@@ -2,7 +2,6 @@ package cc.kafuu.bilidownload.bilibili.video;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +13,6 @@ import java.util.List;
 import cc.kafuu.bilidownload.bilibili.Bili;
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.OkHttp;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
@@ -77,10 +75,10 @@ public class BiliVideoPage {
                     JsonArray accept_quality = data.getAsJsonArray("accept_quality");
                     JsonArray accept_description = data.getAsJsonArray("accept_description");
 
-                    List<BiliResource> resources = new ArrayList<>();
+                    List<BiliVideoResource> resources = new ArrayList<>();
 
                     for (int i = 0; i < accept_quality.size(); ++i) {
-                        BiliResource resource = analysisPlayUrl(
+                        BiliVideoResource resource = analysisPlayUrl(
                                 accept_quality.get(i).getAsInt(),
                                 accept_description.get(i).getAsString(),
                                 callback
@@ -109,7 +107,7 @@ public class BiliVideoPage {
         return new Request.Builder().url(url).headers(Bili.generalHeaders).build();
     }
 
-    public BiliResource analysisPlayUrl(int quality, String description, GetResourceCallback callback) throws IOException {
+    public BiliVideoResource analysisPlayUrl(int quality, String description, GetResourceCallback callback) throws IOException {
         Request request = playUrlRequest(quality);
         Response response = Bili.httpClient.newCall(request).execute();
 
@@ -138,7 +136,7 @@ public class BiliVideoPage {
         }
         String video = durl.get(0).getAsJsonObject().get("url").getAsString();
 
-        return new BiliResource("https://bilibili.com/", video, format, description);
+        return new BiliVideoResource("https://bilibili.com/", video, format, description);
     }
 
 }

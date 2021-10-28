@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".fragment.VideoParserFragment">
 
     <LinearLayout
@@ -12,51 +13,94 @@
         android:orientation="vertical"
         tools:ignore="UselessParent">
 
-
-        <LinearLayout
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="5dp"
-            android:gravity="bottom|end"
-            android:elevation="5dp"
-            android:padding="5dp"
-            android:background="@drawable/default_block"
-            android:orientation="vertical">
+            android:layout_marginHorizontal="15dp"
+            android:layout_marginVertical="5dp"
+
+            app:contentPadding="10dp"
+            app:cardElevation="10dp"
+            app:cardCornerRadius="5dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/default_input_block"
-                android:orientation="horizontal">
+                android:layout_marginHorizontal="5dp"
+                android:gravity="bottom|end"
+                android:orientation="vertical">
 
-                <EditText
-                    android:id="@+id/videoAddress"
-                    android:layout_width="0dp"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="#00000000"
-                    android:ems="10"
-                    android:paddingHorizontal="5dp"
-                    android:gravity="center_vertical"
-                    android:inputType="textMultiLine"
-                    android:minHeight="36dp"
-                    android:autofillHints=""
-                    android:text="BV1A4411N7Kb"
-                    tools:ignore="LabelFor" />
+                    android:background="@drawable/default_input_block"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:id="@+id/videoAddress"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:autofillHints=""
+                        android:background="#00000000"
+                        android:ems="10"
+                        android:gravity="center_vertical"
+                        android:inputType="textMultiLine"
+                        android:minHeight="36dp"
+                        android:paddingHorizontal="5dp"
+                        android:text="BV1A4411N7Kb"
+                        tools:ignore="LabelFor" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/parsingVideo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/parsing_video" />
+
+
             </LinearLayout>
 
+        </androidx.cardview.widget.CardView>
 
-            <Button
-                android:id="@+id/parsingVideo"
+        <androidx.cardview.widget.CardView
+            android:id="@+id/videoInfoCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="15dp"
+            android:layout_marginVertical="5dp"
+            app:contentPadding="10dp"
+            app:cardElevation="10dp"
+            app:cardCornerRadius="5dp">
+
+
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/parsing_video" />
-        </LinearLayout>
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/videoTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1" />
+
+                <TextView
+                    android:id="@+id/videoDescribe"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:maxLines="5"
+                    android:ellipsize="end"/>
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/videoInfoList"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"/>
+
     </LinearLayout>
 
 </FrameLayout>

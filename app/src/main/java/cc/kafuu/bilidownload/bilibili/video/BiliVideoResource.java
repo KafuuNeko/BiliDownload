@@ -21,7 +21,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-public class BiliResource {
+public class BiliVideoResource {
 
     private final static Headers mDownloadHead = new Headers.Builder()
             .add("accept", "*/*")
@@ -41,7 +41,7 @@ public class BiliResource {
     //描述
     private final String mDescription;
 
-    protected BiliResource(final String Referer, final String resource, final String format, final String description)
+    protected BiliVideoResource(final String Referer, final String resource, final String format, final String description)
     {
         this.mRefererUrl = Referer;
         this.mResourceUrl = resource;

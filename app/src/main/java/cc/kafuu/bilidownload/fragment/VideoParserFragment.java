@@ -3,10 +3,12 @@ package cc.kafuu.bilidownload.fragment;
 import android.app.AlertDialog;
 import android.os.Bundle;
 
+import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -14,20 +16,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import org.jetbrains.annotations.NotNull;
 
 
-import java.io.File;
 import java.util.List;
 
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.bilibili.VideoParsingCallback;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideoPage;
-import cc.kafuu.bilidownload.bilibili.video.BiliResource;
+import cc.kafuu.bilidownload.bilibili.video.BiliVideoResource;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideo;
 import cc.kafuu.bilidownload.bilibili.video.GetResourceCallback;
-import cc.kafuu.bilidownload.bilibili.video.ResourceDownloadCallback;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -42,10 +43,14 @@ public class VideoParserFragment extends Fragment {
     private EditText mVideoAddress;
     private Button mParsingVideo;
 
+    private CardView mVideoInfoCard;
+    private TextView mVideoTitle;
+    private TextView mVideoDescribe;
+
 
     public VideoParserFragment() {
         // Required empty public constructor
-        mHandler = new Handler();
+        mHandler = new Handler(Looper.getMainLooper());
     }
 
     /**
@@ -86,15 +91,20 @@ public class VideoParserFragment extends Fragment {
         mVideoInfoList = mRootView.findViewById(R.id.videoInfoList);
         mVideoAddress = mRootView.findViewById(R.id.videoAddress);
         mParsingVideo = mRootView.findViewById(R.id.parsingVideo);
+
+        mVideoInfoCard = mRootView.findViewById(R.id.videoInfoCard);
+        mVideoTitle = mRootView.findViewById(R.id.videoTitle);
+        mVideoDescribe = mRootView.findViewById(R.id.videoDescribe);
     }
 
     private void initView() {
+        mVideoInfoCard.setVisibility(View.GONE);
+
         mVideoAddress.setOnKeyListener((v, keyCode, event) -> {
             if(keyCode == KeyEvent.KEYCODE_ENTER) {
                 onParsingVideo();
-                return true;
             }
-            return false;
+            return keyCode == KeyEvent.KEYCODE_ENTER;
         });
         mParsingVideo.setOnClickListener(v -> onParsingVideo());
     }
@@ -103,8 +113,6 @@ public class VideoParserFragment extends Fragment {
         mVideoInfoList.setEnabled(enable);
         mVideoAddress.setEnabled(enable);
         mParsingVideo.setEnabled(enable);
-
-
     }
 
     private void onParsingVideo() {
@@ -114,39 +122,28 @@ public class VideoParserFragment extends Fragment {
             @Override
             public void onComplete(BiliVideo biliVideos) {
                 Log.d("VideoParserFragment.onParsingVideo->onComplete", biliVideos.toString());
-                parsingVideoComplete(biliVideos, null);
+                mHandler.post(() -> parsingVideoComplete(biliVideos, null));
             }
 
             @Override
             public void onFailure(String message) {
                 Log.d("[Failure]VideoParserFragment.onParsingVideo->onFailure", message);
-                parsingVideoComplete(null, message);
+                mHandler.post(() -> parsingVideoComplete(null, message));
             }
         });
 
     }
 
     private void parsingVideoComplete(BiliVideo biliVideos, String message) {
-
+        changeEnableStatus(true);
         if (biliVideos == null) {
             new AlertDialog.Builder(getContext()).setTitle("Error").setMessage(message).show();
             return;
         }
 
-        for (BiliVideoPage page : biliVideos.getPages()) {
-            Log.d("VideoParserFragment.onParsingVideo->parsingVideoComplete", "Page cid:" + page.getCid());
+        mVideoTitle.setText(biliVideos.getTitle());
+        mVideoDescribe.setText(biliVideos.getDesc());
 
-            page.getResource(new GetResourceCallback() {
-                @Override
-                public void onComplete(List<BiliResource> resources) {
-
-                }
-
-                @Override
-                public void onFailure(String message) {
-                    Log.d("[Failure]VideoParserFragment.onParsingVideo->parsingVideoComplete", message);
-                }
-            });
-        }
+        mVideoInfoCard.setVisibility(View.VISIBLE);
     }
 }
