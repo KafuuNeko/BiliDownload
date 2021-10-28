@@ -104,7 +104,7 @@ public class VideoParserFragment extends Fragment {
         mVideoAddress.setEnabled(enable);
         mParsingVideo.setEnabled(enable);
 
-        
+
     }
 
     private void onParsingVideo() {
