@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.bilibili.resource;
+package cc.kafuu.bilidownload.bilibili.video;
 
 import android.util.Log;
 

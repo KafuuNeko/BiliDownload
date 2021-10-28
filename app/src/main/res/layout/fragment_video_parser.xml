@@ -5,10 +5,58 @@
     android:layout_height="match_parent"
     tools:context=".fragment.VideoParserFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:gravity="center"
+        android:orientation="vertical"
+        tools:ignore="UselessParent">
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="5dp"
+            android:gravity="bottom|end"
+            android:elevation="5dp"
+            android:padding="5dp"
+            android:background="@drawable/default_block"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/default_input_block"
+                android:orientation="horizontal">
+
+                <EditText
+                    android:id="@+id/videoAddress"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="#00000000"
+                    android:ems="10"
+                    android:paddingHorizontal="5dp"
+                    android:gravity="center_vertical"
+                    android:inputType="textMultiLine"
+                    android:minHeight="36dp"
+                    android:autofillHints=""
+                    android:text="BV1A4411N7Kb"
+                    tools:ignore="LabelFor" />
+            </LinearLayout>
+
+
+            <Button
+                android:id="@+id/parsingVideo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/parsing_video" />
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/videoInfoList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
 
 </FrameLayout>
