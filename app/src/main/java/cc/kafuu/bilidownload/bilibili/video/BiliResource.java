@@ -23,50 +23,34 @@ import okhttp3.ResponseBody;
 
 public class BiliResource {
 
-    private final static Headers mDownloadHead1 = new Headers.Builder()
+    private final static Headers mDownloadHead = new Headers.Builder()
             .add("accept", "*/*")
             .add("accept-encoding", "gzip, deflate, br")
-            .add("Accept-Language", "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2")
+            .add("Accept-Language", "zh-CN,zh-Hans;q=0.9")
             .add("Connection", "keep-alive")
-            .add("Origin", "https://www.bilibili.com")
-            .add("sec-fetch-dest", "empty")
-            .add("sec-fetch-mode", "cors")
-            .add("sec-fetch-site", "cross-site")
-            .add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:93.0) Gecko/20100101 Firefox/93.0")
+            .add("Origin", "https://m.bilibili.com")
+            .add("user-agent", Bili.UA)
             .build();
-
-    private final static Headers mDownloadHead2 = new Headers.Builder()
-            .add("accept", "*/*")
-            .add("accept-encoding", "gzip, deflate, br")
-            .add("Accept-Language", "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2")
-            .add("Connection", "keep-alive")
-            .add("Origin", "https://www.bilibili.com")
-            .add("sec-fetch-dest", "empty")
-            .add("sec-fetch-mode", "cors")
-            .add("sec-fetch-site", "cross-site")
-            .add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:93.0) Gecko/20100101 Firefox/93.0")
-            .build();
-
 
     //视频地址
-    private final String mVideoUrl;
+    private final String mRefererUrl;
     //下载地址
-    private final String mDownloadUrl;
+    private final String mResourceUrl;
     //格式
     private final String mFormat;
     //描述
     private final String mDescription;
 
-    protected BiliResource(final String videoUrl, final String url, final String format, final String description)
+    protected BiliResource(final String Referer, final String resource, final String format, final String description)
     {
-        this.mVideoUrl = videoUrl;
-        this.mDownloadUrl = url;
+        this.mRefererUrl = Referer;
+        this.mResourceUrl = resource;
         this.mFormat = format;
         this.mDescription = description;
     }
 
-    public String getUrl() {
-        return mDownloadUrl;
+    public String getResourceUrl() {
+        return mResourceUrl;
     }
 
     public String getDescription() {
@@ -87,8 +71,8 @@ public class BiliResource {
         final OkHttpClient client = Bili.httpClient;
 
         //发起一个预检请求
-        Request options_request = new Request.Builder().url(mDownloadUrl)
-                .headers(mDownloadHead1).addHeader("Referer", mVideoUrl)
+        Request options_request = new Request.Builder().url(mResourceUrl)
+                .headers(mDownloadHead).addHeader("Referer", mRefererUrl)
                 .method("OPTIONS", new FormBody.Builder().build())
                 .build();
 
@@ -100,7 +84,7 @@ public class BiliResource {
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                Log.d("Bili Options", "code: " + response.code());
+                Log.d("BiliResource.download->Options", "code: " + response.code());
                 if (response.code() == 200) {
                     //预检通过
                     startDownload(savePath, callback);
@@ -119,8 +103,8 @@ public class BiliResource {
     {
         final OkHttpClient client = Bili.httpClient;
 
-        Request request = new Request.Builder().url(mDownloadUrl)
-                .headers(mDownloadHead2).addHeader("Referer", mVideoUrl)
+        Request request = new Request.Builder().url(mResourceUrl)
+                .headers(mDownloadHead).addHeader("Referer", mRefererUrl)
                 .build();
 
         client.newCall(request).enqueue(new Callback() {

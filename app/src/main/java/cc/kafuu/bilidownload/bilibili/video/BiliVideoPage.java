@@ -19,14 +19,14 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-public class BiliPlayInfo {
+public class BiliVideoPage {
 
     private long mAv;
     private long mCid;
     private String mPartName;
     private String mPartDuration;
 
-    public BiliPlayInfo(long av, long cid, String partName, String partDuration) {
+    public BiliVideoPage(long av, long cid, String partName, String partDuration) {
         this.mAv = av;
         this.mCid = cid;
         this.mPartName = partName;
@@ -106,7 +106,7 @@ public class BiliPlayInfo {
         if (quality != 0) {
             url += "&qn=" + quality;
         }
-        return new Request.Builder().url(url).headers(BiliVideo.generalHeaders).build();
+        return new Request.Builder().url(url).headers(Bili.generalHeaders).build();
     }
 
     public BiliResource analysisPlayUrl(int quality, String description, GetResourceCallback callback) throws IOException {

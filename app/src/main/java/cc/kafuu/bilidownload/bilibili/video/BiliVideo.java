@@ -24,24 +24,15 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 public class BiliVideo {
-
-    public static final Headers generalHeaders;
-    static {
-        generalHeaders = new Headers.Builder()
-                .add("Accept", "application/json, text/plain, */*")
-                .add("Accept-Language", "zh-CN,zh-Hans;q=0.9")
-                .add("Origin", "https://m.bilibili.com")
-                .add("Referer", "https://m.bilibili.com/")
-                .add("User-Agent", Bili.UA)
-                .build();
-    }
-
+    /**
+     * 通过BV号解析下载地址
+     * */
     public static void fromBv(final String bv, final VideoParsingCallback callback) {
         try {
             //构造访问
             Request request = new Request.Builder()
                     .url("https://api.bilibili.com/x/web-interface/view/detail?aid=&bvid=" + bv.substring(2))
-                    .headers(generalHeaders)
+                    .headers(Bili.generalHeaders)
                     .build();
             Bili.httpClient.newCall(request).enqueue(new Callback() {
                 @Override
@@ -60,12 +51,15 @@ public class BiliVideo {
         }
     }
 
+    /**
+     * 通过AV号解析下载地址
+     * */
     public static void fromAv(final String av, final VideoParsingCallback callback) {
         try {
             //构造访问
             Request request = new Request.Builder()
                     .url("https://api.bilibili.com/x/web-interface/view/detail?aid=" + av + "&bvid=&recommend_type=&need_rcmd_reason=1")
-                    .headers(generalHeaders)
+                    .headers(Bili.generalHeaders)
                     .build();
             Bili.httpClient.newCall(request).enqueue(new Callback() {
                 @Override
@@ -88,6 +82,10 @@ public class BiliVideo {
         }
     }
 
+    /**
+     * 分析Api返回内容
+     * 分析成功将构造BiliVideo并回调
+     * */
     private static void analyzingResponse(@NonNull Response response, final VideoParsingCallback callback) throws IOException {
         ResponseBody body = response.body();
         if (body == null) {
@@ -97,7 +95,7 @@ public class BiliVideo {
 
         String json = body.string();
 
-        Log.d("Bili response", json);
+        Log.d("BiliVideo.analyzingResponse->json", json);
 
         JsonObject res = new Gson().fromJson(json, JsonObject.class);
 
@@ -115,12 +113,12 @@ public class BiliVideo {
     }
 
 
-    private String mBv;
-    private long mAid;
-    private String mPicUrl;
-    private String mTitle;
-    private String mDesc;
-    private List<BiliPlayInfo> mVideos;
+    private final String mBv;
+    private final long mAid;
+    private final String mPicUrl;
+    private final String mTitle;
+    private final String mDesc;
+    private final List<BiliVideoPage> mPages;
 
     private BiliVideo(@NonNull JsonObject data) {
         JsonObject view = data.getAsJsonObject("View");
@@ -131,7 +129,7 @@ public class BiliVideo {
         mTitle = view.get("title").getAsString();
         mDesc = view.get("desc").getAsString();
 
-        mVideos = new ArrayList<>();
+        mPages = new ArrayList<>();
         for (JsonElement element : view.getAsJsonArray("pages")) {
             JsonObject page = element.getAsJsonObject();
 
@@ -139,7 +137,7 @@ public class BiliVideo {
             String partName = page.get("part").getAsString();
             String partDuration = page.get("duration").getAsString();
 
-            mVideos.add(new BiliPlayInfo(mAid, cid, partName, partDuration));
+            mPages.add(new BiliVideoPage(mAid, cid, partName, partDuration));
         }
     }
 
@@ -163,8 +161,8 @@ public class BiliVideo {
         return mPicUrl;
     }
 
-    public List<BiliPlayInfo> getVideos() {
-        return mVideos;
+    public List<BiliVideoPage> getPages() {
+        return mPages;
     }
 
     @NotNull
