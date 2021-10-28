@@ -48,25 +48,21 @@ public class BiliResource {
             .build();
 
 
-    //资源id
-    private final int mId;
     //视频地址
     private final String mVideoUrl;
     //下载地址
     private final String mDownloadUrl;
+    //格式
+    private final String mFormat;
     //描述
     private final String mDescription;
 
-    protected BiliResource(int id, final String videoUrl, final String url, final String description)
+    protected BiliResource(final String videoUrl, final String url, final String format, final String description)
     {
-        this.mId = id;
         this.mVideoUrl = videoUrl;
         this.mDownloadUrl = url;
+        this.mFormat = format;
         this.mDescription = description;
-    }
-
-    public int getId() {
-        return mId;
     }
 
     public String getUrl() {
@@ -75,6 +71,10 @@ public class BiliResource {
 
     public String getDescription() {
         return mDescription;
+    }
+
+    public String getFormat() {
+        return mFormat;
     }
 
     /**

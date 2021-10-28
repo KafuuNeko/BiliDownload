@@ -25,7 +25,7 @@ import okhttp3.ResponseBody;
 
 public class BiliVideo {
 
-    private static final Headers generalHeaders;
+    public static final Headers generalHeaders;
     static {
         generalHeaders = new Headers.Builder()
                 .add("Accept", "application/json, text/plain, */*")
@@ -40,7 +40,7 @@ public class BiliVideo {
         try {
             //构造访问
             Request request = new Request.Builder()
-                    .url("https://api.bilibili.com/x/web-interface/view/detail?aid=&bvid=" + bv.substring(2) + "&recommend_type=&need_rcmd_reason=1")
+                    .url("https://api.bilibili.com/x/web-interface/view/detail?aid=&bvid=" + bv.substring(2))
                     .headers(generalHeaders)
                     .build();
             Bili.httpClient.newCall(request).enqueue(new Callback() {
@@ -139,7 +139,7 @@ public class BiliVideo {
             String partName = page.get("part").getAsString();
             String partDuration = page.get("duration").getAsString();
 
-            mVideos.add(new BiliPlayInfo(cid, partName, partDuration));
+            mVideos.add(new BiliPlayInfo(mAid, cid, partName, partDuration));
         }
     }
 
