@@ -19,6 +19,10 @@
 
     <string name="error">错误</string>
     <string name="success">成功</string>
+    <string name="notarize">确认</string>
+    <string name="browse">浏览</string>
+
+    <string name="system_version_is_not_supported">您的系统版本不支持</string>
 
     <string name="video_address_format_incorrect">请输入正确的视频地址</string>
 
@@ -28,5 +32,6 @@
     <string name="download_operation_cancel">下载操作被取消</string>
 
     <string name="external_storage_device_cannot_be_accessed">无法访问外部存储设备</string>
+    <string name="video_address_hint">视频地址、AV(av55571607)、BV</string>
 
 </resources>

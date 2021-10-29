@@ -1,5 +1,9 @@
 package cc.kafuu.bilidownload.bilibili;
 
+import android.os.Environment;
+
+import java.io.File;
+
 import cc.kafuu.bilidownload.utils.OkHttpUtils;
 import okhttp3.Headers;
 import okhttp3.OkHttpClient;
@@ -17,4 +21,6 @@ public class Bili {
                 .add("User-Agent", Bili.UA)
                 .build();
     }
+
+    public static File saveDir = new File(Environment.getExternalStorageDirectory().getPath() + "/Download");
 }

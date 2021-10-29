@@ -160,7 +160,7 @@ public class VideoParserFragment extends Fragment {
         if (videoId.contains("BV")) {
             BiliVideo.fromBv(videoId, callback);
         } else {
-            BiliVideo.fromAv(videoId, callback);
+            BiliVideo.fromAv(videoId.substring(2), callback);
         }
     }
 

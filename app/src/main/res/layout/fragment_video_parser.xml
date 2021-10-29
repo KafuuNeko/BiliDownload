@@ -48,7 +48,7 @@
                         android:inputType="textMultiLine"
                         android:minHeight="36dp"
                         android:paddingHorizontal="5dp"
-                        android:text="BV1Tx411w7pd"
+                        android:hint="@string/video_address_hint"
                         tools:ignore="LabelFor" />
                 </LinearLayout>
 
