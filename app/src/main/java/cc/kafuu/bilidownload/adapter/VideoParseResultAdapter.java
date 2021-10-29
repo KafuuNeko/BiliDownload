@@ -80,8 +80,6 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
         private final LinearLayout mItem;
         private final TextView mPageTitle;
 
-        private BiliVideoPart mPart = null;
-
         public InnerHolder(@NonNull View itemView) {
             super(itemView);
 
@@ -94,16 +92,15 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
         }
 
         public void bindPart(BiliVideoPart part) {
-            this.mPart = part;
-            mItem.setOnClickListener(v -> onItemClick());
+            mItem.setOnClickListener(v -> onItemClick(part));
         }
 
         /**
          * 用户选择视频片段后调用此函数
          * 此函数将加载此片段的所有下载源
          * */
-        private void onItemClick() {
-            if (mPart == null) {
+        private void onItemClick(final BiliVideoPart part) {
+            if (part == null) {
                 return;
             }
 
@@ -120,11 +117,11 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
             progressDialog.setOnKeyListener((dialog1, keyCode, event) -> keyCode == KeyEvent.KEYCODE_SEARCH);
             progressDialog.show();
 
-            mPart.getResource(new GetResourceCallback() {
+            part.getResource(new GetResourceCallback() {
                 @Override
                 public void onComplete(List<BiliVideoResource> resources) {
                     progressDialog.cancel();
-                    mHandle.post(() -> getResourcesCompleted(resources));
+                    mHandle.post(() -> getResourcesCompleted(part, resources));
                 }
 
                 @Override
@@ -139,7 +136,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
          * 取得判断所有加载源后调用此过程
          * 此过程将继续引导用户选择视频下载源（清晰度）
          * */
-        private void getResourcesCompleted(List<BiliVideoResource> resources) {
+        private void getResourcesCompleted(final BiliVideoPart part, List<BiliVideoResource> resources) {
 
             CharSequence[] items = new CharSequence[resources.size()];
             for (int i = 0; i < resources.size(); ++i) {
@@ -147,8 +144,8 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
             }
 
             new AlertDialog.Builder(mActivity)
-                    .setTitle(mPart.getPartName())
-                    .setItems(items, (dialog, which) -> onResourcesSelected(resources.get(which)))
+                    .setTitle(part.getPartName())
+                    .setItems(items, (dialog, which) -> onResourcesSelected(part, resources.get(which)))
                     .show();
         }
 
@@ -156,11 +153,11 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
          * 用户选择要下载的视频源（清晰度）后调用此函数
          * 将立即开始下载资源
          * */
-        private void onResourcesSelected(final BiliVideoResource resource) {
+        private void onResourcesSelected(final BiliVideoPart part, final BiliVideoResource resource) {
             ProgressDialog progressDialog = new ProgressDialog(mActivity);
             progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            progressDialog.setMax(100);
-            progressDialog.setMessage(mPart.getPartName() + " " + resource.getFormat());
+            progressDialog.setMax(1000);
+            progressDialog.setMessage(part.getPartName() + " " + resource.getFormat());
             progressDialog.setCancelable(false);
             //用户点击返回就申请取消下载操作
             progressDialog.setOnKeyListener((dialog, keyCode, event) -> {
@@ -173,11 +170,11 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
 
 
             //下载状态回调
-            Pair<Integer, Integer> lastProgress = new Pair<>(0, 100);
+            Pair<Integer, Integer> lastProgress = new Pair<>(0, 1000);
             ResourceDownloadCallback callback = new ResourceDownloadCallback() {
                 @Override
                 public void onStatus(int current, int contentLength) {
-                    int progress = (int) ((float)current / (float)contentLength * 100.0);
+                    int progress = (int) ((float)current / (float)contentLength * 1000.0);
                     if (lastProgress.first < progress) {
                         lastProgress.first = progress;
                         mHandle.post(() -> progressDialog.setProgress(lastProgress.first));
@@ -193,7 +190,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
                 @Override
                 public void onCompleted(File file) {
                     mHandle.post(progressDialog::cancel);
-                    mHandle.post(() -> onDownloadComplete(file, resource));
+                    mHandle.post(() -> onDownloadComplete(part, file, resource));
                 }
 
                 @Override
@@ -206,17 +203,17 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
             if (Bili.saveDir.exists() || Bili.saveDir.mkdirs()) {
                 String suffix = resource.getFormat();
                 suffix = suffix.contains("flv") ? "flv" : suffix;
-                resource.save(Bili.saveDir + "/BV_" + mPart.getAv() + "_" + mPart.getCid() + "_" + resource.getFormat() + "." + suffix, callback);
+                resource.save(Bili.saveDir + "/BV_" + part.getAv() + "_" + part.getCid() + "_" + resource.getFormat() + "." + suffix, callback);
             } else {
-                new AlertDialog.Builder(mActivity).setTitle(mPart.getPartName()).setMessage(mActivity.getString(R.string.external_storage_device_cannot_be_accessed)).show();
+                new AlertDialog.Builder(mActivity).setTitle(part.getPartName()).setMessage(mActivity.getString(R.string.external_storage_device_cannot_be_accessed)).show();
             }
         }
 
         /**
          * 下载成功后将调用此函数
          * */
-        private void onDownloadComplete(File file, BiliVideoResource resource) {
-            mRecordDatabase.insertDownloadRecord(mBiliVideo.getBv(), mBiliVideo.getTitle(), mPart.getPartName(), file.getPath(), resource.getFormat(), mBiliVideo.getPicUrl());
+        private void onDownloadComplete(final BiliVideoPart part, File file, BiliVideoResource resource) {
+            mRecordDatabase.insertDownloadRecord(mBiliVideo.getBv(), mBiliVideo.getTitle(), part.getPartName(), file.getPath(), resource.getFormat(), mBiliVideo.getPicUrl());
             new AlertDialog.Builder(mActivity).setTitle(R.string.success).setMessage(mActivity.getString(R.string.download_complete) + "\n" + file.getPath()).setPositiveButton(R.string.notarize, null).show();
 
             mActivity.sendBroadcast(new Intent("notice.download.completed"));

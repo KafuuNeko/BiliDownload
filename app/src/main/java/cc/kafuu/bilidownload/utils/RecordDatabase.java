@@ -74,30 +74,41 @@ public class RecordDatabase extends SQLiteOpenHelper {
         }
     }
 
-    synchronized public void insertDownloadRecord(String vid, String video_title, String part_title, String path, String format, String pic) {
-        getWritableDatabase().execSQL(
-                "INSERT INTO video_download_record(vid, video_title, part_title, path, format, pic) VALUES(?, ?, ?, ?, ?, ?)",
-                new String[] {vid, video_title, part_title, path, format, pic});
+    private static final Integer mWriteLock = 0;
+
+    public void insertDownloadRecord(String vid, String video_title, String part_title, String path, String format, String pic) {
+        synchronized (mWriteLock) {
+            getWritableDatabase().execSQL(
+                    "INSERT INTO video_download_record(vid, video_title, part_title, path, format, pic) VALUES(?, ?, ?, ?, ?, ?)",
+                    new String[] {vid, video_title, part_title, path, format, pic});
+        }
     }
 
-    synchronized public List<DownloadRecord> getDownloadRecord() {
-
+    public List<DownloadRecord> getDownloadRecord() {
         List<DownloadRecord> records = new ArrayList<>();
-        Cursor cursor = getReadableDatabase().rawQuery("SELECT id, vid, video_title, part_title, path, format, pic FROM video_download_record ORDER BY id DESC LIMIT 30", null);
-        while (cursor.moveToNext()) {
-            records.add(
-                    new DownloadRecord (
-                            cursor.getLong(0),
-                            cursor.getString(1),
-                            cursor.getString(2),
-                            cursor.getString(3),
-                            cursor.getString(4),
-                            cursor.getString(5),
-                            cursor.getString(6)
-                    )
-            );
+        synchronized (mWriteLock) {
+            Cursor cursor = getReadableDatabase().rawQuery("SELECT id, vid, video_title, part_title, path, format, pic FROM video_download_record ORDER BY id DESC LIMIT 30", null);
+            while (cursor.moveToNext()) {
+                records.add(
+                        new DownloadRecord (
+                                cursor.getLong(0),
+                                cursor.getString(1),
+                                cursor.getString(2),
+                                cursor.getString(3),
+                                cursor.getString(4),
+                                cursor.getString(5),
+                                cursor.getString(6)
+                        )
+                );
+            }
         }
         return records;
+    }
+
+    public void removeDownloadRecord(DownloadRecord record) {
+        synchronized (mWriteLock) {
+            getWritableDatabase().execSQL("DELETE FROM video_download_record WHERE id=" + record.getId());
+        }
     }
 
 }

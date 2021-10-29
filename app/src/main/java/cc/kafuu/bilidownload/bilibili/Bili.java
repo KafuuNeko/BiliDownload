@@ -22,5 +22,5 @@ public class Bili {
                 .build();
     }
 
-    public static File saveDir = new File(Environment.getExternalStorageDirectory().getPath() + "/Download");
+    public static File saveDir = new File(Environment.getExternalStorageDirectory().getPath() + "/Download/BiliVideo");
 }
