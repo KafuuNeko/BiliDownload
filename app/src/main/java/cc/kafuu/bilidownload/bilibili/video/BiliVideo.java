@@ -107,7 +107,7 @@ public class BiliVideo {
         if (data == null) {
             callback.onFailure("Video data is returned empty");
         } else {
-            callback.onComplete(new BiliVideo(data));
+            callback.onCompleted(new BiliVideo(data));
         }
     }
 

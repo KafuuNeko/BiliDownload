@@ -197,7 +197,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
                 }
 
                 @Override
-                public void onComplete(File file) {
+                public void onCompleted(File file) {
                     mHandle.post(progressDialog::cancel);
                     mHandle.post(() -> onDownloadComplete(file, resource));
                 }
@@ -222,17 +222,8 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
          * 下载成功后将调用此函数
          * */
         private void onDownloadComplete(File file, BiliVideoResource resource) {
-            mRecordDatabase.getWritableDatabase().execSQL(
-                    "INSERT INTO video_download_record(vid, video_title, part_title, path, format) VALUES(?, ?, ?, ?, ?)",
-                    new String[] {mBiliVideo.getBv(), mBiliVideo.getTitle(), mPart.getPartName(), file.getPath(), resource.getFormat()});
-
-            new AlertDialog.Builder(mActivity)
-                    .setTitle(R.string.success)
-                    .setMessage(mActivity.getString(R.string.download_complete) + "\n" + file.getPath())
-                    .setPositiveButton(R.string.notarize, null)
-                    .show();
-
-            
+            mRecordDatabase.insertDownloadRecord(mBiliVideo.getBv(), mBiliVideo.getTitle(), mPart.getPartName(), file.getPath(), resource.getFormat(), mBiliVideo.getPicUrl());
+            new AlertDialog.Builder(mActivity).setTitle(R.string.success).setMessage(mActivity.getString(R.string.download_complete) + "\n" + file.getPath()).setPositiveButton(R.string.notarize, null).show();
         }
 
     }

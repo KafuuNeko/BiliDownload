@@ -3,10 +3,9 @@
     <string name="video_parser">视频解析</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="about">关于</string>
+    <string name="about">关于 BVD</string>
 
     <string name="about_context">
-        BVD\n\n
         开发人员\n
         Kafuu(kafuuneko@gmail.com)\n\n
         个人网站\n

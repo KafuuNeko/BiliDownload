@@ -156,7 +156,7 @@ public class BiliVideoResource {
                         }
                         callback.onStop();
                     } else {
-                        callback.onComplete(resourceFile);
+                        callback.onCompleted(resourceFile);
                     }
 
                 } catch (IOException e) {

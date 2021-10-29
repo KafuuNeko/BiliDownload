@@ -3,6 +3,7 @@ package cc.kafuu.bilidownload.fragment;
 import android.app.AlertDialog;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -75,6 +76,11 @@ public class VideoParserFragment extends Fragment {
     }
 
     @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
     public View onCreateView(@NotNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         if (mRootView != null) {
@@ -144,7 +150,7 @@ public class VideoParserFragment extends Fragment {
 
         VideoParsingCallback callback = new VideoParsingCallback() {
             @Override
-            public void onComplete(BiliVideo biliVideos) {
+            public void onCompleted(BiliVideo biliVideos) {
                 Log.d("VideoParserFragment.onParsingVideo->onComplete", biliVideos.toString());
                 mHandler.post(() -> parsingVideoComplete(biliVideos, null));
             }

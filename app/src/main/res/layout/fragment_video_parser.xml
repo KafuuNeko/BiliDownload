@@ -1,111 +1,116 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".fragment.VideoParserFragment">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:orientation="vertical"
-        tools:ignore="UselessParent">
+        android:layout_height="wrap_content">
 
-        <androidx.cardview.widget.CardView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="15dp"
-            android:layout_marginVertical="10dp"
+            android:orientation="vertical" >
 
-            app:contentPadding="10dp"
-            app:cardElevation="5dp"
-            app:cardCornerRadius="5dp">
-
-            <LinearLayout
+            <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="5dp"
-                android:gravity="bottom|end"
-                android:orientation="vertical">
+                android:layout_marginHorizontal="15dp"
+                android:layout_marginVertical="10dp"
+
+                app:cardCornerRadius="5dp"
+                app:cardElevation="5dp"
+                app:contentPadding="10dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/default_input_block"
-                    android:orientation="horizontal">
+                    android:layout_marginHorizontal="5dp"
+                    android:gravity="bottom|end"
+                    android:orientation="vertical">
 
-                    <EditText
-                        android:id="@+id/videoAddress"
-                        android:layout_width="0dp"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:autofillHints=""
-                        android:background="#00000000"
-                        android:ems="10"
-                        android:gravity="center_vertical"
-                        android:inputType="textMultiLine"
-                        android:minHeight="36dp"
-                        android:paddingHorizontal="5dp"
-                        android:hint="@string/video_address_hint"
-                        tools:ignore="LabelFor" />
+                        android:background="@drawable/default_input_block"
+                        android:orientation="horizontal">
+
+                        <EditText
+                            android:id="@+id/videoAddress"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:autofillHints=""
+                            android:background="#00000000"
+                            android:ems="10"
+                            android:gravity="center_vertical"
+                            android:hint="@string/video_address_hint"
+                            android:inputType="textMultiLine"
+                            android:minHeight="36dp"
+                            android:paddingHorizontal="5dp"
+                            tools:ignore="LabelFor" />
+                    </LinearLayout>
+
+                    <Button
+                        android:id="@+id/parsingVideo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/parsing_video" />
+
+
                 </LinearLayout>
 
-                <Button
-                    android:id="@+id/parsingVideo"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/parsing_video" />
+            </androidx.cardview.widget.CardView>
 
-
-            </LinearLayout>
-
-        </androidx.cardview.widget.CardView>
-
-        <androidx.cardview.widget.CardView
-            android:id="@+id/videoInfoCard"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="15dp"
-            android:layout_marginVertical="10dp"
-            app:contentPadding="10dp"
-            app:cardElevation="5dp"
-            app:cardCornerRadius="5dp">
-
-
-            <LinearLayout
+            <androidx.cardview.widget.CardView
+                android:id="@+id/videoInfoCard"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="15dp"
+                android:layout_marginVertical="10dp"
+                app:cardCornerRadius="5dp"
+                app:cardElevation="5dp"
+                app:contentPadding="10dp">
 
-                <TextView
-                    android:id="@+id/videoTitle"
+
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:maxLines="1" />
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/describe" />
+                    <TextView
+                        android:id="@+id/videoTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1" />
 
-                <TextView
-                    android:id="@+id/videoDescribe"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:maxLines="5"
-                    android:ellipsize="end"/>
-            </LinearLayout>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/describe" />
 
-        </androidx.cardview.widget.CardView>
+                    <TextView
+                        android:id="@+id/videoDescribe"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="5" />
+                </LinearLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/videoInfoList"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            </androidx.cardview.widget.CardView>
 
-    </LinearLayout>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/videoInfoList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
 
-</FrameLayout>
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>
