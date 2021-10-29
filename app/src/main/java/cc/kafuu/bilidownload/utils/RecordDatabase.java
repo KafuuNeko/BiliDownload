@@ -53,7 +53,7 @@ public class RecordDatabase extends SQLiteOpenHelper {
             return format;
         }
 
-        public String getPart_title() {
+        public String getPartTitle() {
             return part_title;
         }
 
@@ -65,7 +65,7 @@ public class RecordDatabase extends SQLiteOpenHelper {
             return vid;
         }
 
-        public String getVideo_title() {
+        public String getVideoTitle() {
             return video_title;
         }
 
@@ -83,7 +83,7 @@ public class RecordDatabase extends SQLiteOpenHelper {
     synchronized public List<DownloadRecord> getDownloadRecord() {
 
         List<DownloadRecord> records = new ArrayList<>();
-        Cursor cursor = getReadableDatabase().rawQuery("SELECT id, vid, video_title, part_title, path, format, pic FROM video_download_record", null);
+        Cursor cursor = getReadableDatabase().rawQuery("SELECT id, vid, video_title, part_title, path, format, pic FROM video_download_record ORDER BY id DESC LIMIT 30", null);
         while (cursor.moveToNext()) {
             records.add(
                     new DownloadRecord (

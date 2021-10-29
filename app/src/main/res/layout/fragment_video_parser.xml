@@ -88,12 +88,9 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
-                        android:maxLines="1" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/describe" />
+                        android:maxLines="1"
+                        android:textColor="@color/colorPrimary"
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/videoDescribe"

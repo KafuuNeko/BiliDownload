@@ -6,13 +6,8 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.sqlite.SQLiteDatabase;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.DocumentsContract;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -57,14 +52,14 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
     @Override
     public VideoParseResultAdapter.InnerHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_video_part, parent, false);
-        return new InnerHolder(view, null);
+        return new InnerHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull VideoParseResultAdapter.InnerHolder holder, int position) {
         BiliVideoPart part = mBiliVideo.getParts().get(position);
         holder.setPageTitle("P" + (position + 1) + " " + part.getPartName());
-        holder.setPart(part);
+        holder.bindPart(part);
     }
 
     @Override
@@ -85,21 +80,20 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
         private final LinearLayout mItem;
         private final TextView mPageTitle;
 
-        private BiliVideoPart mPart;
+        private BiliVideoPart mPart = null;
 
-        public InnerHolder(@NonNull View itemView, BiliVideoPart part) {
+        public InnerHolder(@NonNull View itemView) {
             super(itemView);
 
             this.mItem = itemView.findViewById(R.id.item);
             this.mPageTitle = itemView.findViewById(R.id.pageTitle);
-            this.mPart = part;
         }
 
         public void setPageTitle(String title) {
             mPageTitle.setText(title);
         }
 
-        public void setPart(BiliVideoPart part) {
+        public void bindPart(BiliVideoPart part) {
             this.mPart = part;
             mItem.setOnClickListener(v -> onItemClick());
         }
@@ -224,6 +218,8 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
         private void onDownloadComplete(File file, BiliVideoResource resource) {
             mRecordDatabase.insertDownloadRecord(mBiliVideo.getBv(), mBiliVideo.getTitle(), mPart.getPartName(), file.getPath(), resource.getFormat(), mBiliVideo.getPicUrl());
             new AlertDialog.Builder(mActivity).setTitle(R.string.success).setMessage(mActivity.getString(R.string.download_complete) + "\n" + file.getPath()).setPositiveButton(R.string.notarize, null).show();
+
+            mActivity.sendBroadcast(new Intent("notice.download.completed"));
         }
 
     }

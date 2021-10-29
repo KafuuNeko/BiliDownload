@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 import cc.kafuu.bilidownload.R;
+import cc.kafuu.bilidownload.adapter.VideoDownloadRecordAdapter;
 import cc.kafuu.bilidownload.utils.RecordDatabase;
 
 /**
@@ -90,8 +91,6 @@ public class DownloadFragment extends Fragment {
     }
 
     private void loadRecords() {
-
-        new RecordDatabase(getContext());
-
+        mDownloadRecordList.setAdapter(new VideoDownloadRecordAdapter(getContext()));
     }
 }
