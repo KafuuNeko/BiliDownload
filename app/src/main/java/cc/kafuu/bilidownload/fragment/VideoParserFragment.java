@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Editable;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -18,9 +19,13 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.jetbrains.annotations.NotNull;
 
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.adapter.VideoParseResultAdapter;
@@ -114,10 +119,30 @@ public class VideoParserFragment extends Fragment {
         mParsingVideo.setEnabled(enable);
     }
 
-    private void onParsingVideo() {
-        changeEnableStatus(false);
+    private String getInputId() {
+        Editable address = mVideoAddress.getText();
+        if (address == null) {
+            return null;
+        }
 
-        BiliVideo.fromBv(mVideoAddress.getText().toString(), new VideoParsingCallback() {
+        Pattern pattern = Pattern.compile("(BV.{10})|(av\\d*)");
+        Matcher matcher = pattern.matcher(address);
+
+        if (!matcher.find()) {
+            return null;
+        }
+
+        return matcher.group();
+    }
+
+    private void onParsingVideo() {
+        String videoId = getInputId();
+        if (videoId == null) {
+            Toast.makeText(getContext(), getText(R.string.video_address_format_incorrect), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        VideoParsingCallback callback = new VideoParsingCallback() {
             @Override
             public void onComplete(BiliVideo biliVideos) {
                 Log.d("VideoParserFragment.onParsingVideo->onComplete", biliVideos.toString());
@@ -129,10 +154,15 @@ public class VideoParserFragment extends Fragment {
                 Log.d("[Failure]VideoParserFragment.onParsingVideo->onFailure", message);
                 mHandler.post(() -> parsingVideoComplete(null, message));
             }
-        });
+        };
 
+        changeEnableStatus(false);
+        if (videoId.contains("BV")) {
+            BiliVideo.fromBv(videoId, callback);
+        } else {
+            BiliVideo.fromAv(videoId, callback);
+        }
     }
-
 
     private void parsingVideoComplete(BiliVideo biliVideos, String message) {
         changeEnableStatus(true);
@@ -145,7 +175,8 @@ public class VideoParserFragment extends Fragment {
         mVideoTitle.setText(biliVideos.getTitle());
         mVideoDescribe.setText(biliVideos.getDesc());
 
-
-        mVideoInfoList.setAdapter(new VideoParseResultAdapter(biliVideos));
+        mVideoInfoList.setAdapter(new VideoParseResultAdapter(getActivity(), biliVideos));
     }
+
+
 }

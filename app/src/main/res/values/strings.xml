@@ -20,9 +20,13 @@
     <string name="error">错误</string>
     <string name="success">成功</string>
 
+    <string name="video_address_format_incorrect">请输入正确的视频地址</string>
+
     <string name="download_complete">下载完成</string>
 
     <string name="obtain_video_resource_tips">正在获取视频资源</string>
     <string name="download_operation_cancel">下载操作被取消</string>
+
+    <string name="external_storage_device_cannot_be_accessed">无法访问外部存储设备</string>
 
 </resources>

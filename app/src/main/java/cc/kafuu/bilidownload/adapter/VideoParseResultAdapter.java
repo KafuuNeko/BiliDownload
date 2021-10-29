@@ -1,9 +1,17 @@
 package cc.kafuu.bilidownload.adapter;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DownloadManager;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.media.MediaScannerConnection;
+import android.net.Uri;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -16,11 +24,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
+import cc.kafuu.bilidownload.MainActivity;
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.bilibili.Bili;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideo;
@@ -31,10 +42,11 @@ import cc.kafuu.bilidownload.bilibili.video.ResourceDownloadCallback;
 import cc.kafuu.bilidownload.utils.Pair;
 
 public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResultAdapter.InnerHolder> {
-
+    private final Activity mActivity;
     private final BiliVideo mBiliVideo;
 
-    public VideoParseResultAdapter(BiliVideo biliVideo) {
+    public VideoParseResultAdapter(Activity activity, BiliVideo biliVideo) {
+        this.mActivity = activity;
         this.mBiliVideo = biliVideo;
     }
 
@@ -42,7 +54,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
     @Override
     public VideoParseResultAdapter.InnerHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_page, parent, false);
-        return new InnerHolder(view, null);
+        return new InnerHolder(view, mActivity, null);
     }
 
     @Override
@@ -63,7 +75,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
     }
 
     public static class InnerHolder extends RecyclerView.ViewHolder {
-        private final Context mContext;
+        private final Activity mActivity;
         private final Handler mHandle;
 
         private final LinearLayout mItem;
@@ -71,12 +83,12 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
 
         private BiliVideoPart mPart;
 
-        public InnerHolder(@NonNull View itemView, BiliVideoPart part) {
+        public InnerHolder(@NonNull View itemView, Activity activity, BiliVideoPart part) {
             super(itemView);
 
-            mContext = itemView.getContext();
             mHandle = new Handler(Looper.getMainLooper());
 
+            this.mActivity = activity;
             this.mItem = itemView.findViewById(R.id.item);
             this.mPageTitle = itemView.findViewById(R.id.pageTitle);
             this.mPart = part;
@@ -100,9 +112,15 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
                 return;
             }
 
-            ProgressDialog progressDialog = new ProgressDialog(mContext);
+            if (ActivityCompat.checkSelfPermission(mActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED
+                || ActivityCompat.checkSelfPermission(mActivity, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+                ActivityCompat.requestPermissions(mActivity, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
+                return;
+            }
+
+            ProgressDialog progressDialog = new ProgressDialog(mActivity);
             progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            progressDialog.setMessage(mContext.getString(R.string.obtain_video_resource_tips));
+            progressDialog.setMessage(mActivity.getString(R.string.obtain_video_resource_tips));
             progressDialog.setCancelable(false);
             progressDialog.setOnKeyListener((dialog1, keyCode, event) -> keyCode == KeyEvent.KEYCODE_SEARCH);
             progressDialog.show();
@@ -117,7 +135,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
                 @Override
                 public void onFailure(String message) {
                     progressDialog.cancel();
-                    mHandle.post(() -> new AlertDialog.Builder(mContext).setTitle(R.string.error).setMessage(message).show());
+                    mHandle.post(() -> new AlertDialog.Builder(mActivity).setTitle(R.string.error).setMessage(message).show());
                 }
             });
         }
@@ -133,7 +151,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
                 items[i] = resources.get(i).getFormat() + " " + resources.get(i).getDescription();
             }
 
-            new AlertDialog.Builder(mContext)
+            new AlertDialog.Builder(mActivity)
                     .setTitle(mPart.getPartName())
                     .setItems(items, (dialog, which) -> onResourcesSelected(resources.get(which)))
                     .show();
@@ -144,7 +162,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
          * 将立即开始下载资源
          * */
         void onResourcesSelected(BiliVideoResource resource) {
-            ProgressDialog progressDialog = new ProgressDialog(mContext);
+            ProgressDialog progressDialog = new ProgressDialog(mActivity);
             progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             progressDialog.setMax(100);
             progressDialog.setMessage(mPart.getPartName() + " " + resource.getFormat());
@@ -175,22 +193,36 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
                 @Override
                 public void onStop() {
                     mHandle.post(progressDialog::cancel);
-                    mHandle.post(() -> Toast.makeText(mContext, R.string.download_operation_cancel, Toast.LENGTH_SHORT).show());
+                    mHandle.post(() -> Toast.makeText(mActivity, R.string.download_operation_cancel, Toast.LENGTH_SHORT).show());
                 }
 
                 @Override
                 public void onComplete(File file) {
                     mHandle.post(progressDialog::cancel);
-                    mHandle.post(() -> Toast.makeText(mContext, mContext.getString(R.string.download_complete), Toast.LENGTH_SHORT).show());
+                    mHandle.post(() -> Toast.makeText(mActivity, mActivity.getString(R.string.download_complete), Toast.LENGTH_SHORT).show());
                 }
 
                 @Override
                 public void onFailure(String message) {
                     mHandle.post(progressDialog::cancel);
-                    mHandle.post(() -> new AlertDialog.Builder(mContext).setTitle(R.string.error).setMessage(message).show());
+                    mHandle.post(() -> new AlertDialog.Builder(mActivity).setTitle(R.string.error).setMessage(message).show());
                 }
             };
-            resource.save(mContext.getDataDir() + "/bili_" + mPart.getAv() + "_" + mPart.getCid() + "_" + resource.getFormat() + ".mp4", callback);
+
+
+
+            File saveDir = mActivity.getExternalFilesDir(Environment.DIRECTORY_MOVIES);
+            Log.d("saveDir", saveDir.toString());
+
+            if (saveDir != null && saveDir.exists()) {
+                resource.save(saveDir + "/bili_" + mPart.getAv() + "_" + mPart.getCid() + "_" + resource.getFormat() + ".mp4", callback);
+            } else {
+                new AlertDialog.Builder(mActivity)
+                        .setTitle(mPart.getPartName())
+                        .setMessage(mActivity.getString(R.string.external_storage_device_cannot_be_accessed))
+                        .show();
+            }
+
         }
 
     }
