@@ -2,10 +2,10 @@ package cc.kafuu.bilidownload.adapter;
 
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Paint;
 import android.net.Uri;
+import android.os.Build;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
@@ -28,8 +29,8 @@ import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.utils.RecordDatabase;
 
 public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownloadRecordAdapter.InnerHolder> {
-    private Context mContext;
-    private List<RecordDatabase.DownloadRecord> mDownloadRecords;
+    private final Context mContext;
+    private final List<RecordDatabase.DownloadRecord> mDownloadRecords;
 
     public VideoDownloadRecordAdapter(Context context) {
         this.mContext = context;
@@ -90,32 +91,66 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
                 mSavePath.getPaint().setFlags(0);
             }
 
+            Log.d("Pic", record.getPic());
             Glide.with(mContext).load(record.getPic()).placeholder(R.drawable.ic_2233).centerCrop().into(mVideoPic);
 
             mItem.setOnClickListener(v -> onClientHandler(record));
         }
 
         private void onClientHandler(final RecordDatabase.DownloadRecord record) {
-            File file = new File(record.getPath());
+            final File file = new File(record.getPath());
             if (!file.exists()) {
                 new AlertDialog.Builder(mContext)
                         .setMessage(R.string.delete_download_record_tip)
                         .setNegativeButton(R.string.delete, (dialog, which) -> {
-                            new RecordDatabase(mContext).removeDownloadRecord(record);
-                            mDownloadRecords.removeIf(e -> e.getId() == record.getId());
-                            notifyDataSetChanged();
+                            removeVideo(record);
                         })
                         .setPositiveButton(R.string.cancel, null)
                         .show();
                 return;
             }
 
-            Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
-            Uri uri = FileProvider.getUriForFile(mContext, BuildConfig.APPLICATION_ID + ".fileprovider", file);
-            Log.d("Uri", uri.toString());
-            intent.setDataAndType(uri, "*/*");
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            mContext.startActivity(intent);
+            new AlertDialog.Builder(mContext)
+                    .setItems(new CharSequence[]{"浏览", "分享", "删除", "取消"}, (dialog, which) -> {
+                        if (which == 0) {
+                            videoShareOrView(file, true);
+                        } else if (which == 1) {
+                            videoShareOrView(file, false);
+                        } else if (which == 2) {
+                            if (!removeVideo(record)) {
+                                Toast.makeText(mContext, "删除失败", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    })
+                    .show();
+        }
+
+        private void videoShareOrView(File file, boolean isView) {
+            Intent share = new Intent(isView ? Intent.ACTION_VIEW : Intent.ACTION_SEND);
+
+            Uri uri = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+                    ? FileProvider.getUriForFile(mContext, BuildConfig.APPLICATION_ID + ".fileprovider", file)
+                    : Uri.fromFile(file);
+
+            share.setDataAndType(uri, "*/*");
+            share.putExtra(Intent.EXTRA_STREAM, uri);
+
+            share.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+            mContext.startActivity(Intent.createChooser(share, "Video"));
+        }
+
+        private boolean removeVideo(final RecordDatabase.DownloadRecord record) {
+            File file = new File(record.getPath());
+
+            if (file.exists() && !file.delete()) {
+                return false;
+            }
+
+            new RecordDatabase(mContext).removeDownloadRecord(record);
+            mDownloadRecords.removeIf(e -> e.getId() == record.getId());
+            notifyDataSetChanged();
+
+            return true;
         }
 
     }

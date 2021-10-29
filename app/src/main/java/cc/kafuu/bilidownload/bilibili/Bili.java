@@ -9,8 +9,8 @@ import okhttp3.Headers;
 import okhttp3.OkHttpClient;
 
 public class Bili {
-    public static OkHttpClient httpClient = OkHttpUtils.getUnsafeOkHttpClient();
-    public static String UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 EdgiOS/46.3.30 Mobile/15E148 Safari/605.1.15";
+    public static final OkHttpClient httpClient = new OkHttpClient();//OkHttpUtils.getUnsafeOkHttpClient()
+    public static final String UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 EdgiOS/46.3.30 Mobile/15E148 Safari/605.1.15";
     public static final Headers generalHeaders;
     static {
         generalHeaders = new Headers.Builder()
@@ -22,5 +22,5 @@ public class Bili {
                 .build();
     }
 
-    public static File saveDir = new File(Environment.getExternalStorageDirectory().getPath() + "/Download/BiliVideo");
+    public static final File saveDir = new File(Environment.getExternalStorageDirectory().getPath() + "/Download/BiliVideo");
 }

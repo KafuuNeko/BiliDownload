@@ -21,6 +21,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.File;
+import java.util.Date;
 import java.util.List;
 
 import cc.kafuu.bilidownload.R;
@@ -203,7 +204,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
             if (Bili.saveDir.exists() || Bili.saveDir.mkdirs()) {
                 String suffix = resource.getFormat();
                 suffix = suffix.contains("flv") ? "flv" : suffix;
-                resource.save(Bili.saveDir + "/BV_" + part.getAv() + "_" + part.getCid() + "_" + resource.getFormat() + "." + suffix, callback);
+                resource.save(Bili.saveDir + "/BV_" + (new Date().getTime() % 0xFFFF) + "_" + (part.getAv() ^ part.getCid()) + "_" + resource.getFormat() + "." + suffix, callback);
             } else {
                 new AlertDialog.Builder(mActivity).setTitle(part.getPartName()).setMessage(mActivity.getString(R.string.external_storage_device_cannot_be_accessed)).show();
             }
@@ -213,9 +214,8 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
          * 下载成功后将调用此函数
          * */
         private void onDownloadComplete(final BiliVideoPart part, File file, BiliVideoResource resource) {
-            mRecordDatabase.insertDownloadRecord(mBiliVideo.getBv(), mBiliVideo.getTitle(), part.getPartName(), file.getPath(), resource.getFormat(), mBiliVideo.getPicUrl());
-            new AlertDialog.Builder(mActivity).setTitle(R.string.success).setMessage(mActivity.getString(R.string.download_complete) + "\n" + file.getPath()).setPositiveButton(R.string.notarize, null).show();
-
+            mRecordDatabase.insertDownloadRecord(mBiliVideo.getBv(), mBiliVideo.getTitle(), part.getPartName(), file.getPath(), resource.getDescription() + " " + resource.getFormat(), mBiliVideo.getPicUrl());
+            Toast.makeText(mActivity, R.string.download_complete, Toast.LENGTH_SHORT).show();
             mActivity.sendBroadcast(new Intent("notice.download.completed"));
         }
 
