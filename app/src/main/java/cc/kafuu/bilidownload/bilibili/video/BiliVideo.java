@@ -18,7 +18,6 @@ import cc.kafuu.bilidownload.bilibili.Bili;
 import cc.kafuu.bilidownload.bilibili.VideoParsingCallback;
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.Headers;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
@@ -118,7 +117,7 @@ public class BiliVideo {
     private final String mPicUrl;
     private final String mTitle;
     private final String mDesc;
-    private final List<BiliVideoPage> mPages;
+    private final List<BiliVideoPart> mParts;
 
     private BiliVideo(@NonNull JsonObject data) {
         JsonObject view = data.getAsJsonObject("View");
@@ -129,7 +128,7 @@ public class BiliVideo {
         mTitle = view.get("title").getAsString();
         mDesc = view.get("desc").getAsString();
 
-        mPages = new ArrayList<>();
+        mParts = new ArrayList<>();
         for (JsonElement element : view.getAsJsonArray("pages")) {
             JsonObject page = element.getAsJsonObject();
 
@@ -137,7 +136,7 @@ public class BiliVideo {
             String partName = page.get("part").getAsString();
             String partDuration = page.get("duration").getAsString();
 
-            mPages.add(new BiliVideoPage(mAid, cid, partName, partDuration));
+            mParts.add(new BiliVideoPart(mAid, cid, partName, partDuration));
         }
     }
 
@@ -161,8 +160,8 @@ public class BiliVideo {
         return mPicUrl;
     }
 
-    public List<BiliVideoPage> getPages() {
-        return mPages;
+    public List<BiliVideoPart> getParts() {
+        return mParts;
     }
 
     @NotNull

@@ -17,14 +17,14 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-public class BiliVideoPage {
+public class BiliVideoPart {
 
     private long mAv;
     private long mCid;
     private String mPartName;
     private String mPartDuration;
 
-    public BiliVideoPage(long av, long cid, String partName, String partDuration) {
+    public BiliVideoPart(long av, long cid, String partName, String partDuration) {
         this.mAv = av;
         this.mCid = cid;
         this.mPartName = partName;
@@ -78,15 +78,19 @@ public class BiliVideoPage {
                     List<BiliVideoResource> resources = new ArrayList<>();
 
                     for (int i = 0; i < accept_quality.size(); ++i) {
+                        int quality = accept_quality.get(i).getAsInt();
                         BiliVideoResource resource = analysisPlayUrl(
-                                accept_quality.get(i).getAsInt(),
+                                quality,
                                 accept_description.get(i).getAsString(),
                                 callback
                         );
                         if (resource == null) {
                             return;
                         }
-                        resources.add(resource);
+
+                        if (resource.getQuality() == quality) {
+                            resources.add(resource);
+                        }
                     }
 
                     callback.onComplete(resources);
@@ -107,7 +111,7 @@ public class BiliVideoPage {
         return new Request.Builder().url(url).headers(Bili.generalHeaders).build();
     }
 
-    public BiliVideoResource analysisPlayUrl(int quality, String description, GetResourceCallback callback) throws IOException {
+    private BiliVideoResource analysisPlayUrl(int quality, String description, GetResourceCallback callback) throws IOException {
         Request request = playUrlRequest(quality);
         Response response = Bili.httpClient.newCall(request).execute();
 
@@ -123,8 +127,8 @@ public class BiliVideoPage {
             return null;
         }
 
-
         JsonObject data = json.getAsJsonObject("data");
+
         //视频格式
         String format = data.get("format").getAsString();
         //播放源
@@ -136,7 +140,7 @@ public class BiliVideoPage {
         }
         String video = durl.get(0).getAsJsonObject().get("url").getAsString();
 
-        return new BiliVideoResource("https://bilibili.com/", video, format, description);
+        return new BiliVideoResource(data.get("quality").getAsInt(), "https://bilibili.com/", video, format, description);
     }
 
 }

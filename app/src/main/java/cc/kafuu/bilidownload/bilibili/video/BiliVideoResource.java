@@ -32,7 +32,9 @@ public class BiliVideoResource {
             .add("user-agent", Bili.UA)
             .build();
 
-    //视频地址
+    //清晰度
+    private final int mQuality;
+    //参考地址
     private final String mRefererUrl;
     //下载地址
     private final String mResourceUrl;
@@ -41,12 +43,20 @@ public class BiliVideoResource {
     //描述
     private final String mDescription;
 
-    protected BiliVideoResource(final String Referer, final String resource, final String format, final String description)
+    //0无操作，1正在下载，2请求停止
+    private volatile int mSaveStatus = 0;
+
+    protected BiliVideoResource(final int quality, final String Referer, final String resource, final String format, final String description)
     {
+        this.mQuality = quality;
         this.mRefererUrl = Referer;
         this.mResourceUrl = resource;
         this.mFormat = format;
         this.mDescription = description;
+    }
+
+    public int getQuality() {
+        return mQuality;
     }
 
     public String getResourceUrl() {
@@ -66,7 +76,7 @@ public class BiliVideoResource {
      *
      * @param callback 下载状态回调
      * */
-    public void download(final String savePath, final ResourceDownloadCallback callback)
+    public void save(final String savePath, final ResourceDownloadCallback callback)
     {
         final OkHttpClient client = Bili.httpClient;
 
@@ -87,7 +97,7 @@ public class BiliVideoResource {
                 Log.d("BiliResource.download->Options", "code: " + response.code());
                 if (response.code() == 200) {
                     //预检通过
-                    startDownload(savePath, callback);
+                    startSave(savePath, callback);
                 } else {
                     callback.onFailure("Options request return code " + response.code());
                 }
@@ -99,7 +109,7 @@ public class BiliVideoResource {
     /**
      * 预检请求通过后调用此过程开始下载
      * */
-    private void startDownload(final String savePath, final ResourceDownloadCallback callback)
+    private void startSave(final String savePath, final ResourceDownloadCallback callback)
     {
         final OkHttpClient client = Bili.httpClient;
 
@@ -121,27 +131,50 @@ public class BiliVideoResource {
                     return;
                 }
 
+                mSaveStatus = 1;
                 int contentLength = Integer.parseInt(Objects.requireNonNull(response.header("content-length")));
+                File resourceFile = new File(savePath);
 
                 try {
                     InputStream inputStream = body.byteStream();
-                    OutputStream outputStream = new FileOutputStream(savePath);
+                    OutputStream outputStream = new FileOutputStream(resourceFile);
 
                     byte[] buf = new byte[1024];
                     int len, cur = 0;
-                    while ((len = inputStream.read(buf)) != -1)
+                    while ((len = inputStream.read(buf)) != -1 && mSaveStatus == 1)
                     {
                         cur += len;
                         outputStream.write(buf, 0, len);
                         callback.onStatus(cur, contentLength);
                     }
 
-                    callback.onComplete(new File(savePath));
+                    outputStream.close();
+
+                    if (mSaveStatus == 2) {
+                        if (resourceFile.delete()) {
+                            Log.e("BiliVideoResource.startSave", "Failed to clear invalid files");
+                        }
+                        callback.onStop();
+                    } else {
+                        callback.onComplete(resourceFile);
+                    }
 
                 } catch (IOException e) {
                     callback.onFailure(e.getMessage());
                 }
+
+                mSaveStatus = 0;
             }
         });
+    }
+
+    /**
+     * 请求停止下载
+     * 当下载停止后将调用ResourceDownloadCallback.onStop回调
+     * */
+    public void stopSave() {
+        if (mSaveStatus == 1) {
+            mSaveStatus = 2;
+        }
     }
 }

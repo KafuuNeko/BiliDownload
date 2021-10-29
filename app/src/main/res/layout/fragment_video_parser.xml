@@ -17,10 +17,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="15dp"
-            android:layout_marginVertical="5dp"
+            android:layout_marginVertical="10dp"
 
             app:contentPadding="10dp"
-            app:cardElevation="10dp"
+            app:cardElevation="5dp"
             app:cardCornerRadius="5dp">
 
             <LinearLayout
@@ -48,7 +48,7 @@
                         android:inputType="textMultiLine"
                         android:minHeight="36dp"
                         android:paddingHorizontal="5dp"
-                        android:text="BV1A4411N7Kb"
+                        android:text="BV1Tx411w7pd"
                         tools:ignore="LabelFor" />
                 </LinearLayout>
 
@@ -68,9 +68,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="15dp"
-            android:layout_marginVertical="5dp"
+            android:layout_marginVertical="10dp"
             app:contentPadding="10dp"
-            app:cardElevation="10dp"
+            app:cardElevation="5dp"
             app:cardCornerRadius="5dp">
 
 
@@ -85,6 +85,11 @@
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
                     android:maxLines="1" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/describe" />
 
                 <TextView
                     android:id="@+id/videoDescribe"

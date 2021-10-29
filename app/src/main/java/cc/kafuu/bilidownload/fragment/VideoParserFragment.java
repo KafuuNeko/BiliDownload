@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Handler;
@@ -21,14 +22,10 @@ import android.widget.TextView;
 import org.jetbrains.annotations.NotNull;
 
 
-import java.util.List;
-
 import cc.kafuu.bilidownload.R;
+import cc.kafuu.bilidownload.adapter.VideoParseResultAdapter;
 import cc.kafuu.bilidownload.bilibili.VideoParsingCallback;
-import cc.kafuu.bilidownload.bilibili.video.BiliVideoPage;
-import cc.kafuu.bilidownload.bilibili.video.BiliVideoResource;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideo;
-import cc.kafuu.bilidownload.bilibili.video.GetResourceCallback;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -107,6 +104,8 @@ public class VideoParserFragment extends Fragment {
             return keyCode == KeyEvent.KEYCODE_ENTER;
         });
         mParsingVideo.setOnClickListener(v -> onParsingVideo());
+
+        mVideoInfoList.setLayoutManager(new LinearLayoutManager(getContext()));
     }
 
     private void changeEnableStatus(boolean enable) {
@@ -118,7 +117,7 @@ public class VideoParserFragment extends Fragment {
     private void onParsingVideo() {
         changeEnableStatus(false);
 
-        BiliVideo.fromBv("BV1A4411N7Kb", new VideoParsingCallback() {
+        BiliVideo.fromBv(mVideoAddress.getText().toString(), new VideoParsingCallback() {
             @Override
             public void onComplete(BiliVideo biliVideos) {
                 Log.d("VideoParserFragment.onParsingVideo->onComplete", biliVideos.toString());
@@ -134,16 +133,19 @@ public class VideoParserFragment extends Fragment {
 
     }
 
+
     private void parsingVideoComplete(BiliVideo biliVideos, String message) {
         changeEnableStatus(true);
         if (biliVideos == null) {
-            new AlertDialog.Builder(getContext()).setTitle("Error").setMessage(message).show();
+            new AlertDialog.Builder(getContext()).setTitle(R.string.error).setMessage(message).show();
             return;
         }
 
+        mVideoInfoCard.setVisibility(View.VISIBLE);
         mVideoTitle.setText(biliVideos.getTitle());
         mVideoDescribe.setText(biliVideos.getDesc());
 
-        mVideoInfoCard.setVisibility(View.VISIBLE);
+
+        mVideoInfoList.setAdapter(new VideoParseResultAdapter(biliVideos));
     }
 }

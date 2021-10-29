@@ -15,4 +15,14 @@
         https://github.com/KafuuNeko/BiliDownload\n
     </string>
     <string name="parsing_video">解析</string>
+    <string name="describe">简介：</string>
+
+    <string name="error">错误</string>
+    <string name="success">成功</string>
+
+    <string name="download_complete">下载完成</string>
+
+    <string name="obtain_video_resource_tips">正在获取视频资源</string>
+    <string name="download_operation_cancel">下载操作被取消</string>
+
 </resources>
