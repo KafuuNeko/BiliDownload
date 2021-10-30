@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -114,6 +115,8 @@ public class VideoParserFragment extends Fragment {
         findView();
         initView();
 
+        loadUserInfo();
+
         return mRootView;
     }
 
@@ -122,7 +125,13 @@ public class VideoParserFragment extends Fragment {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 100 && resultCode == 0 && Bili.biliAccount != null) {
             //登录成功 显示用户头像昵称和签名
-            Glide.with(getContext()).load(Bili.biliAccount.getFace()).placeholder(R.drawable.ic_2233).into(mUserFace);
+            loadUserInfo();
+        }
+    }
+
+    private void loadUserInfo() {
+        if (Bili.biliAccount != null && Bili.biliCookie != null) {
+            Glide.with(Objects.requireNonNull(getContext())).load(Bili.biliAccount.getFace()).placeholder(R.drawable.ic_2233).into(mUserFace);
             mUserName.setText(Bili.biliAccount.getUserName());
             mUserSign.setText(Bili.biliAccount.getSign());
         }
