@@ -1,0 +1,20 @@
+{
+  "buildFiles": [
+    "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\src\\main\\cpp\\CMakeLists.txt",
+    "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\ndk\\21.1.6352462\\build\\cmake\\android.toolchain.cmake",
+    "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\ndk\\21.1.6352462\\build\\cmake\\platforms.cmake"
+  ],
+  "cleanCommands": [
+    "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe -C \"C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\.cxx\\cmake\\release\\x86_64\" clean"
+  ],
+  "buildTargetsCommand": "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe  -C \"C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\.cxx\\cmake\\release\\x86_64\" {LIST_OF_TARGETS_TO_BUILD}",
+  "libraries": {
+    "native-lib-Release-x86_64": {
+      "artifactName": "native-lib",
+      "buildCommand": "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe -C \"C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\.cxx\\cmake\\release\\x86_64\" native-lib",
+      "abi": "x86_64",
+      "output": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\build\\intermediates\\cmake\\release\\obj\\x86_64\\libnative-lib.so",
+      "runtimeFiles": []
+    }
+  }
+}

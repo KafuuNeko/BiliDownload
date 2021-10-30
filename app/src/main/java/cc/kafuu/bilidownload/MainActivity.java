@@ -8,22 +8,19 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import cc.kafuu.bilidownload.fragment.DownloadFragment;
 import cc.kafuu.bilidownload.fragment.VideoParserFragment;
+import cc.kafuu.bilidownload.jniexport.JniTools;
 
 public class MainActivity extends AppCompatActivity {
     private Handler mHandler;
@@ -48,7 +45,11 @@ public class MainActivity extends AppCompatActivity {
 
         initFragment(savedInstanceState);
         showFragment(mCurrentFragment);
+
+        Log.d("JniDebug.stringFromJNI()", JniTools.stringFromJNI());
     }
+
+
 
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
