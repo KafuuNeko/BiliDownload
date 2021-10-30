@@ -2,6 +2,7 @@ package cc.kafuu.bilidownload.adapter;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Paint;
 import android.net.Uri;
@@ -26,7 +27,9 @@ import java.util.List;
 
 import cc.kafuu.bilidownload.BuildConfig;
 import cc.kafuu.bilidownload.R;
+import cc.kafuu.bilidownload.utils.DialogTools;
 import cc.kafuu.bilidownload.utils.RecordDatabase;
+import cc.kafuu.bilidownload.utils.SystemTools;
 
 public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownloadRecordAdapter.InnerHolder> {
     private final Context mContext;
@@ -97,48 +100,41 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
             mItem.setOnClickListener(v -> onClientHandler(record));
         }
 
+        /**
+         * 这个块被点击将调用此过程
+         * */
         private void onClientHandler(final RecordDatabase.DownloadRecord record) {
             final File file = new File(record.getPath());
             if (!file.exists()) {
-                new AlertDialog.Builder(mContext)
-                        .setMessage(R.string.delete_download_record_tip)
-                        .setNegativeButton(R.string.delete, (dialog, which) -> {
-                            removeVideo(record);
-                        })
-                        .setPositiveButton(R.string.cancel, null)
-                        .show();
+                DialogTools.confirm(mContext, record.getVideoTitle(), mContext.getString(R.string.delete_download_record_tip), (dialog, which) -> removeVideo(record), null);
                 return;
             }
-
-            new AlertDialog.Builder(mContext)
-                    .setItems(new CharSequence[]{"浏览", "分享", "删除", "取消"}, (dialog, which) -> {
-                        if (which == 0) {
-                            videoShareOrView(file, true);
-                        } else if (which == 1) {
-                            videoShareOrView(file, false);
-                        } else if (which == 2) {
-                            if (!removeVideo(record)) {
-                                Toast.makeText(mContext, "删除失败", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    })
-                    .show();
+            new AlertDialog.Builder(mContext).setTitle(record.getVideoTitle()).setItems(new CharSequence[]{"浏览", "分享", "删除", "取消"}, (dialog, which) -> onSelectedOperation(record, file, which) ).show();
         }
 
-        private void videoShareOrView(File file, boolean isView) {
-            Intent share = new Intent(isView ? Intent.ACTION_VIEW : Intent.ACTION_SEND);
-
-            Uri uri = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-                    ? FileProvider.getUriForFile(mContext, BuildConfig.APPLICATION_ID + ".fileprovider", file)
-                    : Uri.fromFile(file);
-
-            share.setDataAndType(uri, "*/*");
-            share.putExtra(Intent.EXTRA_STREAM, uri);
-
-            share.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-            mContext.startActivity(Intent.createChooser(share, "Video"));
+        /**
+         * 用户选定了操作
+         * */
+        private void onSelectedOperation(final RecordDatabase.DownloadRecord record, File file, int which) {
+            if (which == 0) {
+                SystemTools.shareOrViewFile(mContext, record.getVideoTitle(), file, "*/*", true);
+            } else if (which == 1) {
+                SystemTools.shareOrViewFile(mContext, record.getVideoTitle(), file, "*/*", false);
+            } else if (which == 2) {
+                DialogTools.confirm(
+                        mContext,
+                        record.getVideoTitle(),
+                        mContext.getString(R.string.delete_download_record_confirm),
+                        (dialog, which1) -> Toast.makeText(mContext, removeVideo(record) ? R.string.delete_success : R.string.delete_failure, Toast.LENGTH_SHORT).show(),
+                        null
+                );
+            }
         }
 
+        /**
+         * 从数据库和表项中移除视频
+         * 如果视频文件存在则删除文件
+         * */
         private boolean removeVideo(final RecordDatabase.DownloadRecord record) {
             File file = new File(record.getPath());
 

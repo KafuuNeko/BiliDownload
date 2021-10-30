@@ -130,7 +130,7 @@ public class BiliVideoResource {
                     InputStream inputStream = body.byteStream();
                     OutputStream outputStream = new FileOutputStream(resourceFile);
 
-                    byte[] buf = new byte[1024];
+                    byte[] buf = new byte[4096];
                     int len, cur = 0;
                     while ((len = inputStream.read(buf)) != -1 && mSaveStatus == 1)
                     {

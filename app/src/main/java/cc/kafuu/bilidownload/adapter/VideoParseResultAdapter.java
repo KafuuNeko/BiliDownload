@@ -158,7 +158,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
             ProgressDialog progressDialog = new ProgressDialog(mActivity);
             progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             progressDialog.setMax(1000);
-            progressDialog.setMessage(part.getPartName() + " " + resource.getFormat());
+            progressDialog.setMessage(part.getPartName() + " " + resource.getDescription());
             progressDialog.setCancelable(false);
             //用户点击返回就申请取消下载操作
             progressDialog.setOnKeyListener((dialog, keyCode, event) -> {
@@ -204,7 +204,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
             if (Bili.saveDir.exists() || Bili.saveDir.mkdirs()) {
                 String suffix = resource.getFormat();
                 suffix = suffix.contains("flv") ? "flv" : suffix;
-                resource.save(Bili.saveDir + "/BV_" + (new Date().getTime() % 0xFFFF) + "_" + (part.getAv() ^ part.getCid()) + "_" + resource.getFormat() + "." + suffix, callback);
+                resource.save(Bili.saveDir + "/BV_" + (new Date().getTime() % 0xFFFF) + "_" + (part.getAv() ^ part.getCid()) + "_" + resource.getQuality() + "." + suffix, callback);
             } else {
                 new AlertDialog.Builder(mActivity).setTitle(part.getPartName()).setMessage(mActivity.getString(R.string.external_storage_device_cannot_be_accessed)).show();
             }

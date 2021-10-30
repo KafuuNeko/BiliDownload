@@ -35,8 +35,8 @@
         </activity>
 
         <activity android:name=".BiliLoginActivity"
+            android:launchMode="singleTask"
             android:screenOrientation="portrait">
-
         </activity>
 
     </application>

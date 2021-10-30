@@ -19,6 +19,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import java.util.ArrayList;
 import java.util.List;
 
+import cc.kafuu.bilidownload.bilibili.Bili;
 import cc.kafuu.bilidownload.fragment.DownloadFragment;
 import cc.kafuu.bilidownload.fragment.VideoParserFragment;
 import cc.kafuu.bilidownload.jniexport.JniTools;
@@ -35,6 +36,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Bili.initApplication(getApplicationContext());
+
         mHandler = new Handler();
 
         if (savedInstanceState != null) {
@@ -46,13 +50,7 @@ public class MainActivity extends AppCompatActivity {
 
         initFragment(savedInstanceState);
         showFragment(mCurrentFragment);
-
-        Log.d("JniDebug.stringFromJNI()", JniTools.stringFromJNI());
-
-        startActivity(new Intent(this, BiliLoginActivity.class));
     }
-
-
 
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
