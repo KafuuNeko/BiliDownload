@@ -23,15 +23,6 @@ import okhttp3.ResponseBody;
 
 public class BiliVideoResource {
 
-    private final static Headers mDownloadHead = new Headers.Builder()
-            .add("accept", "*/*")
-            .add("accept-encoding", "gzip, deflate, br")
-            .add("Accept-Language", "zh-CN,zh-Hans;q=0.9")
-            .add("Connection", "keep-alive")
-            .add("Origin", "https://m.bilibili.com")
-            .add("user-agent", Bili.UA)
-            .build();
-
     //清晰度
     private final int mQuality;
     //参考地址
@@ -82,7 +73,7 @@ public class BiliVideoResource {
 
         //发起一个预检请求
         Request options_request = new Request.Builder().url(mResourceUrl)
-                .headers(mDownloadHead).addHeader("Referer", mRefererUrl)
+                .headers(Bili.downloadHeaders).addHeader("Referer", mRefererUrl)
                 .method("OPTIONS", new FormBody.Builder().build())
                 .build();
 
@@ -114,7 +105,7 @@ public class BiliVideoResource {
         final OkHttpClient client = Bili.httpClient;
 
         Request request = new Request.Builder().url(mResourceUrl)
-                .headers(mDownloadHead).addHeader("Referer", mRefererUrl)
+                .headers(Bili.downloadHeaders).addHeader("Referer", mRefererUrl)
                 .build();
 
         client.newCall(request).enqueue(new Callback() {

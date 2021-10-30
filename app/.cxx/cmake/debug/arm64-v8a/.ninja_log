@@ -1,15 +1,3 @@
 # ninja log v5
-1	404	657268469	CMakeFiles/native-lib.dir/native-lib.cpp.o	e1e02d2f1bb0643
-405	537	657268470	C:/Users/kafuu/Documents/GitHub/BiliDownload/app/build/intermediates/cmake/debug/obj/arm64-v8a/libnative-lib.so	9ee005a3b75e8d1f
-2	395	657268616	CMakeFiles/native-lib.dir/native-lib.cpp.o	e1e02d2f1bb0643
-396	511	657268616	C:/Users/kafuu/Documents/GitHub/BiliDownload/app/build/intermediates/cmake/debug/obj/arm64-v8a/libnative-lib.so	9ee005a3b75e8d1f
-1	392	657268714	CMakeFiles/native-lib.dir/native-lib.cpp.o	e1e02d2f1bb0643
-392	510	657268714	C:/Users/kafuu/Documents/GitHub/BiliDownload/app/build/intermediates/cmake/debug/obj/arm64-v8a/libnative-lib.so	9ee005a3b75e8d1f
-2	420	657268823	CMakeFiles/native-lib.dir/native-lib.cpp.o	e1e02d2f1bb0643
-420	536	657268823	C:/Users/kafuu/Documents/GitHub/BiliDownload/app/build/intermediates/cmake/debug/obj/arm64-v8a/libnative-lib.so	9ee005a3b75e8d1f
-2	387	657268879	CMakeFiles/native-lib.dir/native-lib.cpp.o	e1e02d2f1bb0643
-387	503	657268879	C:/Users/kafuu/Documents/GitHub/BiliDownload/app/build/intermediates/cmake/debug/obj/arm64-v8a/libnative-lib.so	9ee005a3b75e8d1f
-3	515	657269545	CMakeFiles/native-lib.dir/native-lib.cpp.o	e1e02d2f1bb0643
-515	645	657269545	C:/Users/kafuu/Documents/GitHub/BiliDownload/app/build/intermediates/cmake/debug/obj/arm64-v8a/libnative-lib.so	9ee005a3b75e8d1f
-1	398	657269849	CMakeFiles/native-lib.dir/native-lib.cpp.o	e1e02d2f1bb0643
-398	518	657269849	C:/Users/kafuu/Documents/GitHub/BiliDownload/app/build/intermediates/cmake/debug/obj/arm64-v8a/libnative-lib.so	9ee005a3b75e8d1f
+0	628	1635573363	CMakeFiles/native-lib.dir/native-lib.cpp.o	e309d02015e44bbc
+629	744	1635573363	/Users/cat/Documents/GitHub/BiliDownload/app/build/intermediates/cmake/debug/obj/arm64-v8a/libnative-lib.so	85a82b764352c244

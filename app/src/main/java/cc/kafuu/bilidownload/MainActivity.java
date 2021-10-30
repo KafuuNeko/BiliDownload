@@ -7,6 +7,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -47,6 +48,8 @@ public class MainActivity extends AppCompatActivity {
         showFragment(mCurrentFragment);
 
         Log.d("JniDebug.stringFromJNI()", JniTools.stringFromJNI());
+
+        startActivity(new Intent(this, BiliLoginActivity.class));
     }
 
 

@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">BVD</string>
     <string name="video_parser">视频解析</string>
+    <string name="bilibili_login">登录Bilibili</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="about">关于 BVD</string>
@@ -35,5 +36,7 @@
     <string name="delete">删除</string>
     <string name="delete_download_record_tip">\"文件已被删除，是否删除这条下载记录?\"</string>
     <string name="cancel">取消</string>
+    <string name="login_tips_1">点击此处登录</string>
+    <string name="login_tips_2">登录Bilibili下载高清资源</string>
 
 </resources>
