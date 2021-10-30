@@ -21,12 +21,14 @@ public class BiliVideoPart {
 
     private long mAv;
     private long mCid;
+    private String mPic;
     private String mPartName;
     private String mPartDuration;
 
-    public BiliVideoPart(long av, long cid, String partName, String partDuration) {
+    public BiliVideoPart(long av, long cid, String pic, String partName, String partDuration) {
         this.mAv = av;
         this.mCid = cid;
+        this.mPic = pic;
         this.mPartName = partName;
         this.mPartDuration = partDuration;
     }
@@ -37,6 +39,10 @@ public class BiliVideoPart {
 
     public long getCid() {
         return mCid;
+    }
+
+    public String getPic() {
+        return mPic;
     }
 
     public String getPartDuration() {

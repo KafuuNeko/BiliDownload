@@ -252,11 +252,7 @@ public class VideoParserFragment extends Fragment {
         };
 
         changeEnableStatus(false);
-        if (videoId.contains("BV")) {
-            BiliVideo.fromBv(videoId, callback);
-        } else {
-            BiliVideo.fromAv(videoId.substring(2), callback);
-        }
+        BiliVideo.fromVideoId(videoId, callback);
     }
 
     /**
@@ -268,7 +264,7 @@ public class VideoParserFragment extends Fragment {
             return null;
         }
 
-        Pattern pattern = Pattern.compile("(BV.{10})|(av\\d*)");
+        Pattern pattern = Pattern.compile("(BV.{10})|((av|ep|ss)\\d*)");
         Matcher matcher = pattern.matcher(address);
 
         if (!matcher.find()) {

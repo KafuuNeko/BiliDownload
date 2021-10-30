@@ -214,7 +214,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
          * 下载成功后将调用此函数
          * */
         private void onDownloadComplete(final BiliVideoPart part, File file, BiliVideoResource resource) {
-            mRecordDatabase.insertDownloadRecord(mBiliVideo.getBv(), mBiliVideo.getTitle(), part.getPartName(), file.getPath(), resource.getDescription() + " " + resource.getFormat(), mBiliVideo.getPicUrl());
+            mRecordDatabase.insertDownloadRecord(mBiliVideo.getVideoAddress(), mBiliVideo.getTitle(), part.getPartName(), file.getPath(), resource.getDescription() + " " + resource.getFormat(), part.getPic());
             Toast.makeText(mActivity, R.string.download_complete, Toast.LENGTH_SHORT).show();
             mActivity.sendBroadcast(new Intent("notice.download.completed"));
         }
