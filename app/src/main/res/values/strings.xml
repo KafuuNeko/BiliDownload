@@ -32,7 +32,7 @@
     <string name="download_operation_cancel">下载操作被取消</string>
 
     <string name="external_storage_device_cannot_be_accessed">无法访问外部存储设备</string>
-    <string name="video_address_hint">视频地址、AV(av55571607)、BV</string>
+    <string name="video_address_hint">视频地址、AV、BV、EP、SS</string>
     <string name="delete">删除</string>
     <string name="delete_download_record_tip">视频文件已被删除或移动，是否删除这条下载记录?</string>
     <string name="cancel">取消</string>

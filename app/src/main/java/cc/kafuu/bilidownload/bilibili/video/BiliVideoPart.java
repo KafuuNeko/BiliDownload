@@ -110,7 +110,7 @@ public class BiliVideoPart {
     }
 
     private Request playUrlRequest(int quality) {
-        String url = "https://api.bilibili.com/x/player/playurl?cid=" + this.mCid + "&avid=" + this.mAv + "&otype=json";
+        String url = "https://api.bilibili.com/x/player/playurl?cid=" + this.mCid + "&avid=" + this.mAv + "&otype=json&fourk=1";
         if (quality != 0) {
             url += "&qn=" + quality;
         }

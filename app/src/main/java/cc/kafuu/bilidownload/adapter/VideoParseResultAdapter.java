@@ -174,8 +174,8 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
             Pair<Integer, Integer> lastProgress = new Pair<>(0, 1000);
             ResourceDownloadCallback callback = new ResourceDownloadCallback() {
                 @Override
-                public void onStatus(int current, int contentLength) {
-                    int progress = (int) ((float)current / (float)contentLength * 1000.0);
+                public void onStatus(long current, long contentLength) {
+                    int progress = (int) ((double)current / (double) contentLength * 1000.0D);
                     if (lastProgress.first < progress) {
                         lastProgress.first = progress;
                         mHandle.post(() -> progressDialog.setProgress(lastProgress.first));

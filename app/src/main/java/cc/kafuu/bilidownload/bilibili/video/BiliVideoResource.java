@@ -123,7 +123,8 @@ public class BiliVideoResource {
                 }
 
                 mSaveStatus = 1;
-                int contentLength = Integer.parseInt(Objects.requireNonNull(response.header("content-length")));
+
+                long contentLength = Long.parseLong(Objects.requireNonNull(response.header("content-length")));
                 File resourceFile = new File(savePath);
 
                 try {
@@ -131,7 +132,8 @@ public class BiliVideoResource {
                     OutputStream outputStream = new FileOutputStream(resourceFile);
 
                     byte[] buf = new byte[4096];
-                    int len, cur = 0;
+                    int len;
+                    long cur = 0;
                     while ((len = inputStream.read(buf)) != -1 && mSaveStatus == 1)
                     {
                         cur += len;
