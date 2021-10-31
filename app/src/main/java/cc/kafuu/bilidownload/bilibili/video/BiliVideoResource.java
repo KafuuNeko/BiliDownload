@@ -58,6 +58,8 @@ public class BiliVideoResource {
     }
 
     /**
+     * 取得下载此资源的下载器（需要在线程中执行）
+     *
      * @param savePath 下载保存路径
      *
      * @param callback 下载状态回调
@@ -80,7 +82,7 @@ public class BiliVideoResource {
 
             JsonObject data = result.getAsJsonObject("data");
             if (data.get("quality").getAsInt() != mQuality) {
-                callback.onFailure("Video quality is inconsistent");
+                callback.onFailure("您还未登录或当前登录的账户不支持下载此视频");
                 return null;
             }
 

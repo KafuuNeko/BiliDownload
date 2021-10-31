@@ -32,6 +32,7 @@ public class BiliVideo {
             return;
         }
 
+        //通过给定Id类型选择Api
         String type = videoId.substring(0, 2);
         String requestUrl = null;
         if (type.equals("ss")) {
@@ -48,6 +49,7 @@ public class BiliVideo {
         }
 
         //判断使用的Api是不是https://api.bilibili.com/pgc/view/web/h5/season
+        //不同的Api返回结果解析方式也不同
         boolean isSeason = type.equals("ss") | type.equals("ep");
 
         try {
@@ -61,6 +63,7 @@ public class BiliVideo {
 
                 @Override
                 public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                    //取得访问数据，交予analyzingResponse进行处理
                     analyzingResponse(response, callback, isSeason);
                 }
             });
@@ -73,6 +76,12 @@ public class BiliVideo {
     /**
      * 分析Api返回内容
      * 分析成功将构造BiliVideo并回调
+     *
+     * @param response response
+     *
+     * @param callback 分析回调
+     *
+     * @param isSeason 是否是ss或ep，不同协议结果不同，分析方式不一样
      * */
     private static void analyzingResponse(@NonNull Response response, final VideoParsingCallback callback, boolean isSeason) throws IOException {
         ResponseBody body = response.body();
@@ -101,11 +110,17 @@ public class BiliVideo {
     }
 
 
+    //视频地址，如BV1QN411o73X、ss34415、ep835
     private final String mVideoAddress;
+    //视频ID，BV则是它对应的AV号，av、ss、ep则是后面的数字
     private final long mVideoId;
+    //视频封面图片
     private final String mPicUrl;
+    //视频标题
     private final String mTitle;
+    //视频描述
     private final String mDesc;
+    //视频片段（分集）
     private final List<BiliVideoPart> mParts;
 
     private BiliVideo(@NonNull JsonObject data, boolean isSeason) {

@@ -19,24 +19,40 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
+/**
+ * Bili资源下载器
+ * */
 public class BiliDownloader {
 
     public enum Status {
         NO_OPS, DOWNLOADING, REQUEST_STOP
     }
 
-    private File mSavePath;
-    private String mResourceUrl;
-    private ResourceDownloadCallback mCallback;
+    private final File mSavePath;
+    private final String mResourceUrl;
+    private final ResourceDownloadCallback mCallback;
 
     private Status mStatus = Status.NO_OPS;
 
+    /**
+     * 构造资源下载器
+     *
+     * @param savePath 资源下载保存路径
+     *
+     * @param resourceUrl 资源下载地址
+     *
+     * @param callback 下载状态回调（下载进度、下载失败、下载完成）
+     * */
     public BiliDownloader(File savePath, String resourceUrl, ResourceDownloadCallback callback) {
         this.mSavePath = savePath;
         this.mResourceUrl = resourceUrl;
         this.mCallback = callback;
     }
 
+    /**
+     * 开始下载资源
+     * 将开启一个线程开始下载资源
+     * */
     public void start() {
         Log.d("Bili", "start download: " + mResourceUrl);
         new Thread(() -> {
@@ -51,6 +67,9 @@ public class BiliDownloader {
         }).start();
     }
 
+    /**
+     * 资源下载过程函数（在线程执行）
+     * */
     synchronized private void download() throws IOException {
         if (mStatus != Status.NO_OPS) {
             mCallback.onFailure("Download task is running");
@@ -71,6 +90,7 @@ public class BiliDownloader {
         }
 
 
+        //预检通过，开始请求资源
         Request request = new Request.Builder().url(mResourceUrl).headers(Bili.downloadHeaders).build();
         Response response = Bili.httpClient.newCall(request).execute();
         if (response.code() != 200) {
@@ -84,6 +104,7 @@ public class BiliDownloader {
             return;
         }
 
+        //取得资源总长度
         long contentLength = Long.parseLong(Objects.requireNonNull(response.header("content-length")));
         Log.d("Bili", "contentLength=" + contentLength);
 
@@ -103,6 +124,7 @@ public class BiliDownloader {
         outputStream.close();
 
         if (mStatus == Status.REQUEST_STOP) {
+            //如果下载是被用户请求停止的，则删除下载的文件
             if (mSavePath.delete()) {
                 Log.e("BiliVideoResource.startSave", "Failed to clear invalid files");
             }

@@ -2,6 +2,7 @@ package cc.kafuu.bilidownload.bilibili.video;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import org.jetbrains.annotations.NotNull;
@@ -53,9 +54,11 @@ public class BiliVideoPart {
         return mPartName;
     }
 
+    /**
+     * 取得此视频所支持的清晰度视频资源
+     * */
     public void getResource(GetResourceCallback callback) {
-        Request request = Bili.playUrlRequest(mCid, mAv, 0);
-        Bili.httpClient.newCall(request).enqueue(new Callback() {
+        Bili.httpClient.newCall(Bili.playUrlRequest(mCid, mAv, 0)).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 callback.onFailure(e.getMessage());
@@ -78,25 +81,18 @@ public class BiliVideoPart {
                     }
 
                     JsonObject data = res.get("data").getAsJsonObject();
-                    JsonArray accept_quality = data.getAsJsonArray("accept_quality");
-                    JsonArray accept_description = data.getAsJsonArray("accept_description");
+
+                    JsonArray support_formats = data.getAsJsonArray("support_formats");
 
                     List<BiliVideoResource> resources = new ArrayList<>();
 
-                    for (int i = 0; i < accept_quality.size(); ++i) {
-                        int quality = accept_quality.get(i).getAsInt();
-                        BiliVideoResource resource = analysisPlayUrl(
-                                quality,
-                                accept_description.get(i).getAsString(),
-                                callback
-                        );
-                        if (resource == null) {
-                            return;
-                        }
+                    for (JsonElement element : support_formats) {
+                        JsonObject format = element.getAsJsonObject();
 
-                        if (resource.getQuality() == quality) {
-                            resources.add(resource);
-                        }
+                        int quality = format.get("quality").getAsInt();
+                        String new_description = format.get("new_description").getAsString();
+
+                        resources.add(new BiliVideoResource(quality, mCid, mAv, format.get("format").getAsString(), new_description));
                     }
 
                     callback.onComplete(resources);
@@ -107,40 +103,6 @@ public class BiliVideoPart {
                 }
             }
         });
-    }
-
-
-
-    private BiliVideoResource analysisPlayUrl(int quality, String description, GetResourceCallback callback) throws IOException {
-        Request request = Bili.playUrlRequest(mCid, mAv, quality);
-        Response response = Bili.httpClient.newCall(request).execute();
-
-        ResponseBody body = response.body();
-        if (body == null) {
-            callback.onFailure("Request is returned empty");
-            return null;
-        }
-
-        JsonObject json = new Gson().fromJson(body.string(), JsonObject.class);
-        if (json.get("code").getAsInt() != 0) {
-            callback.onFailure(json.get("message").getAsString());
-            return null;
-        }
-
-        JsonObject data = json.getAsJsonObject("data");
-
-        //视频格式
-        String format = data.get("format").getAsString();
-        //播放源
-        JsonArray durl = data.get("durl").getAsJsonArray();
-
-        if (durl.size() == 0) {
-            callback.onFailure("No player source");
-            return null;
-        }
-        String video = durl.get(0).getAsJsonObject().get("url").getAsString();
-
-        return new BiliVideoResource(data.get("quality").getAsInt(), mCid, mAv, format, description);
     }
 
 }

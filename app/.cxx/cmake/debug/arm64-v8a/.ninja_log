@@ -1,3 +1,3 @@
 # ninja log v5
-1	460	657286635	CMakeFiles/native-lib.dir/native-lib.cpp.o	d318a8a002f6facc
-462	614	657286636	C:/Users/kafuu/Documents/GitHub/BiliDownload/app/build/intermediates/cmake/debug/obj/arm64-v8a/libnative-lib.so	ea4ea4c55ed19b81
+1	1023	1635657165	CMakeFiles/native-lib.dir/native-lib.cpp.o	e309d02015e44bbc
+1026	1158	1635657165	/Users/cat/Documents/GitHub/BiliDownload/app/build/intermediates/cmake/debug/obj/arm64-v8a/libnative-lib.so	85a82b764352c244

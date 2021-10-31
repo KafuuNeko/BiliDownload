@@ -211,7 +211,9 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
 
                 new Thread(() -> {
                     mDownloader = resource.download(saveFile, callback);
-                    mDownloader.start();
+                    if (mDownloader != null) {
+                        mDownloader.start();
+                    }
                 }).start();
 
             } else {
