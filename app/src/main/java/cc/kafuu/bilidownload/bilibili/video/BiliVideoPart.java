@@ -54,7 +54,7 @@ public class BiliVideoPart {
     }
 
     public void getResource(GetResourceCallback callback) {
-        Request request = playUrlRequest(0);
+        Request request = Bili.playUrlRequest(mCid, mAv, 0);
         Bili.httpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
@@ -109,16 +109,10 @@ public class BiliVideoPart {
         });
     }
 
-    private Request playUrlRequest(int quality) {
-        String url = "https://api.bilibili.com/x/player/playurl?cid=" + this.mCid + "&avid=" + this.mAv + "&otype=json&fourk=1";
-        if (quality != 0) {
-            url += "&qn=" + quality;
-        }
-        return new Request.Builder().url(url).headers(Bili.generalHeaders).build();
-    }
+
 
     private BiliVideoResource analysisPlayUrl(int quality, String description, GetResourceCallback callback) throws IOException {
-        Request request = playUrlRequest(quality);
+        Request request = Bili.playUrlRequest(mCid, mAv, quality);
         Response response = Bili.httpClient.newCall(request).execute();
 
         ResponseBody body = response.body();
@@ -146,7 +140,7 @@ public class BiliVideoPart {
         }
         String video = durl.get(0).getAsJsonObject().get("url").getAsString();
 
-        return new BiliVideoResource(data.get("quality").getAsInt(), "https://bilibili.com/", video, format, description);
+        return new BiliVideoResource(data.get("quality").getAsInt(), mCid, mAv, format, description);
     }
 
 }

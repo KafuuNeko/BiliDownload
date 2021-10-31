@@ -2,6 +2,10 @@ package cc.kafuu.bilidownload.bilibili.video;
 
 import android.util.Log;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -15,9 +19,8 @@ import cc.kafuu.bilidownload.bilibili.Bili;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
-import okhttp3.Headers;
-import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
@@ -25,10 +28,9 @@ public class BiliVideoResource {
 
     //清晰度
     private final int mQuality;
-    //参考地址
-    private final String mRefererUrl;
     //下载地址
-    private final String mResourceUrl;
+    private final long mCid;
+    private final long mAvid;
     //格式
     private final String mFormat;
     //描述
@@ -37,21 +39,17 @@ public class BiliVideoResource {
     //0无操作，1正在下载，2请求停止
     private volatile int mSaveStatus = 0;
 
-    protected BiliVideoResource(final int quality, final String Referer, final String resource, final String format, final String description)
+    protected BiliVideoResource(final int quality, final long cid, final long avid, final String format, final String description)
     {
         this.mQuality = quality;
-        this.mRefererUrl = Referer;
-        this.mResourceUrl = resource;
+        this.mCid = cid;
+        this.mAvid = avid;
         this.mFormat = format;
         this.mDescription = description;
     }
 
     public int getQuality() {
         return mQuality;
-    }
-
-    public String getResourceUrl() {
-        return mResourceUrl;
     }
 
     public String getDescription() {
@@ -67,107 +65,41 @@ public class BiliVideoResource {
      *
      * @param callback 下载状态回调
      * */
-    public void save(final String savePath, final ResourceDownloadCallback callback)
+    public BiliDownloader download(final File savePath, final ResourceDownloadCallback callback)
     {
-        final OkHttpClient client = Bili.httpClient;
-
-        //发起一个预检请求
-        Request options_request = new Request.Builder().url(mResourceUrl)
-                .headers(Bili.downloadHeaders).addHeader("Referer", mRefererUrl)
-                .method("OPTIONS", new FormBody.Builder().build())
-                .build();
-
-        client.newCall(options_request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                callback.onFailure(e.getMessage());
+        try {
+            Response response = Bili.httpClient.newCall(Bili.playUrlRequest(mCid, mAvid, mQuality)).execute();
+            ResponseBody body = response.body();
+            if (body == null) {
+                callback.onFailure("No data returned");
+                return null;
             }
 
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                Log.d("BiliResource.download->Options", "code: " + response.code());
-                if (response.code() == 200) {
-                    //预检通过
-                    startSave(savePath, callback);
-                } else {
-                    callback.onFailure("Options request return code " + response.code());
-                }
-            }
-        });
-
-    }
-
-    /**
-     * 预检请求通过后调用此过程开始下载
-     * */
-    private void startSave(final String savePath, final ResourceDownloadCallback callback)
-    {
-        final OkHttpClient client = Bili.httpClient;
-
-        Request request = new Request.Builder().url(mResourceUrl)
-                .headers(Bili.downloadHeaders).addHeader("Referer", mRefererUrl)
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                callback.onFailure(e.getMessage());
+            JsonObject result = new Gson().fromJson(body.string(), JsonObject.class);
+            if (result.get("code").getAsInt() != 0) {
+                callback.onFailure(result.get("message").getAsString());
+                return null;
             }
 
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                ResponseBody body = response.body();
-                if (body == null) {
-                    callback.onFailure("Body is empty");
-                    return;
-                }
-
-                mSaveStatus = 1;
-
-                long contentLength = Long.parseLong(Objects.requireNonNull(response.header("content-length")));
-                File resourceFile = new File(savePath);
-
-                try {
-                    InputStream inputStream = body.byteStream();
-                    OutputStream outputStream = new FileOutputStream(resourceFile);
-
-                    byte[] buf = new byte[4096];
-                    int len;
-                    long cur = 0;
-                    while ((len = inputStream.read(buf)) != -1 && mSaveStatus == 1)
-                    {
-                        cur += len;
-                        outputStream.write(buf, 0, len);
-                        callback.onStatus(cur, contentLength);
-                    }
-
-                    outputStream.close();
-
-                    if (mSaveStatus == 2) {
-                        if (resourceFile.delete()) {
-                            Log.e("BiliVideoResource.startSave", "Failed to clear invalid files");
-                        }
-                        callback.onStop();
-                    } else {
-                        callback.onCompleted(resourceFile);
-                    }
-
-                } catch (IOException e) {
-                    callback.onFailure(e.getMessage());
-                }
-
-                mSaveStatus = 0;
+            JsonObject data = result.getAsJsonObject("data");
+            if (data.get("quality").getAsInt() != mQuality) {
+                callback.onFailure("Video quality is inconsistent");
+                return null;
             }
-        });
-    }
 
-    /**
-     * 请求停止下载
-     * 当下载停止后将调用ResourceDownloadCallback.onStop回调
-     * */
-    public void stopSave() {
-        if (mSaveStatus == 1) {
-            mSaveStatus = 2;
+            JsonArray durl = data.getAsJsonArray("durl");
+            if (durl.size() == 0) {
+                callback.onFailure("Video player source is empty");
+                return null;
+            }
+
+            return new BiliDownloader(savePath, durl.get(0).getAsJsonObject().get("url").getAsString(), callback);
+        } catch (Exception e) {
+            e.printStackTrace();
+            callback.onFailure(e.getMessage());
         }
+
+        return null;
     }
+
 }

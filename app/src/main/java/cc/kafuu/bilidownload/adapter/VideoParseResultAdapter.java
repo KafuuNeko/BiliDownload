@@ -26,6 +26,7 @@ import java.util.List;
 
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.bilibili.Bili;
+import cc.kafuu.bilidownload.bilibili.video.BiliDownloader;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideo;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideoPart;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideoResource;
@@ -39,6 +40,8 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
     private final Activity mActivity;
     private final BiliVideo mBiliVideo;
     private final RecordDatabase mRecordDatabase;
+
+    private BiliDownloader mDownloader = null;
 
     public VideoParseResultAdapter(Activity activity, BiliVideo biliVideo) {
         mHandle = new Handler(Looper.getMainLooper());
@@ -163,7 +166,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
             //用户点击返回就申请取消下载操作
             progressDialog.setOnKeyListener((dialog, keyCode, event) -> {
                 if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_SEARCH) {
-                    resource.stopSave();
+                    mDownloader.requestStop();
                 }
                 return keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_SEARCH;
             });
@@ -204,8 +207,15 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
             if (Bili.saveDir.exists() || Bili.saveDir.mkdirs()) {
                 String suffix = resource.getFormat();
                 suffix = suffix.contains("flv") ? "flv" : suffix;
-                resource.save(Bili.saveDir + "/BV_" + (new Date().getTime() % 0xFFFF) + "_" + (part.getAv() ^ part.getCid()) + "_" + resource.getQuality() + "." + suffix, callback);
+                File saveFile = new File(Bili.saveDir + "/BV_" + (new Date().getTime() % 0xFFFF) + "_" + (part.getAv() ^ part.getCid()) + "_" + resource.getQuality() + "." + suffix);
+
+                new Thread(() -> {
+                    mDownloader = resource.download(saveFile, callback);
+                    mDownloader.start();
+                }).start();
+
             } else {
+                progressDialog.cancel();
                 new AlertDialog.Builder(mActivity).setTitle(part.getPartName()).setMessage(mActivity.getString(R.string.external_storage_device_cannot_be_accessed)).show();
             }
         }

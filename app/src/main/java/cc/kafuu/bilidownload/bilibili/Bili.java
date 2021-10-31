@@ -43,6 +43,7 @@ public class Bili {
                 .add("Accept-Language", "zh-CN,zh-Hans;q=0.9")
                 .add("Connection", "keep-alive")
                 .add("Origin", "https://m.bilibili.com")
+                .add("Referer", "https://m.bilibili.com/")
                 .add("user-agent", Bili.UA);
 
         if (cookie != null) {
@@ -83,5 +84,16 @@ public class Bili {
                 .headers(generalHeaders)
                 .build()
         ).enqueue(callback);
+    }
+
+    /**
+     * Api: https://api.bilibili.com/x/player/playurl
+     * */
+    public static Request playUrlRequest(long cid, long avid, int quality) {
+        String url = "https://api.bilibili.com/x/player/playurl?cid=" + cid + "&avid=" + avid + "&otype=json&fourk=1";
+        if (quality != 0) {
+            url += "&qn=" + quality;
+        }
+        return new Request.Builder().url(url).headers(Bili.generalHeaders).build();
     }
 }
