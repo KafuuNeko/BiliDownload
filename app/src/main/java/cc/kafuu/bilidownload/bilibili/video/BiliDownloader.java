@@ -30,7 +30,7 @@ public class BiliDownloader {
 
     private final File mSavePath;
     private final String mResourceUrl;
-    private final ResourceDownloadCallback mCallback;
+    private ResourceDownloadCallback mCallback = null;
 
     private Status mStatus = Status.NO_OPS;
 
@@ -41,11 +41,19 @@ public class BiliDownloader {
      *
      * @param resourceUrl 资源下载地址
      *
-     * @param callback 下载状态回调（下载进度、下载失败、下载完成）
      * */
+    public BiliDownloader(File savePath, String resourceUrl) {
+        this.mSavePath = savePath;
+        this.mResourceUrl = resourceUrl;
+    }
+
     public BiliDownloader(File savePath, String resourceUrl, ResourceDownloadCallback callback) {
         this.mSavePath = savePath;
         this.mResourceUrl = resourceUrl;
+        setCallback(callback);
+    }
+
+    public void setCallback(ResourceDownloadCallback callback) {
         this.mCallback = callback;
     }
 
@@ -60,7 +68,10 @@ public class BiliDownloader {
                 download();
             } catch (Exception e) {
                 e.printStackTrace();
-                mCallback.onFailure(e.getMessage());
+                if (mCallback != null) {
+                    mCallback.onFailure(e.getMessage());
+                }
+
             } finally {
                 mStatus = Status.NO_OPS;
             }
@@ -72,7 +83,9 @@ public class BiliDownloader {
      * */
     synchronized private void download() throws IOException {
         if (mStatus != Status.NO_OPS) {
-            mCallback.onFailure("Download task is running");
+            if (mCallback != null) {
+                mCallback.onFailure("Download task is running");
+            }
             return;
         }
 
@@ -83,7 +96,9 @@ public class BiliDownloader {
                 .build();
         Response options_response = Bili.httpClient.newCall(options_request).execute();
         if (options_response.code() != 200) {
-            mCallback.onFailure("Options request return code " + options_response.code());
+            if (mCallback != null) {
+                mCallback.onFailure("Options request return code " + options_response.code());
+            }
             return;
         } else {
             Log.d("Bili", "Options complete");
@@ -94,13 +109,17 @@ public class BiliDownloader {
         Request request = new Request.Builder().url(mResourceUrl).headers(Bili.downloadHeaders).build();
         Response response = Bili.httpClient.newCall(request).execute();
         if (response.code() != 200) {
-            mCallback.onFailure("Request return code " + response.code());
+            if (mCallback != null) {
+                mCallback.onFailure("Request return code " + response.code());
+            }
             return;
         }
 
         ResponseBody body = response.body();
         if (body == null) {
-            mCallback.onFailure("Body is empty");
+            if (mCallback != null) {
+                mCallback.onFailure("Body is empty");
+            }
             return;
         }
 
@@ -118,7 +137,9 @@ public class BiliDownloader {
         {
             cur += len;
             outputStream.write(buf, 0, len);
-            mCallback.onStatus(cur, contentLength);
+            if (mCallback != null) {
+                mCallback.onStatus(cur, contentLength);
+            }
         }
 
         outputStream.close();
@@ -128,8 +149,10 @@ public class BiliDownloader {
             if (mSavePath.delete()) {
                 Log.e("BiliVideoResource.startSave", "Failed to clear invalid files");
             }
-            mCallback.onStop();
-        } else {
+            if (mCallback != null) {
+                mCallback.onStop();
+            }
+        } else if (mCallback != null){
             mCallback.onCompleted(mSavePath);
         }
     }

@@ -23,6 +23,7 @@ import cc.kafuu.bilidownload.bilibili.Bili;
 import cc.kafuu.bilidownload.fragment.DownloadFragment;
 import cc.kafuu.bilidownload.fragment.VideoParserFragment;
 import cc.kafuu.bilidownload.jniexport.JniTools;
+import cc.kafuu.bilidownload.service.DownloadService;
 
 public class MainActivity extends AppCompatActivity {
     private Handler mHandler;

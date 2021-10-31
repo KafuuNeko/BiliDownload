@@ -4,9 +4,13 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -32,6 +36,7 @@ import cc.kafuu.bilidownload.bilibili.video.BiliVideoPart;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideoResource;
 import cc.kafuu.bilidownload.bilibili.video.GetResourceCallback;
 import cc.kafuu.bilidownload.bilibili.video.ResourceDownloadCallback;
+import cc.kafuu.bilidownload.service.DownloadService;
 import cc.kafuu.bilidownload.utils.Pair;
 import cc.kafuu.bilidownload.utils.RecordDatabase;
 
@@ -158,78 +163,30 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
          * 将立即开始下载资源
          * */
         private void onResourcesSelected(final BiliVideoPart part, final BiliVideoResource resource) {
-            ProgressDialog progressDialog = new ProgressDialog(mActivity);
-            progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            progressDialog.setMax(1000);
-            progressDialog.setMessage(part.getPartName() + " " + resource.getDescription());
-            progressDialog.setCancelable(false);
-            //用户点击返回就申请取消下载操作
-            progressDialog.setOnKeyListener((dialog, keyCode, event) -> {
-                if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_SEARCH) {
-                    mDownloader.requestStop();
-                }
-                return keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_SEARCH;
-            });
-            progressDialog.show();
-
-
-            //下载状态回调
-            Pair<Integer, Integer> lastProgress = new Pair<>(0, 1000);
-            ResourceDownloadCallback callback = new ResourceDownloadCallback() {
-                @Override
-                public void onStatus(long current, long contentLength) {
-                    int progress = (int) ((double)current / (double) contentLength * 1000.0D);
-                    if (lastProgress.first < progress) {
-                        lastProgress.first = progress;
-                        mHandle.post(() -> progressDialog.setProgress(lastProgress.first));
-                    }
-                }
-
-                @Override
-                public void onStop() {
-                    mHandle.post(progressDialog::cancel);
-                    mHandle.post(() -> Toast.makeText(mActivity, R.string.download_operation_cancel, Toast.LENGTH_SHORT).show());
-                }
-
-                @Override
-                public void onCompleted(File file) {
-                    mHandle.post(progressDialog::cancel);
-                    mHandle.post(() -> onDownloadComplete(part, file, resource));
-                }
-
-                @Override
-                public void onFailure(String message) {
-                    mHandle.post(progressDialog::cancel);
-                    mHandle.post(() -> new AlertDialog.Builder(mActivity).setTitle(R.string.error).setMessage(message).show());
-                }
-            };
-
             if (Bili.saveDir.exists() || Bili.saveDir.mkdirs()) {
                 String suffix = resource.getFormat();
                 suffix = suffix.contains("flv") ? "flv" : suffix;
-                File saveFile = new File(Bili.saveDir + "/BV_" + (new Date().getTime() % 0xFFFF) + "_" + (part.getAv() ^ part.getCid()) + "_" + resource.getQuality() + "." + suffix);
+                final File saveFile = new File(Bili.saveDir + "/BV_" + (new Date().getTime() % 0xFFFF) + "_" + (part.getAv() ^ part.getCid()) + "_" + resource.getQuality() + "." + suffix);
 
-                new Thread(() -> {
-                    mDownloader = resource.download(saveFile, callback);
-                    if (mDownloader != null) {
-                        mDownloader.start();
+                Intent service = new Intent(mActivity, DownloadService.class);
+                mActivity.startService(service);
+                mActivity.bindService(service, new ServiceConnection() {
+                    @Override
+                    public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+                        ((DownloadService.DownloadServiceBinder) iBinder).startDownload(mBiliVideo, part, resource, saveFile);
                     }
-                }).start();
+
+                    @Override
+                    public void onServiceDisconnected(ComponentName componentName) {
+
+                    }
+                }, Context.BIND_AUTO_CREATE);
 
             } else {
-                progressDialog.cancel();
                 new AlertDialog.Builder(mActivity).setTitle(part.getPartName()).setMessage(mActivity.getString(R.string.external_storage_device_cannot_be_accessed)).show();
             }
         }
 
-        /**
-         * 下载成功后将调用此函数
-         * */
-        private void onDownloadComplete(final BiliVideoPart part, File file, BiliVideoResource resource) {
-            mRecordDatabase.insertDownloadRecord(mBiliVideo.getVideoAddress(), mBiliVideo.getTitle(), part.getPartName(), file.getPath(), resource.getDescription() + " " + resource.getFormat(), part.getPic());
-            Toast.makeText(mActivity, R.string.download_complete, Toast.LENGTH_SHORT).show();
-            mActivity.sendBroadcast(new Intent("notice.download.completed"));
-        }
 
     }
 }
