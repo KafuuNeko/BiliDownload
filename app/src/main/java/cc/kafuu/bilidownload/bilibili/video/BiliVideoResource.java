@@ -36,9 +36,6 @@ public class BiliVideoResource {
     //描述
     private final String mDescription;
 
-    //0无操作，1正在下载，2请求停止
-    private volatile int mSaveStatus = 0;
-
     protected BiliVideoResource(final int quality, final long cid, final long avid, final String format, final String description)
     {
         this.mQuality = quality;
