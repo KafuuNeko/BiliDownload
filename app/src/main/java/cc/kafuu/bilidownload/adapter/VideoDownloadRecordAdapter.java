@@ -1,12 +1,9 @@
 package cc.kafuu.bilidownload.adapter;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.graphics.Paint;
-import android.net.Uri;
-import android.os.Build;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,7 +14,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -25,15 +21,14 @@ import com.bumptech.glide.Glide;
 import java.io.File;
 import java.util.List;
 
-import cc.kafuu.bilidownload.BuildConfig;
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.utils.DialogTools;
-import cc.kafuu.bilidownload.utils.RecordDatabase;
+import cc.kafuu.bilidownload.database.RecordDatabase;
 import cc.kafuu.bilidownload.utils.SystemTools;
 
 public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownloadRecordAdapter.InnerHolder> {
     private final Context mContext;
-    private final List<RecordDatabase.DownloadRecord> mDownloadRecords;
+    private List<RecordDatabase.DownloadRecord> mDownloadRecords;
 
     public VideoDownloadRecordAdapter(Context context) {
         this.mContext = context;
@@ -62,7 +57,6 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
         private final ImageView mVideoPic;
         private final TextView mVideoTitle;
         private final TextView mVid;
-        private final TextView mPartTitle;
         private final TextView mFormat;
         private final TextView mSavePath;
 
@@ -74,19 +68,21 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
             mVideoPic = itemView.findViewById(R.id.videoPic);
             mVideoTitle = itemView.findViewById(R.id.videoTitle);
             mVid = itemView.findViewById(R.id.vid);
-            mPartTitle = itemView.findViewById(R.id.partTitle);
             mFormat = itemView.findViewById(R.id.format);
             mSavePath = itemView.findViewById(R.id.savePath);
         }
 
+        @SuppressLint("SetTextI18n")
         public void bindRecord(final RecordDatabase.DownloadRecord record) {
-            mVideoTitle.setText(record.getVideoTitle());
+            mVideoTitle.setText(record.getPartTitle() + "-" + record.getVideoTitle());
             mVid.setText(record.getVid());
-            mPartTitle.setText(record.getPartTitle());
             mFormat.setText(record.getFormat());
 
+            int progress = record.getDownloadProgress();
+            String prefix = progress == -1 ? "(缺失)" : progress == 1000 ? "(完整)" : "(" + progress + "/1000)";
+
             File file = new File(record.getPath());
-            mSavePath.setText(file.getName());
+            mSavePath.setText(prefix + file.getName());
 
             if (!file.exists()) {
                 mSavePath.getPaint().setFlags(Paint.STRIKE_THRU_TEXT_FLAG | Paint.ANTI_ALIAS_FLAG);
@@ -149,5 +145,10 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
             return true;
         }
 
+    }
+
+    public void update() {
+        mDownloadRecords = new RecordDatabase(mContext).getDownloadRecord();
+        notifyDataSetChanged();
     }
 }

@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload;
 
+import androidx.annotation.LongDef;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -7,9 +8,15 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.app.DownloadManager;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,6 +31,7 @@ import cc.kafuu.bilidownload.fragment.DownloadFragment;
 import cc.kafuu.bilidownload.fragment.VideoParserFragment;
 import cc.kafuu.bilidownload.jniexport.JniTools;
 import cc.kafuu.bilidownload.service.DownloadService;
+import cc.kafuu.bilidownload.utils.DialogTools;
 
 public class MainActivity extends AppCompatActivity {
     private Handler mHandler;
@@ -51,6 +59,22 @@ public class MainActivity extends AppCompatActivity {
 
         initFragment(savedInstanceState);
         showFragment(mCurrentFragment);
+
+        checkIntent();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        checkIntent();
+    }
+
+    private void checkIntent() {
+        Intent intent = getIntent();
+        if (intent.getBooleanExtra("DownloadNotification", false)) {
+            mBottomNavigationView.setSelectedItemId(R.id.navDownloadList);
+        }
     }
 
     @Override

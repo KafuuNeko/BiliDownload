@@ -44,5 +44,13 @@
     <string name="delete_download_record_confirm">是否删除？</string>
     <string name="delete_success">删除成功</string>
     <string name="delete_failure">删除失败</string>
+    <string name="download_queue_full">下载队列已满，请不要继续添加任务！</string>
+    <string name="resoult_downloading_text">%PartTitle% - %VideoTitle%</string>
+    <string name="resoult_downloading_title">正在下载</string>
+    <string name="resoult_downloading_complete">下载完成</string>
+    <string name="download_faiure">下载失败</string>
+    <string name="stop_download_tips">是否停止当前进行的下载任务？</string>
+    <string name="warn">警告</string>
+    <string name="download_task_terminal">任务中止</string>
 
 </resources>

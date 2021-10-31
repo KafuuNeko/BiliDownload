@@ -20,7 +20,6 @@ import java.util.Objects;
 
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.adapter.VideoDownloadRecordAdapter;
-import cc.kafuu.bilidownload.utils.RecordDatabase;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -32,6 +31,17 @@ public class DownloadFragment extends Fragment {
     private View mRootView = null;
 
     private RecyclerView mDownloadRecordList;
+
+    private VideoDownloadRecordAdapter mVideoDownloadRecordAdapter = null;
+
+    private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (mVideoDownloadRecordAdapter != null) {
+                mVideoDownloadRecordAdapter.update();
+            }
+        }
+    };
 
     public DownloadFragment() {
         // Required empty public constructor
@@ -57,6 +67,12 @@ public class DownloadFragment extends Fragment {
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Objects.requireNonNull(getContext()).unregisterReceiver(mBroadcastReceiver);
+    }
+
+    @Override
     public View onCreateView(@NotNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         if (mRootView != null) {
@@ -79,18 +95,11 @@ public class DownloadFragment extends Fragment {
         mDownloadRecordList.setLayoutManager(new LinearLayoutManager(getContext()));
 
         IntentFilter filter = new IntentFilter();
-        filter.addAction("notice.download.completed");
-        Objects.requireNonNull(getContext()).registerReceiver(new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                loadRecords();
-            }
-        }, filter);
+        filter.addAction("notice.download.progress.update");
+        Objects.requireNonNull(getContext()).registerReceiver(mBroadcastReceiver, filter);
 
-        loadRecords();
+        mVideoDownloadRecordAdapter = new VideoDownloadRecordAdapter(getContext());
+        mDownloadRecordList.setAdapter(mVideoDownloadRecordAdapter);
     }
 
-    private void loadRecords() {
-        mDownloadRecordList.setAdapter(new VideoDownloadRecordAdapter(getContext()));
-    }
 }

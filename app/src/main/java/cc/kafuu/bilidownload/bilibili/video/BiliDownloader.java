@@ -2,8 +2,6 @@ package cc.kafuu.bilidownload.bilibili.video;
 
 import android.util.Log;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -12,8 +10,6 @@ import java.io.OutputStream;
 import java.util.Objects;
 
 import cc.kafuu.bilidownload.bilibili.Bili;
-import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.FormBody;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -47,35 +43,31 @@ public class BiliDownloader {
         this.mResourceUrl = resourceUrl;
     }
 
-    public BiliDownloader(File savePath, String resourceUrl, ResourceDownloadCallback callback) {
-        this.mSavePath = savePath;
-        this.mResourceUrl = resourceUrl;
-        setCallback(callback);
-    }
-
     public void setCallback(ResourceDownloadCallback callback) {
         this.mCallback = callback;
     }
 
     /**
-     * 开始下载资源
+     * 异步开始下载资源
      * 将开启一个线程开始下载资源
      * */
-    public void start() {
+    public void start_async() {
         Log.d("Bili", "start download: " + mResourceUrl);
-        new Thread(() -> {
-            try {
-                download();
-            } catch (Exception e) {
-                e.printStackTrace();
-                if (mCallback != null) {
-                    mCallback.onFailure(e.getMessage());
-                }
+        new Thread(this::start).start();
+    }
 
-            } finally {
-                mStatus = Status.NO_OPS;
+    public void start() {
+        try {
+            download();
+        } catch (Exception e) {
+            e.printStackTrace();
+            if (mCallback != null) {
+                mCallback.onFailure(e.getMessage());
             }
-        }).start();
+
+        } finally {
+            mStatus = Status.NO_OPS;
+        }
     }
 
     /**
@@ -87,6 +79,10 @@ public class BiliDownloader {
                 mCallback.onFailure("Download task is running");
             }
             return;
+        }
+
+        if (mCallback != null) {
+            mCallback.onStart();
         }
 
         mStatus = Status.DOWNLOADING;
@@ -146,7 +142,7 @@ public class BiliDownloader {
 
         if (mStatus == Status.REQUEST_STOP) {
             //如果下载是被用户请求停止的，则删除下载的文件
-            if (mSavePath.delete()) {
+            if (!mSavePath.delete()) {
                 Log.e("BiliVideoResource.startSave", "Failed to clear invalid files");
             }
             if (mCallback != null) {
@@ -167,4 +163,11 @@ public class BiliDownloader {
         }
     }
 
+    public static interface ResourceDownloadCallback {
+        void onStart();
+        void onStatus(long current, long contentLength);
+        void onStop();
+        void onCompleted(File file);
+        void onFailure(String message);
+    }
 }

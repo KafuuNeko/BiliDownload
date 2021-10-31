@@ -18,7 +18,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -34,11 +33,8 @@ import cc.kafuu.bilidownload.bilibili.video.BiliDownloader;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideo;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideoPart;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideoResource;
-import cc.kafuu.bilidownload.bilibili.video.GetResourceCallback;
-import cc.kafuu.bilidownload.bilibili.video.ResourceDownloadCallback;
 import cc.kafuu.bilidownload.service.DownloadService;
-import cc.kafuu.bilidownload.utils.Pair;
-import cc.kafuu.bilidownload.utils.RecordDatabase;
+import cc.kafuu.bilidownload.database.RecordDatabase;
 
 public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResultAdapter.InnerHolder> {
     private final Handler mHandle;
@@ -126,7 +122,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
             progressDialog.setOnKeyListener((dialog1, keyCode, event) -> keyCode == KeyEvent.KEYCODE_SEARCH);
             progressDialog.show();
 
-            part.getResource(new GetResourceCallback() {
+            part.getResource(new BiliVideoPart.GetResourceCallback() {
                 @Override
                 public void onComplete(List<BiliVideoResource> resources) {
                     progressDialog.cancel();

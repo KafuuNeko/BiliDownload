@@ -8,7 +8,7 @@ import cc.kafuu.bilidownload.R;
 
 public class DialogTools {
 
-    public static void notify(Context context, String title, String message) {
+    public static void notify(Context context, CharSequence title, CharSequence message) {
         new AlertDialog.Builder(context)
                 .setTitle(title)
                 .setMessage(message)
@@ -16,7 +16,7 @@ public class DialogTools {
                 .show();
     }
 
-    public static void confirm(Context context, String title, String message, DialogInterface.OnClickListener confirmCallback, DialogInterface.OnClickListener cancelCallback) {
+    public static void confirm(Context context, CharSequence title, CharSequence message, DialogInterface.OnClickListener confirmCallback, DialogInterface.OnClickListener cancelCallback) {
         new AlertDialog.Builder(context)
                 .setTitle(title)
                 .setMessage(message)

@@ -57,48 +57,57 @@ public class BiliVideoResource {
         return mFormat;
     }
 
+    public interface GetDownloaderCallback {
+        void onCompleted(BiliDownloader downloader);
+        void onFailure(String message);
+    }
+
     /**
-     * 取得下载此资源的下载器（需要在线程中执行）
+     * 取得下载此资源的下载器
      *
      * @param savePath 下载保存路径
      *
      * @param callback 下载状态回调
      * */
-    public BiliDownloader download(final File savePath, final ResourceDownloadCallback callback)
+    public void download(final File savePath, final GetDownloaderCallback callback)
     {
-        try {
-            Response response = Bili.httpClient.newCall(Bili.playUrlRequest(mCid, mAvid, mQuality)).execute();
-            ResponseBody body = response.body();
-            if (body == null) {
-                callback.onFailure("No data returned");
-                return null;
+        Bili.httpClient.newCall(Bili.playUrlRequest(mCid, mAvid, mQuality)).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                e.printStackTrace();
+                callback.onFailure(e.getMessage());
             }
 
-            JsonObject result = new Gson().fromJson(body.string(), JsonObject.class);
-            if (result.get("code").getAsInt() != 0) {
-                callback.onFailure(result.get("message").getAsString());
-                return null;
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                ResponseBody body = response.body();
+                if (body == null) {
+                    callback.onFailure("No data returned");
+                    return;
+                }
+
+                JsonObject result = new Gson().fromJson(body.string(), JsonObject.class);
+                if (result.get("code").getAsInt() != 0) {
+                    callback.onFailure(result.get("message").getAsString());
+                    return;
+                }
+
+                JsonObject data = result.getAsJsonObject("data");
+                if (data.get("quality").getAsInt() != mQuality) {
+                    callback.onFailure("您还未登录或当前登录的账户不支持下载此视频");
+                    return;
+                }
+
+                JsonArray durl = data.getAsJsonArray("durl");
+                if (durl.size() == 0) {
+                    callback.onFailure("Video player source is empty");
+                    return;
+                }
+
+                callback.onCompleted(new BiliDownloader(savePath, durl.get(0).getAsJsonObject().get("url").getAsString()));
             }
+        });
 
-            JsonObject data = result.getAsJsonObject("data");
-            if (data.get("quality").getAsInt() != mQuality) {
-                callback.onFailure("您还未登录或当前登录的账户不支持下载此视频");
-                return null;
-            }
-
-            JsonArray durl = data.getAsJsonArray("durl");
-            if (durl.size() == 0) {
-                callback.onFailure("Video player source is empty");
-                return null;
-            }
-
-            return new BiliDownloader(savePath, durl.get(0).getAsJsonObject().get("url").getAsString(), callback);
-        } catch (Exception e) {
-            e.printStackTrace();
-            callback.onFailure(e.getMessage());
-        }
-
-        return null;
     }
 
 }

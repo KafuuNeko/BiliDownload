@@ -14,17 +14,16 @@ import java.util.List;
 import cc.kafuu.bilidownload.bilibili.Bili;
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 public class BiliVideoPart {
 
-    private long mAv;
-    private long mCid;
-    private String mPic;
-    private String mPartName;
-    private String mPartDuration;
+    private final long mAv;
+    private final long mCid;
+    private final String mPic;
+    private final String mPartName;
+    private final String mPartDuration;
 
     public BiliVideoPart(long av, long cid, String pic, String partName, String partDuration) {
         this.mAv = av;
@@ -105,4 +104,8 @@ public class BiliVideoPart {
         });
     }
 
+    public static interface GetResourceCallback {
+        void onComplete(List<BiliVideoResource> resources);
+        void onFailure(String message);
+    }
 }
