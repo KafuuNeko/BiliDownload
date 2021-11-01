@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.Date;
 
 import cc.kafuu.bilidownload.bilibili.Bili;
+import cc.kafuu.bilidownload.database.VideoInfo;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
@@ -32,6 +33,25 @@ public class BiliVideoResource {
         this.mQuality = quality;
         this.mFormat = format;
         this.mDescription = description;
+
+        updateRecord();
+    }
+
+    private void updateRecord() {
+        VideoInfo info = new VideoInfo(getPart().getAv(), getPart().getCid(), getQuality());
+
+        info.setFormat(getFormat());
+        info.setQualityDescription(getDescription());
+
+        info.setVideoTitle(getPart().getVideo().getTitle());
+        info.setVideoDescription(getPart().getVideo().getDesc());
+        info.setVideoPic(getPart().getVideo().getPicUrl());
+
+        info.setPartTitle(getPart().getPartName());
+        info.setPartDescription(getPart().getPartDuration());
+        info.setPartPic(getPart().getPic());
+
+        info.saveOrUpdate();
     }
 
     public BiliVideoPart getPart() {
@@ -58,25 +78,14 @@ public class BiliVideoResource {
         return mFormat;
     }
 
+
     public interface GetDownloaderCallback {
         void onCompleted(BiliDownloader downloader);
         void onFailure(String message);
     }
 
-    /**
-     * 取得下载此资源的下载器
-     *
-     * @param callback 下载状态回调
-     * */
-    public void download(final GetDownloaderCallback callback)
-    {
-        Bili.httpClient.newCall(Bili.playUrlRequest(getCid(), getAvid(), mQuality)).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                e.printStackTrace();
-                callback.onFailure(e.getMessage());
-            }
-
+    public static void getDownloadUrl(String videoTitle, String partTitle, long cid, long avid, int quality, final File saveTo, GetDownloaderCallback callback) {
+        Bili.httpClient.newCall(Bili.playUrlRequest(cid, avid, quality)).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 ResponseBody body = response.body();
@@ -92,7 +101,7 @@ public class BiliVideoResource {
                 }
 
                 JsonObject data = result.getAsJsonObject("data");
-                if (data.get("quality").getAsInt() != mQuality) {
+                if (data.get("quality").getAsInt() != quality) {
                     callback.onFailure("您还未登录或当前登录的账户不支持下载此视频");
                     return;
                 }
@@ -105,13 +114,30 @@ public class BiliVideoResource {
 
                 String url = durl.get(0).getAsJsonObject().get("url").getAsString();
 
-                String fileSuffix = mFormat.contains("flv") ? "flv" : mFormat;
-                final File videoFile = new File(Bili.saveDir + "/Video/" + getAvid() + "/" + getCid() + "/" + getQuality() + "/" + new Date().getTime() + "-" + url.hashCode() + "." + fileSuffix);
+                callback.onCompleted(new BiliDownloader(videoTitle, partTitle, saveTo, url));
+            }
 
-                callback.onCompleted(new BiliDownloader(BiliVideoResource.this, videoFile, url));
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                e.printStackTrace();
+                callback.onFailure(e.getMessage());
             }
         });
+    }
 
+    /**
+     * 取得下载此资源的下载器
+     *
+     * @param callback 下载状态回调
+     * */
+    public void download(final GetDownloaderCallback callback, File saveTo)
+    {
+        if (saveTo == null) {
+            String fileSuffix = mFormat.contains("flv") ? "flv" : mFormat;
+            saveTo = new File(Bili.saveDir + "/Video/" + getAvid() + "/" + getCid() + "/" + getQuality() + "/" + new Date().getTime() + "." + fileSuffix);
+        }
+
+        getDownloadUrl(getPart().getVideo().getTitle(), getPart().getPartName(), getCid(), getAvid(), getQuality(), saveTo, callback);
     }
 
 }

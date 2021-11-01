@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload.fragment;
 
+import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -34,11 +35,11 @@ public class DownloadFragment extends Fragment {
 
     private VideoDownloadRecordAdapter mVideoDownloadRecordAdapter = null;
 
-    private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (mVideoDownloadRecordAdapter != null) {
-                mVideoDownloadRecordAdapter.update();
+                mVideoDownloadRecordAdapter.reloadRecords();
             }
         }
     };
@@ -92,10 +93,12 @@ public class DownloadFragment extends Fragment {
     }
 
     private void initView() {
-        mDownloadRecordList.setLayoutManager(new LinearLayoutManager(getContext()));
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, true);
+        linearLayoutManager.setStackFromEnd(true);
+        mDownloadRecordList.setLayoutManager(linearLayoutManager);
 
         IntentFilter filter = new IntentFilter();
-        filter.addAction("notice.download.progress.update");
+        filter.addAction("download.task.create");
         Objects.requireNonNull(getContext()).registerReceiver(mBroadcastReceiver, filter);
 
         mVideoDownloadRecordAdapter = new VideoDownloadRecordAdapter(getContext());

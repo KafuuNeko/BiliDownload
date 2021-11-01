@@ -20,7 +20,8 @@ import okhttp3.Response;
  * Bili资源下载器
  * */
 public class BiliDownloader {
-    private final BiliVideoResource mResource;
+    private final String mVideoTitle;
+    private final String mVideoDescription;
     private final File mSavePath;
     private final String mResourceUrl;
 
@@ -32,20 +33,22 @@ public class BiliDownloader {
      * @param resourceUrl 资源下载地址
      *
      * */
-    public BiliDownloader(BiliVideoResource resource, File savePath, String resourceUrl) {
-        mResource = resource;
+    public BiliDownloader(String videoTitle, String videoDescription, File savePath, String resourceUrl) {
+        this.mVideoTitle = videoTitle;
+        this.mVideoDescription = videoDescription;
         this.mSavePath = savePath;
         this.mResourceUrl = resourceUrl;
     }
 
-    public BiliVideoResource getResource() {
-        return mResource;
+    public File getSavePath() {
+        return mSavePath;
     }
 
     public interface GetDownloadIdCallback {
         void onFailure(String message);
         void onCompleted(long id);
     }
+
 
 
     public void getDownloadId(DownloadManager downloadManager, GetDownloadIdCallback callback) {
@@ -73,16 +76,14 @@ public class BiliDownloader {
                     request.addRequestHeader(item.getFirst(), item.getSecond());
                 }
 
-                BiliVideoPart part = getResource().getPart();
-
                 //设置漫游条件下是否可以下载
                 request.setAllowedOverRoaming(false);
                 //在通知栏中显示
                 request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
                 //设置通知标题
-                request.setTitle(part.getVideo().getTitle());
+                request.setTitle(mVideoTitle);
                 //设置通知标题message
-                request.setDescription(part.getPartName() + "-" + getResource().getDescription());
+                request.setDescription(mVideoTitle + "-" + mVideoDescription);
                 //下载保存地址
                 request.setDestinationUri(Uri.fromFile(mSavePath));
 

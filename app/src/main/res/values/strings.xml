@@ -49,5 +49,21 @@
     <string name="stop_download_tips">是否停止当前进行的下载任务？</string>
     <string name="warn">警告</string>
     <string name="download_task_terminal">任务中止</string>
+    <string name="create_download_record_failure">创建下载记录失败</string>
+    <string name="create_download_task_completed">下载任务创建完成</string>
+    <string name="load_video_info_failure">加载视频信息失败</string>
+    <string name="download_paused">下载停止</string>
+    <string name="download_pending">下载等待</string>
+    <string name="download_running">正在下载</string>
+    <string name="download_unknown">未知状态</string>
+    <string name="download_item_undefined">此下载记录缺失，是否删除？</string>
+    <string name="download_failure_whether_restart_or_remode">任务下载失败，是否重启任务？</string>
+    <string name="restart">重启</string>
+    <string name="stop">停止</string>
+    <string name="cancel_download_confirm">是否取消这个下载任务？</string>
+    <string name="view">查看</string>
+    <string name="send">发送</string>
+    <string name="delete_download_file_failure">删除已下载的文件失败</string>
+    <string name="file_not_exist">文件不存在</string>
 
 </resources>
