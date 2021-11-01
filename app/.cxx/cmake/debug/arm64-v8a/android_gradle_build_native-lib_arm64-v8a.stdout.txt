@@ -1,2 +1,3 @@
-ninja: Entering directory `/Users/cat/Documents/GitHub/BiliDownload/app/.cxx/cmake/debug/arm64-v8a'
-ninja: no work to do.
+ninja: Entering directory `C:\Users\kafuu\Documents\GitHub\BiliDownload\app\.cxx\cmake\debug\arm64-v8a'
+[1/2] Building CXX object CMakeFiles/native-lib.dir/native-lib.cpp.o
+[2/2] Linking CXX shared library C:\Users\kafuu\Documents\GitHub\BiliDownload\app\build\intermediates\cmake\debug\obj\arm64-v8a\libnative-lib.so
