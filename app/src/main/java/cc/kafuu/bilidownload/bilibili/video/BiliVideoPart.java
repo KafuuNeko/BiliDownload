@@ -19,13 +19,15 @@ import okhttp3.ResponseBody;
 
 public class BiliVideoPart {
 
+    private final BiliVideo mVideo;
     private final long mAv;
     private final long mCid;
     private final String mPic;
     private final String mPartName;
     private final String mPartDuration;
 
-    public BiliVideoPart(long av, long cid, String pic, String partName, String partDuration) {
+    public BiliVideoPart(BiliVideo video, long av, long cid, String pic, String partName, String partDuration) {
+        this.mVideo = video;
         this.mAv = av;
         this.mCid = cid;
         this.mPic = pic;
@@ -53,6 +55,10 @@ public class BiliVideoPart {
         return mPartName;
     }
 
+    public BiliVideo getVideo() {
+        return mVideo;
+    }
+
     /**
      * 取得此视频所支持的清晰度视频资源
      * */
@@ -64,7 +70,7 @@ public class BiliVideoPart {
             }
 
             @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+            public void onResponse(@NotNull Call call, @NotNull Response response) {
                 ResponseBody body = response.body();
                 if (body == null) {
                     callback.onFailure("Request is returned empty");
@@ -91,7 +97,7 @@ public class BiliVideoPart {
                         int quality = format.get("quality").getAsInt();
                         String new_description = format.get("new_description").getAsString();
 
-                        resources.add(new BiliVideoResource(quality, mCid, mAv, format.get("format").getAsString(), new_description));
+                        resources.add(new BiliVideoResource(BiliVideoPart.this, quality, format.get("format").getAsString(), new_description));
                     }
 
                     callback.onComplete(resources);
@@ -104,7 +110,7 @@ public class BiliVideoPart {
         });
     }
 
-    public static interface GetResourceCallback {
+    public interface GetResourceCallback {
         void onComplete(List<BiliVideoResource> resources);
         void onFailure(String message);
     }

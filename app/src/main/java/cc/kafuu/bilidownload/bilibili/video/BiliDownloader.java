@@ -1,34 +1,28 @@
 package cc.kafuu.bilidownload.bilibili.video;
 
-import android.util.Log;
+import android.app.DownloadManager;
+import android.net.Uri;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Objects;
 
 import cc.kafuu.bilidownload.bilibili.Bili;
+import kotlin.Pair;
+import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.FormBody;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 
 /**
  * Bili资源下载器
  * */
 public class BiliDownloader {
-
-    public enum Status {
-        NO_OPS, DOWNLOADING, REQUEST_STOP
-    }
-
+    private final BiliVideoResource mResource;
     private final File mSavePath;
     private final String mResourceUrl;
-    private ResourceDownloadCallback mCallback = null;
-
-    private Status mStatus = Status.NO_OPS;
 
     /**
      * 构造资源下载器
@@ -38,136 +32,63 @@ public class BiliDownloader {
      * @param resourceUrl 资源下载地址
      *
      * */
-    public BiliDownloader(File savePath, String resourceUrl) {
+    public BiliDownloader(BiliVideoResource resource, File savePath, String resourceUrl) {
+        mResource = resource;
         this.mSavePath = savePath;
         this.mResourceUrl = resourceUrl;
     }
 
-    public void setCallback(ResourceDownloadCallback callback) {
-        this.mCallback = callback;
+    public BiliVideoResource getResource() {
+        return mResource;
     }
 
-    /**
-     * 异步开始下载资源
-     * 将开启一个线程开始下载资源
-     * */
-    public void start_async() {
-        Log.d("Bili", "start download: " + mResourceUrl);
-        new Thread(this::start).start();
+    public interface GetDownloadIdCallback {
+        void onFailure(String message);
+        void onCompleted(long id);
     }
 
-    public void start() {
-        try {
-            download();
-        } catch (Exception e) {
-            e.printStackTrace();
-            if (mCallback != null) {
-                mCallback.onFailure(e.getMessage());
-            }
 
-        } finally {
-            mStatus = Status.NO_OPS;
-        }
-    }
-
-    /**
-     * 资源下载过程函数（在线程执行）
-     * */
-    synchronized private void download() throws IOException {
-        if (mStatus != Status.NO_OPS) {
-            if (mCallback != null) {
-                mCallback.onFailure("Download task is running");
-            }
-            return;
-        }
-
-        if (mCallback != null) {
-            mCallback.onStart();
-        }
-
-        mStatus = Status.DOWNLOADING;
+    public void getDownloadId(DownloadManager downloadManager, GetDownloadIdCallback callback) {
         //发起一个预检请求
         Request options_request = new Request.Builder().url(mResourceUrl).headers(Bili.downloadHeaders)
                 .method("OPTIONS", new FormBody.Builder().build())
                 .build();
-        Response options_response = Bili.httpClient.newCall(options_request).execute();
-        if (options_response.code() != 200) {
-            if (mCallback != null) {
-                mCallback.onFailure("Options request return code " + options_response.code());
+        Bili.httpClient.newCall(options_request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                callback.onFailure(e.getMessage());
             }
-            return;
-        } else {
-            Log.d("Bili", "Options complete");
-        }
 
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull Response response) {
+                if (response.code() != 200) {
+                    if (callback != null) {
+                        callback.onFailure("Options request return code " + response.code());
+                    }
+                    return;
+                }
 
-        //预检通过，开始请求资源
-        Request request = new Request.Builder().url(mResourceUrl).headers(Bili.downloadHeaders).build();
-        Response response = Bili.httpClient.newCall(request).execute();
-        if (response.code() != 200) {
-            if (mCallback != null) {
-                mCallback.onFailure("Request return code " + response.code());
+                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(mResourceUrl));
+                for (Pair<? extends String, ? extends String> item : Bili.downloadHeaders){
+                    request.addRequestHeader(item.getFirst(), item.getSecond());
+                }
+
+                BiliVideoPart part = getResource().getPart();
+
+                //设置漫游条件下是否可以下载
+                request.setAllowedOverRoaming(false);
+                //在通知栏中显示
+                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
+                //设置通知标题
+                request.setTitle(part.getVideo().getTitle());
+                //设置通知标题message
+                request.setDescription(part.getPartName() + "-" + getResource().getDescription());
+                //下载保存地址
+                request.setDestinationUri(Uri.fromFile(mSavePath));
+
+                callback.onCompleted(downloadManager.enqueue(request));
             }
-            return;
-        }
-
-        ResponseBody body = response.body();
-        if (body == null) {
-            if (mCallback != null) {
-                mCallback.onFailure("Body is empty");
-            }
-            return;
-        }
-
-        //取得资源总长度
-        long contentLength = Long.parseLong(Objects.requireNonNull(response.header("content-length")));
-        Log.d("Bili", "contentLength=" + contentLength);
-
-        InputStream inputStream = body.byteStream();
-        OutputStream outputStream = new FileOutputStream(mSavePath);
-
-        byte[] buf = new byte[4096];
-        int len;
-        long cur = 0;
-        while ((len = inputStream.read(buf)) != -1 && mStatus == Status.DOWNLOADING)
-        {
-            cur += len;
-            outputStream.write(buf, 0, len);
-            if (mCallback != null) {
-                mCallback.onStatus(cur, contentLength);
-            }
-        }
-
-        outputStream.close();
-
-        if (mStatus == Status.REQUEST_STOP) {
-            //如果下载是被用户请求停止的，则删除下载的文件
-            if (!mSavePath.delete()) {
-                Log.e("BiliVideoResource.startSave", "Failed to clear invalid files");
-            }
-            if (mCallback != null) {
-                mCallback.onStop();
-            }
-        } else if (mCallback != null){
-            mCallback.onCompleted(mSavePath);
-        }
+        });
     }
 
-    /**
-     * 请求停止下载
-     * 当下载停止后将调用ResourceDownloadCallback.onStop回调
-     * */
-    public void requestStop() {
-        if (mStatus == Status.DOWNLOADING) {
-            mStatus = Status.REQUEST_STOP;
-        }
-    }
-
-    public static interface ResourceDownloadCallback {
-        void onStart();
-        void onStatus(long current, long contentLength);
-        void onStop();
-        void onCompleted(File file);
-        void onFailure(String message);
-    }
 }

@@ -1,6 +1,5 @@
 package cc.kafuu.bilidownload.fragment;
 
-import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -41,7 +40,6 @@ import cc.kafuu.bilidownload.BiliLoginActivity;
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.adapter.VideoParseResultAdapter;
 import cc.kafuu.bilidownload.bilibili.Bili;
-import cc.kafuu.bilidownload.bilibili.VideoParsingCallback;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideo;
 import cc.kafuu.bilidownload.utils.DialogTools;
 import okhttp3.Call;
@@ -237,7 +235,7 @@ public class VideoParserFragment extends Fragment {
             return;
         }
 
-        VideoParsingCallback callback = new VideoParsingCallback() {
+        BiliVideo.VideoParsingCallback callback = new BiliVideo.VideoParsingCallback() {
             @Override
             public void onCompleted(BiliVideo biliVideos) {
                 Log.d("VideoParserFragment.onParsingVideo->onComplete", biliVideos.toString());

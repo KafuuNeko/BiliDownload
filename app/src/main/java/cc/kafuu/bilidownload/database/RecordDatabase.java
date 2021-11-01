@@ -7,9 +7,14 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import androidx.annotation.Nullable;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import cc.kafuu.bilidownload.database.model.VideoBase;
+import cc.kafuu.bilidownload.database.model.VideoDownloadRecord;
+import cc.kafuu.bilidownload.database.model.VideoInfo;
 
 public class RecordDatabase extends SQLiteOpenHelper {
     public RecordDatabase(@Nullable Context context) {
@@ -18,144 +23,91 @@ public class RecordDatabase extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE IF NOT EXISTS video_download_record(" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "vid VARCHAR, " +
-                "video_title VARCHAR, " +
-                "part_title VARCHAR, " +
-                "path VARCHAR, " +
-                "format VARCHAR, " +
-                "pic VARCHAR, " +
-                "download_time DATETIME, " +
-                "download_progress INTEGER)"
-        );
+        initDatabase(db);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         if (oldVersion == 1) {
-            db.execSQL("alter table video_download_record add download_time DATETIME");
-            db.execSQL("alter table video_download_record add download_progress INTEGER");
-            db.execSQL("update video_download_record set download_time=datetime('now')");
-            db.execSQL("update video_download_record set download_progress=1000");
+            db.execSQL("ALTER TABLE video_download_record RENAME TO VideoDownloadRecord_v1");
+            initDatabase(db);
         }
     }
 
-    public static class DownloadRecord {
-        private final long id;
-        private final String vid;
-        private final String video_title;
-        private final String part_title;
-        private final String path;
-        private final String format;
-        private final String pic;
-        private final String downloadTime;
-        private int downloadProgress;
-
-        private DownloadRecord(long id, String vid, String video_title, String part_title, String path, String format, String pic, String downloadTime, int downloadProgress) {
-            this.id = id;
-            this.vid = vid;
-            this.video_title = video_title;
-            this.part_title = part_title;
-            this.path = path;
-            this.format = format;
-            this.pic = pic;
-            this.downloadTime = downloadTime;
-            this.downloadProgress = downloadProgress;
-        }
-
-        public long getId() {
-            return id;
-        }
-
-        public String getFormat() {
-            return format;
-        }
-
-        public String getPartTitle() {
-            return part_title;
-        }
-
-        public String getPath() {
-            return path;
-        }
-
-        public String getVid() {
-            return vid;
-        }
-
-        public String getVideoTitle() {
-            return video_title;
-        }
-
-        public String getPic() {
-            return pic;
-        }
-
-        public String getDownloadTime() {
-            return downloadTime;
-        }
-
-        public int getDownloadProgress() {
-            return downloadProgress;
-        }
-
-        public void setDownloadProgress(int downloadProgress) {
-            this.downloadProgress = downloadProgress;
-        }
+    private void initDatabase(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS VideoDownloadRecord(id INTEGER PRIMARY KEY AUTOINCREMENT, downloadID INTEGER, avid INTEGER, cid INTEGER, quality INTEGER, downloadTime DATETIME, file VARCHAR)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS VideoInfo(avid INTEGER, cid INTEGER, quality INTEGER, videoPic VARCHAR, partPic VARCHAR, videoTitle VARCHAR, partTitle VARCHAR, videoDescription VARCHAR, partDescription VARCHAR)");
     }
 
-    private static final Object mWriteLock = new Object();
-
-    public DownloadRecord newDownloadRecord(String vid, String video_title, String part_title, String path, String format, String pic) {
-        synchronized (mWriteLock) {
-            getWritableDatabase().execSQL(
-                    "INSERT INTO video_download_record(vid, video_title, part_title, path, format, pic, download_time, download_progress) VALUES(?, ?, ?, ?, ?, ?, datetime('now'), 0)",
-                    new String[] {vid, video_title, part_title, path, format, pic});
-
-            Cursor cursor = getReadableDatabase().rawQuery("select last_insert_rowid(), datetime('now') from video_download_record", null);
-            int id = -1;
-            if(cursor.moveToFirst()){
-                id = cursor.getInt(0);
-            }
-
-            return new DownloadRecord(id, vid, video_title, part_title, path, format, pic, cursor.getString(1), 0);
-        }
+    private long lastInsertRowId(String table) {
+        Cursor cursor = getReadableDatabase().rawQuery("SELECT last_insert_rowid() FROM " + table + " LIMIT 1", null);
+        long rowId = cursor.moveToFirst() ? cursor.getLong(0) : -1;
+        cursor.close();
+        return rowId;
     }
 
-    public List<DownloadRecord> getDownloadRecord() {
-        List<DownloadRecord> records = new ArrayList<>();
-        synchronized (mWriteLock) {
-            Cursor cursor = getReadableDatabase().rawQuery("SELECT id, vid, video_title, part_title, path, format, pic, download_time, download_progress FROM video_download_record ORDER BY id DESC LIMIT 30", null);
-            while (cursor.moveToNext()) {
-                records.add(
-                        new DownloadRecord (
-                                cursor.getLong(0),
-                                cursor.getString(1),
-                                cursor.getString(2),
-                                cursor.getString(3),
-                                cursor.getString(4),
-                                cursor.getString(5),
-                                cursor.getString(6),
-                                cursor.getString(7),
-                                cursor.getInt(8)
-                        )
-                );
-            }
+    private VideoDownloadRecord queryVideoDownloadRecord(long id) {
+        VideoDownloadRecord record = null;
+        Cursor cursor = getReadableDatabase().rawQuery("SELECT * FROM VideoDownloadRecord WHERE id=" + id, null);
+        if (cursor.moveToFirst()) {
+            record = new VideoDownloadRecord(id,
+                    cursor.getLong(cursor.getColumnIndex("avid")),
+                    cursor.getLong(cursor.getColumnIndex("cid")),
+                    cursor.getInt(cursor.getColumnIndex("quality")),
+                    cursor.getLong(cursor.getColumnIndex("downloadID")),
+                    cursor.getString(cursor.getColumnIndex("downloadTime")),
+                    new File(cursor.getString(cursor.getColumnIndex("file"))));
         }
-        return records;
+        cursor.close();
+        return record;
     }
 
-    public void updateDownloadRecord(DownloadRecord record) {
-        synchronized (mWriteLock) {
-            getWritableDatabase().execSQL("update video_download_record set download_progress=" + record.getDownloadProgress() + " where id=" + record.getId());
-        }
+    private VideoDownloadRecord newVideoDownloadRecord(long downloadID, long avid, long cid, int quality, File file) {
+        getWritableDatabase().execSQL("INSERT INTO VideoDownloadRecord VALUES(?, ?, ?, ?, datetime('now'), ?)"
+                , new String[]{String.valueOf(downloadID), String.valueOf(avid), String.valueOf(cid), String.valueOf(quality), String.valueOf(file)});
+        return queryVideoDownloadRecord(lastInsertRowId("VideoDownloadRecord"));
     }
 
-    public void removeDownloadRecord(DownloadRecord record) {
-        synchronized (mWriteLock) {
-            getWritableDatabase().execSQL("DELETE FROM video_download_record WHERE id=" + record.getId());
+    private VideoInfo queryVideoInfo(long avid, long cid, int quality) {
+        VideoInfo info = null;
+
+        Cursor cursor = getReadableDatabase().rawQuery("SELECT * FROM VideoInfo WHERE avid=? AND cid=? AND quality=?",
+                new String[]{String.valueOf(avid), String.valueOf(cid), String.valueOf(quality)});
+
+        if (cursor.moveToFirst()) {
+            info = new VideoInfo(avid, cid, quality,
+                    cursor.getString(cursor.getColumnIndex("videoPic")),
+                    cursor.getString(cursor.getColumnIndex("partPic")),
+                    cursor.getString(cursor.getColumnIndex("videoTitle")),
+                    cursor.getString(cursor.getColumnIndex("partTitle")),
+                    cursor.getString(cursor.getColumnIndex("videoDescription")),
+                    cursor.getString(cursor.getColumnIndex("partDescription")));
         }
+
+        cursor.close();
+        return info;
+    }
+
+    private void insertOrUpdateVideoInfo(VideoInfo videoInfo) {
+        String sql;
+
+        if (queryVideoInfo(videoInfo.getAvid(), videoInfo.getCid(), videoInfo.getQuality()) != null) {
+            sql = "UPDATE VideoInfo SET videoPic=?, partPic=?, videoTitle=?, partTitle=?, videoDescription=?, partDescription=? WHERE avid=? AND cid=? AND quality=?";
+        } else {
+            sql = "INSERT INTO VideoInfo(videoPic, partPic, videoTitle, partTitle, videoDescription, partDescription, avid, cid, quality) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        }
+
+        String[] args = new String[]{videoInfo.getVideoPic(),
+                videoInfo.getPartPic(),
+                videoInfo.getVideoTitle(),
+                videoInfo.getPartTitle(),
+                videoInfo.getVideoDescription(),
+                videoInfo.getPartDescription(),
+                String.valueOf(videoInfo.getAvid()),
+                String.valueOf(videoInfo.getCid()),
+                String.valueOf(videoInfo.getQuality())};
+
+        getWritableDatabase().execSQL(sql, args);
     }
 
 }

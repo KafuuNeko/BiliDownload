@@ -1,7 +1,5 @@
 package cc.kafuu.bilidownload.bilibili.video;
 
-import android.util.Log;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -9,40 +7,43 @@ import com.google.gson.JsonObject;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Objects;
+import java.util.Date;
 
 import cc.kafuu.bilidownload.bilibili.Bili;
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.FormBody;
-import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 public class BiliVideoResource {
 
+    private final BiliVideoPart mPart;
     //清晰度
     private final int mQuality;
-    //下载地址
-    private final long mCid;
-    private final long mAvid;
     //格式
     private final String mFormat;
     //描述
     private final String mDescription;
 
-    protected BiliVideoResource(final int quality, final long cid, final long avid, final String format, final String description)
+    protected BiliVideoResource(BiliVideoPart part, final int quality, final String format, final String description)
     {
+        this.mPart = part;
         this.mQuality = quality;
-        this.mCid = cid;
-        this.mAvid = avid;
         this.mFormat = format;
         this.mDescription = description;
+    }
+
+    public BiliVideoPart getPart() {
+        return mPart;
+    }
+
+    public long getAvid() {
+        return mPart.getAv();
+    }
+
+    public long getCid() {
+        return mPart.getCid();
     }
 
     public int getQuality() {
@@ -65,13 +66,11 @@ public class BiliVideoResource {
     /**
      * 取得下载此资源的下载器
      *
-     * @param savePath 下载保存路径
-     *
      * @param callback 下载状态回调
      * */
-    public void download(final File savePath, final GetDownloaderCallback callback)
+    public void download(final GetDownloaderCallback callback)
     {
-        Bili.httpClient.newCall(Bili.playUrlRequest(mCid, mAvid, mQuality)).enqueue(new Callback() {
+        Bili.httpClient.newCall(Bili.playUrlRequest(getCid(), getAvid(), mQuality)).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 e.printStackTrace();
@@ -104,7 +103,12 @@ public class BiliVideoResource {
                     return;
                 }
 
-                callback.onCompleted(new BiliDownloader(savePath, durl.get(0).getAsJsonObject().get("url").getAsString()));
+                String url = durl.get(0).getAsJsonObject().get("url").getAsString();
+
+                String fileSuffix = mFormat.contains("flv") ? "flv" : mFormat;
+                final File videoFile = new File(Bili.saveDir + "/Video/" + getAvid() + "/" + getCid() + "/" + getQuality() + "/" + new Date().getTime() + "-" + url.hashCode() + "." + fileSuffix);
+
+                callback.onCompleted(new BiliDownloader(BiliVideoResource.this, videoFile, url));
             }
         });
 

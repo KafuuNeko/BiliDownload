@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cc.kafuu.bilidownload.bilibili.Bili;
-import cc.kafuu.bilidownload.bilibili.VideoParsingCallback;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Request;
@@ -34,18 +33,24 @@ public class BiliVideo {
 
         //通过给定Id类型选择Api
         String type = videoId.substring(0, 2);
-        String requestUrl = null;
-        if (type.equals("ss")) {
-            requestUrl = "https://api.bilibili.com/pgc/view/web/h5/season?season_id=" + videoId.substring(2);
-        } else if (type.equals("ep")) {
-            requestUrl = "https://api.bilibili.com/pgc/view/web/h5/season?ep_id=" + videoId.substring(2);
-        } else if (type.equals("BV")) {
-            requestUrl = "https://api.bilibili.com/x/web-interface/view/detail?aid=&bvid=" + videoId;
-        } else if (type.equals("av")) {
-            requestUrl = "https://api.bilibili.com/x/web-interface/view/detail?aid=" + videoId.substring(2) + "&bvid=";
-        } else {
-            callback.onFailure("Id format error");
-            return;
+        String requestUrl;
+
+        switch (type) {
+            case "ss":
+                requestUrl = "https://api.bilibili.com/pgc/view/web/h5/season?season_id=" + videoId.substring(2);
+                break;
+            case "ep":
+                requestUrl = "https://api.bilibili.com/pgc/view/web/h5/season?ep_id=" + videoId.substring(2);
+                break;
+            case "BV":
+                requestUrl = "https://api.bilibili.com/x/web-interface/view/detail?aid=&bvid=" + videoId;
+                break;
+            case "av":
+                requestUrl = "https://api.bilibili.com/x/web-interface/view/detail?aid=" + videoId.substring(2) + "&bvid=";
+                break;
+            default:
+                callback.onFailure("Id format error");
+                return;
         }
 
         //判断使用的Api是不是https://api.bilibili.com/pgc/view/web/h5/season
@@ -142,11 +147,11 @@ public class BiliVideo {
                 String partName = page.get("part").getAsString();
                 String partDuration = page.get("duration").getAsString();
 
-                mParts.add(new BiliVideoPart(mVideoId, cid, mPicUrl, partName, partDuration));
+                mParts.add(new BiliVideoPart(BiliVideo.this, mVideoId, cid, mPicUrl, partName, partDuration));
             }
         } else {
             mVideoAddress = "ss" + data.get("season_id").getAsLong();
-            mVideoId = data.get("season_id").getAsLong();;
+            mVideoId = data.get("season_id").getAsLong();
             mPicUrl = data.get("cover").getAsString();
             mTitle = data.get("season_title").getAsString();
             mDesc = data.get("evaluate").getAsString();
@@ -157,7 +162,7 @@ public class BiliVideo {
                 String partName = episode.get("long_title").getAsString();
                 String partDuration = episode.get("share_copy").getAsString();
 
-                mParts.add(new BiliVideoPart(episode.get("aid").getAsLong(), cid, episode.get("cover").getAsString(), partName, partDuration));
+                mParts.add(new BiliVideoPart(BiliVideo.this, episode.get("aid").getAsLong(), cid, episode.get("cover").getAsString(), partName, partDuration));
             }
         }
     }
@@ -190,5 +195,10 @@ public class BiliVideo {
     @Override
     public String toString() {
         return "VideoAddress: " + getVideoAddress() + ", VideoId: " + getVideoId() + ", Title: " + getTitle() + ", Desc: " + getDesc() + ", Pic: " + getPicUrl();
+    }
+
+    public interface VideoParsingCallback {
+        void onCompleted(BiliVideo biliVideos);
+        void onFailure(String message);
     }
 }

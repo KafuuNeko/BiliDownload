@@ -3,15 +3,13 @@ package cc.kafuu.bilidownload.adapter;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DownloadManager;
 import android.app.ProgressDialog;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Looper;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,7 +31,6 @@ import cc.kafuu.bilidownload.bilibili.video.BiliDownloader;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideo;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideoPart;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideoResource;
-import cc.kafuu.bilidownload.service.DownloadService;
 import cc.kafuu.bilidownload.database.RecordDatabase;
 
 public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResultAdapter.InnerHolder> {
@@ -41,8 +38,6 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
     private final Activity mActivity;
     private final BiliVideo mBiliVideo;
     private final RecordDatabase mRecordDatabase;
-
-    private BiliDownloader mDownloader = null;
 
     public VideoParseResultAdapter(Activity activity, BiliVideo biliVideo) {
         mHandle = new Handler(Looper.getMainLooper());
@@ -159,28 +154,33 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
          * 将立即开始下载资源
          * */
         private void onResourcesSelected(final BiliVideoPart part, final BiliVideoResource resource) {
-            if (Bili.saveDir.exists() || Bili.saveDir.mkdirs()) {
-                String suffix = resource.getFormat();
-                suffix = suffix.contains("flv") ? "flv" : suffix;
-                final File saveFile = new File(Bili.saveDir + "/BV_" + (new Date().getTime() % 0xFFFF) + "_" + (part.getAv() ^ part.getCid()) + "_" + resource.getQuality() + "." + suffix);
-
-                Intent service = new Intent(mActivity, DownloadService.class);
-                mActivity.startService(service);
-                mActivity.bindService(service, new ServiceConnection() {
-                    @Override
-                    public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-                        ((DownloadService.DownloadServiceBinder) iBinder).startDownload(mBiliVideo, part, resource, saveFile);
-                    }
-
-                    @Override
-                    public void onServiceDisconnected(ComponentName componentName) {
-
-                    }
-                }, Context.BIND_AUTO_CREATE);
-
-            } else {
+            if (!Bili.saveDir.exists() && !Bili.saveDir.mkdirs()) {
                 new AlertDialog.Builder(mActivity).setTitle(part.getPartName()).setMessage(mActivity.getString(R.string.external_storage_device_cannot_be_accessed)).show();
             }
+
+            final DownloadManager downloadManager = (DownloadManager) mActivity.getSystemService(Context.DOWNLOAD_SERVICE);
+
+            resource.download(new BiliVideoResource.GetDownloaderCallback() {
+                @Override
+                public void onCompleted(BiliDownloader downloader) {
+                    downloader.getDownloadId(downloadManager, new BiliDownloader.GetDownloadIdCallback() {
+                        @Override
+                        public void onFailure(String message) {
+                            mHandle.post(() -> new AlertDialog.Builder(mActivity).setTitle(part.getPartName()).setMessage(message).show());
+                        }
+
+                        @Override
+                        public void onCompleted(long id) {
+
+                        }
+                    });
+                }
+
+                @Override
+                public void onFailure(String message) {
+                    mHandle.post(() -> new AlertDialog.Builder(mActivity).setTitle(part.getPartName()).setMessage(message).show());
+                }
+            });
         }
 
 

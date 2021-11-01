@@ -1,7 +1,6 @@
 package cc.kafuu.bilidownload;
 
 import android.annotation.SuppressLint;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
@@ -21,7 +20,6 @@ import cc.kafuu.bilidownload.bilibili.BiliAccount;
 
 
 public class BiliLoginActivity extends AppCompatActivity {
-    private WebView mWebView;
     private ProgressBar mProgressBar;
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -35,13 +33,13 @@ public class BiliLoginActivity extends AppCompatActivity {
 
     @SuppressLint("SetJavaScriptEnabled")
     private void initView() {
-        mWebView = findViewById(R.id.webView);
+        WebView mWebView = findViewById(R.id.webView);
         mProgressBar = findViewById(R.id.progressBar);
 
         mWebView.setWebViewClient(new WebViewClient(){
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                return webViewShouldOverrideUrlLoading(view, request);
+                return webViewShouldOverrideUrlLoading();
             }
 
             @Override
@@ -65,7 +63,7 @@ public class BiliLoginActivity extends AppCompatActivity {
     }
 
 
-    public boolean webViewShouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+    public boolean webViewShouldOverrideUrlLoading() {
         Log.d("ViewWeb", "shouldOverrideUrlLoading");
         final String cookie = CookieManager.getInstance().getCookie("https://m.bilibili.com");
         Log.d("ViewWeb cookie", cookie);
