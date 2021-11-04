@@ -1,2 +1,2 @@
-ninja: Entering directory `C:\Users\kafuu\Documents\GitHub\BiliDownload\app\.cxx\cmake\debug\arm64-v8a'
+ninja: Entering directory `/Users/cat/Documents/GitHub/BiliDownload/app/.cxx/cmake/debug/arm64-v8a'
 ninja: no work to do.

@@ -7,11 +7,12 @@
 
     <string name="about_context">
         开发人员\n
-        Kafuu(kafuuneko@gmail.com)\n\n
-        个人网站\n
-        https://kafuu.cc\n\n
+        Kafuu(https://kafuu.cc)\n\n
+        联系邮箱\n
+        kafuuneko@gmail.com\n\n
         项目仓库\n
-        https://github.com/KafuuNeko/BiliDownload\n
+        https://github.com/KafuuNeko/BiliDownload\n\n
+        下载的视频资源所有权属视频上传者所有，未经允许禁止转载！
     </string>
     <string name="parsing_video">解析</string>
     <string name="describe">简介：</string>
@@ -66,5 +67,6 @@
     <string name="delete_download_file_failure">删除已下载的文件失败</string>
     <string name="file_not_exist">文件不存在</string>
     <string name="video_download_not_allowed">上传者不允许下载此视频资源</string>
+    <string name="confirm_use_contents_paste_board">您当前粘贴板的内容可能是您需要解析的视频，是否使用它？</string>
 
 </resources>

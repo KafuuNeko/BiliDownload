@@ -1,41 +1,41 @@
 {
   "stringTable": {
-    "0": "C:/Users/kafuu/Documents/GitHub/BiliDownload/app/.cxx/cmake/debug/armeabi-v7a",
-    "1": "--target=armv7-none-linux-androideabi24 --gcc-toolchain=C:/Users/kafuu/AppData/Local/Android/Sdk/ndk/23.1.7779620/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=C:/Users/kafuu/AppData/Local/Android/Sdk/ndk/23.1.7779620/toolchains/llvm/prebuilt/windows-x86_64/sysroot -Dnative_lib_EXPORTS -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security -std=c++17 -fno-limit-debug-info -fPIC"
+    "0": "/Users/cat/Documents/GitHub/BiliDownload/app/.cxx/cmake/debug/armeabi-v7a",
+    "1": "--target=armv7-none-linux-androideabi24 --gcc-toolchain=/Users/cat/Library/Android/sdk/ndk/23.1.7779620/toolchains/llvm/prebuilt/darwin-x86_64 --sysroot=/Users/cat/Library/Android/sdk/ndk/23.1.7779620/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -Dnative_lib_EXPORTS -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security -std=c++17 -fno-limit-debug-info -fPIC"
   },
   "buildFiles": [
-    "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\src\\main\\cpp\\CMakeLists.txt",
-    "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\ndk\\23.1.7779620\\build\\cmake\\android.toolchain.cmake",
-    "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\ndk\\23.1.7779620\\build\\cmake\\android-legacy.toolchain.cmake",
-    "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\ndk\\23.1.7779620\\build\\cmake\\platforms.cmake",
-    "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\ndk\\23.1.7779620\\build\\cmake\\compiler_id.cmake"
+    "/Users/cat/Documents/GitHub/BiliDownload/app/src/main/cpp/CMakeLists.txt",
+    "/Users/cat/Library/Android/sdk/ndk/23.1.7779620/build/cmake/android.toolchain.cmake",
+    "/Users/cat/Library/Android/sdk/ndk/23.1.7779620/build/cmake/android-legacy.toolchain.cmake",
+    "/Users/cat/Library/Android/sdk/ndk/23.1.7779620/build/cmake/platforms.cmake",
+    "/Users/cat/Library/Android/sdk/ndk/23.1.7779620/build/cmake/compiler_id.cmake"
   ],
   "cleanCommands": [
-    "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe -C \"C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\.cxx\\cmake\\debug\\armeabi-v7a\" clean"
+    "/Users/cat/Library/Android/sdk/cmake/3.10.2.4988404/bin/ninja -C \"/Users/cat/Documents/GitHub/BiliDownload/app/.cxx/cmake/debug/armeabi-v7a\" clean"
   ],
-  "buildTargetsCommand": "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe  -C \"C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\.cxx\\cmake\\debug\\armeabi-v7a\" {LIST_OF_TARGETS_TO_BUILD}",
+  "buildTargetsCommand": "/Users/cat/Library/Android/sdk/cmake/3.10.2.4988404/bin/ninja  -C \"/Users/cat/Documents/GitHub/BiliDownload/app/.cxx/cmake/debug/armeabi-v7a\" {LIST_OF_TARGETS_TO_BUILD}",
   "libraries": {
     "native-lib-Debug-armeabi-v7a": {
-      "buildCommand": "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe -C \"C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\.cxx\\cmake\\debug\\armeabi-v7a\" native-lib",
+      "buildCommand": "/Users/cat/Library/Android/sdk/cmake/3.10.2.4988404/bin/ninja -C \"/Users/cat/Documents/GitHub/BiliDownload/app/.cxx/cmake/debug/armeabi-v7a\" native-lib",
       "buildType": "debug",
-      "toolchain": "3743910708",
+      "toolchain": "3068605925",
       "abi": "armeabi-v7a",
       "artifactName": "native-lib",
       "files": [
         {
-          "src": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\src\\main\\cpp\\native-lib.cpp",
+          "src": "/Users/cat/Documents/GitHub/BiliDownload/app/src/main/cpp/native-lib.cpp",
           "flagsOrdinal": 1,
           "workingDirectoryOrdinal": 0
         }
       ],
       "headers": [],
-      "output": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\build\\intermediates\\cmake\\debug\\obj\\armeabi-v7a\\libnative-lib.so",
+      "output": "/Users/cat/Documents/GitHub/BiliDownload/app/build/intermediates/cmake/debug/obj/armeabi-v7a/libnative-lib.so",
       "runtimeFiles": []
     }
   },
   "toolchains": {
-    "3743910708": {
-      "cppCompilerExecutable": "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\ndk\\23.1.7779620\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe"
+    "3068605925": {
+      "cppCompilerExecutable": "/Users/cat/Library/Android/sdk/ndk/23.1.7779620/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++"
     }
   },
   "cFileExtensions": [],

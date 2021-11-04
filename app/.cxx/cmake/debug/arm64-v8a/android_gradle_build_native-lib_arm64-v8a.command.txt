@@ -1,7 +1,7 @@
-Executable : C:\Users\kafuu\AppData\Local\Android\Sdk\cmake\3.10.2.4988404\bin\ninja.exe
+Executable : /Users/cat/Library/Android/sdk/cmake/3.10.2.4988404/bin/ninja
 arguments : 
 -C
-C:\Users\kafuu\Documents\GitHub\BiliDownload\app\.cxx\cmake\debug\arm64-v8a
+/Users/cat/Documents/GitHub/BiliDownload/app/.cxx/cmake/debug/arm64-v8a
 native-lib
 jvmArgs : 
 

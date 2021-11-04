@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload.fragment;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -42,6 +43,7 @@ import cc.kafuu.bilidownload.adapter.VideoParseResultAdapter;
 import cc.kafuu.bilidownload.bilibili.Bili;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideo;
 import cc.kafuu.bilidownload.utils.DialogTools;
+import cc.kafuu.bilidownload.utils.SystemTools;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
@@ -63,12 +65,12 @@ public class VideoParserFragment extends Fragment {
 
     private EditText mVideoAddress;
     private Button mParsingVideo;
-    private TextView mVideoDownloadNotAllowed;
 
     private CardView mVideoInfoCard;
     private ImageView mUserFace;
     private TextView mVideoTitle;
     private TextView mVideoDescribe;
+    private TextView mVideoDownloadNotAllowed;
 
     private RecyclerView mVideoInfoList;
 
@@ -95,6 +97,37 @@ public class VideoParserFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        final CharSequence pasteText = SystemTools.paste(getContext());
+        if (pasteText != null) {
+            //解析粘贴板内容中可能存在的Id
+            String id = getInputId(pasteText.toString());
+            if (id == null) {
+                //粘贴板内容中不存在可用的Id
+                return;
+            }
+
+            //粘贴板内容和当前用户正在解析的内容是否一致
+            if (mVideoAddress.getText() != null) {
+                String curId = getInputId(mVideoAddress.getText().toString());
+                if (curId != null && curId.equals(id)) {
+                    //一样的，不需要再次提示用户
+                    return;
+                }
+            }
+
+            DialogTools.confirm(getContext(), null, getText(R.string.confirm_use_contents_paste_board), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    mVideoAddress.setText(pasteText);
+                }
+            }, null);
+        }
     }
 
     @Override
@@ -143,12 +176,12 @@ public class VideoParserFragment extends Fragment {
 
         mVideoAddress = mRootView.findViewById(R.id.videoAddress);
         mParsingVideo = mRootView.findViewById(R.id.parsingVideo);
-        mVideoDownloadNotAllowed = mRootView.findViewById(R.id.videoDownloadNotAllowed);
 
         mVideoInfoCard = mRootView.findViewById(R.id.videoInfoCard);
         mUserFace = mRootView.findViewById(R.id.userFace);
         mVideoTitle = mRootView.findViewById(R.id.videoTitle);
         mVideoDescribe = mRootView.findViewById(R.id.videoDescribe);
+        mVideoDownloadNotAllowed = mRootView.findViewById(R.id.videoDownloadNotAllowed);
 
         mVideoInfoList = mRootView.findViewById(R.id.videoInfoList);
     }
@@ -167,6 +200,12 @@ public class VideoParserFragment extends Fragment {
         mVideoInfoCard.setVisibility(View.GONE);
 
         mVideoInfoList.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        //将此列表设置为嵌套列表
+        mVideoInfoList.setNestedScrollingEnabled(false);
+        mVideoInfoList.setHasFixedSize(true);
+        //设置为不可聚焦
+        mVideoInfoList.setFocusable(false);
     }
 
     /**
@@ -231,7 +270,12 @@ public class VideoParserFragment extends Fragment {
      * 用户开始尝试解析视频地址获得视频
      * */
     private void onParsingVideo() {
-        String videoId = getInputId();
+        String videoId = null;
+
+        if (mVideoAddress.getText() != null) {
+            videoId = getInputId(mVideoAddress.getText().toString());
+        }
+
         if (videoId == null) {
             Toast.makeText(getContext(), getText(R.string.video_address_format_incorrect), Toast.LENGTH_SHORT).show();
             return;
@@ -258,12 +302,7 @@ public class VideoParserFragment extends Fragment {
     /**
      * 取得用户要获取的视频的BV号或AV号
      * */
-    private String getInputId() {
-        Editable address = mVideoAddress.getText();
-        if (address == null) {
-            return null;
-        }
-
+    private String getInputId(String address) {
         Pattern pattern = Pattern.compile("(BV.{10})|((av|ep|ss)\\d*)");
         Matcher matcher = pattern.matcher(address);
 

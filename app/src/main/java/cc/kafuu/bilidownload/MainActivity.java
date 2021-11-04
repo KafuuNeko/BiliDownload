@@ -80,8 +80,10 @@ public class MainActivity extends AppCompatActivity {
             new AlertDialog.Builder(this)
                     .setTitle(R.string.about)
                     .setMessage(R.string.about_context)
+                    .setPositiveButton(R.string.confirm, null)
                     .show();
         }
+
         return super.onOptionsItemSelected(item);
     }
 

@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload.utils;
 
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -24,5 +25,11 @@ public class SystemTools {
 
         share.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
         context.startActivity(Intent.createChooser(share, title));
+    }
+
+    public static CharSequence paste(Context context) {
+        ClipboardManager clipboardManager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+        int count = clipboardManager.getPrimaryClip().getItemCount();
+        return count == 0 ? null : clipboardManager.getPrimaryClip().getItemAt(0).getText();
     }
 }
