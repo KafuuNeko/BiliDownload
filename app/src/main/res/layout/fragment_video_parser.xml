@@ -110,7 +110,6 @@
                         android:layout_height="wrap_content"
                         android:text="@string/parsing_video" />
 
-
                 </LinearLayout>
 
             </androidx.cardview.widget.CardView>
@@ -146,6 +145,16 @@
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
                         android:maxLines="5" />
+
+                    <TextView
+                        android:id="@+id/videoDownloadNotAllowed"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/video_download_not_allowed"
+                        android:textColor="#FF0000"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+
                 </LinearLayout>
 
             </androidx.cardview.widget.CardView>

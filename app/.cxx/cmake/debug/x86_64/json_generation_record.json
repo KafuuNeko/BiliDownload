@@ -43,31 +43,7 @@
   },
   {
     "level": "INFO",
-    "message": "  - C:\\Users\\cat\\Documents\\GitHub\\BiliDownload\\app\\src\\main\\cpp\\CMakeLists.txt",
-    "file": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\src\\main\\cpp\\CMakeLists.txt",
-    "tag": "debug|x86_64"
-  },
-  {
-    "level": "INFO",
-    "message": "  - C:\\Users\\cat\\Library\\Android\\sdk\\ndk\\23.1.7779620\\build\\cmake\\android.toolchain.cmake",
-    "file": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\src\\main\\cpp\\CMakeLists.txt",
-    "tag": "debug|x86_64"
-  },
-  {
-    "level": "INFO",
-    "message": "  - C:\\Users\\cat\\Library\\Android\\sdk\\ndk\\23.1.7779620\\build\\cmake\\android-legacy.toolchain.cmake",
-    "file": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\src\\main\\cpp\\CMakeLists.txt",
-    "tag": "debug|x86_64"
-  },
-  {
-    "level": "INFO",
-    "message": "  - C:\\Users\\cat\\Library\\Android\\sdk\\ndk\\23.1.7779620\\build\\cmake\\platforms.cmake",
-    "file": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\src\\main\\cpp\\CMakeLists.txt",
-    "tag": "debug|x86_64"
-  },
-  {
-    "level": "INFO",
-    "message": "  - C:\\Users\\cat\\Library\\Android\\sdk\\ndk\\23.1.7779620\\build\\cmake\\compiler_id.cmake",
+    "message": "  - C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\src\\main\\cpp\\CMakeLists.txt",
     "file": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\src\\main\\cpp\\CMakeLists.txt",
     "tag": "debug|x86_64"
   },

@@ -124,7 +124,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
                 @Override
                 public void onFailure(String message) {
                     progressDialog.cancel();
-                    mHandle.post(() -> new AlertDialog.Builder(mActivity).setTitle(R.string.error).setMessage(message).show());
+                    mHandle.post(() -> Toast.makeText(mActivity, message, Toast.LENGTH_LONG).show());
                 }
             });
         }
@@ -168,7 +168,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
                         @Override
                         public void onFailure(String message) {
                             //提交下载任务失败（可能是当前登录的账户不支持下载此资源）
-                            mHandle.post(() -> new AlertDialog.Builder(mActivity).setTitle(part.getPartName()).setMessage(message).show());
+                            mHandle.post(() -> Toast.makeText(mActivity, message, Toast.LENGTH_LONG).show());
                         }
 
                         @Override
@@ -177,7 +177,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
                             VideoDownloadRecord newVideoDownloadRecord = new VideoDownloadRecord(id, part.getAv(), part.getCid(), resource.getQuality(), downloader.getSavePath().getPath());
                             if (!newVideoDownloadRecord.save()) {
                                 downloadManager.remove(id);
-                                mHandle.post(() -> new AlertDialog.Builder(mActivity).setTitle(part.getPartName()).setMessage(R.string.create_download_record_failure).show());
+                                mHandle.post(() -> Toast.makeText(mActivity, R.string.create_download_record_failure, Toast.LENGTH_LONG).show());
                                 return;
                             }
 
@@ -191,7 +191,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
                 @Override
                 public void onFailure(String message) {
                     //取资源下载器失败
-                    mHandle.post(() -> new AlertDialog.Builder(mActivity).setTitle(part.getPartName()).setMessage(message).show());
+                    mHandle.post(() -> Toast.makeText(mActivity, message, Toast.LENGTH_LONG).show());
                 }
             }, null);
         }

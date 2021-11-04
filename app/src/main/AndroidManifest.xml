@@ -40,8 +40,6 @@
             android:screenOrientation="portrait">
         </activity>
 
-        <service android:name=".service.DownloadService"/>
-
     </application>
 
 </manifest>

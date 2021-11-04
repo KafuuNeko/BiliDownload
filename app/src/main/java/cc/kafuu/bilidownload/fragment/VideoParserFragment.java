@@ -63,6 +63,7 @@ public class VideoParserFragment extends Fragment {
 
     private EditText mVideoAddress;
     private Button mParsingVideo;
+    private TextView mVideoDownloadNotAllowed;
 
     private CardView mVideoInfoCard;
     private ImageView mUserFace;
@@ -142,6 +143,7 @@ public class VideoParserFragment extends Fragment {
 
         mVideoAddress = mRootView.findViewById(R.id.videoAddress);
         mParsingVideo = mRootView.findViewById(R.id.parsingVideo);
+        mVideoDownloadNotAllowed = mRootView.findViewById(R.id.videoDownloadNotAllowed);
 
         mVideoInfoCard = mRootView.findViewById(R.id.videoInfoCard);
         mUserFace = mRootView.findViewById(R.id.userFace);
@@ -208,7 +210,7 @@ public class VideoParserFragment extends Fragment {
                 Bili.biliAccount = null;
 
                 mHandler.post(() -> {
-                    Glide.with(getContext()).load(R.drawable.ic_2233).into(mUserFace);
+                    Glide.with(Objects.requireNonNull(getContext())).load(R.drawable.ic_2233).into(mUserFace);
                     mUserName.setText(R.string.login_tips_1);
                     mUserSign.setText(R.string.login_tips_2);
                 });
@@ -286,6 +288,8 @@ public class VideoParserFragment extends Fragment {
         mVideoInfoCard.setVisibility(View.VISIBLE);
         mVideoTitle.setText(biliVideos.getTitle());
         mVideoDescribe.setText(biliVideos.getDesc());
+
+        mVideoDownloadNotAllowed.setVisibility(biliVideos.allowDownload() ? View.GONE : View.VISIBLE);
 
         mVideoInfoList.setAdapter(new VideoParseResultAdapter(getActivity(), biliVideos));
     }

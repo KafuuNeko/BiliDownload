@@ -1,5 +1,7 @@
 package cc.kafuu.bilidownload.bilibili.video;
 
+import android.content.Context;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -81,7 +83,12 @@ public class BiliVideoPart {
                     String json = body.string();
                     JsonObject res = new Gson().fromJson(json, JsonObject.class);
                     if (res.get("code").getAsInt() != 0) {
-                        callback.onFailure(res.get("message").getAsString());
+                        if (res.get("code").getAsInt() == -404) {
+                            callback.onFailure("您还未登录或当前登录的账户不支持下载此视频");
+                        } else {
+                            callback.onFailure(res.get("message").getAsString());
+                        }
+
                         return;
                     }
 

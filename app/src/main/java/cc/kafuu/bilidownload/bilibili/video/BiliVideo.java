@@ -125,6 +125,8 @@ public class BiliVideo {
     private final String mTitle;
     //视频描述
     private final String mDesc;
+    //视频是否允许下载
+    private final int mAllowDownload;
     //视频片段（分集）
     private final List<BiliVideoPart> mParts;
 
@@ -133,12 +135,15 @@ public class BiliVideo {
 
         if (!isSeason) {
             JsonObject view = data.getAsJsonObject("View");
+            JsonObject rights = view.getAsJsonObject("rights");
 
             mVideoAddress = view.get("bvid").getAsString();
             mVideoId = view.get("aid").getAsLong();
             mPicUrl = view.get("pic").getAsString();
             mTitle = view.get("title").getAsString();
             mDesc = view.get("desc").getAsString();
+
+            mAllowDownload = rights.get("download").getAsInt();
 
             for (JsonElement element : view.getAsJsonArray("pages")) {
                 JsonObject page = element.getAsJsonObject();
@@ -150,11 +155,15 @@ public class BiliVideo {
                 mParts.add(new BiliVideoPart(BiliVideo.this, mVideoId, cid, mPicUrl, partName, partDuration));
             }
         } else {
+            JsonObject rights = data.getAsJsonObject("rights");
+
             mVideoAddress = "ss" + data.get("season_id").getAsLong();
             mVideoId = data.get("season_id").getAsLong();
             mPicUrl = data.get("cover").getAsString();
             mTitle = data.get("season_title").getAsString();
             mDesc = data.get("evaluate").getAsString();
+
+            mAllowDownload = rights.get("allow_download").getAsInt();
 
             for (JsonElement element : data.getAsJsonArray("episodes")) {
                 JsonObject episode = element.getAsJsonObject();
@@ -165,6 +174,10 @@ public class BiliVideo {
                 mParts.add(new BiliVideoPart(BiliVideo.this, episode.get("aid").getAsLong(), cid, episode.get("cover").getAsString(), partName, partDuration));
             }
         }
+    }
+
+    public boolean allowDownload() {
+        return mAllowDownload != 0;
     }
 
     public String getVideoAddress() {

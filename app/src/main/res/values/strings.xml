@@ -65,5 +65,6 @@
     <string name="send">发送</string>
     <string name="delete_download_file_failure">删除已下载的文件失败</string>
     <string name="file_not_exist">文件不存在</string>
+    <string name="video_download_not_allowed">上传者不允许下载此视频资源</string>
 
 </resources>
