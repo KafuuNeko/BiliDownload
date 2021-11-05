@@ -67,7 +67,10 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            // Zipalign优化
+            zipAlignEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -92,6 +95,8 @@ android {
         }
     }
 }
+
+
 
 dependencies {
 
