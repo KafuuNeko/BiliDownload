@@ -20,5 +20,3 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
-#压缩级别
--optimizationpasses 7
