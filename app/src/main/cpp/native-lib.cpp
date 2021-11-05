@@ -5,7 +5,6 @@
 #include <android/log.h>
 
 extern "C" {
-#include "libavcodec/avcodec.h"
 #include "libavformat/avformat.h"
 }
 

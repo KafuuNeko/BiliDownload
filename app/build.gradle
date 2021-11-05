@@ -10,8 +10,8 @@ android {
         applicationId "cc.kafuu.bilidownload"
         minSdkVersion 24
         targetSdkVersion 30
-        versionCode 7
-        versionName "1.6"
+        versionCode 8
+        versionName "1.6.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
@@ -20,7 +20,7 @@ android {
             }
 
             ndk {
-                abiFilters 'armeabi-v7a', 'arm64-v8a'
+                abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64', 'x86'
             }
         }
 
@@ -46,6 +46,22 @@ android {
             pickFirst 'lib/armeabi-v7a/libavutil.so'
             pickFirst 'lib/armeabi-v7a/libswresample.so'
             pickFirst 'lib/armeabi-v7a/libswscale.so'
+
+            pickFirst 'lib/x86_64/libavcodec.so'
+            pickFirst 'lib/x86_64/libavdevice.so'
+            pickFirst 'lib/x86_64/libavfilter.so'
+            pickFirst 'lib/x86_64/libavformat.so'
+            pickFirst 'lib/x86_64/libavutil.so'
+            pickFirst 'lib/x86_64/libswresample.so'
+            pickFirst 'lib/x86_64/libswscale.so'
+
+            pickFirst 'lib/x86/libavcodec.so'
+            pickFirst 'lib/x86/libavdevice.so'
+            pickFirst 'lib/x86/libavfilter.so'
+            pickFirst 'lib/x86/libavformat.so'
+            pickFirst 'lib/x86/libavutil.so'
+            pickFirst 'lib/x86/libswresample.so'
+            pickFirst 'lib/x86/libswscale.so'
         }
     }
 
@@ -71,7 +87,7 @@ android {
         abi {
             enable true
             reset()
-            include 'armeabi-v7a', 'arm64-v8a'
+            include 'armeabi-v7a', 'arm64-v8a', 'x86_64', 'x86'
             universalApk true
         }
     }

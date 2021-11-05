@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload.utils;
 
+import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
@@ -29,7 +30,14 @@ public class SystemTools {
 
     public static CharSequence paste(Context context) {
         ClipboardManager clipboardManager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-        int count = clipboardManager.getPrimaryClip().getItemCount();
+        if (clipboardManager == null) {
+            return null;
+        }
+        ClipData clipData = clipboardManager.getPrimaryClip();
+        if (clipData == null) {
+            return null;
+        }
+        int count = clipData.getItemCount();
         return count == 0 ? null : clipboardManager.getPrimaryClip().getItemAt(0).getText();
     }
 }
