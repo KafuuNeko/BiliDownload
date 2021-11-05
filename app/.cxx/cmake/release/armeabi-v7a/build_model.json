@@ -5,9 +5,9 @@
     "environmentVariables": []
   },
   "cmake": {
-    "cmakeArtifactsBaseFolder": "/Users/cat/Documents/GitHub/BiliDownload/app/.cxx/cmake/release/armeabi-v7a",
-    "cmakeServerLogFile": "/Users/cat/Documents/GitHub/BiliDownload/app/.cxx/cmake/release/armeabi-v7a/cmake_server_log.txt",
-    "cmakeWrappingBaseFolder": "/Users/cat/Documents/GitHub/BiliDownload/app/.cxx/cxx/release/armeabi-v7a",
+    "cmakeArtifactsBaseFolder": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\.cxx\\cmake\\release\\armeabi-v7a",
+    "cmakeServerLogFile": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\.cxx\\cmake\\release\\armeabi-v7a\\cmake_server_log.txt",
+    "cmakeWrappingBaseFolder": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\.cxx\\cxx\\release\\armeabi-v7a",
     "effectiveConfiguration": {
       "name": "traditional-android-studio-cmake-environment",
       "description": "Composite reified CMakeSettings configuration",
@@ -15,9 +15,9 @@
       "inheritEnvironments": [
         "ndk"
       ],
-      "buildRoot": "/Users/cat/Documents/GitHub/BiliDownload/app/.cxx/cmake/release/armeabi-v7a",
-      "cmakeToolchain": "/Users/cat/Library/Android/sdk/ndk/23.1.7779620/build/cmake/android.toolchain.cmake",
-      "cmakeExecutable": "/Users/cat/Library/Android/sdk/cmake/3.10.2.4988404/bin/cmake",
+      "buildRoot": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\.cxx\\cmake\\release\\armeabi-v7a",
+      "cmakeToolchain": "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\ndk\\23.1.7779620\\build\\cmake\\android.toolchain.cmake",
+      "cmakeExecutable": "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\cmake.exe",
       "variables": [
         {
           "name": "CMAKE_CXX_FLAGS",
@@ -25,7 +25,7 @@
         },
         {
           "name": "CMAKE_FIND_ROOT_PATH",
-          "value": "/Users/cat/Documents/GitHub/BiliDownload/app/.cxx/cmake/release/prefab/armeabi-v7a/prefab"
+          "value": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\.cxx\\cmake\\release\\prefab\\armeabi-v7a\\prefab"
         },
         {
           "name": "CMAKE_BUILD_TYPE",
@@ -33,7 +33,7 @@
         },
         {
           "name": "CMAKE_TOOLCHAIN_FILE",
-          "value": "/Users/cat/Library/Android/sdk/ndk/23.1.7779620/build/cmake/android.toolchain.cmake"
+          "value": "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\ndk\\23.1.7779620\\build\\cmake\\android.toolchain.cmake"
         },
         {
           "name": "ANDROID_ABI",
@@ -41,7 +41,7 @@
         },
         {
           "name": "ANDROID_NDK",
-          "value": "/Users/cat/Library/Android/sdk/ndk/23.1.7779620"
+          "value": "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\ndk\\23.1.7779620"
         },
         {
           "name": "ANDROID_PLATFORM",
@@ -53,7 +53,7 @@
         },
         {
           "name": "CMAKE_ANDROID_NDK",
-          "value": "/Users/cat/Library/Android/sdk/ndk/23.1.7779620"
+          "value": "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\ndk\\23.1.7779620"
         },
         {
           "name": "CMAKE_EXPORT_COMPILE_COMMANDS",
@@ -61,11 +61,11 @@
         },
         {
           "name": "CMAKE_LIBRARY_OUTPUT_DIRECTORY",
-          "value": "/Users/cat/Documents/GitHub/BiliDownload/app/build/intermediates/cmake/release/obj/armeabi-v7a"
+          "value": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\build\\intermediates\\cmake\\release\\obj\\armeabi-v7a"
         },
         {
           "name": "CMAKE_MAKE_PROGRAM",
-          "value": "/Users/cat/Library/Android/sdk/cmake/3.10.2.4988404/bin/ninja"
+          "value": "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe"
         },
         {
           "name": "CMAKE_SYSTEM_NAME",
@@ -78,14 +78,14 @@
       ]
     }
   },
-  "cxxBuildFolder": "/Users/cat/Documents/GitHub/BiliDownload/app/.cxx/cmake/release/armeabi-v7a",
+  "cxxBuildFolder": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\.cxx\\cmake\\release\\armeabi-v7a",
   "info": {
     "abi": "ARMEABI_V7A",
     "bitness": 32,
     "deprecated": false,
     "default": true
   },
-  "originalCxxBuildFolder": "/Users/cat/Documents/GitHub/BiliDownload/app/.cxx/cmake/release/armeabi-v7a",
+  "originalCxxBuildFolder": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\.cxx\\cmake\\release\\armeabi-v7a",
   "variant": {
     "buildSystemArgumentList": [],
     "buildTargetSet": [],
@@ -99,24 +99,24 @@
     "module": {
       "buildSystem": "CMAKE",
       "cmake": {
-        "cmakeExe": "/Users/cat/Library/Android/sdk/cmake/3.10.2.4988404/bin/cmake",
+        "cmakeExe": "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\cmake.exe",
         "minimumCmakeVersion": "3.10.2",
-        "ninjaExe": "/Users/cat/Library/Android/sdk/cmake/3.10.2.4988404/bin/ninja"
+        "ninjaExe": "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe"
       },
-      "cmakeToolchainFile": "/Users/cat/Library/Android/sdk/ndk/23.1.7779620/build/cmake/android.toolchain.cmake",
-      "cxxFolder": "/Users/cat/Documents/GitHub/BiliDownload/app/.cxx",
+      "cmakeToolchainFile": "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\ndk\\23.1.7779620\\build\\cmake\\android.toolchain.cmake",
+      "cxxFolder": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\.cxx",
       "gradleModulePathName": ":app",
-      "intermediatesFolder": "/Users/cat/Documents/GitHub/BiliDownload/app/build/intermediates",
-      "makeFile": "/Users/cat/Documents/GitHub/BiliDownload/app/src/main/cpp/CMakeLists.txt",
-      "moduleBuildFile": "/Users/cat/Documents/GitHub/BiliDownload/app/build.gradle",
-      "moduleRootFolder": "/Users/cat/Documents/GitHub/BiliDownload/app",
+      "intermediatesFolder": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\build\\intermediates",
+      "makeFile": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\src\\main\\cpp\\CMakeLists.txt",
+      "moduleBuildFile": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\build.gradle",
+      "moduleRootFolder": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app",
       "ndkDefaultAbiList": [
         "ARMEABI_V7A",
         "ARM64_V8A",
         "X86",
         "X86_64"
       ],
-      "ndkFolder": "/Users/cat/Library/Android/sdk/ndk/23.1.7779620",
+      "ndkFolder": "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\ndk\\23.1.7779620",
       "ndkMetaAbiList": [
         {
           "abi": "ARMEABI_V7A",
@@ -175,38 +175,39 @@
       "ndkDefaultStl": "LIBCXX_STATIC",
       "ndkVersion": "23.1.7779620",
       "project": {
-        "compilerSettingsCacheFolder": "/Users/cat/Documents/GitHub/BiliDownload/.cxx",
-        "cxxFolder": "/Users/cat/Documents/GitHub/BiliDownload/.cxx",
+        "compilerSettingsCacheFolder": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\.cxx",
+        "cxxFolder": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\.cxx",
         "isBuildOnlyTargetAbiEnabled": true,
         "isCmakeBuildCohabitationEnabled": false,
         "isNativeCompilerSettingsCacheEnabled": false,
-        "rootBuildGradleFolder": "/Users/cat/Documents/GitHub/BiliDownload",
-        "sdkFolder": "/Users/cat/Library/Android/sdk",
+        "rootBuildGradleFolder": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload",
+        "sdkFolder": "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk",
         "isPrefabEnabled": false
       },
-      "splitsAbiFilterSet": [],
+      "splitsAbiFilterSet": [
+        "armeabi-v7a",
+        "arm64-v8a"
+      ],
       "stlSharedObjectMap": {
         "LIBCXX_SHARED": {
-          "ARMEABI_V7A": "/Users/cat/Library/Android/sdk/ndk/23.1.7779620/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/arm-linux-androideabi/libc++_shared.so",
-          "ARM64_V8A": "/Users/cat/Library/Android/sdk/ndk/23.1.7779620/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so",
-          "X86": "/Users/cat/Library/Android/sdk/ndk/23.1.7779620/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/i686-linux-android/libc++_shared.so",
-          "X86_64": "/Users/cat/Library/Android/sdk/ndk/23.1.7779620/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/libc++_shared.so"
+          "ARMEABI_V7A": "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\ndk\\23.1.7779620\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\usr\\lib\\arm-linux-androideabi\\libc++_shared.so",
+          "ARM64_V8A": "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\ndk\\23.1.7779620\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\usr\\lib\\aarch64-linux-android\\libc++_shared.so",
+          "X86": "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\ndk\\23.1.7779620\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\usr\\lib\\i686-linux-android\\libc++_shared.so",
+          "X86_64": "C:\\Users\\kafuu\\AppData\\Local\\Android\\Sdk\\ndk\\23.1.7779620\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\usr\\lib\\x86_64-linux-android\\libc++_shared.so"
         },
         "LIBCXX_STATIC": {},
         "NONE": {},
         "SYSTEM": {}
       }
     },
-    "objFolder": "/Users/cat/Documents/GitHub/BiliDownload/app/build/intermediates/cmake/release/obj",
+    "objFolder": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\build\\intermediates\\cmake\\release\\obj",
     "variantName": "release",
     "validAbiList": [
       "ARMEABI_V7A",
-      "ARM64_V8A",
-      "X86",
-      "X86_64"
+      "ARM64_V8A"
     ],
-    "prefabDirectory": "/Users/cat/Documents/GitHub/BiliDownload/app/.cxx/cmake/release/prefab",
+    "prefabDirectory": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\.cxx\\cmake\\release\\prefab",
     "prefabPackageDirectoryList": []
   },
-  "prefabFolder": "/Users/cat/Documents/GitHub/BiliDownload/app/.cxx/cmake/release/prefab/armeabi-v7a"
+  "prefabFolder": "C:\\Users\\kafuu\\Documents\\GitHub\\BiliDownload\\app\\.cxx\\cmake\\release\\prefab\\armeabi-v7a"
 }

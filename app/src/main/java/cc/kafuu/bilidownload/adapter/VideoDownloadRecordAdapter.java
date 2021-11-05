@@ -3,11 +3,12 @@ package cc.kafuu.bilidownload.adapter;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.DownloadManager;
+import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.database.Cursor;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +28,7 @@ import org.litepal.LitePal;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -37,6 +39,7 @@ import cc.kafuu.bilidownload.bilibili.video.BiliDownloader;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideoResource;
 import cc.kafuu.bilidownload.database.VideoDownloadRecord;
 import cc.kafuu.bilidownload.database.VideoInfo;
+import cc.kafuu.bilidownload.jniexport.JniTools;
 import cc.kafuu.bilidownload.utils.DialogTools;
 import cc.kafuu.bilidownload.utils.SystemTools;
 
@@ -180,7 +183,7 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
             Glide.with(mContext).load(mVideoInfo.getPartPic()).placeholder(R.drawable.ic_2233).centerCrop().into(mVideoPic);
             mVideoTitle.setText(mVideoInfo.getPartTitle() + "-" + mVideoInfo.getVideoTitle());
             mVid.setText(BvConvert.av2bv(String.valueOf(mVideoInfo.getAvid())));
-            mFormat.setText(mVideoInfo.getQualityDescription() + "(" + mVideoInfo.getFormat() + ")");
+            mFormat.setText(mVideoInfo.getQualityDescription() + "(" + mBindRecord.getSaveTo().substring(mBindRecord.getSaveTo().lastIndexOf('.') + 1) + ")");
 
             return true;
         }
@@ -303,7 +306,7 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
 
             //下载完成的任务
             if (mDownloadStatusFlag == DownloadManager.STATUS_SUCCESSFUL) {
-                CharSequence[] items = new CharSequence[] {mContext.getText(R.string.view), mContext.getText(R.string.send), mContext.getText(R.string.delete), mContext.getText(R.string.cancel) };
+                CharSequence[] items = new CharSequence[] {mContext.getText(R.string.view), mContext.getText(R.string.send), mContext.getText(R.string.convert), mContext.getText(R.string.delete), mContext.getText(R.string.cancel) };
                 new AlertDialog.Builder(mContext)
                         .setTitle(mVideoInfo.getVideoTitle())
                         .setItems(items, (dialogInterface, i) -> onOperationSelected(i))
@@ -313,8 +316,17 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
         }
 
         private void onDeleteItem() {
-            File saveTo = new File(mBindRecord.getSaveTo());
+            String converting = mBindRecord.getConverting();
+            if (converting != null) {
+                File convertingFile = new File(converting);
+                if (convertingFile.exists() && !convertingFile.delete()) {
+                    Toast.makeText(mContext, R.string.delete_download_file_failure, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
 
+
+            File saveTo = new File(mBindRecord.getSaveTo());
             if (saveTo.exists() && !saveTo.delete()) {
                 Toast.makeText(mContext, R.string.delete_download_file_failure, Toast.LENGTH_SHORT).show();
                 return;
@@ -370,12 +382,82 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
                 SystemTools.shareOrViewFile(mContext, mVideoInfo.getVideoTitle() + "-" + mVideoInfo.getPartTitle(), file, "*/*", i == 0);
 
             } else if (i == 2) {
+                //视频格式化转换
+                //当前格式是flv就转为mp4，如果是mp4就转为flv
+                final String format = mBindRecord.getSaveTo().substring(mBindRecord.getSaveTo().lastIndexOf('.') + 1);
+                final String toFormat = format.contains("mp4") ? "flv" : "mp4";
+
+                DialogTools.confirm(mContext,
+                        mVideoInfo.getVideoTitle(),
+                        mContext.getText(R.string.video_convert_tip).toString().replace("%args1", format).replace("%args2", toFormat),
+                        (dialog, which) -> convertVideoFormat(toFormat),
+                        null);
+
+
+            } else if (i == 3) {
                 //删除
                 DialogTools.confirm(mContext, mVideoInfo.getVideoTitle(),
                         mContext.getText(R.string.delete_download_record_confirm),
                         (dialogInterface, x) -> onDeleteItem(),
                         null);
             }
+        }
+
+        /**
+         * 转换视频格式
+         * */
+        private void convertVideoFormat(final String toFormat) {
+
+
+            Log.d("mBindRecord.getSaveTo()", mBindRecord.getSaveTo());
+            if (mBindRecord.getConverting() != null) {
+                Log.d("mBindRecord.getConverting()", mBindRecord.getConverting());
+            }
+
+            if (mBindRecord.getConverting() != null) {
+                File file = new File(mBindRecord.getConverting());
+                if (file.exists() && !file.delete()) {
+                    Toast.makeText(mContext, R.string.convert_failure_1, Toast.LENGTH_LONG).show();
+                    return;
+                }
+            }
+
+
+            final File convertSaveTo = new File(new File(mBindRecord.getSaveTo()).getParent() + "/" + new Date().getTime() + "." + toFormat);
+
+            Log.d("convertSaveTo", convertSaveTo.toString());
+
+            mBindRecord.setConverting(convertSaveTo.getPath());
+            mBindRecord.saveOrUpdate("id=?", String.valueOf(mBindRecord.getId()));
+
+            final ProgressDialog progressDialog = new ProgressDialog(mContext);
+            progressDialog.setMessage(mContext.getText(R.string.convert_progress_title));
+            progressDialog.setCancelable(false);
+            progressDialog.show();
+
+            Thread thread = new Thread(() -> {
+                int rc = JniTools.videoFormatConversion(mBindRecord.getSaveTo(), convertSaveTo.getPath());
+                progressDialog.cancel();
+                if (rc != 0) {
+                    mHandle.post(() -> Toast.makeText(mContext, R.string.convert_failure_2, Toast.LENGTH_LONG).show());
+                } else if (!new File(mBindRecord.getSaveTo()).delete()) {
+                    mHandle.post(() -> Toast.makeText(mContext, R.string.convert_failure_3, Toast.LENGTH_LONG).show());
+                } else {
+                    mHandle.post(() -> {
+                        mBindRecord.setSaveTo(convertSaveTo.getPath());
+                        mBindRecord.setConverting(null);
+                        mBindRecord.saveOrUpdate("id=?", String.valueOf(mBindRecord.getId()));
+
+                        if(!loadingBaseInfo()) {
+                            loadedFailure();
+                        }
+                        Toast.makeText(mContext, R.string.convert_completed, Toast.LENGTH_SHORT).show();
+                    }); //重新加载数据
+                }
+            });
+
+            thread.start();
+
         }
     }
 }

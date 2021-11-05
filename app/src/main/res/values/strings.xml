@@ -68,5 +68,13 @@
     <string name="file_not_exist">文件不存在</string>
     <string name="video_download_not_allowed">上传者不允许下载此视频资源</string>
     <string name="confirm_use_contents_paste_board">您当前粘贴板的内容可能是您需要解析的视频，是否使用它？</string>
+    <string name="convert">转换</string>
+    <string name="video_format_error">无法取得此视频封装格式</string>
+    <string name="video_convert_tip">您当前视频封装格式是%args1,是否转换此视频的封装格式到%args2？</string>
+    <string name="convert_failure_1">有转换进程在执行或无法删除无效的转换文件！</string>
+    <string name="convert_failure_2">视频封装格式转换失败</string>
+    <string name="convert_failure_3">原视频资源删除失败</string>
+    <string name="convert_progress_title">正在转换视频封装格式中</string>
+    <string name="convert_completed">视频封装格式转换完成</string>
 
 </resources>

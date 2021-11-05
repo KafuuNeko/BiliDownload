@@ -17,7 +17,10 @@ public class VideoDownloadRecord extends LitePalSupport {
     @Column(nullable = false)
     private final Date startTime;
     @Column(nullable = false)
-    private final String saveTo;
+    private String saveTo;
+
+    @Column(defaultValue = "NULL")
+    private String converting = null;
 
     public VideoDownloadRecord(long downloadId, long avid, long cid, int quality, String saveTo) {
         this.downloadId = downloadId;
@@ -60,5 +63,24 @@ public class VideoDownloadRecord extends LitePalSupport {
 
     public String getSaveTo() {
         return saveTo;
+    }
+
+    public void setSaveTo(String saveTo) {
+        this.saveTo = saveTo;
+    }
+
+    public String getConverting() {
+        if (converting == null || converting.equals("NULL")) {
+            return null;
+        }
+        return converting;
+    }
+
+    public void setConverting(String converting) {
+        if (converting == null) {
+            this.converting = "NULL";
+        } else {
+            this.converting = converting;
+        }
     }
 }
