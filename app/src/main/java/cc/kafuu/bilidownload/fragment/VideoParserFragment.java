@@ -1,7 +1,9 @@
 package cc.kafuu.bilidownload.fragment;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -55,7 +57,7 @@ import okhttp3.ResponseBody;
  * create an instance of this fragment.
  */
 public class VideoParserFragment extends Fragment {
-    private Handler mHandler;
+    private final Handler mHandler;
 
     private View mRootView = null;
 
@@ -106,8 +108,8 @@ public class VideoParserFragment extends Fragment {
         final CharSequence pasteText = SystemTools.paste(getContext());
         if (pasteText != null) {
             //解析粘贴板内容中可能存在的Id
-            String id = getInputId(pasteText.toString());
-            if (id == null) {
+            String pasteId = getInputId(pasteText.toString());
+            if (pasteId == null) {
                 //粘贴板内容中不存在可用的Id
                 return;
             }
@@ -115,18 +117,27 @@ public class VideoParserFragment extends Fragment {
             //粘贴板内容和当前用户正在解析的内容是否一致
             if (mVideoAddress.getText() != null) {
                 String curId = getInputId(mVideoAddress.getText().toString());
-                if (curId != null && curId.equals(id)) {
+                if (curId != null && curId.equals(pasteId)) {
                     //一样的，不需要再次提示用户
                     return;
                 }
             }
 
-            DialogTools.confirm(getContext(), null, getText(R.string.confirm_use_contents_paste_board), new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    mVideoAddress.setText(pasteText);
+            //判断此内容是否是上次用户粘贴的内容
+            SharedPreferences sharedPreferences = getContext().getSharedPreferences("app", Context.MODE_PRIVATE);
+            if (sharedPreferences == null) {
+                return;
+            }
+            String lastPasteId = sharedPreferences.getString("pasteId", null);
+            if (lastPasteId != null) {
+                Log.d("lastPasteId", lastPasteId);
+                if (lastPasteId.equals(pasteId)) {
+                    return;
                 }
-            }, null);
+            }
+            sharedPreferences.edit().putString("pasteId", pasteId).apply();
+
+            DialogTools.confirm(getContext(), null, getText(R.string.confirm_use_contents_paste_board), (dialogInterface, i) -> mVideoAddress.setText(pasteText), null);
         }
     }
 
