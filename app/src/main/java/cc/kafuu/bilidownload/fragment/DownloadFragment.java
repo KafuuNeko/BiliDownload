@@ -100,7 +100,7 @@ public class DownloadFragment extends Fragment {
         filter.addAction("download.task.create");
         Objects.requireNonNull(getContext()).registerReceiver(mBroadcastReceiver, filter);
 
-        mVideoDownloadRecordAdapter = new VideoDownloadRecordAdapter(getContext());
+        mVideoDownloadRecordAdapter = new VideoDownloadRecordAdapter(getActivity());
         mDownloadRecordList.setAdapter(mVideoDownloadRecordAdapter);
     }
 

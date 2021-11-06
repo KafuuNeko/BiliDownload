@@ -217,7 +217,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
         }
 
         private void onCreateDownloadComplete(VideoDownloadRecord record) {
-            Log.d(TAG, "onCreateDownloadComplete: Id " + record.getId());
+            Log.d(TAG, "onCreateDownloadComplete: Id " + record.getDownloadId());
 
             Toast.makeText(mActivity, R.string.create_download_task_completed, Toast.LENGTH_SHORT).show();
 

@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload.utils;
 
+import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -39,5 +40,9 @@ public class SystemTools {
         }
         int count = clipData.getItemCount();
         return count == 0 ? null : clipboardManager.getPrimaryClip().getItemAt(0).getText();
+    }
+
+    public static boolean isActivityDestroy(Activity activity) {
+        return activity == null || activity.isFinishing() || activity.isDestroyed();
     }
 }

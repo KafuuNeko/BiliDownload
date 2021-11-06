@@ -142,9 +142,7 @@
                     <TextView
                         android:id="@+id/videoDescribe"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:ellipsize="end"
-                        android:maxLines="5" />
+                        android:layout_height="wrap_content" />
 
                     <TextView
                         android:id="@+id/videoDownloadNotAllowed"

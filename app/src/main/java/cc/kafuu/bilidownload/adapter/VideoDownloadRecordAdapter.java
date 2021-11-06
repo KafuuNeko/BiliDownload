@@ -1,11 +1,13 @@
 package cc.kafuu.bilidownload.adapter;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DownloadManager;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.database.Cursor;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -19,6 +21,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -28,6 +31,7 @@ import org.litepal.LitePal;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Timer;
@@ -47,15 +51,15 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
     private static final String TAG = "VideoDownloadRecordAdap";
 
     private final Handler mHandle;
-    private final Context mContext;
+    private final Activity mActivity;
     private final DownloadManager mDownloadManager;
     private List<VideoDownloadRecord> mRecords;
 
-    public VideoDownloadRecordAdapter(Context context) {
+    public VideoDownloadRecordAdapter(Activity activity) {
         this.mHandle = new Handler(Looper.getMainLooper());
 
-        this.mContext = context;
-        this.mDownloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+        this.mActivity = activity;
+        this.mDownloadManager = (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
         reloadRecords();
     }
 
@@ -63,17 +67,34 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
         mRecords = LitePal.findAll(VideoDownloadRecord.class);
 
         //删除无效数据
-        mRecords.removeIf(record -> {
-            try (Cursor cursor = mDownloadManager.query(new DownloadManager.Query().setFilterById(record.getDownloadId()))) {
-                if (cursor == null || !cursor.moveToFirst()) {
-                    LitePal.delete(VideoDownloadRecord.class, record.getId());
-                    return true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            mRecords.removeIf(record -> !checkRecord(record));
+        } else {
+            List<VideoDownloadRecord> newRecords = new ArrayList<>();
+            for (VideoDownloadRecord record : mRecords) {
+                if (checkRecord(record)) {
+                    newRecords.add(record);
                 }
-                return false;
             }
-        });
+            mRecords = newRecords;
+        }
 
         notifyDataSetChanged();
+    }
+
+    /**
+     * 校验记录是否有效
+     * 如果记录无效则删除并返回false
+     * */
+    private boolean checkRecord(VideoDownloadRecord record) {
+        try (Cursor cursor = mDownloadManager.query(new DownloadManager.Query().setFilterById(record.getDownloadId()))) {
+            if (cursor == null || !cursor.moveToFirst()) {
+                Log.d(TAG, "checkRecord: " + record.getDownloadId() + " lose efficacy");
+                LitePal.delete(VideoDownloadRecord.class, record.getId());
+                return false;
+            }
+            return true;
+        }
     }
 
     @NonNull
@@ -85,7 +106,9 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
 
     @Override
     public void onBindViewHolder(@NonNull VideoDownloadRecordAdapter.InnerHolder holder, int position) {
-        holder.bindRecord(mRecords.get(position));
+        if (!SystemTools.isActivityDestroy(mActivity)) {
+            holder.bindRecord(mRecords.get(position));
+        }
     }
 
     @Override
@@ -182,10 +205,12 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
                 return false;
             }
 
-            Glide.with(mContext).load(mVideoInfo.getPartPic()).placeholder(R.drawable.ic_2233).centerCrop().into(mVideoPic);
-            mVideoTitle.setText(mVideoInfo.getPartTitle() + "-" + mVideoInfo.getVideoTitle());
-            mVid.setText(BvConvert.av2bv(String.valueOf(mVideoInfo.getAvid())));
-            mFormat.setText(mVideoInfo.getQualityDescription() + "(" + mBindRecord.getSaveTo().substring(mBindRecord.getSaveTo().lastIndexOf('.') + 1) + ")");
+            if (!SystemTools.isActivityDestroy(mActivity)) {
+                Glide.with(mActivity).load(mVideoInfo.getPartPic()).placeholder(R.drawable.ic_2233).centerCrop().into(mVideoPic);
+                mVideoTitle.setText(mVideoInfo.getPartTitle() + "-" + mVideoInfo.getVideoTitle());
+                mVid.setText(BvConvert.av2bv(String.valueOf(mVideoInfo.getAvid())));
+                mFormat.setText(mVideoInfo.getQualityDescription() + "(" + mBindRecord.getSaveTo().substring(mBindRecord.getSaveTo().lastIndexOf('.') + 1) + ")");
+            }
 
             return true;
         }
@@ -218,31 +243,31 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
                 mDownloadInfo.setText(simpleDateFormat.format(mBindRecord.getStartTime()));
 
                 if (mDownloadStatusFlag == DownloadManager.STATUS_RUNNING) {
-                    mDownloadStatus.setTextColor(mContext.getColor(R.color.blue));
+                    mDownloadStatus.setTextColor(ContextCompat.getColor(mActivity, R.color.blue));
                     mDownloadStatus.setText(R.string.download_running);
                     mDownloadProgress.setMax(10000);
                     mDownloadProgress.setProgress((int)(((double) completedSize / (double) totalSize) * 10000.0D));
 
                 } else if (mDownloadStatusFlag == DownloadManager.STATUS_PAUSED){
                     mDownloadStatus.setText(R.string.download_paused);
-                    mDownloadStatus.setTextColor(mContext.getColor(R.color.gray));
+                    mDownloadStatus.setTextColor(ContextCompat.getColor(mActivity, R.color.gray));
 
                 } else if (mDownloadStatusFlag == DownloadManager.STATUS_PENDING){
                     mDownloadStatus.setText(R.string.download_pending);
-                    mDownloadStatus.setTextColor(mContext.getColor(R.color.gray));
+                    mDownloadStatus.setTextColor(ContextCompat.getColor(mActivity, R.color.gray));
 
                 } else if (mDownloadStatusFlag == DownloadManager.STATUS_FAILED){
                     mDownloadStatus.setText(R.string.download_failure);
-                    mDownloadStatus.setTextColor(mContext.getColor(R.color.red));
+                    mDownloadStatus.setTextColor(ContextCompat.getColor(mActivity, R.color.red));
 
                 } else if (mDownloadStatusFlag == DownloadManager.STATUS_SUCCESSFUL){
                     mDownloadStatus.setText(R.string.download_complete);
-                    mDownloadStatus.setTextColor(mContext.getColor(R.color.green));
+                    mDownloadStatus.setTextColor(ContextCompat.getColor(mActivity, R.color.green));
 
                 } else {
                     mDownloadStatusFlag = -1;
                     mDownloadStatus.setText(R.string.download_unknown);
-                    mDownloadStatus.setTextColor(mContext.getColor(R.color.red));
+                    mDownloadStatus.setTextColor(ContextCompat.getColor(mActivity, R.color.red));
                 }
 
                 return true;
@@ -256,12 +281,14 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
         public void loadedFailure() {
             mLoadedStatus = LoadedStatus.LoadedFailure;
 
-            Glide.with(mContext).load(R.drawable.ic_2233).into(mVideoPic);
-            mVideoTitle.setText(R.string.load_video_info_failure);
-            mVid.setText("AV:" + mBindRecord.getAvid() + ", CID: " + mBindRecord.getCid());
-            mFormat.setText(null);
-            mDownloadStatus.setText(null);
-            mDownloadInfo.setText(null);
+            if (!SystemTools.isActivityDestroy(mActivity)) {
+                Glide.with(mActivity).load(R.drawable.ic_2233).into(mVideoPic);
+                mVideoTitle.setText(R.string.load_video_info_failure);
+                mVid.setText("AV:" + mBindRecord.getAvid() + ", CID: " + mBindRecord.getCid());
+                mFormat.setText(null);
+                mDownloadStatus.setText(null);
+                mDownloadInfo.setText(null);
+            }
         }
 
         /**
@@ -274,8 +301,8 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
 
             //表项加载失败
             if (mLoadedStatus == LoadedStatus.LoadedFailure || mDownloadStatusFlag == -1) {
-                DialogTools.confirm(mContext, mContext.getText(R.string.confirm),
-                        mContext.getText(R.string.download_item_undefined),
+                DialogTools.confirm(mActivity, mActivity.getText(R.string.confirm),
+                        mActivity.getText(R.string.download_item_undefined),
                         (dialogInterface, i) -> onDeleteItem(),
                         null);
                 return;
@@ -287,7 +314,7 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
 
             //下载失败
             if (mDownloadStatusFlag == DownloadManager.STATUS_FAILED) {
-                new AlertDialog.Builder(mContext)
+                new AlertDialog.Builder(mActivity)
                         .setTitle(mVideoInfo.getVideoTitle())
                         .setMessage(R.string.download_failure_whether_restart_or_remode)
                         .setNegativeButton(R.string.cancel, null)
@@ -299,8 +326,8 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
 
             //等待下载、下载挂起、正在下载
             if (mDownloadStatusFlag == DownloadManager.STATUS_PENDING || mDownloadStatusFlag == DownloadManager.STATUS_PAUSED || mDownloadStatusFlag == DownloadManager.STATUS_RUNNING) {
-                DialogTools.confirm(mContext, mContext.getText(R.string.confirm),
-                        mContext.getText(R.string.cancel_download_confirm),
+                DialogTools.confirm(mActivity, mActivity.getText(R.string.confirm),
+                        mActivity.getText(R.string.cancel_download_confirm),
                         (dialogInterface, i) -> onDeleteItem(),
                         null);
                 return;
@@ -308,8 +335,8 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
 
             //下载完成的任务
             if (mDownloadStatusFlag == DownloadManager.STATUS_SUCCESSFUL) {
-                CharSequence[] items = new CharSequence[] {mContext.getText(R.string.view), mContext.getText(R.string.send), mContext.getText(R.string.convert), mContext.getText(R.string.delete), mContext.getText(R.string.cancel) };
-                new AlertDialog.Builder(mContext)
+                CharSequence[] items = new CharSequence[] {mActivity.getText(R.string.view), mActivity.getText(R.string.send), mActivity.getText(R.string.convert), mActivity.getText(R.string.delete), mActivity.getText(R.string.cancel) };
+                new AlertDialog.Builder(mActivity)
                         .setTitle(mVideoInfo.getVideoTitle())
                         .setItems(items, (dialogInterface, i) -> onOperationSelected(i))
                         .create().show();
@@ -322,7 +349,7 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
             if (converting != null) {
                 File convertingFile = new File(converting);
                 if (convertingFile.exists() && !convertingFile.delete()) {
-                    Toast.makeText(mContext, R.string.delete_download_file_failure, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mActivity, R.string.delete_download_file_failure, Toast.LENGTH_SHORT).show();
                     return;
                 }
             }
@@ -330,7 +357,7 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
 
             File saveTo = new File(mBindRecord.getSaveTo());
             if (saveTo.exists() && !saveTo.delete()) {
-                Toast.makeText(mContext, R.string.delete_download_file_failure, Toast.LENGTH_SHORT).show();
+                Toast.makeText(mActivity, R.string.delete_download_file_failure, Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -355,7 +382,7 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
                     downloader.getDownloadId(mDownloadManager, new BiliDownloader.GetDownloadIdCallback() {
                         @Override
                         public void onFailure(String message) {
-                            mHandle.post(() -> Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show());
+                            mHandle.post(() -> Toast.makeText(mActivity, message, Toast.LENGTH_SHORT).show());
                         }
 
                         @Override
@@ -368,7 +395,7 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
 
                 @Override
                 public void onFailure(String message) {
-                    mHandle.post(() -> Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show());
+                    mHandle.post(() -> Toast.makeText(mActivity, message, Toast.LENGTH_SHORT).show());
                 }
             });
         }
@@ -378,10 +405,10 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
                 //查看、发送
                 File file = new File(mBindRecord.getSaveTo());
                 if (!file.exists()) {
-                    Toast.makeText(mContext, R.string.file_not_exist, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mActivity, R.string.file_not_exist, Toast.LENGTH_SHORT).show();
                     return;
                 }
-                SystemTools.shareOrViewFile(mContext, mVideoInfo.getVideoTitle() + "-" + mVideoInfo.getPartTitle(), file, "*/*", i == 0);
+                SystemTools.shareOrViewFile(mActivity, mVideoInfo.getVideoTitle() + "-" + mVideoInfo.getPartTitle(), file, "*/*", i == 0);
 
             } else if (i == 2) {
                 //视频格式化转换
@@ -389,17 +416,17 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
                 final String format = mBindRecord.getSaveTo().substring(mBindRecord.getSaveTo().lastIndexOf('.') + 1);
                 final String toFormat = format.contains("mp4") ? "flv" : "mp4";
 
-                DialogTools.confirm(mContext,
+                DialogTools.confirm(mActivity,
                         mVideoInfo.getVideoTitle(),
-                        mContext.getText(R.string.video_convert_tip).toString().replace("%args1", format).replace("%args2", toFormat),
+                        mActivity.getText(R.string.video_convert_tip).toString().replace("%args1", format).replace("%args2", toFormat),
                         (dialog, which) -> convertVideoFormat(toFormat),
                         null);
 
 
             } else if (i == 3) {
                 //删除
-                DialogTools.confirm(mContext, mVideoInfo.getVideoTitle(),
-                        mContext.getText(R.string.delete_download_record_confirm),
+                DialogTools.confirm(mActivity, mVideoInfo.getVideoTitle(),
+                        mActivity.getText(R.string.delete_download_record_confirm),
                         (dialogInterface, x) -> onDeleteItem(),
                         null);
             }
@@ -418,7 +445,7 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
             if (mBindRecord.getConverting() != null) {
                 File file = new File(mBindRecord.getConverting());
                 if (file.exists() && !file.delete()) {
-                    Toast.makeText(mContext, R.string.convert_failure_1, Toast.LENGTH_LONG).show();
+                    Toast.makeText(mActivity, R.string.convert_failure_1, Toast.LENGTH_LONG).show();
                     return;
                 }
             }
@@ -431,8 +458,8 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
             mBindRecord.setConverting(convertSaveTo.getPath());
             mBindRecord.saveOrUpdate("id=?", String.valueOf(mBindRecord.getId()));
 
-            final ProgressDialog progressDialog = new ProgressDialog(mContext);
-            progressDialog.setMessage(mContext.getText(R.string.convert_progress_title));
+            final ProgressDialog progressDialog = new ProgressDialog(mActivity);
+            progressDialog.setMessage(mActivity.getText(R.string.convert_progress_title));
             progressDialog.setCancelable(false);
             progressDialog.show();
 
@@ -440,9 +467,9 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
                 int rc = JniTools.videoFormatConversion(mBindRecord.getSaveTo(), convertSaveTo.getPath());
                 progressDialog.cancel();
                 if (rc != 0) {
-                    mHandle.post(() -> Toast.makeText(mContext, R.string.convert_failure_2, Toast.LENGTH_LONG).show());
+                    mHandle.post(() -> Toast.makeText(mActivity, R.string.convert_failure_2, Toast.LENGTH_LONG).show());
                 } else if (!new File(mBindRecord.getSaveTo()).delete()) {
-                    mHandle.post(() -> Toast.makeText(mContext, R.string.convert_failure_3, Toast.LENGTH_LONG).show());
+                    mHandle.post(() -> Toast.makeText(mActivity, R.string.convert_failure_3, Toast.LENGTH_LONG).show());
                 } else {
                     mHandle.post(() -> {
                         mBindRecord.setSaveTo(convertSaveTo.getPath());
@@ -452,7 +479,7 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
                         if(!loadingBaseInfo()) {
                             loadedFailure();
                         }
-                        Toast.makeText(mContext, R.string.convert_completed, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(mActivity, R.string.convert_completed, Toast.LENGTH_SHORT).show();
                     }); //重新加载数据
                 }
             });
