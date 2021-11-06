@@ -22,6 +22,8 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 public class BiliVideo {
+    private static final String TAG = "BiliVideo";
+
     /**
      * 通过BV号解析下载地址
      * */
@@ -97,7 +99,7 @@ public class BiliVideo {
 
         String json = body.string();
 
-        Log.d("BiliVideo.analyzingResponse->json", json);
+        Log.d(TAG, "analyzingResponse: json " + json);
 
         JsonObject res = new Gson().fromJson(json, JsonObject.class);
 

@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "cc.kafuu.bilidownload"
-        minSdkVersion 24
+        minSdkVersion 21
         targetSdkVersion 30
         versionCode 9
         versionName "1.6.2"

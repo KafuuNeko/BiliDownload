@@ -57,6 +57,8 @@ import okhttp3.ResponseBody;
  * create an instance of this fragment.
  */
 public class VideoParserFragment extends Fragment {
+    private static final String TAG = "VideoParserFragment";
+
     private final Handler mHandler;
 
     private View mRootView = null;
@@ -130,7 +132,7 @@ public class VideoParserFragment extends Fragment {
             }
             String lastPasteId = sharedPreferences.getString("pasteId", null);
             if (lastPasteId != null) {
-                Log.d("lastPasteId", lastPasteId);
+                Log.d(TAG, "onResume: lastPasteId " + lastPasteId);
                 if (lastPasteId.equals(pasteId)) {
                     return;
                 }
@@ -250,7 +252,7 @@ public class VideoParserFragment extends Fragment {
                 }
 
                 JsonObject jsonObject = new Gson().fromJson(body.string(), JsonObject.class);
-                Log.d("onExitLogin", jsonObject.toString());
+                Log.d(TAG, "onResponse: onExitLogin " + jsonObject.toString());
                 if (jsonObject.get("code").getAsInt() != 0) {
                     mHandler.post(() -> Toast.makeText(getContext(), R.string.exit_login_failure, Toast.LENGTH_SHORT).show());
                     return;
@@ -295,13 +297,13 @@ public class VideoParserFragment extends Fragment {
         BiliVideo.VideoParsingCallback callback = new BiliVideo.VideoParsingCallback() {
             @Override
             public void onCompleted(BiliVideo biliVideos) {
-                Log.d("VideoParserFragment.onParsingVideo->onComplete", biliVideos.toString());
+                Log.d(TAG, "onCompleted: " + biliVideos.toString());
                 mHandler.post(() -> parsingVideoCompleted(biliVideos, null));
             }
 
             @Override
             public void onFailure(String message) {
-                Log.d("[Failure]VideoParserFragment.onParsingVideo->onFailure", message);
+                Log.d(TAG, "onFailure: onFailure " + message);
                 mHandler.post(() -> parsingVideoCompleted(null, message));
             }
         };

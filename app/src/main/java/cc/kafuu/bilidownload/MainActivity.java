@@ -25,6 +25,8 @@ import cc.kafuu.bilidownload.fragment.DownloadFragment;
 import cc.kafuu.bilidownload.fragment.VideoParserFragment;
 
 public class MainActivity extends AppCompatActivity {
+    //private static final String TAG = "MainActivity";
+
     private Toolbar mToolbar;
     private BottomNavigationView mBottomNavigationView;
 

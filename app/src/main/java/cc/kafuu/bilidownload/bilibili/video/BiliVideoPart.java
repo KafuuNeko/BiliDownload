@@ -1,7 +1,5 @@
 package cc.kafuu.bilidownload.bilibili.video;
 
-import android.content.Context;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;

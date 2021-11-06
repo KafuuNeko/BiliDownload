@@ -44,6 +44,8 @@ import cc.kafuu.bilidownload.utils.DialogTools;
 import cc.kafuu.bilidownload.utils.SystemTools;
 
 public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownloadRecordAdapter.InnerHolder> {
+    private static final String TAG = "VideoDownloadRecordAdap";
+
     private final Handler mHandle;
     private final Context mContext;
     private final DownloadManager mDownloadManager;
@@ -407,11 +409,10 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
          * 转换视频格式
          * */
         private void convertVideoFormat(final String toFormat) {
+            Log.d(TAG, "convertVideoFormat: saveTo " + mBindRecord.getSaveTo());
 
-
-            Log.d("mBindRecord.getSaveTo()", mBindRecord.getSaveTo());
             if (mBindRecord.getConverting() != null) {
-                Log.d("mBindRecord.getConverting()", mBindRecord.getConverting());
+                Log.d(TAG, "convertVideoFormat: getConverting " + mBindRecord.getConverting());
             }
 
             if (mBindRecord.getConverting() != null) {
@@ -425,7 +426,7 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
 
             final File convertSaveTo = new File(new File(mBindRecord.getSaveTo()).getParent() + "/" + new Date().getTime() + "." + toFormat);
 
-            Log.d("convertSaveTo", convertSaveTo.toString());
+            Log.d(TAG, "convertVideoFormat: saveTo " + convertSaveTo.toString());
 
             mBindRecord.setConverting(convertSaveTo.getPath());
             mBindRecord.saveOrUpdate("id=?", String.valueOf(mBindRecord.getId()));

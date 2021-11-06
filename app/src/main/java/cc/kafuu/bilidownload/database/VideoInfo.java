@@ -1,6 +1,5 @@
 package cc.kafuu.bilidownload.database;
 
-import org.litepal.annotation.Column;
 import org.litepal.crud.LitePalSupport;
 
 public class VideoInfo extends LitePalSupport {

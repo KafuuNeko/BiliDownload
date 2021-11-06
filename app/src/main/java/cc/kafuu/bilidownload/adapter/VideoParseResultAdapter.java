@@ -35,6 +35,8 @@ import cc.kafuu.bilidownload.bilibili.video.BiliVideoResource;
 import cc.kafuu.bilidownload.database.VideoDownloadRecord;
 
 public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResultAdapter.InnerHolder> {
+    private static final String TAG = "VideoParseResultAdapter";
+
     private final Handler mHandle;
     private final Activity mActivity;
     private final BiliVideo mBiliVideo;
@@ -215,7 +217,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
         }
 
         private void onCreateDownloadComplete(VideoDownloadRecord record) {
-            Log.d("VideoDownloadRecord", "Id" + record.getId());
+            Log.d(TAG, "onCreateDownloadComplete: Id " + record.getId());
 
             Toast.makeText(mActivity, R.string.create_download_task_completed, Toast.LENGTH_SHORT).show();
 

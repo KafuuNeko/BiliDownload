@@ -12,6 +12,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
 public class Bili {
+    private static final String TAG = "Bili";
+
     //下载视频保存目录
     public static File saveDir = null; //= new File(Environment.getExternalStorageDirectory().getPath() + "/Download/BiliVideo");
 
@@ -72,7 +74,7 @@ public class Bili {
         }
 
         String bili_jct = Bili.biliCookie.substring(begin + 9, end);
-        Log.d("bili_jct", bili_jct);
+        Log.d(TAG, "requestExitLogin: bili_jct " + bili_jct);
 
 
         httpClient.newCall(new Request.Builder()
