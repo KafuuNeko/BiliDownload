@@ -1,12 +1,14 @@
 package cc.kafuu.bilidownload;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -47,6 +49,20 @@ public class MainActivity extends AppCompatActivity {
 
         initFragment(savedInstanceState);
         showFragment(mCurrentFragment);
+
+        if (!getSharedPreferences("app", MODE_PRIVATE).getBoolean("agree_clause_0", false)) {
+            startActivityForResult(new Intent(this, UseClausesActivity.class), 1);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1) {
+            if (!getSharedPreferences("app", MODE_PRIVATE).getBoolean("agree_clause_0", false)) {
+                finish();
+            }
+        }
     }
 
     @Override
@@ -82,6 +98,8 @@ public class MainActivity extends AppCompatActivity {
                     .setMessage(R.string.about_context)
                     .setPositiveButton(R.string.confirm, null)
                     .show();
+        } else if (item.getItemId() == R.id.navClauses) {
+            startActivityForResult(new Intent(this, UseClausesActivity.class), 1);
         }
 
         return super.onOptionsItemSelected(item);

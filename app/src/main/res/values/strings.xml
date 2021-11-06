@@ -76,5 +76,13 @@
     <string name="convert_failure_3">原视频资源删除失败</string>
     <string name="convert_progress_title">正在转换视频封装格式中</string>
     <string name="convert_completed">视频封装格式转换完成</string>
+    <string name="useClauses">使用条款</string>
+    <string name="refused">拒绝</string>
+    <string name="agree">同意</string>
+    <string name="clauses_load_failure">使用条款加载失败</string>
+    <string name="clauses">使用条款</string>
+    <string name="download_right_confirmation">视频上传者禁止了这个视频下载，视频所有者是否已授权您下载此视频？</string>
+    <string name="authorized_download">已授权</string>
+    <string name="unauthorized">未授权</string>
 
 </resources>

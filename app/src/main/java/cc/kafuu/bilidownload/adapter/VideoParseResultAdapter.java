@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.app.DownloadManager;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Handler;
@@ -97,12 +98,29 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
          * 此函数将加载此片段的所有下载源
          * */
         private void onItemClick(final BiliVideoPart part) {
+            if (part.getVideo().allowDownload()) {
+                getResources(part);
+                return;
+            }
+
+            new AlertDialog.Builder(mActivity)
+                    .setTitle(part.getVideo().getTitle())
+                    .setMessage(R.string.download_right_confirmation)
+                    .setNegativeButton(R.string.authorized_download, (dialog, which) -> getResources(part))
+                    .setPositiveButton(R.string.unauthorized, null)
+                    .show();
+        }
+
+        /**
+         * 获取资源
+         * */
+        private void getResources(final BiliVideoPart part) {
             if (part == null) {
                 return;
             }
 
             if (ActivityCompat.checkSelfPermission(mActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED
-                || ActivityCompat.checkSelfPermission(mActivity, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+                    || ActivityCompat.checkSelfPermission(mActivity, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
                 ActivityCompat.requestPermissions(mActivity, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
                 return;
             }
