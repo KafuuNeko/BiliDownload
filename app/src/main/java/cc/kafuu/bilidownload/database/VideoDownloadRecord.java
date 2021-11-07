@@ -21,6 +21,8 @@ public class VideoDownloadRecord extends LitePalSupport {
 
     @Column(defaultValue = "NULL")
     private String converting = null;
+    @Column(defaultValue = "NULL")
+    private String audio = null;
 
     public VideoDownloadRecord(long downloadId, long avid, long cid, int quality, String saveTo) {
         this.downloadId = downloadId;
@@ -70,17 +72,18 @@ public class VideoDownloadRecord extends LitePalSupport {
     }
 
     public String getConverting() {
-        if (converting == null || converting.equals("NULL")) {
-            return null;
-        }
-        return converting;
+        return (converting == null || converting.equals("NULL")) ? null : converting;
     }
 
     public void setConverting(String converting) {
-        if (converting == null) {
-            this.converting = "NULL";
-        } else {
-            this.converting = converting;
-        }
+        this.converting = (converting == null) ? "NULL" : converting;
+    }
+
+    public String getAudio() {
+        return (audio == null || audio.equals("NULL")) ? null : audio;
+    }
+
+    public void setAudio(String audio) {
+        this.audio = (audio == null) ? "NULL" : audio;
     }
 }

@@ -62,13 +62,13 @@
     <string name="restart">重启</string>
     <string name="stop">停止</string>
     <string name="cancel_download_confirm">是否取消这个下载任务？</string>
-    <string name="view">查看</string>
-    <string name="send">发送</string>
+    <string name="view_video">查看视频</string>
+    <string name="send_video">发送视频</string>
     <string name="delete_download_file_failure">删除已下载的文件失败</string>
     <string name="file_not_exist">文件不存在</string>
     <string name="video_download_not_allowed">上传者不允许下载此视频资源</string>
     <string name="confirm_use_contents_paste_board">您当前粘贴板的内容可能是您需要解析的视频，是否使用它？</string>
-    <string name="convert">转换</string>
+    <string name="convert_format">转换格式</string>
     <string name="video_format_error">无法取得此视频封装格式</string>
     <string name="video_convert_tip">您当前视频封装格式是%args1,是否转换此视频的封装格式到%args2？</string>
     <string name="convert_failure_1">有转换进程在执行或无法删除无效的转换文件！</string>
@@ -84,5 +84,13 @@
     <string name="download_right_confirmation">视频上传者禁止了这个视频下载，视频所有者是否已授权您下载此视频？</string>
     <string name="authorized_download">已授权</string>
     <string name="unauthorized">未授权</string>
+    <string name="delete_video">删除视频</string>
+    <string name="cancel_operation">取消操作</string>
+    <string name="extract_audio">提取音频</string>
+    <string name="failed_extract_audio_1">无法确认视频音频格式</string>
+    <string name="extracting_audio">正在提取音频</string>
+    <string name="failed_extract_audio_2">提取音频失败, 错误代码: %ec</string>
+    <string name="view_audio">查看音频</string>
+    <string name="send_audio">发送音频</string>
 
 </resources>

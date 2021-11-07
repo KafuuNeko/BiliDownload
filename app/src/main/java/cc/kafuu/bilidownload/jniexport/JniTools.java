@@ -8,4 +8,8 @@ public class JniTools {
     public static native String ffmpegInfo();
 
     public static native int videoFormatConversion(String in_filename, String out_filename);
+
+    public static native int extractAudio(String in_filename, String out_filename);
+
+    public static native String getVideoAudioFormat(String in_filename);
 }

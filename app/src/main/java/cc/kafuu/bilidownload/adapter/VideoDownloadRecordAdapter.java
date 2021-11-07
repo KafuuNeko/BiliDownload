@@ -335,7 +335,14 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
 
             //下载完成的任务
             if (mDownloadStatusFlag == DownloadManager.STATUS_SUCCESSFUL) {
-                CharSequence[] items = new CharSequence[] {mActivity.getText(R.string.view), mActivity.getText(R.string.send), mActivity.getText(R.string.convert), mActivity.getText(R.string.delete), mActivity.getText(R.string.cancel) };
+                CharSequence[] items = new CharSequence[] {
+                        mActivity.getText(R.string.view_video),
+                        mActivity.getText(R.string.send_video),
+                        mActivity.getText(R.string.convert_format),
+                        mActivity.getText(R.string.extract_audio),
+                        mActivity.getText(R.string.delete_video),
+                        mActivity.getText(R.string.cancel_operation) };
+
                 new AlertDialog.Builder(mActivity)
                         .setTitle(mVideoInfo.getVideoTitle())
                         .setItems(items, (dialogInterface, i) -> onOperationSelected(i))
@@ -344,17 +351,24 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
 
         }
 
+        /**
+         * 删除下载项
+         * */
         private void onDeleteItem() {
-            String converting = mBindRecord.getConverting();
-            if (converting != null) {
-                File convertingFile = new File(converting);
-                if (convertingFile.exists() && !convertingFile.delete()) {
-                    Toast.makeText(mActivity, R.string.delete_download_file_failure, Toast.LENGTH_SHORT).show();
-                    return;
-                }
+            //删除转换临时记录文件
+            File converting = (mBindRecord.getConverting() == null) ? null : new File(mBindRecord.getConverting());
+            if (converting != null && converting.exists() && !converting.delete()) {
+                Toast.makeText(mActivity, R.string.delete_download_file_failure, Toast.LENGTH_SHORT).show();
+                return;
             }
 
+            //删除音频文件
+            File audio = (mBindRecord.getAudio() == null) ? null : new File(mBindRecord.getAudio());
+            if (audio != null && audio.exists() && !audio.delete()) {
+                Toast.makeText(mActivity, R.string.delete_download_file_failure, Toast.LENGTH_SHORT).show();
+            }
 
+            //删除视频文件
             File saveTo = new File(mBindRecord.getSaveTo());
             if (saveTo.exists() && !saveTo.delete()) {
                 Toast.makeText(mActivity, R.string.delete_download_file_failure, Toast.LENGTH_SHORT).show();
@@ -368,6 +382,9 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
             notifyDataSetChanged();
         }
 
+        /**
+         * 重启任务
+         * */
         private void onRestartTask() {
             //通过Cid/Avid/Quality重新获取下载源
             BiliVideoResource.getDownloadUrl(mVideoInfo.getVideoTitle(),
@@ -400,6 +417,9 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
             });
         }
 
+        /**
+         * 视频操作被选择
+         * */
         private void onOperationSelected(int i) {
             if (i == 0 || i == 1) {
                 //查看、发送
@@ -421,9 +441,10 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
                         mActivity.getText(R.string.video_convert_tip).toString().replace("%args1", format).replace("%args2", toFormat),
                         (dialog, which) -> convertVideoFormat(toFormat),
                         null);
-
-
             } else if (i == 3) {
+                //提取音频
+                extractAudio();
+            } else if (i == 4) {
                 //删除
                 DialogTools.confirm(mActivity, mVideoInfo.getVideoTitle(),
                         mActivity.getText(R.string.delete_download_record_confirm),
@@ -450,7 +471,6 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
                 }
             }
 
-
             final File convertSaveTo = new File(new File(mBindRecord.getSaveTo()).getParent() + "/" + new Date().getTime() + "." + toFormat);
 
             Log.d(TAG, "convertVideoFormat: saveTo " + convertSaveTo.toString());
@@ -465,6 +485,7 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
 
             Thread thread = new Thread(() -> {
                 int rc = JniTools.videoFormatConversion(mBindRecord.getSaveTo(), convertSaveTo.getPath());
+
                 progressDialog.cancel();
                 if (rc != 0) {
                     mHandle.post(() -> Toast.makeText(mActivity, R.string.convert_failure_2, Toast.LENGTH_LONG).show());
@@ -485,6 +506,64 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
             });
 
             thread.start();
+
+        }
+
+        /**
+         * 提取音频
+         * */
+        private void extractAudio() {
+            File saveTo = new File(mBindRecord.getSaveTo());
+            if (!saveTo.exists()) {
+                Toast.makeText(mActivity, R.string.file_not_exist, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            File audioFile = (mBindRecord.getAudio() == null) ? null : new File(mBindRecord.getAudio());
+
+            if (audioFile == null || !audioFile.exists()) {
+                String audioFormat = JniTools.getVideoAudioFormat(saveTo.getPath());
+                if (audioFormat == null) {
+                    Toast.makeText(mActivity, R.string.failed_extract_audio_1, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                final ProgressDialog progressDialog = new ProgressDialog(mActivity);
+                progressDialog.setMessage(mActivity.getText(R.string.extracting_audio));
+                progressDialog.setCancelable(false);
+                progressDialog.show();
+
+                final File saveAudioFile = new File(saveTo.getParent() + "/" + new Date().getTime() + "." + audioFormat);
+                mBindRecord.setAudio(saveAudioFile.getPath());
+                mBindRecord.saveOrUpdate("id=?", String.valueOf(mBindRecord.getId()));
+
+                new Thread(() -> {
+                    int rc = JniTools.extractAudio(saveTo.getPath(), saveAudioFile.getPath());
+                    progressDialog.cancel();
+                    if (rc == 0) {
+                        mHandle.post(this::extractAudio);
+                    } else {
+                        mHandle.post(() -> Toast.makeText(mActivity, mActivity.getText(R.string.failed_extract_audio_2).toString().replace("%ec", String.valueOf(rc)), Toast.LENGTH_SHORT).show());
+                    }
+                }).start();
+
+                return;
+            }
+
+
+            CharSequence[] items = new CharSequence[] {
+                    mActivity.getText(R.string.view_audio),
+                    mActivity.getText(R.string.send_audio),
+                    mActivity.getText(R.string.cancel_operation) };
+
+            new AlertDialog.Builder(mActivity)
+                    .setTitle(mVideoInfo.getVideoTitle())
+                    .setItems(items, (dialogInterface, i) -> {
+                        if (i == 0 || i == 1) {
+                            SystemTools.shareOrViewFile(mActivity, mVideoInfo.getVideoTitle() + "-" + mVideoInfo.getPartTitle(), audioFile, "*/*", i == 0);
+                        }
+                    })
+                    .create().show();
 
         }
     }
