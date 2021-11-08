@@ -24,7 +24,7 @@ import cc.kafuu.bilidownload.bilibili.Bili;
 import cc.kafuu.bilidownload.fragment.DownloadFragment;
 import cc.kafuu.bilidownload.fragment.VideoParserFragment;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
     //private static final String TAG = "MainActivity";
 
     private Toolbar mToolbar;
@@ -52,19 +52,7 @@ public class MainActivity extends AppCompatActivity {
         initFragment(savedInstanceState);
         showFragment(mCurrentFragment);
 
-        if (!getSharedPreferences("app", MODE_PRIVATE).getBoolean("agree_clause_0", false)) {
-            startActivityForResult(new Intent(this, UseClausesActivity.class), 1);
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 1) {
-            if (!getSharedPreferences("app", MODE_PRIVATE).getBoolean("agree_clause_0", false)) {
-                finish();
-            }
-        }
+        UseClausesActivity.clauseInspection(this);
     }
 
     @Override

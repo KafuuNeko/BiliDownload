@@ -1,7 +1,6 @@
 package cc.kafuu.bilidownload.fragment;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -15,7 +14,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Handler;
 import android.os.Looper;
-import android.text.Editable;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -107,7 +105,7 @@ public class VideoParserFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        final CharSequence pasteText = SystemTools.paste(getContext());
+        final CharSequence pasteText = SystemTools.paste(Objects.requireNonNull(getContext()));
         if (pasteText != null) {
             //解析粘贴板内容中可能存在的Id
             String pasteId = getInputId(pasteText.toString());
@@ -168,7 +166,8 @@ public class VideoParserFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 100 && resultCode == 0 && Bili.biliAccount != null) {
+        Log.d(TAG, "onActivityResult: requestCode=" + requestCode);
+        if (requestCode == BiliLoginActivity.RequestCode && resultCode == 0 && Bili.biliAccount != null) {
             //登录成功 显示用户头像昵称和签名
             loadUserInfo();
         }
@@ -222,11 +221,11 @@ public class VideoParserFragment extends Fragment {
     }
 
     /**
-     * 询问用户是否退出登录
+     * 登录或询问用户是否退出登录
      * */
     private void onLoginBiliCardClick() {
         if (Bili.biliAccount == null) {
-            startActivityForResult(new Intent(getContext(), BiliLoginActivity.class), 100);
+            BiliLoginActivity.actionStartForResult(this);
             return;
         }
         DialogTools.confirm(getContext(), null, getString(R.string.exit_login_confirm), (dialog, which) -> onExitLogin(), null);

@@ -1,6 +1,9 @@
 package cc.kafuu.bilidownload;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,13 +17,17 @@ import android.widget.ProgressBar;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 
 import cc.kafuu.bilidownload.bilibili.Bili;
 import cc.kafuu.bilidownload.bilibili.BiliAccount;
 
 
-public class BiliLoginActivity extends AppCompatActivity {
+public class BiliLoginActivity extends BaseActivity {
+    public static int RequestCode = 0;
+
     private ProgressBar mProgressBar;
+
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -86,5 +93,10 @@ public class BiliLoginActivity extends AppCompatActivity {
         }
 
         return true;
+    }
+
+    public static void actionStartForResult(Fragment fragment) {
+        Intent intent = new Intent(fragment.getContext(), BiliLoginActivity.class);
+        fragment.startActivityForResult(intent, RequestCode);
     }
 }

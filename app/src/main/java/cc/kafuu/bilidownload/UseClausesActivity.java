@@ -1,5 +1,7 @@
 package cc.kafuu.bilidownload;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
@@ -14,15 +16,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-public class UseClausesActivity extends AppCompatActivity {
+public class UseClausesActivity extends BaseActivity {
     private Toolbar mToolbar;
     private TextView mClauses;
     private Button mRefused, mAgree;
+
+    private boolean mUserAgree;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_use_clauses);
+
+        mUserAgree = getSharedPreferences("app", MODE_PRIVATE).getBoolean("agree_clause_0", false);
 
         findView();
         initView();
@@ -41,11 +47,11 @@ public class UseClausesActivity extends AppCompatActivity {
         mClauses.setText(getDisclaimer());
 
         mRefused.setOnClickListener(v -> {
-            getSharedPreferences("app", MODE_PRIVATE).edit().putBoolean("agree_clause_0", false).apply();
+            mUserAgree = false;
             finish();
         });
         mAgree.setOnClickListener(v -> {
-            getSharedPreferences("app", MODE_PRIVATE).edit().putBoolean("agree_clause_0", true).apply();
+            mUserAgree = true;
             finish();
         });
     }
@@ -53,6 +59,11 @@ public class UseClausesActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        getSharedPreferences("app", MODE_PRIVATE).edit().putBoolean("agree_clause_0", mUserAgree).apply();
+
+        if (!mUserAgree) {
+            ActivityCollector.finishAll();
+        }
     }
 
     private String getDisclaimer() {
@@ -73,5 +84,11 @@ public class UseClausesActivity extends AppCompatActivity {
         }
 
         return stringBuilder.toString();
+    }
+
+    public static void clauseInspection(Context context) {
+        if (!context.getSharedPreferences("app", MODE_PRIVATE).getBoolean("agree_clause_0", false)) {
+            context.startActivity(new Intent(context, UseClausesActivity.class));
+        }
     }
 }
