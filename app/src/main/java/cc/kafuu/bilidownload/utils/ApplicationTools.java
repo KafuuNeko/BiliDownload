@@ -14,7 +14,7 @@ import java.io.File;
 
 import cc.kafuu.bilidownload.BuildConfig;
 
-public class SystemTools {
+public class ApplicationTools {
     public static void shareOrViewFile(Context context, String title, File file, String type, boolean isView) {
         Intent share = new Intent(isView ? Intent.ACTION_VIEW : Intent.ACTION_SEND);
 
@@ -42,7 +42,27 @@ public class SystemTools {
         return count == 0 ? null : clipboardManager.getPrimaryClip().getItemAt(0).getText();
     }
 
-    public static boolean isActivityDestroy(Activity activity) {
-        return activity == null || activity.isFinishing() || activity.isDestroyed();
+    public static boolean isActivitySurvive(Activity activity) {
+        return activity != null && !activity.isFinishing() && !activity.isDestroyed();
+    }
+
+    /**
+     * 计算指定文件或目录及它的所有子目录中所有文件所占用的空间大小
+     * */
+    public static long totalSpaceUsed(File file) {
+        if (file == null) {
+            return 0;
+        }
+
+        if (file.isFile()) {
+            return file.length();
+        } else if (file.isDirectory()) {
+            long count = 0;
+            for (File sub : file.listFiles()) {
+                count += totalSpaceUsed(sub);
+            }
+            return count;
+        }
+        return 0;
     }
 }

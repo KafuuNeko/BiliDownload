@@ -43,7 +43,7 @@ import cc.kafuu.bilidownload.adapter.VideoParseResultAdapter;
 import cc.kafuu.bilidownload.bilibili.Bili;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideo;
 import cc.kafuu.bilidownload.utils.DialogTools;
-import cc.kafuu.bilidownload.utils.SystemTools;
+import cc.kafuu.bilidownload.utils.ApplicationTools;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
@@ -105,7 +105,7 @@ public class VideoParserFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        final CharSequence pasteText = SystemTools.paste(Objects.requireNonNull(getContext()));
+        final CharSequence pasteText = ApplicationTools.paste(Objects.requireNonNull(getContext()));
         if (pasteText != null) {
             //解析粘贴板内容中可能存在的Id
             String pasteId = getInputId(pasteText.toString());

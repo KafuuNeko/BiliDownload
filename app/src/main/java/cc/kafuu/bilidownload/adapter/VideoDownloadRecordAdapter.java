@@ -45,7 +45,7 @@ import cc.kafuu.bilidownload.database.VideoDownloadRecord;
 import cc.kafuu.bilidownload.database.VideoInfo;
 import cc.kafuu.bilidownload.jniexport.JniTools;
 import cc.kafuu.bilidownload.utils.DialogTools;
-import cc.kafuu.bilidownload.utils.SystemTools;
+import cc.kafuu.bilidownload.utils.ApplicationTools;
 
 public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownloadRecordAdapter.InnerHolder> {
     private static final String TAG = "VideoDownloadRecordAdap";
@@ -106,7 +106,7 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
 
     @Override
     public void onBindViewHolder(@NonNull VideoDownloadRecordAdapter.InnerHolder holder, int position) {
-        if (!SystemTools.isActivityDestroy(mActivity)) {
+        if (ApplicationTools.isActivitySurvive(mActivity)) {
             holder.bindRecord(mRecords.get(position));
         }
     }
@@ -205,7 +205,7 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
                 return false;
             }
 
-            if (!SystemTools.isActivityDestroy(mActivity)) {
+            if (ApplicationTools.isActivitySurvive(mActivity)) {
                 Glide.with(mActivity).load(mVideoInfo.getPartPic()).placeholder(R.drawable.ic_2233).centerCrop().into(mVideoPic);
                 mVideoTitle.setText(mVideoInfo.getPartTitle() + "-" + mVideoInfo.getVideoTitle());
                 mVid.setText(BvConvert.av2bv(String.valueOf(mVideoInfo.getAvid())));
@@ -281,7 +281,7 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
         public void loadedFailure() {
             mLoadedStatus = LoadedStatus.LoadedFailure;
 
-            if (!SystemTools.isActivityDestroy(mActivity)) {
+            if (ApplicationTools.isActivitySurvive(mActivity)) {
                 Glide.with(mActivity).load(R.drawable.ic_2233).into(mVideoPic);
                 mVideoTitle.setText(R.string.load_video_info_failure);
                 mVid.setText("AV:" + mBindRecord.getAvid() + ", CID: " + mBindRecord.getCid());
@@ -428,7 +428,7 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
                     Toast.makeText(mActivity, R.string.file_not_exist, Toast.LENGTH_SHORT).show();
                     return;
                 }
-                SystemTools.shareOrViewFile(mActivity, mVideoInfo.getVideoTitle() + "-" + mVideoInfo.getPartTitle(), file, "*/*", i == 0);
+                ApplicationTools.shareOrViewFile(mActivity, mVideoInfo.getVideoTitle() + "-" + mVideoInfo.getPartTitle(), file, "*/*", i == 0);
 
             } else if (i == 2) {
                 //视频格式化转换
@@ -560,7 +560,7 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
                     .setTitle(mVideoInfo.getVideoTitle())
                     .setItems(items, (dialogInterface, i) -> {
                         if (i == 0 || i == 1) {
-                            SystemTools.shareOrViewFile(mActivity, mVideoInfo.getVideoTitle() + "-" + mVideoInfo.getPartTitle(), audioFile, "*/*", i == 0);
+                            ApplicationTools.shareOrViewFile(mActivity, mVideoInfo.getVideoTitle() + "-" + mVideoInfo.getPartTitle(), audioFile, "*/*", i == 0);
                         }
                     })
                     .create().show();
