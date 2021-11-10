@@ -10,16 +10,19 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
 import cc.kafuu.bilidownload.R;
-import cc.kafuu.bilidownload.adapter.VideoDownloadRecordAdapter;
+import cc.kafuu.bilidownload.adapter.DownloadRecordAdapter;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -27,12 +30,14 @@ import cc.kafuu.bilidownload.adapter.VideoDownloadRecordAdapter;
  * create an instance of this fragment.
  */
 public class DownloadFragment extends Fragment {
+    private Handler mHandler;
 
     private View mRootView = null;
 
     private RecyclerView mDownloadRecordList;
+    private TextView mNoDownloadRecordTip;
 
-    private VideoDownloadRecordAdapter mVideoDownloadRecordAdapter = null;
+    private DownloadRecordAdapter mVideoDownloadRecordAdapter = null;
 
     private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -64,6 +69,7 @@ public class DownloadFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mHandler = new Handler(Looper.getMainLooper());
     }
 
     @Override
@@ -89,6 +95,7 @@ public class DownloadFragment extends Fragment {
 
     private void findView() {
         mDownloadRecordList = mRootView.findViewById(R.id.downloadRecordList);
+        mNoDownloadRecordTip = mRootView.findViewById(R.id.noDownloadRecordTip);
     }
 
     private void initView() {
@@ -100,8 +107,21 @@ public class DownloadFragment extends Fragment {
         filter.addAction("download.task.create");
         Objects.requireNonNull(getContext()).registerReceiver(mBroadcastReceiver, filter);
 
-        mVideoDownloadRecordAdapter = new VideoDownloadRecordAdapter(getActivity());
+        mVideoDownloadRecordAdapter = new DownloadRecordAdapter(getActivity());
+        mVideoDownloadRecordAdapter.setItemCountChangeListener(this::showOrHideTip);
+
         mDownloadRecordList.setAdapter(mVideoDownloadRecordAdapter);
+
+        showOrHideTip();
+    }
+
+    private void showOrHideTip() {
+        if (mVideoDownloadRecordAdapter == null) {
+            return;
+        }
+
+        mHandler.post(() -> mNoDownloadRecordTip.setVisibility(
+                mVideoDownloadRecordAdapter.getItemCount() == 0 ? View.VISIBLE : View.GONE));
     }
 
 }

@@ -43,25 +43,40 @@ import cc.kafuu.bilidownload.bilibili.video.BiliDownloader;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideoResource;
 import cc.kafuu.bilidownload.database.VideoDownloadRecord;
 import cc.kafuu.bilidownload.database.VideoInfo;
+import cc.kafuu.bilidownload.fragment.ItemChangeListener;
 import cc.kafuu.bilidownload.jniexport.JniTools;
 import cc.kafuu.bilidownload.utils.DialogTools;
 import cc.kafuu.bilidownload.utils.ApplicationTools;
 
-public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownloadRecordAdapter.InnerHolder> {
-    private static final String TAG = "VideoDownloadRecordAdap";
+public class DownloadRecordAdapter extends RecyclerView.Adapter<DownloadRecordAdapter.InnerHolder> {
+    private static final String TAG = "DownloadRecordAdapter";
 
     private final Handler mHandle;
     private final Activity mActivity;
     private final DownloadManager mDownloadManager;
     private List<VideoDownloadRecord> mRecords;
 
-    public VideoDownloadRecordAdapter(Activity activity) {
+    private ItemChangeListener mItemCountChangeListener = null;
+
+    public DownloadRecordAdapter(Activity activity) {
         this.mHandle = new Handler(Looper.getMainLooper());
 
         this.mActivity = activity;
         this.mDownloadManager = (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
         reloadRecords();
     }
+
+    public void setItemCountChangeListener(ItemChangeListener mItemCountChangeListener) {
+        this.mItemCountChangeListener = mItemCountChangeListener;
+    }
+
+    private void itemChange() {
+        if (this.mItemCountChangeListener != null) {
+            this.mItemCountChangeListener.onItemChange();
+        }
+    }
+
+
 
     public void reloadRecords() {
         mRecords = LitePal.findAll(VideoDownloadRecord.class);
@@ -80,6 +95,7 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
         }
 
         notifyDataSetChanged();
+        itemChange();
     }
 
     /**
@@ -99,16 +115,17 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
 
     @NonNull
     @Override
-    public VideoDownloadRecordAdapter.InnerHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public DownloadRecordAdapter.InnerHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_download_record, parent, false);
         return new InnerHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull VideoDownloadRecordAdapter.InnerHolder holder, int position) {
+    public void onBindViewHolder(@NonNull DownloadRecordAdapter.InnerHolder holder, int position) {
         if (ApplicationTools.isActivitySurvive(mActivity)) {
             holder.bindRecord(mRecords.get(position));
         }
+
     }
 
     @Override
@@ -177,8 +194,9 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
                     public void run() {
                         mHandle.post(() -> {
                             if (mBindRecord != null && !loadingDownloadInfo(true)) {
-                                //加载信息失败（任务已被删除），通知列表更新
+                                //加载信息失败（任务已被删除），删除记录并通知列表更新
                                 notifyDataSetChanged();
+                                itemChange();
                             } else if (mUpdate != null && mDownloadStatusFlag == DownloadManager.STATUS_SUCCESSFUL){
                                 mUpdate.cancel();
                                 mUpdate = null;
@@ -380,6 +398,7 @@ public class VideoDownloadRecordAdapter extends RecyclerView.Adapter<VideoDownlo
             mRecords.remove(mBindRecord);
 
             notifyDataSetChanged();
+            itemChange();
         }
 
         /**

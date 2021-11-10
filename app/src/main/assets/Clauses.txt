@@ -2,8 +2,7 @@
 
 使用条款
 
-一.本软件遵循GPL-2.0协议开源。
-https://github.com/KafuuNeko/BiliDownload
+一.本软件遵循GPL协议开源: https://github.com/KafuuNeko/BiliDownload
 
 二.通过本软件下载的资源皆来自于bilibili.com。
 
