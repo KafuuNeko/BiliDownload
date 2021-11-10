@@ -83,11 +83,7 @@ public class MainActivity extends BaseActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.navAbout) {
-            new AlertDialog.Builder(this)
-                    .setTitle(R.string.about)
-                    .setMessage(R.string.about_context)
-                    .setPositiveButton(R.string.confirm, null)
-                    .show();
+            new AlertDialog.Builder(this).setView(R.layout.dialog_about).show();
         } else if (item.getItemId() == R.id.navClauses) {
             startActivityForResult(new Intent(this, UseClausesActivity.class), 1);
         }

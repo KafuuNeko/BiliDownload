@@ -1,19 +1,16 @@
 <resources>
     <string name="app_name">BVD</string>
-    <string name="video_parser">视频解析</string>
-    <string name="bilibili_login">登录</string>
 
-    <string name="about">关于 BVD</string>
-
+    <string name="about_title">BVD for Android</string>
+    <string name="version_describe">1.7.2.foss</string>
     <string name="about_context">
-        开发人员\n
-        Kafuu(https://kafuu.cc)\n\n
-        联系邮箱\n
-        kafuuneko@gmail.com\n\n
-        项目仓库\n
-        https://github.com/KafuuNeko/BiliDownload\n\n
-        下载的视频资源所有权属视频上传者所有，未经允许禁止转载！
+        By kafuu(kafuuneko@gmail.com)
     </string>
+
+
+    <string name="video_parser">视频解析</string>
+    <string name="bili_login">登录</string>
+
     <string name="parsing_video">解析</string>
     <string name="describe">简介：</string>
 
@@ -92,5 +89,6 @@
     <string name="failed_extract_audio_2">提取音频失败, 错误代码: %ec</string>
     <string name="view_audio">查看音频</string>
     <string name="send_audio">发送音频</string>
+    <string name="about">关于BVD</string>
 
 </resources>
