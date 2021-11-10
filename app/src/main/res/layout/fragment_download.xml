@@ -24,8 +24,11 @@
         android:textAllCaps="false"
         android:textColor="@color/colorPrimary"
         android:textSize="18sp"
+        android:gravity="center_vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/downloadRecordList"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:drawableStartCompat="@drawable/ic_is_null" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
