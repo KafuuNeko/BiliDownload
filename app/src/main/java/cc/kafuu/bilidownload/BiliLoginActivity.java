@@ -24,7 +24,7 @@ import cc.kafuu.bilidownload.bilibili.BiliAccount;
 
 
 public class BiliLoginActivity extends BaseActivity {
-    public static int RequestCode = 0;
+    public static int RequestCode = 0x00;
 
     private ProgressBar mProgressBar;
 

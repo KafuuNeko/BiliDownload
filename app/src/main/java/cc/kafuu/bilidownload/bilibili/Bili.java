@@ -4,12 +4,18 @@ import android.content.Context;
 import android.os.Environment;
 import android.util.Log;
 
-import java.io.File;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.IOException;
+
+import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.FormBody;
 import okhttp3.Headers;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Response;
 
 public class Bili {
     private static final String TAG = "Bili";
@@ -94,5 +100,30 @@ public class Bili {
             url += "&qn=" + quality;
         }
         return new Request.Builder().url(url).headers(Bili.generalHeaders).build();
+    }
+
+
+    public interface RedirectionCallback {
+        void onFailure(String message);
+        void onCompleted(String location);
+    }
+
+    public static void redirection(String url, final RedirectionCallback callback) {
+        httpClient.newCall(new Request.Builder().url(url).get().headers(generalHeaders).build()).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                callback.onFailure(e.getMessage());
+            }
+
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                if (response.code() == 200) {
+                    String location = response.request().url().toString();
+                    callback.onCompleted(location);
+                } else {
+                    callback.onFailure("Code: " + response.code());
+                }
+            }
+        });
     }
 }

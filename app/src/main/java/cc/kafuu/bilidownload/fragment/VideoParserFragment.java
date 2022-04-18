@@ -38,6 +38,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import cc.kafuu.bilidownload.BiliLoginActivity;
+import cc.kafuu.bilidownload.PersonalActivity;
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.adapter.VideoParseResultAdapter;
 import cc.kafuu.bilidownload.bilibili.Bili;
@@ -170,6 +171,12 @@ public class VideoParserFragment extends Fragment {
         if (requestCode == BiliLoginActivity.RequestCode && resultCode == 0 && Bili.biliAccount != null) {
             //登录成功 显示用户头像昵称和签名
             loadUserInfo();
+            return;
+        }
+
+        if (requestCode == PersonalActivity.RequestCode && resultCode == 1) {
+            onExitLogin();
+
         }
     }
 
@@ -228,7 +235,9 @@ public class VideoParserFragment extends Fragment {
             BiliLoginActivity.actionStartForResult(this);
             return;
         }
-        DialogTools.confirm(getContext(), null, getString(R.string.exit_login_confirm), (dialog, which) -> onExitLogin(), null);
+
+        PersonalActivity.actionStartForResult(this);
+        //DialogTools.confirm(getContext(), null, getString(R.string.exit_login_confirm), (dialog, which) -> onExitLogin(), null);
     }
 
     /**
@@ -285,7 +294,35 @@ public class VideoParserFragment extends Fragment {
         String videoId = null;
 
         if (mVideoAddress.getText() != null) {
-            videoId = getInputId(mVideoAddress.getText().toString());
+            String addressStr = mVideoAddress.getText().toString();
+
+            if (addressStr.contains("https://b23.tv/")) {
+                Pattern pattern = Pattern.compile("https://b23.tv/.*");
+                Matcher matcher = pattern.matcher(addressStr);
+
+                if (!matcher.find()) {
+                    Toast.makeText(getContext(), getText(R.string.video_address_format_incorrect), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                Bili.redirection(matcher.group(), new Bili.RedirectionCallback() {
+                    @Override
+                    public void onFailure(String message) {
+                        mHandler.post(() -> Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show());
+                    }
+
+                    @Override
+                    public void onCompleted(String location) {
+                        mHandler.post(() -> {
+                            mVideoAddress.setText(getInputId(location));
+                            onParsingVideo();
+                        });
+                    }
+                });
+                return;
+            }
+
+            videoId = getInputId(addressStr);
         }
 
         if (videoId == null) {
