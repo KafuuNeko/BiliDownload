@@ -25,7 +25,7 @@ public class PersonalActivity extends AppCompatActivity {
     }
 
     public void onClick(View view) {
-
         BiliFavourite.getFavourite();
     }
 }
+

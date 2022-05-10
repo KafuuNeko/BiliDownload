@@ -91,5 +91,6 @@
     <string name="send_audio">发送音频</string>
     <string name="about">关于BVD</string>
     <string name="no_download_record">啥也没有</string>
+    <string name="bili_personal">个人</string>
 
 </resources>

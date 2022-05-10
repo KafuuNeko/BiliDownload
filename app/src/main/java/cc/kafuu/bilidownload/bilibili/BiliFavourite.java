@@ -18,14 +18,14 @@ public class BiliFavourite {
     //https://api.bilibili.com/x/v3/fav/resource/list?media_id=426737898&pn=1&ps=20&keyword=&order=mtime&type=0&tid=0&platform=web&jsonp=jsonp 获取收藏内容
     public static void getFavourite() {
         Request request = new Request.Builder()
-                .url("https://api.bilibili.cn/favourite?ver=2")
+                .url("https://api.bilibili.com/x/v3/fav/folder/created/list-all?up_mid=" + Bili.biliAccount.getId() + "&jsonp=jsonp ")
                 .headers(Bili.generalHeaders)
                 .build();
-
+        Log.d(TAG, "getFavourite: " + request.url());
         Bili.httpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-
+                Log.d(TAG, "onFailure: " + e.toString());
             }
 
             @Override

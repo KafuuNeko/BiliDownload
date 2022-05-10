@@ -19,6 +19,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.CookieManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -42,6 +43,7 @@ import cc.kafuu.bilidownload.PersonalActivity;
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.adapter.VideoParseResultAdapter;
 import cc.kafuu.bilidownload.bilibili.Bili;
+import cc.kafuu.bilidownload.bilibili.BiliAccount;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideo;
 import cc.kafuu.bilidownload.utils.DialogTools;
 import cc.kafuu.bilidownload.utils.ApplicationTools;
@@ -176,12 +178,33 @@ public class VideoParserFragment extends Fragment {
 
         if (requestCode == PersonalActivity.RequestCode && resultCode == 1) {
             onExitLogin();
-
         }
     }
 
     private void loadUserInfo() {
-        if (Bili.biliAccount != null && Bili.biliCookie != null) {
+        final String cookie = CookieManager.getInstance().getCookie("https://m.bilibili.com");
+        if (cookie != null && (Bili.biliAccount == null || Bili.biliCookie == null)) {
+            mLoginBiliCard.setEnabled(false);
+
+            Thread thread = new Thread(() -> {
+                Bili.biliAccount = BiliAccount.getAccount(cookie);
+
+                Log.d(TAG, Bili.biliAccount == null ? "不是有效Cookie" : "登录成功: " + Bili.biliAccount.getUserName());
+
+                Bili.updateHeaders(cookie);
+                mHandler.post(() -> {
+                    mLoginBiliCard.setEnabled(true);
+                    if (Bili.biliAccount == null) {
+                        return;
+                    }
+                    Glide.with(Objects.requireNonNull(getContext())).load(Bili.biliAccount.getFace()).placeholder(R.drawable.ic_2233).into(mUserFace);
+                    mUserName.setText(Bili.biliAccount.getUserName());
+                    mUserSign.setText(Bili.biliAccount.getSign());
+                });
+            });
+            thread.start();
+
+        } else if (Bili.biliAccount != null && Bili.biliCookie != null) {
             Glide.with(Objects.requireNonNull(getContext())).load(Bili.biliAccount.getFace()).placeholder(R.drawable.ic_2233).into(mUserFace);
             mUserName.setText(Bili.biliAccount.getUserName());
             mUserSign.setText(Bili.biliAccount.getSign());
