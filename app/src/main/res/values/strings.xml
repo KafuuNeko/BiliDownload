@@ -33,8 +33,8 @@
     <string name="delete">删除</string>
     <string name="delete_download_record_tip">视频文件已被删除或移动，是否删除这条下载记录?</string>
     <string name="cancel">取消</string>
-    <string name="login_tips_1">点击此处登录</string>
-    <string name="login_tips_2">登录Bilibili下载高清资源</string>
+    <string name="login_tips_1">未登录</string>
+    <string name="login_tips_2">720p以上分辨率的视频需登录后下载</string>
     <string name="confirm">确认</string>
     <string name="exit_login_confirm">是否退出登录</string>
     <string name="exit_login_failure">请求退出登录失败</string>
@@ -92,5 +92,6 @@
     <string name="about">关于BVD</string>
     <string name="no_download_record">啥也没有</string>
     <string name="bili_personal">个人</string>
+    <string name="exit_login">退出登录</string>
 
 </resources>

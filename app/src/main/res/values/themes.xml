@@ -14,4 +14,9 @@
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
     </style>
+
+    <style name="ToolBarTheme">
+        <item name="actionMenuTextColor">@android:color/holo_green_light</item>
+        <item name="colorControlNormal">@android:color/white</item>
+    </style>
 </resources>

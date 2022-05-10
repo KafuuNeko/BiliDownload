@@ -45,7 +45,8 @@
             android:launchMode="singleTask" />
 
         <activity android:name=".PersonalActivity"
-            android:launchMode="singleTask" />
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait"/>
 
     </application>
 
