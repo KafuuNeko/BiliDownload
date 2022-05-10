@@ -92,6 +92,8 @@ public class Bili {
     }
 
     /**
+     * 获取视频下载链接
+     * https://upos-sz-mirrorhwo1.bilivideo.com/
      * Api: https://api.bilibili.com/x/player/playurl
      * */
     public static Request playUrlRequest(long cid, long avid, int quality) {
