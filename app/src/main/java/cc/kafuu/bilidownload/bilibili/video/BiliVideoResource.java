@@ -80,8 +80,8 @@ public class BiliVideoResource {
 
 
     public interface GetDownloaderCallback {
-        void onCompleted(BiliDownloader downloader);
-        void onFailure(String message);
+        void completed(BiliDownloader downloader);
+        void failure(String message);
     }
 
     public static void getDownloadUrl(String videoTitle, String partTitle, long cid, long avid, int quality, final File saveTo, GetDownloaderCallback callback) {
@@ -90,37 +90,37 @@ public class BiliVideoResource {
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 ResponseBody body = response.body();
                 if (body == null) {
-                    callback.onFailure("No data returned");
+                    callback.failure("No data returned");
                     return;
                 }
 
                 JsonObject result = new Gson().fromJson(body.string(), JsonObject.class);
                 if (result.get("code").getAsInt() != 0) {
-                    callback.onFailure(result.get("message").getAsString());
+                    callback.failure(result.get("message").getAsString());
                     return;
                 }
 
                 JsonObject data = result.getAsJsonObject("data");
                 if (data.get("quality").getAsInt() != quality) {
-                    callback.onFailure("您还未登录或当前登录的账户不支持下载此视频");
+                    callback.failure("您还未登录或当前登录的账户不支持下载此视频");
                     return;
                 }
 
                 JsonArray durl = data.getAsJsonArray("durl");
                 if (durl.size() == 0) {
-                    callback.onFailure("Video player source is empty");
+                    callback.failure("Video player source is empty");
                     return;
                 }
 
                 String url = durl.get(0).getAsJsonObject().get("url").getAsString();
 
-                callback.onCompleted(new BiliDownloader(videoTitle, partTitle, saveTo, url));
+                callback.completed(new BiliDownloader(videoTitle, partTitle, saveTo, url));
             }
 
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 e.printStackTrace();
-                callback.onFailure(e.getMessage());
+                callback.failure(e.getMessage());
             }
         });
     }

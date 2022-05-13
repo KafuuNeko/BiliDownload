@@ -22,8 +22,7 @@ inline auto makeFormatPair() {
 
         delete pair;
     };
-    auto *_FormatPair = new FormatPair(nullptr, nullptr);
-    return std::unique_ptr<FormatPair, decltype(deleter)>(_FormatPair, deleter);
+    return std::unique_ptr<FormatPair, decltype(deleter)>(new FormatPair(nullptr, nullptr), deleter);
 }
 
 /**

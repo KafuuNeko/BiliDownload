@@ -414,15 +414,15 @@ public class DownloadRecordAdapter extends RecyclerView.Adapter<DownloadRecordAd
                     new File(mBindRecord.getSaveTo()),
                     new BiliVideoResource.GetDownloaderCallback() {
                 @Override
-                public void onCompleted(BiliDownloader downloader) {
+                public void completed(BiliDownloader downloader) {
                     downloader.getDownloadId(mDownloadManager, new BiliDownloader.GetDownloadIdCallback() {
                         @Override
-                        public void onFailure(String message) {
+                        public void failure(String message) {
                             mHandle.post(() -> Toast.makeText(mActivity, message, Toast.LENGTH_SHORT).show());
                         }
 
                         @Override
-                        public void onCompleted(long id) {
+                        public void completed(long id) {
                             mBindRecord.setDownloadId(id);
                             mBindRecord.saveOrUpdate("id=?", String.valueOf(mBindRecord.getId()));
                         }
@@ -430,7 +430,7 @@ public class DownloadRecordAdapter extends RecyclerView.Adapter<DownloadRecordAd
                 }
 
                 @Override
-                public void onFailure(String message) {
+                public void failure(String message) {
                     mHandle.post(() -> Toast.makeText(mActivity, message, Toast.LENGTH_SHORT).show());
                 }
             });

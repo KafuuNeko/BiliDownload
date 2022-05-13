@@ -93,5 +93,9 @@
     <string name="no_download_record">啥也没有</string>
     <string name="bili_personal">个人</string>
     <string name="exit_login">退出登录</string>
+    <string name="favorite">收藏夹</string>
+    <string name="history">历史记录</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 
 </resources>

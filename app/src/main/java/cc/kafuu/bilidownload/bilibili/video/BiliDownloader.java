@@ -45,8 +45,8 @@ public class BiliDownloader {
     }
 
     public interface GetDownloadIdCallback {
-        void onFailure(String message);
-        void onCompleted(long id);
+        void failure(String message);
+        void completed(long id);
     }
 
 
@@ -59,14 +59,14 @@ public class BiliDownloader {
         Bili.httpClient.newCall(options_request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                callback.onFailure(e.getMessage());
+                callback.failure(e.getMessage());
             }
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) {
                 if (response.code() != 200) {
                     if (callback != null) {
-                        callback.onFailure("Options request return code " + response.code());
+                        callback.failure("Options request return code " + response.code());
                     }
                     return;
                 }
@@ -87,7 +87,7 @@ public class BiliDownloader {
                 //下载保存地址
                 request.setDestinationUri(Uri.fromFile(mSavePath));
 
-                callback.onCompleted(downloadManager.enqueue(request));
+                callback.completed(downloadManager.enqueue(request));
             }
         });
     }

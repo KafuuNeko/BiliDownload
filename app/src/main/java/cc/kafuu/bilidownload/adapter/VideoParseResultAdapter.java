@@ -136,13 +136,13 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
 
             part.getResource(new BiliVideoPart.GetResourceCallback() {
                 @Override
-                public void onComplete(List<BiliVideoResource> resources) {
+                public void completed(List<BiliVideoResource> resources) {
                     progressDialog.cancel();
                     mHandle.post(() -> getResourcesCompleted(part, resources));
                 }
 
                 @Override
-                public void onFailure(String message) {
+                public void failure(String message) {
                     progressDialog.cancel();
                     mHandle.post(() -> Toast.makeText(mActivity, message, Toast.LENGTH_LONG).show());
                 }
@@ -181,18 +181,18 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
             //开始获取资源下载器
             resource.download(new BiliVideoResource.GetDownloaderCallback() {
                 @Override
-                public void onCompleted(final BiliDownloader downloader) {
+                public void completed(final BiliDownloader downloader) {
                     //取得资源下载器
                     //调用资源下载器的getDownloadId将下载任务交给系统下载管理器并取得ID
                     downloader.getDownloadId(downloadManager, new BiliDownloader.GetDownloadIdCallback() {
                         @Override
-                        public void onFailure(String message) {
+                        public void failure(String message) {
                             //提交下载任务失败（可能是当前登录的账户不支持下载此资源）
                             mHandle.post(() -> Toast.makeText(mActivity, message, Toast.LENGTH_LONG).show());
                         }
 
                         @Override
-                        public void onCompleted(long id) {
+                        public void completed(long id) {
                             //提交下载任务成功后尝试记录下载，如果失败则删除下载任务并弹出提示
                             VideoDownloadRecord newVideoDownloadRecord = new VideoDownloadRecord(id, part.getAv(), part.getCid(), resource.getQuality(), downloader.getSavePath().getPath());
                             if (!newVideoDownloadRecord.save()) {
@@ -209,7 +209,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
                 }
 
                 @Override
-                public void onFailure(String message) {
+                public void failure(String message) {
                     //取资源下载器失败
                     mHandle.post(() -> Toast.makeText(mActivity, message, Toast.LENGTH_LONG).show());
                 }

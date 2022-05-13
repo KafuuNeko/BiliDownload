@@ -19,4 +19,5 @@
         <item name="actionMenuTextColor">@android:color/holo_green_light</item>
         <item name="colorControlNormal">@android:color/white</item>
     </style>
+
 </resources>

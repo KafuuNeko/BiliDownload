@@ -66,14 +66,14 @@ public class BiliVideoPart {
         Bili.httpClient.newCall(Bili.playUrlRequest(mCid, mAv, 0)).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                callback.onFailure(e.getMessage());
+                callback.failure(e.getMessage());
             }
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) {
                 ResponseBody body = response.body();
                 if (body == null) {
-                    callback.onFailure("Request is returned empty");
+                    callback.failure("Request is returned empty");
                     return;
                 }
 
@@ -82,9 +82,9 @@ public class BiliVideoPart {
                     JsonObject res = new Gson().fromJson(json, JsonObject.class);
                     if (res.get("code").getAsInt() != 0) {
                         if (res.get("code").getAsInt() == -404) {
-                            callback.onFailure("您还未登录或当前登录的账户不支持下载此视频");
+                            callback.failure("您还未登录或当前登录的账户不支持下载此视频");
                         } else {
-                            callback.onFailure(res.get("message").getAsString());
+                            callback.failure(res.get("message").getAsString());
                         }
 
                         return;
@@ -105,18 +105,18 @@ public class BiliVideoPart {
                         resources.add(new BiliVideoResource(BiliVideoPart.this, quality, format.get("format").getAsString(), new_description));
                     }
 
-                    callback.onComplete(resources);
+                    callback.completed(resources);
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                    callback.onFailure(e.getMessage());
+                    callback.failure(e.getMessage());
                 }
             }
         });
     }
 
     public interface GetResourceCallback {
-        void onComplete(List<BiliVideoResource> resources);
-        void onFailure(String message);
+        void completed(List<BiliVideoResource> resources);
+        void failure(String message);
     }
 }

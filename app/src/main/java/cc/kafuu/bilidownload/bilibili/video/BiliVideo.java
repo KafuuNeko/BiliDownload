@@ -29,7 +29,7 @@ public class BiliVideo {
      * */
     public static void fromVideoId(final String videoId, final VideoParsingCallback callback) {
         if (videoId.length() < 3) {
-            callback.onFailure("Id format error");
+            callback.failure("Id format error");
             return;
         }
 
@@ -51,7 +51,7 @@ public class BiliVideo {
                 requestUrl = "https://api.bilibili.com/x/web-interface/view/detail?aid=" + videoId.substring(2) + "&bvid=";
                 break;
             default:
-                callback.onFailure("Id format error");
+                callback.failure("Id format error");
                 return;
         }
 
@@ -65,7 +65,7 @@ public class BiliVideo {
             Bili.httpClient.newCall(request).enqueue(new Callback() {
                 @Override
                 public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                    callback.onFailure(e.getMessage());
+                    callback.failure(e.getMessage());
                 }
 
                 @Override
@@ -76,7 +76,7 @@ public class BiliVideo {
             });
         } catch (Exception e) {
             e.printStackTrace();
-            callback.onFailure(e.getMessage());
+            callback.failure(e.getMessage());
         }
     }
 
@@ -93,7 +93,7 @@ public class BiliVideo {
     private static void analyzingResponse(@NonNull Response response, final VideoParsingCallback callback, boolean isSeason) throws IOException {
         ResponseBody body = response.body();
         if (body == null) {
-            callback.onFailure("Request is returned empty");
+            callback.failure("Request is returned empty");
             return;
         }
 
@@ -104,15 +104,15 @@ public class BiliVideo {
         JsonObject res = new Gson().fromJson(json, JsonObject.class);
 
         if (res.get("code").getAsInt() != 0) {
-            callback.onFailure(res.get("message").getAsString());
+            callback.failure(res.get("message").getAsString());
             return;
         }
 
         JsonObject data = isSeason ? res.getAsJsonObject("result") : res.getAsJsonObject("data");
         if (data == null) {
-            callback.onFailure("Video data is returned empty");
+            callback.failure("Video data is returned empty");
         } else {
-            callback.onCompleted(new BiliVideo(data, isSeason));
+            callback.completed(new BiliVideo(data, isSeason));
         }
     }
 
@@ -213,7 +213,7 @@ public class BiliVideo {
     }
 
     public interface VideoParsingCallback {
-        void onCompleted(BiliVideo biliVideos);
-        void onFailure(String message);
+        void completed(BiliVideo biliVideos);
+        void failure(String message);
     }
 }

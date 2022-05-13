@@ -1,10 +1,11 @@
-package cc.kafuu.bilidownload.bilibili;
+package cc.kafuu.bilidownload.bilibili.account;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import java.io.IOException;
 
+import cc.kafuu.bilidownload.bilibili.Bili;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;

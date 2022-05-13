@@ -43,7 +43,7 @@ import cc.kafuu.bilidownload.PersonalActivity;
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.adapter.VideoParseResultAdapter;
 import cc.kafuu.bilidownload.bilibili.Bili;
-import cc.kafuu.bilidownload.bilibili.BiliAccount;
+import cc.kafuu.bilidownload.bilibili.account.BiliAccount;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideo;
 import cc.kafuu.bilidownload.utils.DialogTools;
 import cc.kafuu.bilidownload.utils.ApplicationTools;
@@ -355,13 +355,13 @@ public class VideoParserFragment extends Fragment {
 
         BiliVideo.VideoParsingCallback callback = new BiliVideo.VideoParsingCallback() {
             @Override
-            public void onCompleted(BiliVideo biliVideos) {
+            public void completed(BiliVideo biliVideos) {
                 Log.d(TAG, "onCompleted: " + biliVideos.toString());
                 mHandler.post(() -> parsingVideoCompleted(biliVideos, null));
             }
 
             @Override
-            public void onFailure(String message) {
+            public void failure(String message) {
                 Log.d(TAG, "onFailure: onFailure " + message);
                 mHandler.post(() -> parsingVideoCompleted(null, message));
             }
