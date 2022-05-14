@@ -25,15 +25,16 @@ public class BiliHistory {
     //https://api.bilibili.com/x/web-interface/history/cursor?max=&view_at=&business=archive
 
     public static class Cursor {
-        long max;
-        long viewAt;
+        public long max;
+        public String business;
+        public long viewAt;
     }
 
     public static class Record {
-        String title;
-        String bv;
-        String cover;
-        String author;
+        public String title;
+        public String bv;
+        public String cover;
+        public String author;
     }
 
     public interface GetHistoryCallback {
@@ -42,9 +43,9 @@ public class BiliHistory {
     }
 
     public static void getHistory(Cursor cursor, final GetHistoryCallback callback) {
-        String url = "https://api.bilibili.com/x/web-interface/history/cursor?business=archive";
+        String url = "https://api.bilibili.com/x/web-interface/history/cursor";
         if (cursor != null) {
-            url += "&max=" + cursor.max + "&view_at=" + cursor.viewAt;
+            url += "?business=" + cursor.business + "&max=" + cursor.max + "&view_at=" + cursor.viewAt;
         }
         Request request = new Request.Builder().url(url).headers(Bili.generalHeaders).build();
 
@@ -77,7 +78,9 @@ public class BiliHistory {
 
                 Cursor nextCursor = new Cursor();
                 nextCursor.max = jsonCursor.get("max").getAsLong();
+                nextCursor.business = jsonCursor.get("business").getAsString();
                 nextCursor.viewAt = jsonCursor.get("view_at").getAsLong();
+
                 if (nextCursor.max == 0 && nextCursor.viewAt == 0) {
                     nextCursor = null;
                 }
@@ -85,6 +88,11 @@ public class BiliHistory {
                 List<Record> records = new ArrayList<>();
                 JsonArray jsonList = jsonData.get("list").getAsJsonArray();
                 for (JsonElement element : jsonList) {
+                    if (!element.getAsJsonObject().get("history").getAsJsonObject().get("business").getAsString().equals("archive")) {
+                        //这条历史记录不是视频 跳过
+                        continue;
+                    }
+
                     Record record = new Record();
                     record.title = element.getAsJsonObject().get("title").getAsString();
                     record.cover = element.getAsJsonObject().get("cover").getAsString();

@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.fragment;
+package cc.kafuu.bilidownload.fragment.personal;
 
 import android.os.Bundle;
 
@@ -10,16 +10,16 @@ import android.view.ViewGroup;
 
 import cc.kafuu.bilidownload.R;
 
-public class HistoryFragment extends Fragment {
+public class FavoriteFragment extends Fragment {
 
     private View mRootView = null;
 
-    public HistoryFragment() {
+    public FavoriteFragment() {
         // Required empty public constructor
     }
 
-    public static HistoryFragment newInstance() {
-        HistoryFragment fragment = new HistoryFragment();
+    public static FavoriteFragment newInstance() {
+        FavoriteFragment fragment = new FavoriteFragment();
         Bundle args = new Bundle();
         fragment.setArguments(args);
         return fragment;
@@ -29,18 +29,16 @@ public class HistoryFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-
         }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
         if (mRootView != null) {
             ((ViewGroup) container.getParent()).removeView(mRootView);
         } else {
-            mRootView = inflater.inflate(R.layout.fragment_history, container, false);
+            mRootView = inflater.inflate(R.layout.fragment_favorite, container, false);
         }
 
         findView();

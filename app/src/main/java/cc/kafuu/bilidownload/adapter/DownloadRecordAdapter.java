@@ -43,7 +43,6 @@ import cc.kafuu.bilidownload.bilibili.video.BiliDownloader;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideoResource;
 import cc.kafuu.bilidownload.database.VideoDownloadRecord;
 import cc.kafuu.bilidownload.database.VideoInfo;
-import cc.kafuu.bilidownload.fragment.ItemChangeListener;
 import cc.kafuu.bilidownload.jniexport.JniTools;
 import cc.kafuu.bilidownload.utils.DialogTools;
 import cc.kafuu.bilidownload.utils.ApplicationTools;
@@ -55,6 +54,10 @@ public class DownloadRecordAdapter extends RecyclerView.Adapter<DownloadRecordAd
     private final Activity mActivity;
     private final DownloadManager mDownloadManager;
     private List<VideoDownloadRecord> mRecords;
+
+    public interface ItemChangeListener {
+        void onItemChange();
+    }
 
     private ItemChangeListener mItemCountChangeListener = null;
 
@@ -586,4 +589,6 @@ public class DownloadRecordAdapter extends RecyclerView.Adapter<DownloadRecordAd
 
         }
     }
+
+
 }

@@ -52,11 +52,7 @@ import okhttp3.Callback;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link VideoParserFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+
 public class VideoParserFragment extends Fragment {
     private static final String TAG = "VideoParserFragment";
 
@@ -176,8 +172,14 @@ public class VideoParserFragment extends Fragment {
             return;
         }
 
-        if (requestCode == PersonalActivity.RequestCode && resultCode == 1) {
+        if (requestCode == PersonalActivity.RequestCode && resultCode == PersonalActivity.ResultCodeLogout) {
             onExitLogin();
+            return;
+        }
+
+        if (requestCode == PersonalActivity.RequestCode && resultCode == PersonalActivity.ResultCodeVideoClicked) {
+            mVideoAddress.setText(data.getStringExtra("video_id"));
+            parsingVideoAddress();
         }
     }
 
@@ -233,11 +235,11 @@ public class VideoParserFragment extends Fragment {
 
         mVideoAddress.setOnKeyListener((v, keyCode, event) -> {
             if(keyCode == KeyEvent.KEYCODE_ENTER) {
-                onParsingVideo();
+                parsingVideoAddress();
             }
             return keyCode == KeyEvent.KEYCODE_ENTER;
         });
-        mParsingVideo.setOnClickListener(v -> onParsingVideo());
+        mParsingVideo.setOnClickListener(v -> parsingVideoAddress());
 
         mVideoInfoCard.setVisibility(View.GONE);
 
@@ -313,7 +315,7 @@ public class VideoParserFragment extends Fragment {
     /**
      * 用户开始尝试解析视频地址获得视频
      * */
-    private void onParsingVideo() {
+    private void parsingVideoAddress() {
         String videoId = null;
 
         if (mVideoAddress.getText() != null) {
@@ -338,7 +340,7 @@ public class VideoParserFragment extends Fragment {
                     public void onCompleted(String location) {
                         mHandler.post(() -> {
                             mVideoAddress.setText(getInputId(location));
-                            onParsingVideo();
+                            parsingVideoAddress();
                         });
                     }
                 });

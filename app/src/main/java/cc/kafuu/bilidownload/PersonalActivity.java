@@ -23,12 +23,17 @@ import java.util.Objects;
 
 import cc.kafuu.bilidownload.adapter.PersonalFragmentPagesAdapter;
 import cc.kafuu.bilidownload.bilibili.Bili;
-import cc.kafuu.bilidownload.fragment.FavoriteFragment;
-import cc.kafuu.bilidownload.fragment.HistoryFragment;
+import cc.kafuu.bilidownload.bilibili.account.BiliFollow;
+import cc.kafuu.bilidownload.fragment.personal.FollowFragment;
+import cc.kafuu.bilidownload.fragment.personal.FavoriteFragment;
+import cc.kafuu.bilidownload.fragment.personal.HistoryFragment;
 import cc.kafuu.bilidownload.utils.DialogTools;
 
 public class PersonalActivity extends AppCompatActivity {
     public static int RequestCode = 0x10;
+
+    public static int ResultCodeLogout = 0x01;
+    public static int ResultCodeVideoClicked = 0x02;
 
     //private CardView mLoginBiliCard;
     private ImageView mUserFace;
@@ -82,6 +87,9 @@ public class PersonalActivity extends AppCompatActivity {
         mFragments.add(new Pair<>(getString(R.string.history), HistoryFragment.newInstance()));
         mFragments.add(new Pair<>(getString(R.string.favorite), FavoriteFragment.newInstance()));
 
+        mFragments.add(new Pair<>(getString(R.string.cartoon), FollowFragment.newInstance(BiliFollow.Type.Cartoon)));
+        mFragments.add(new Pair<>(getString(R.string.teleplay), FollowFragment.newInstance(BiliFollow.Type.Teleplay)));
+
 
         mViewPager.setAdapter(new PersonalFragmentPagesAdapter(mFragments, getSupportFragmentManager(),  FragmentPagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT));
 
@@ -103,7 +111,7 @@ public class PersonalActivity extends AppCompatActivity {
      * */
     private void logout() {
         DialogTools.confirm(this, getString(R.string.exit_login), getString(R.string.exit_login_confirm), (dialog, which) -> {
-            setResult(1);
+            setResult(ResultCodeLogout);
             finish();
         }, null);
 

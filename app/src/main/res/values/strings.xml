@@ -63,7 +63,7 @@
     <string name="send_video">发送视频</string>
     <string name="delete_download_file_failure">删除已下载的文件失败</string>
     <string name="file_not_exist">文件不存在</string>
-    <string name="video_download_not_allowed">上传者不允许下载此视频资源</string>
+    <string name="video_download_not_allowed">下载此视频资源前请确保您已获得上传者许可</string>
     <string name="confirm_use_contents_paste_board">您当前粘贴板的内容可能是您需要解析的视频，是否使用它？</string>
     <string name="convert_format">转换格式</string>
     <string name="video_format_error">无法取得此视频封装格式</string>
@@ -97,5 +97,7 @@
     <string name="history">历史记录</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="cartoon">追番</string>
+    <string name="teleplay">电视剧</string>
 
 </resources>

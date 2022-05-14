@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".fragment.personal.HistoryFragment">
+    tools:context=".fragment.personal.FollowFragment">
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefreshLayout"
@@ -11,7 +11,7 @@
         android:layout_height="wrap_content">
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/historyList"
+            android:id="@+id/videoList"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
 

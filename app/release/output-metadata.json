@@ -31,24 +31,24 @@
       "filters": [
         {
           "filterType": "ABI",
-          "value": "arm64-v8a"
-        }
-      ],
-      "versionCode": 12,
-      "versionName": "1.7.2",
-      "outputFile": "app-arm64-v8a-release.apk"
-    },
-    {
-      "type": "ONE_OF_MANY",
-      "filters": [
-        {
-          "filterType": "ABI",
           "value": "x86"
         }
       ],
       "versionCode": 12,
       "versionName": "1.7.2",
       "outputFile": "app-x86-release.apk"
+    },
+    {
+      "type": "ONE_OF_MANY",
+      "filters": [
+        {
+          "filterType": "ABI",
+          "value": "arm64-v8a"
+        }
+      ],
+      "versionCode": 12,
+      "versionName": "1.7.2",
+      "outputFile": "app-arm64-v8a-release.apk"
     },
     {
       "type": "ONE_OF_MANY",
