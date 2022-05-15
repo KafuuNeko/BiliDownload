@@ -167,7 +167,7 @@ public class DownloadedVideoActivity extends AppCompatActivity {
         mVideoBv.setText(BvConvert.av2bv(String.valueOf(mVideoInfo.getAvid())));
         mVideoAvid.setText(String.valueOf(mVideoInfo.getAvid()));
         mVideoCid.setText(String.valueOf(mVideoInfo.getCid()));
-        mVideoFormat.setText((mDownloadRecord.getSaveTo().substring(mDownloadRecord.getSaveTo().lastIndexOf('.') + 1) + " " + mVideoInfo.getFormat()).toUpperCase());
+        mVideoFormat.setText((mDownloadRecord.getSaveTo().substring(mDownloadRecord.getSaveTo().lastIndexOf('.') + 1) + " " + mVideoInfo.getQualityDescription()).toUpperCase());
         mVideoSize.setText(Utility.getFileSizeString(new File(mDownloadRecord.getSaveTo()).length()));
     }
 
