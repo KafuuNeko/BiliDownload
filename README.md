@@ -12,7 +12,7 @@
   
  登录后可在解析页点击头像处进入个人信息页面查看您的历史记录、收藏夹、番剧、电视剧列表，点击指定视频可直接下载 
  
-  <img src="repository/image/PersonalActivity_1.JPG" width="20%" height="20%"><img src="repository/image/PersonalActivity_2.JPG" width="20%" height="20%"><img src="repository/image/PersonalActivity_3.JPG" width="20%" height="20%"><img src="repository/image/PersonalActivity_4.JPG" width="20%" height="20%">
+  <img src="repository/image/PersonalActivity_1.JPG" width="20%" height="20%"> <img src="repository/image/PersonalActivity_2.JPG" width="20%" height="20%"> <img src="repository/image/PersonalActivity_3.JPG" width="20%" height="20%"> <img src="repository/image/PersonalActivity_4.JPG" width="20%" height="20%">
  
   
 # 下载后  
@@ -20,5 +20,5 @@
 
  在下载页选中已下载项目可进入对应的下载项管理页  
 
-  <img src="repository/image/DownloadedVideoActivity_1.JPG" width="20%" height="20%"><img src="repository/image/DownloadedVideoActivity_2.JPG" width="20%" height="20%">
+  <img src="repository/image/DownloadedVideoActivity_1.JPG" width="20%" height="20%"> <img src="repository/image/DownloadedVideoActivity_2.JPG" width="20%" height="20%">
  
