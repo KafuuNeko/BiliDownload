@@ -29,6 +29,7 @@
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTask"
+            android:theme="@style/AppTheme"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -39,14 +40,18 @@
         <activity
             android:name=".BiliLoginActivity"
             android:launchMode="singleTask"
+            android:theme="@style/AppTheme"
             android:screenOrientation="portrait"/>
+
         <activity
             android:name=".UseClausesActivity"
-            android:launchMode="singleTask" />
+            android:launchMode="singleTask"
+            android:theme="@style/AppTheme"/>
 
         <activity android:name=".PersonalActivity"
             android:launchMode="singleTask"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme"/>
 
     </application>
 

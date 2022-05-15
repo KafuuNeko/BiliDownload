@@ -15,6 +15,11 @@
         <!-- Customize your theme here. -->
     </style>
 
+    <style name="AppTheme" parent="Theme.BiliDownload">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
     <style name="ToolBarTheme">
         <item name="actionMenuTextColor">@android:color/holo_green_light</item>
         <item name="colorControlNormal">@android:color/white</item>
