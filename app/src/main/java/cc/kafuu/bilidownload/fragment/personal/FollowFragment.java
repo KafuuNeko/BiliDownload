@@ -15,11 +15,13 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 
 import cc.kafuu.bilidownload.PersonalActivity;
 import cc.kafuu.bilidownload.R;
@@ -41,6 +43,7 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
 
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private RecyclerView mVideoList;
+    private TextView mNoRecordTip;
 
 
     public FollowFragment(BiliFollow.Type type) {
@@ -69,7 +72,7 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
         if (mRootView != null) {
             ((ViewGroup) container.getParent()).removeView(mRootView);
         } else {
-            mRootView = inflater.inflate(R.layout.fragment_follow, container, false);
+            mRootView = inflater.inflate(R.layout.fragment_videos, container, false);
         }
 
         findView();
@@ -82,6 +85,7 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
     private void findView() {
         mSwipeRefreshLayout = mRootView.findViewById(R.id.swipeRefreshLayout);
         mVideoList = mRootView.findViewById(R.id.videoList);
+        mNoRecordTip = mRootView.findViewById(R.id.noRecordTip);
     }
 
     private void initView() {
@@ -157,17 +161,21 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
                     mVideoList.getAdapter().notifyDataSetChanged();
                 });
 
+                updateTip();
             }
 
             @Override
             public void failure(String message) {
-                mLoading = false;
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    mLoading = false;
 
-                if (!loadMore) {
-                    mSwipeRefreshLayout.setRefreshing(false);
-                }
+                    if (!loadMore) {
+                        mSwipeRefreshLayout.setRefreshing(false);
+                    }
 
-                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+                });
+                updateTip();
             }
         });
 
@@ -181,5 +189,9 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
 
         getActivity().setResult(PersonalActivity.ResultCodeVideoClicked, new Intent().putExtra("video_id", record.videoId));
         getActivity().finish();
+    }
+
+    private void updateTip() {
+        new Handler(Looper.getMainLooper()).post(() -> mNoRecordTip.setVisibility((Objects.requireNonNull(mVideoList.getAdapter()).getItemCount() == 0) ? View.VISIBLE : View.GONE));
     }
 }

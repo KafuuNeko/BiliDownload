@@ -15,11 +15,13 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 
 import cc.kafuu.bilidownload.PersonalActivity;
 import cc.kafuu.bilidownload.R;
@@ -37,7 +39,8 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
 
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private RecyclerView mHistoryList;
-    
+    private TextView mNoRecordTip;
+
 
     public HistoryFragment() {
         // Required empty public constructor
@@ -65,7 +68,7 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
         if (mRootView != null) {
             ((ViewGroup) container.getParent()).removeView(mRootView);
         } else {
-            mRootView = inflater.inflate(R.layout.fragment_history, container, false);
+            mRootView = inflater.inflate(R.layout.fragment_videos, container, false);
         }
 
         findView();
@@ -77,8 +80,8 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
 
     private void findView() {
         mSwipeRefreshLayout = mRootView.findViewById(R.id.swipeRefreshLayout);
-        mHistoryList = mRootView.findViewById(R.id.historyList);
-
+        mHistoryList = mRootView.findViewById(R.id.videoList);
+        mNoRecordTip = mRootView.findViewById(R.id.noRecordTip);
     }
 
     private void initView() {
@@ -154,6 +157,8 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
                     }
 
                 });
+
+                updateTip();
             }
 
             @Override
@@ -167,6 +172,8 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
 
                     Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
                 });
+
+                updateTip();
             }
         });
 
@@ -177,11 +184,15 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
      * */
     @Override
     public void onVideoListItemClicked(VideoListAdapter.Record record) {
-        if (getActivity().isDestroyed()) {
+        if (Objects.requireNonNull(getActivity()).isDestroyed()) {
             return;
         }
 
         getActivity().setResult(PersonalActivity.ResultCodeVideoClicked, new Intent().putExtra("video_id", record.videoId));
         getActivity().finish();
+    }
+
+    private void updateTip() {
+        new Handler(Looper.getMainLooper()).post(() -> mNoRecordTip.setVisibility((Objects.requireNonNull(mHistoryList.getAdapter()).getItemCount() == 0) ? View.VISIBLE : View.GONE));
     }
 }

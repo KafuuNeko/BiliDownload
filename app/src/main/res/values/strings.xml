@@ -95,9 +95,9 @@
     <string name="exit_login">退出登录</string>
     <string name="favorite">收藏夹</string>
     <string name="history">历史记录</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="cartoon">追番</string>
+    <string name="cartoon">番剧</string>
     <string name="teleplay">电视剧</string>
+    <string name="no_record">没有记录</string>
+    <string name="no_sign">这个人很神秘，什么都没有写</string>
 
 </resources>

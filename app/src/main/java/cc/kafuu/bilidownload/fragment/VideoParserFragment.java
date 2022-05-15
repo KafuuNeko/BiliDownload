@@ -201,7 +201,11 @@ public class VideoParserFragment extends Fragment {
                     }
                     Glide.with(Objects.requireNonNull(getContext())).load(Bili.biliAccount.getFace()).placeholder(R.drawable.ic_2233).into(mUserFace);
                     mUserName.setText(Bili.biliAccount.getUserName());
-                    mUserSign.setText(Bili.biliAccount.getSign());
+                    if (Bili.biliAccount.getSign() == null || Bili.biliAccount.getSign().length() == 0) {
+                        mUserSign.setText(getText(R.string.no_sign));
+                    } else {
+                        mUserSign.setText(Bili.biliAccount.getSign());
+                    }
                 });
             });
             thread.start();

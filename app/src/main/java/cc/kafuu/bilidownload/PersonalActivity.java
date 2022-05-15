@@ -80,7 +80,11 @@ public class PersonalActivity extends AppCompatActivity {
         //加载头像/昵称/个性签名
         Glide.with(this).load(Bili.biliAccount.getFace()).placeholder(R.drawable.ic_2233).into(mUserFace);
         mUserName.setText(Bili.biliAccount.getUserName());
-        mUserSign.setText(Bili.biliAccount.getSign());
+        if (Bili.biliAccount.getSign() == null || Bili.biliAccount.getSign().length() == 0) {
+            mUserSign.setText(getText(R.string.no_sign));
+        } else {
+            mUserSign.setText(Bili.biliAccount.getSign());
+        }
 
         List<Pair<CharSequence, Fragment>> mFragments = new ArrayList<>();
 
@@ -92,6 +96,7 @@ public class PersonalActivity extends AppCompatActivity {
 
 
         mViewPager.setAdapter(new PersonalFragmentPagesAdapter(mFragments, getSupportFragmentManager(),  FragmentPagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT));
+        mViewPager.setOffscreenPageLimit(Objects.requireNonNull(mViewPager.getAdapter()).getCount());
 
         mTabLayout.setupWithViewPager(mViewPager, false);
 

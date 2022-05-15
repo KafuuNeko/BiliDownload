@@ -29,6 +29,15 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/videoId"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="bv"
+                android:textSize="10sp" />
+
+            <TextView
                 android:id="@+id/videoTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -42,17 +51,10 @@
                 android:id="@+id/info"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:maxLines="1"
                 android:ellipsize="end"
+                android:maxLines="1"
                 android:text="Up" />
 
-            <TextView
-                android:id="@+id/videoId"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:text="bv" />
         </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>
