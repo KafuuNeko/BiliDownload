@@ -28,7 +28,6 @@ import java.util.Objects;
 
 import cc.kafuu.bilidownload.adapter.OperatorListAdapter;
 import cc.kafuu.bilidownload.bilibili.BvConvert;
-import cc.kafuu.bilidownload.bilibili.account.BiliHistory;
 import cc.kafuu.bilidownload.database.VideoDownloadRecord;
 import cc.kafuu.bilidownload.database.VideoInfo;
 import cc.kafuu.bilidownload.jniexport.JniTools;
