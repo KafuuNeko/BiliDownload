@@ -2,7 +2,7 @@
     <string name="app_name">BVD</string>
 
     <string name="about_title">BVD for Android</string>
-    <string name="version_describe">1.7.2.foss</string>
+    <string name="version_describe">1.8.1.foss</string>
     <string name="about_context">
         By kafuu(kafuuneko@gmail.com)
     </string>
@@ -99,5 +99,17 @@
     <string name="teleplay">电视剧</string>
     <string name="no_record">没有记录</string>
     <string name="no_sign">这个人很神秘，什么都没有写</string>
+    <string name="bili_video">视频</string>
+    <string name="todo">TODO</string>
+    <string name="convert_to_flv_format">视频转换为FLV</string>
+    <string name="convert_to_mp4_format">视频转换为MP4</string>
+    <string name="convert_to_wmv_format">视频转换为WMV</string>
+    <string name="convert_to_mkv_format">视频转换为MKV</string>
+    <string name="video_format">视频格式</string>
+    <string name="video_size">视频尺寸</string>
+    <string name="video_bv">BV</string>
+    <string name="video_avid">AVID</string>
+    <string name="video_cid">CID</string>
+    <string name="convert_to_avi_format">视频转换为AVI</string>
 
 </resources>

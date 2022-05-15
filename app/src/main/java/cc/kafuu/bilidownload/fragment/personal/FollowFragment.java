@@ -34,7 +34,7 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
 
     private View mRootView = null;
 
-    private BiliFollow.Type mType;
+    private final BiliFollow.Type mType;
 
     private boolean mLoading = false;
 
@@ -61,8 +61,6 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-        }
     }
 
     @Override
@@ -102,6 +100,7 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
 
                 LinearLayoutManager linearLayoutManager =  (LinearLayoutManager) mVideoList.getLayoutManager();
 
+                assert linearLayoutManager != null;
                 int total = linearLayoutManager.getItemCount();
                 int lastVisible = linearLayoutManager.findLastVisibleItemPosition();
                 Log.d(TAG, "onScrolled: " + total + "-" + lastVisible);
@@ -139,7 +138,7 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
 
                     if (!loadMore) {
                         mSwipeRefreshLayout.setRefreshing(false);
-                        ((VideoListAdapter) mVideoList.getAdapter()).clearRecord();
+                        ((VideoListAdapter) Objects.requireNonNull(mVideoList.getAdapter())).clearRecord();
                     }
 
                     if (records.size() == 0) {
@@ -155,7 +154,7 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
                         videoRecord.title = record.title;
                         videoRecord.videoId = "ss" + record.seasonId;
 
-                        ((VideoListAdapter) mVideoList.getAdapter()).addRecord(videoRecord);
+                        ((VideoListAdapter) Objects.requireNonNull(mVideoList.getAdapter())).addRecord(videoRecord);
                     }
 
                     mVideoList.getAdapter().notifyDataSetChanged();
@@ -183,7 +182,7 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
 
     @Override
     public void onVideoListItemClicked(VideoListAdapter.Record record) {
-        if (getActivity().isDestroyed()) {
+        if (Objects.requireNonNull(getActivity()).isDestroyed()) {
             return;
         }
 

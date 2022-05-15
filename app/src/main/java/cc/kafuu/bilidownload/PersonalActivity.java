@@ -30,7 +30,7 @@ import cc.kafuu.bilidownload.fragment.personal.HistoryFragment;
 import cc.kafuu.bilidownload.utils.DialogTools;
 
 public class PersonalActivity extends AppCompatActivity {
-    public static int RequestCode = 0x10;
+    public static int RequestCode = 0x02;
 
     public static int ResultCodeLogout = 0x01;
     public static int ResultCodeVideoClicked = 0x02;

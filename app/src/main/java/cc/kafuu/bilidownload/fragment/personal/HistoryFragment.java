@@ -56,9 +56,6 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-
-        }
     }
 
     @Override
@@ -98,6 +95,7 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
 
                 LinearLayoutManager linearLayoutManager =  (LinearLayoutManager) mHistoryList.getLayoutManager();
 
+                assert linearLayoutManager != null;
                 int total = linearLayoutManager.getItemCount();
                 int lastVisible = linearLayoutManager.findLastVisibleItemPosition();
                 Log.d(TAG, "onScrolled: " + total + "-" + lastVisible);
@@ -135,7 +133,7 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
 
                     if (!loadMore) {
                         mSwipeRefreshLayout.setRefreshing(false);
-                        ((VideoListAdapter) mHistoryList.getAdapter()).clearRecord();
+                        ((VideoListAdapter) Objects.requireNonNull(mHistoryList.getAdapter())).clearRecord();
                     }
 
                     for (BiliHistory.Record record : records) {
@@ -146,10 +144,10 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
                         videoRecord.title = record.title;
                         videoRecord.videoId = record.bv;
 
-                        ((VideoListAdapter) mHistoryList.getAdapter()).addRecord(videoRecord);
+                        ((VideoListAdapter) Objects.requireNonNull(mHistoryList.getAdapter())).addRecord(videoRecord);
                     }
 
-                    mHistoryList.getAdapter().notifyDataSetChanged();
+                    Objects.requireNonNull(mHistoryList.getAdapter()).notifyDataSetChanged();
 
                     //加载的数量不足20且还有未加载完的记录则继续加载更多历史记录
                     if (records.size() < 20 && nextCursor != null) {

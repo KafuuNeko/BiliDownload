@@ -6,12 +6,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +23,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+import cc.kafuu.bilidownload.DownloadedVideoActivity;
+import cc.kafuu.bilidownload.PersonalActivity;
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.adapter.DownloadRecordAdapter;
 
@@ -30,6 +34,8 @@ import cc.kafuu.bilidownload.adapter.DownloadRecordAdapter;
  * create an instance of this fragment.
  */
 public class DownloadFragment extends Fragment {
+    private static final String TAG = "DownloadFragment";
+
     private Handler mHandler;
 
     private View mRootView = null;
@@ -93,6 +99,18 @@ public class DownloadFragment extends Fragment {
         return mRootView;
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        Log.d(TAG, "onActivityResult: requestCode: " + requestCode + ", requestCode: " + requestCode);
+
+        if (requestCode == DownloadedVideoActivity.RequestCode && resultCode == DownloadedVideoActivity.ResultCodeDeleted) {
+            assert data != null;
+            mVideoDownloadRecordAdapter.removeItem(data.getLongExtra("download_record_id", 0));
+        }
+    }
+
     private void findView() {
         mDownloadRecordList = mRootView.findViewById(R.id.downloadRecordList);
         mNoDownloadRecordTip = mRootView.findViewById(R.id.noDownloadRecordTip);
@@ -107,7 +125,7 @@ public class DownloadFragment extends Fragment {
         filter.addAction("download.task.create");
         Objects.requireNonNull(getContext()).registerReceiver(mBroadcastReceiver, filter);
 
-        mVideoDownloadRecordAdapter = new DownloadRecordAdapter(Objects.requireNonNull(getActivity()));
+        mVideoDownloadRecordAdapter = new DownloadRecordAdapter(this);
         mVideoDownloadRecordAdapter.setItemCountChangeListener(this::showOrHideTip);
 
         mDownloadRecordList.setAdapter(mVideoDownloadRecordAdapter);

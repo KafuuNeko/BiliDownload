@@ -178,6 +178,7 @@ public class VideoParserFragment extends Fragment {
         }
 
         if (requestCode == PersonalActivity.RequestCode && resultCode == PersonalActivity.ResultCodeVideoClicked) {
+            assert data != null;
             mVideoAddress.setText(data.getStringExtra("video_id"));
             parsingVideoAddress();
         }
