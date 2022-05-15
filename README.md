@@ -1,3 +1,11 @@
+<style>
+img{
+    width: 20%;
+    height: 20%
+    padding-left: 20%;
+}
+</style>
+
 # BiliDownload
  支持下载bilibili所有视频(用户上传的视频、番剧、电视剧、电影)  
  支持提取视频文件音频(aac)  
@@ -6,18 +14,18 @@
 # 如何下载
  将bilibili视频地址(也可以是分享链接、BV、AV、EP、SS)复制粘贴到解析页输入框点击解析  
  部分视频以及720p以上的分辨率需登录bilibili账号后下载    
- ![image](repository/image/VideoParserFragment_1.JPG)  
+ ![image](repository/image/VideoParserFragment_1.JPG)
   
  登录后可在解析页点击头像处进入个人信息页面查看您的历史记录、收藏夹、番剧、电视剧列表，点击指定视频可直接下载  
  ![image](repository/image/PersonalActivity_1.JPG)
  ![image](repository/image/PersonalActivity_2.JPG)
  ![image](repository/image/PersonalActivity_3.JPG)
  ![image](repository/image/PersonalActivity_4.JPG)
+ 
   
 # 下载后  
  ![image](repository/image/DownloadFragment_1.JPG)  
  在下载页选中已下载项目可进入对应的下载项管理页  
  ![image](repository/image/DownloadedVideoActivity_1.JPG)
  ![image](repository/image/DownloadedVideoActivity_2.JPG)
- 
  
