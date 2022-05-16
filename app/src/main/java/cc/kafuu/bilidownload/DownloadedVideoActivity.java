@@ -1,7 +1,6 @@
 package cc.kafuu.bilidownload;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -35,7 +34,7 @@ import cc.kafuu.bilidownload.utils.ApplicationTools;
 import cc.kafuu.bilidownload.utils.DialogTools;
 import cc.kafuu.bilidownload.utils.Utility;
 
-public class DownloadedVideoActivity extends AppCompatActivity {
+public class DownloadedVideoActivity extends BaseActivity {
     private static final String TAG = "DownloadedVideoActivity";
 
     public static int RequestCode = 0x03;
@@ -56,9 +55,12 @@ public class DownloadedVideoActivity extends AppCompatActivity {
     private TextView mVideoFormat;
     private TextView mVideoSize;
 
-
     private RecyclerView mViewOperator;
     private RecyclerView mVideoFormatOperator;
+
+    private TextView mAudioFormat;
+    private TextView mAudioSize;
+
     private RecyclerView mAudioOperator;
     private RecyclerView mVideoOtherOperator;
 
@@ -109,6 +111,10 @@ public class DownloadedVideoActivity extends AppCompatActivity {
 
         mViewOperator = findViewById(R.id.viewOperator);
         mVideoFormatOperator = findViewById(R.id.videoFormatOperator);
+
+        mAudioFormat = findViewById(R.id.audioFormat);
+        mAudioSize = findViewById(R.id.audioSize);
+
         mAudioOperator = findViewById(R.id.audioOperator);
         mVideoOtherOperator = findViewById(R.id.videoOtherOperator);
     }
@@ -124,7 +130,7 @@ public class DownloadedVideoActivity extends AppCompatActivity {
         @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         mDownloadTime.setText(simpleDateFormat.format(mDownloadRecord.getStartTime()));
 
-        updateVideoInfo();
+        reloadVideoInfo();
 
         mViewOperator.setLayoutManager(new LinearLayoutManager(this));
         mVideoFormatOperator.setLayoutManager(new LinearLayoutManager(this));
@@ -136,6 +142,11 @@ public class DownloadedVideoActivity extends AppCompatActivity {
         Utility.setRecyclerViewNested(mAudioOperator);
         Utility.setRecyclerViewNested(mVideoOtherOperator);
 
+        reloadOperatorListAdapter();
+        reloadAudioInfo();
+    }
+
+    private void reloadOperatorListAdapter() {
         OperatorListAdapter adapter;
 
         adapter = new OperatorListAdapter(this);
@@ -149,21 +160,31 @@ public class DownloadedVideoActivity extends AppCompatActivity {
         mAudioOperator.setAdapter(adapter);
 
         adapter = new OperatorListAdapter(this);
-        adapter.addItem(R.string.convert_to_flv_format, v -> convertVideoFormatCheck("flv"));
-        adapter.addItem(R.string.convert_to_mp4_format, v -> convertVideoFormatCheck("mp4"));
-        adapter.addItem(R.string.convert_to_mkv_format, v -> convertVideoFormatCheck("mkv"));
-        adapter.addItem(R.string.convert_to_wmv_format, v -> convertVideoFormatCheck("wmv"));
+
+        String currentFormat = mDownloadRecord.getSaveTo().substring(mDownloadRecord.getSaveTo().lastIndexOf('.') + 1).toLowerCase();
+
+        if (!currentFormat.equals("flv")) {
+            adapter.addItem(R.string.convert_to_flv_format, v -> convertVideoFormatCheck("flv"));
+        }
+        if (!currentFormat.equals("mp4")) {
+            adapter.addItem(R.string.convert_to_mp4_format, v -> convertVideoFormatCheck("mp4"));
+        }
+        if (!currentFormat.equals("mkv")) {
+            adapter.addItem(R.string.convert_to_mkv_format, v -> convertVideoFormatCheck("mkv"));
+        }
+        if (!currentFormat.equals("wmv")) {
+            adapter.addItem(R.string.convert_to_wmv_format, v -> convertVideoFormatCheck("wmv"));
+        }
+
         mVideoFormatOperator.setAdapter(adapter);
 
         adapter = new OperatorListAdapter(this);
         adapter.addItem(R.string.delete_video, v -> deleteVideo());
         mVideoOtherOperator.setAdapter(adapter);
-
-
     }
 
     @SuppressLint("SetTextI18n")
-    private void updateVideoInfo() {
+    private void reloadVideoInfo() {
         mVideoBv.setText(BvConvert.av2bv(String.valueOf(mVideoInfo.getAvid())));
         mVideoAvid.setText(String.valueOf(mVideoInfo.getAvid()));
         mVideoCid.setText(String.valueOf(mVideoInfo.getCid()));
@@ -171,9 +192,21 @@ public class DownloadedVideoActivity extends AppCompatActivity {
         mVideoSize.setText(Utility.getFileSizeString(new File(mDownloadRecord.getSaveTo()).length()));
     }
 
+    private void reloadAudioInfo() {
+        File audioFile = (mDownloadRecord.getAudio() == null) ? null : new File(mDownloadRecord.getAudio());
+
+        if (audioFile == null || !audioFile.exists()) {
+            mAudioFormat.setText(R.string.audio_not_extract);
+            mAudioSize.setText(R.string.audio_not_extract);
+        } else {
+            mAudioFormat.setText(audioFile.getPath().substring(mDownloadRecord.getSaveTo().lastIndexOf('.') + 1).toUpperCase());
+            mAudioSize.setText(Utility.getFileSizeString(audioFile.length()));
+        }
+    }
+
     /**
      * 发送或查看视频
-     * */
+     */
     private void viewVideo(boolean isSend) {
         File file = new File(mDownloadRecord.getSaveTo());
         if (!file.exists()) {
@@ -185,7 +218,7 @@ public class DownloadedVideoActivity extends AppCompatActivity {
 
     /**
      * 提取音频
-     * */
+     */
     private void viewAudio(boolean isSend) {
         File saveTo = new File(mDownloadRecord.getSaveTo());
         if (!saveTo.exists()) {
@@ -215,7 +248,10 @@ public class DownloadedVideoActivity extends AppCompatActivity {
                 int rc = JniTools.extractAudio(saveTo.getPath(), saveAudioFile.getPath());
                 progressDialog.cancel();
                 if (rc == 0) {
-                    new Handler(getMainLooper()).post(() -> viewAudio(isSend));
+                    new Handler(getMainLooper()).post(() -> {
+                        reloadAudioInfo();
+                        viewAudio(isSend);
+                    });
                 } else {
                     new Handler(getMainLooper()).post(() -> Toast.makeText(this, getText(R.string.failed_extract_audio_2).toString().replace("%ec", String.valueOf(rc)), Toast.LENGTH_SHORT).show());
                 }
@@ -236,7 +272,7 @@ public class DownloadedVideoActivity extends AppCompatActivity {
 
         String message = getText(R.string.video_convert_tip).toString().replace("%args1", oldFormat).replace("%args2", toFormat);
 
-        DialogTools.confirm(this, mVideoInfo.getVideoTitle(), message, (dialog, which) -> convertVideoFormat(toFormat) , null);
+        DialogTools.confirm(this, mVideoInfo.getVideoTitle(), message, (dialog, which) -> convertVideoFormat(toFormat), null);
     }
 
     private void convertVideoFormat(final String toFormat) {
@@ -281,7 +317,8 @@ public class DownloadedVideoActivity extends AppCompatActivity {
                     mDownloadRecord.saveOrUpdate("id=?", String.valueOf(mDownloadRecord.getId()));
 
                     //转换成功，更新显示信息
-                    updateVideoInfo();
+                    reloadVideoInfo();
+                    reloadOperatorListAdapter();
 
                     Toast.makeText(this, R.string.convert_completed, Toast.LENGTH_SHORT).show();
                 }); //重新加载数据

@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 
 import cc.kafuu.bilidownload.bilibili.account.BiliAccount;
+import cc.kafuu.bilidownload.utils.Utility;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
@@ -28,7 +29,7 @@ public class Bili {
         saveDir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
     }
 
-    public static final OkHttpClient httpClient = new OkHttpClient();//OkHttpUtils.getUnsafeOkHttpClient()
+    public static final OkHttpClient httpClient = Utility.getOkHttpClient();
 
     public static final String UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 EdgiOS/46.3.30 Mobile/15E148 Safari/605.1.15";
     public static Headers generalHeaders;

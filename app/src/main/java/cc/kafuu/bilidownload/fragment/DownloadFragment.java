@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 import cc.kafuu.bilidownload.DownloadedVideoActivity;
-import cc.kafuu.bilidownload.PersonalActivity;
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.adapter.DownloadRecordAdapter;
 
@@ -107,7 +106,7 @@ public class DownloadFragment extends Fragment {
 
         if (requestCode == DownloadedVideoActivity.RequestCode && resultCode == DownloadedVideoActivity.ResultCodeDeleted) {
             assert data != null;
-            mVideoDownloadRecordAdapter.removeItem(data.getLongExtra("download_record_id", 0));
+            mVideoDownloadRecordAdapter.removeDownloadRecord(data.getLongExtra("download_record_id", 0), true);
         }
     }
 

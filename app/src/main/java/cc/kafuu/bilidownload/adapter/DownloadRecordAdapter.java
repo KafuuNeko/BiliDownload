@@ -111,7 +111,7 @@ public class DownloadRecordAdapter extends RecyclerView.Adapter<DownloadRecordAd
         try (Cursor cursor = mDownloadManager.query(new DownloadManager.Query().setFilterById(record.getDownloadId()))) {
             if (cursor == null || !cursor.moveToFirst()) {
                 Log.d(TAG, "checkRecord: " + record.getDownloadId() + " lose efficacy");
-                LitePal.delete(VideoDownloadRecord.class, record.getId());
+                removeDownloadRecord(record.getId(), false);
                 return false;
             }
             return true;
@@ -138,7 +138,7 @@ public class DownloadRecordAdapter extends RecyclerView.Adapter<DownloadRecordAd
         return mRecords.size();
     }
 
-    public void removeItem(long downloadRecordId) {
+    public void removeDownloadRecord(long downloadRecordId, boolean changeItems) {
 
         VideoDownloadRecord videoDownloadRecord = LitePal.find(VideoDownloadRecord.class, downloadRecordId);
 
@@ -165,15 +165,17 @@ public class DownloadRecordAdapter extends RecyclerView.Adapter<DownloadRecordAd
         LitePal.delete(VideoDownloadRecord.class, videoDownloadRecord.getId());
         mDownloadManager.remove(videoDownloadRecord.getDownloadId());
 
-        for (VideoDownloadRecord item : mRecords) {
-            if (item.getId() == downloadRecordId) {
-                mRecords.remove(item);
-                break;
+        if (changeItems) {
+            for (VideoDownloadRecord item : mRecords) {
+                if (item.getId() == downloadRecordId) {
+                    mRecords.remove(item);
+                    break;
+                }
             }
-        }
 
-        notifyDataSetChanged();
-        itemChange();
+            notifyDataSetChanged();
+            itemChange();
+        }
     }
 
     private enum LoadedStatus {
@@ -366,7 +368,7 @@ public class DownloadRecordAdapter extends RecyclerView.Adapter<DownloadRecordAd
             if (mLoadedStatus == LoadedStatus.LoadedFailure || mDownloadStatusFlag == -1) {
                 DialogTools.confirm(mActivity, mActivity.getText(R.string.confirm),
                         mActivity.getText(R.string.download_item_undefined),
-                        (dialogInterface, i) -> removeItem(mBindRecord.getId()),
+                        (dialogInterface, i) -> removeDownloadRecord(mBindRecord.getId(), true),
                         null);
                 return;
             }
@@ -381,8 +383,8 @@ public class DownloadRecordAdapter extends RecyclerView.Adapter<DownloadRecordAd
                         .setTitle(mVideoInfo.getVideoTitle())
                         .setMessage(R.string.download_failure_whether_restart_or_remode)
                         .setNegativeButton(R.string.cancel, null)
-                        .setPositiveButton(R.string.restart, (dialogInterface, i) -> onRestartTask())
-                        .setNeutralButton(R.string.delete, (dialogInterface, i) -> removeItem(mBindRecord.getId()))
+                        .setPositiveButton(R.string.restart, (dialogInterface, i) -> restartTask())
+                        .setNeutralButton(R.string.delete, (dialogInterface, i) -> removeDownloadRecord(mBindRecord.getId(), true))
                         .create().show();
                 return;
             }
@@ -391,7 +393,7 @@ public class DownloadRecordAdapter extends RecyclerView.Adapter<DownloadRecordAd
             if (mDownloadStatusFlag == DownloadManager.STATUS_PENDING || mDownloadStatusFlag == DownloadManager.STATUS_PAUSED || mDownloadStatusFlag == DownloadManager.STATUS_RUNNING) {
                 DialogTools.confirm(mActivity, mActivity.getText(R.string.confirm),
                         mActivity.getText(R.string.cancel_download_confirm),
-                        (dialogInterface, i) -> removeItem(mBindRecord.getId()),
+                        (dialogInterface, i) -> removeDownloadRecord(mBindRecord.getId(), true),
                         null);
                 return;
             }
@@ -408,7 +410,7 @@ public class DownloadRecordAdapter extends RecyclerView.Adapter<DownloadRecordAd
         /**
          * 重启任务
          * */
-        private void onRestartTask() {
+        private void restartTask() {
             //通过Cid/Avid/Quality重新获取下载源
             BiliVideoResource.getDownloadUrl(mVideoInfo.getVideoTitle(),
                     mVideoInfo.getPartTitle(),

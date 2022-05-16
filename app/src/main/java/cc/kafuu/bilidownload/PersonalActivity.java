@@ -29,7 +29,7 @@ import cc.kafuu.bilidownload.fragment.personal.FavoriteFragment;
 import cc.kafuu.bilidownload.fragment.personal.HistoryFragment;
 import cc.kafuu.bilidownload.utils.DialogTools;
 
-public class PersonalActivity extends AppCompatActivity {
+public class PersonalActivity extends BaseActivity {
     public static int RequestCode = 0x02;
 
     public static int ResultCodeLogout = 0x01;

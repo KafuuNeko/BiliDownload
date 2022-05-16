@@ -111,5 +111,8 @@
     <string name="video_avid">AVID</string>
     <string name="video_cid">CID</string>
     <string name="convert_to_avi_format">视频转换为AVI</string>
+    <string name="audio_format">音频格式</string>
+    <string name="audio_size">音频尺寸</string>
+    <string name="audio_not_extract">音频未提取</string>
 
 </resources>
