@@ -25,7 +25,8 @@ https://github.com/KafuuNeko/BiliDownload
 ------------------------------
 FFmpeg
 ------------------------------
-https://www.ffmpeg.org
+Official site:    https://www.ffmpeg.org
+Modified version: https://github.com/KafuuNeko/AndroidFFmpeg
 
 Copyright (c) FFmpeg developers and contributers
 
