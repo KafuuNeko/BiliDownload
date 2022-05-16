@@ -128,4 +128,11 @@ public class Utility {
         return builder.build();
     }
 
+    public static String secondToTime(long second) {
+        long hh = second / 3600, mm = (second % 3600) / 60, ss = second % 60;
+        return ((hh < 10) ? ("0" + hh) : String.valueOf(hh)) + ":" +
+                ((mm < 10) ? ("0" + mm) : String.valueOf(mm)) + ":" +
+                ((ss < 10) ? ("0" + ss) : String.valueOf(ss));
+    }
+
 }

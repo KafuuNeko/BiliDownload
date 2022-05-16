@@ -114,5 +114,9 @@
     <string name="audio_format">音频格式</string>
     <string name="audio_size">音频尺寸</string>
     <string name="audio_not_extract">音频未提取</string>
+    <string name="video_duration">视频时长</string>
+    <string name="coder_info">编码信息</string>
+    <string name="video_code_rate">视频码率</string>
+    <string name="audio_code_rate">音频码率</string>
 
 </resources>

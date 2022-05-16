@@ -17,6 +17,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 import org.litepal.LitePal;
 
@@ -44,6 +47,9 @@ public class DownloadedVideoActivity extends BaseActivity {
     private VideoInfo mVideoInfo = null;
     private VideoDownloadRecord mDownloadRecord = null;
 
+    private JsonObject mMediaInfo;
+    private JsonObject mAudioInfo;
+
     private ImageView mVideoPic;
     private TextView mVideoTitle;
     private TextView mPart;
@@ -53,12 +59,16 @@ public class DownloadedVideoActivity extends BaseActivity {
     private TextView mVideoAvid;
     private TextView mVideoCid;
     private TextView mVideoFormat;
+    private TextView mCoderInfo;
+    private TextView mVideoCodeRate;
     private TextView mVideoSize;
+    private TextView mVideoDuration;
 
     private RecyclerView mViewOperator;
     private RecyclerView mVideoFormatOperator;
 
     private TextView mAudioFormat;
+    private TextView mAudioCodeRate;
     private TextView mAudioSize;
 
     private RecyclerView mAudioOperator;
@@ -107,12 +117,16 @@ public class DownloadedVideoActivity extends BaseActivity {
         mVideoAvid = findViewById(R.id.videoAvid);
         mVideoCid = findViewById(R.id.videoCid);
         mVideoFormat = findViewById(R.id.videoFormat);
+        mCoderInfo = findViewById(R.id.coderInfo);
+        mVideoCodeRate = findViewById(R.id.videoCodeRate);
         mVideoSize = findViewById(R.id.videoSize);
+        mVideoDuration = findViewById(R.id.videoDuration);
 
         mViewOperator = findViewById(R.id.viewOperator);
         mVideoFormatOperator = findViewById(R.id.videoFormatOperator);
 
         mAudioFormat = findViewById(R.id.audioFormat);
+        mAudioCodeRate = findViewById(R.id.audioCodeRate);
         mAudioSize = findViewById(R.id.audioSize);
 
         mAudioOperator = findViewById(R.id.audioOperator);
@@ -185,20 +199,52 @@ public class DownloadedVideoActivity extends BaseActivity {
 
     @SuppressLint("SetTextI18n")
     private void reloadVideoInfo() {
+        mMediaInfo = new Gson().fromJson(JniTools.getMediaInfo(mDownloadRecord.getSaveTo()), JsonObject.class);
+
         mVideoBv.setText(BvConvert.av2bv(String.valueOf(mVideoInfo.getAvid())));
         mVideoAvid.setText(String.valueOf(mVideoInfo.getAvid()));
         mVideoCid.setText(String.valueOf(mVideoInfo.getCid()));
         mVideoFormat.setText((mDownloadRecord.getSaveTo().substring(mDownloadRecord.getSaveTo().lastIndexOf('.') + 1) + " " + mVideoInfo.getQualityDescription()).toUpperCase());
         mVideoSize.setText(Utility.getFileSizeString(new File(mDownloadRecord.getSaveTo()).length()));
+
+        mVideoDuration.setText("null");
+        mCoderInfo.setText("null");
+        mVideoCodeRate.setText("null");
+
+        if (mMediaInfo.get("code").getAsInt() == 0) {
+            mVideoDuration.setText(Utility.secondToTime(mMediaInfo.get("second").getAsLong()));
+
+            mVideoCodeRate.setText((mMediaInfo.get("bit_rate").getAsLong() / 1024) + "kbps");
+
+            if (mMediaInfo.get("streams").isJsonArray()) {
+                StringBuilder coders = new StringBuilder();
+                for (JsonElement element : mMediaInfo.get("streams").getAsJsonArray()) {
+                    if (coders.length() != 0) {
+                        coders.append(", ");
+                    }
+                    coders.append(element.getAsJsonObject().get("name").getAsString());
+                }
+                mCoderInfo.setText(coders);
+            }
+        }
     }
 
+    @SuppressLint("SetTextI18n")
     private void reloadAudioInfo() {
         File audioFile = (mDownloadRecord.getAudio() == null) ? null : new File(mDownloadRecord.getAudio());
 
         if (audioFile == null || !audioFile.exists()) {
             mAudioFormat.setText(R.string.audio_not_extract);
             mAudioSize.setText(R.string.audio_not_extract);
+            mAudioCodeRate.setText(R.string.audio_not_extract);
         } else {
+            mAudioInfo = new Gson().fromJson(JniTools.getMediaInfo(audioFile.getPath()), JsonObject.class);
+
+            mAudioCodeRate.setText("null");
+            if (mAudioInfo.get("code").getAsLong() == 0) {
+                mAudioCodeRate.setText((mAudioInfo.get("bit_rate").getAsLong() / 1024) + "kbps");
+            }
+
             mAudioFormat.setText(audioFile.getPath().substring(mDownloadRecord.getSaveTo().lastIndexOf('.') + 1).toUpperCase());
             mAudioSize.setText(Utility.getFileSizeString(audioFile.length()));
         }
