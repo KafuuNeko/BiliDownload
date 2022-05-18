@@ -15,54 +15,54 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
-            cmake {
-                cppFlags "-std=c++17"
-            }
-
-            ndk {
-                abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64', 'x86'
-            }
+//            cmake {
+//                cppFlags "-std=c++17"
+//            }
+//
+//            ndk {
+//                abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64', 'x86'
+//            }
         }
 
         sourceSets {
             main {
-                jniLibs.srcDirs = ['src/main/cpp/ffmpeg/libs/']
+//                jniLibs.srcDirs = ['src/main/cpp/ffmpeg/libs/']
             }
         }
 
-        packagingOptions {
-            pickFirst 'lib/arm64-v8a/libavcodec.so'
-            pickFirst 'lib/arm64-v8a/libavdevice.so'
-            pickFirst 'lib/arm64-v8a/libavfilter.so'
-            pickFirst 'lib/arm64-v8a/libavformat.so'
-            pickFirst 'lib/arm64-v8a/libavutil.so'
-            pickFirst 'lib/arm64-v8a/libswresample.so'
-            pickFirst 'lib/arm64-v8a/libswscale.so'
-
-            pickFirst 'lib/armeabi-v7a/libavcodec.so'
-            pickFirst 'lib/armeabi-v7a/libavdevice.so'
-            pickFirst 'lib/armeabi-v7a/libavfilter.so'
-            pickFirst 'lib/armeabi-v7a/libavformat.so'
-            pickFirst 'lib/armeabi-v7a/libavutil.so'
-            pickFirst 'lib/armeabi-v7a/libswresample.so'
-            pickFirst 'lib/armeabi-v7a/libswscale.so'
-
-            pickFirst 'lib/x86_64/libavcodec.so'
-            pickFirst 'lib/x86_64/libavdevice.so'
-            pickFirst 'lib/x86_64/libavfilter.so'
-            pickFirst 'lib/x86_64/libavformat.so'
-            pickFirst 'lib/x86_64/libavutil.so'
-            pickFirst 'lib/x86_64/libswresample.so'
-            pickFirst 'lib/x86_64/libswscale.so'
-
-            pickFirst 'lib/x86/libavcodec.so'
-            pickFirst 'lib/x86/libavdevice.so'
-            pickFirst 'lib/x86/libavfilter.so'
-            pickFirst 'lib/x86/libavformat.so'
-            pickFirst 'lib/x86/libavutil.so'
-            pickFirst 'lib/x86/libswresample.so'
-            pickFirst 'lib/x86/libswscale.so'
-        }
+//        packagingOptions {
+//            pickFirst 'lib/arm64-v8a/libavcodec.so'
+//            pickFirst 'lib/arm64-v8a/libavdevice.so'
+//            pickFirst 'lib/arm64-v8a/libavfilter.so'
+//            pickFirst 'lib/arm64-v8a/libavformat.so'
+//            pickFirst 'lib/arm64-v8a/libavutil.so'
+//            pickFirst 'lib/arm64-v8a/libswresample.so'
+//            pickFirst 'lib/arm64-v8a/libswscale.so'
+//
+//            pickFirst 'lib/armeabi-v7a/libavcodec.so'
+//            pickFirst 'lib/armeabi-v7a/libavdevice.so'
+//            pickFirst 'lib/armeabi-v7a/libavfilter.so'
+//            pickFirst 'lib/armeabi-v7a/libavformat.so'
+//            pickFirst 'lib/armeabi-v7a/libavutil.so'
+//            pickFirst 'lib/armeabi-v7a/libswresample.so'
+//            pickFirst 'lib/armeabi-v7a/libswscale.so'
+//
+//            pickFirst 'lib/x86_64/libavcodec.so'
+//            pickFirst 'lib/x86_64/libavdevice.so'
+//            pickFirst 'lib/x86_64/libavfilter.so'
+//            pickFirst 'lib/x86_64/libavformat.so'
+//            pickFirst 'lib/x86_64/libavutil.so'
+//            pickFirst 'lib/x86_64/libswresample.so'
+//            pickFirst 'lib/x86_64/libswscale.so'
+//
+//            pickFirst 'lib/x86/libavcodec.so'
+//            pickFirst 'lib/x86/libavdevice.so'
+//            pickFirst 'lib/x86/libavfilter.so'
+//            pickFirst 'lib/x86/libavformat.so'
+//            pickFirst 'lib/x86/libavutil.so'
+//            pickFirst 'lib/x86/libswresample.so'
+//            pickFirst 'lib/x86/libswscale.so'
+//        }so
     }
 
     buildTypes {
@@ -75,11 +75,12 @@ android {
         }
     }
     externalNativeBuild {
-        cmake {
-            path "src/main/cpp/CMakeLists.txt"
-            version "3.10.2"
-        }
+//        cmake {
+//            path "src/main/cpp/CMakeLists.txt"
+//            version "3.10.2"
+//        }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -87,12 +88,12 @@ android {
     ndkVersion '23.1.7779620'
 
     splits {
-        abi {
-            enable true
-            reset()
-            include 'armeabi-v7a', 'arm64-v8a', 'x86_64', 'x86'
-            universalApk true
-        }
+//        abi {
+//            enable true
+//            reset()
+//            include 'armeabi-v7a', 'arm64-v8a', 'x86_64', 'x86'
+//            universalApk true
+//        }
     }
 }
 

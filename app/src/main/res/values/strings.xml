@@ -118,5 +118,6 @@
     <string name="coder_info">编码信息</string>
     <string name="video_code_rate">视频码率</string>
     <string name="audio_code_rate">音频码率</string>
+    <string name="lite_none">精简版无法读取此信息</string>
 
 </resources>

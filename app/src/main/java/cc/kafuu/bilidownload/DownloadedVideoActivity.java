@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -173,24 +174,25 @@ public class DownloadedVideoActivity extends BaseActivity {
         adapter.addItem(R.string.send_audio, v -> viewAudio(true));
         mAudioOperator.setAdapter(adapter);
 
-        adapter = new OperatorListAdapter(this);
-
-        String currentFormat = mDownloadRecord.getSaveTo().substring(mDownloadRecord.getSaveTo().lastIndexOf('.') + 1).toLowerCase();
-
-        if (!currentFormat.equals("flv")) {
-            adapter.addItem(R.string.convert_to_flv_format, v -> convertVideoFormatCheck("flv"));
-        }
-        if (!currentFormat.equals("mp4")) {
-            adapter.addItem(R.string.convert_to_mp4_format, v -> convertVideoFormatCheck("mp4"));
-        }
-        if (!currentFormat.equals("mkv")) {
-            adapter.addItem(R.string.convert_to_mkv_format, v -> convertVideoFormatCheck("mkv"));
-        }
-        if (!currentFormat.equals("wmv")) {
-            adapter.addItem(R.string.convert_to_wmv_format, v -> convertVideoFormatCheck("wmv"));
-        }
-
-        mVideoFormatOperator.setAdapter(adapter);
+//        adapter = new OperatorListAdapter(this);
+//
+//        String currentFormat = mDownloadRecord.getSaveTo().substring(mDownloadRecord.getSaveTo().lastIndexOf('.') + 1).toLowerCase();
+//
+//        if (!currentFormat.equals("flv")) {
+//            adapter.addItem(R.string.convert_to_flv_format, v -> convertVideoFormatCheck("flv"));
+//        }
+//        if (!currentFormat.equals("mp4")) {
+//            adapter.addItem(R.string.convert_to_mp4_format, v -> convertVideoFormatCheck("mp4"));
+//        }
+//        if (!currentFormat.equals("mkv")) {
+//            adapter.addItem(R.string.convert_to_mkv_format, v -> convertVideoFormatCheck("mkv"));
+//        }
+//        if (!currentFormat.equals("wmv")) {
+//            adapter.addItem(R.string.convert_to_wmv_format, v -> convertVideoFormatCheck("wmv"));
+//        }
+//
+//        mVideoFormatOperator.setAdapter(adapter);
+        mVideoFormatOperator.setVisibility(View.GONE);
 
         adapter = new OperatorListAdapter(this);
         adapter.addItem(R.string.delete_video, v -> deleteVideo());
@@ -207,10 +209,6 @@ public class DownloadedVideoActivity extends BaseActivity {
         mVideoFormat.setText((mDownloadRecord.getSaveTo().substring(mDownloadRecord.getSaveTo().lastIndexOf('.') + 1) + " " + mVideoInfo.getQualityDescription()).toUpperCase());
         mVideoSize.setText(Utility.getFileSizeString(new File(mDownloadRecord.getSaveTo()).length()));
 
-        mVideoDuration.setText("null");
-        mCoderInfo.setText("null");
-        mVideoCodeRate.setText("null");
-
         if (mMediaInfo.get("code").getAsInt() == 0) {
             mVideoDuration.setText(Utility.secondToTime(mMediaInfo.get("second").getAsLong()));
 
@@ -226,6 +224,10 @@ public class DownloadedVideoActivity extends BaseActivity {
                 }
                 mCoderInfo.setText(coders);
             }
+        } else {
+            mVideoDuration.setText(R.string.lite_none);
+            mCoderInfo.setText(R.string.lite_none);
+            mVideoCodeRate.setText(R.string.lite_none);
         }
     }
 
@@ -240,9 +242,10 @@ public class DownloadedVideoActivity extends BaseActivity {
         } else {
             mAudioInfo = new Gson().fromJson(JniTools.getMediaInfo(audioFile.getPath()), JsonObject.class);
 
-            mAudioCodeRate.setText("null");
             if (mAudioInfo.get("code").getAsLong() == 0) {
                 mAudioCodeRate.setText((mAudioInfo.get("bit_rate").getAsLong() / 1024) + "kbps");
+            } else {
+                mAudioCodeRate.setText(R.string.lite_none);
             }
 
             mAudioFormat.setText(audioFile.getPath().substring(mDownloadRecord.getSaveTo().lastIndexOf('.') + 1).toUpperCase());
