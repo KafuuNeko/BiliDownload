@@ -1,0 +1,3 @@
+bilibili video resource downloader
+
+https://github.com/KafuuNeko/BiliDownload
