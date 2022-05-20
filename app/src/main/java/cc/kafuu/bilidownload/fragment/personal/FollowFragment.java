@@ -34,7 +34,7 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
 
     private View mRootView = null;
 
-    private final BiliFollow.Type mType;
+    private BiliFollow.Type mType;
 
     private boolean mLoading = false;
 
@@ -46,14 +46,15 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
     private TextView mNoRecordTip;
 
 
-    public FollowFragment(BiliFollow.Type type) {
-        mType = type;
+    public FollowFragment() {
+
     }
 
 
     public static FollowFragment newInstance(BiliFollow.Type type) {
-        FollowFragment fragment = new FollowFragment(type);
+        FollowFragment fragment = new FollowFragment();
         Bundle args = new Bundle();
+        args.putString("type", type.name());
         fragment.setArguments(args);
         return fragment;
     }
@@ -61,6 +62,15 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+
+            String type = getArguments().getString("type");
+            if (type.equals(BiliFollow.Type.Cartoon.name())) {
+                mType = BiliFollow.Type.Cartoon;
+            } else {
+                mType = BiliFollow.Type.Teleplay;
+            }
+        }
     }
 
     @Override

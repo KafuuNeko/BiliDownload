@@ -77,18 +77,12 @@ public class VideoParserFragment extends Fragment {
 
 
     public VideoParserFragment() {
-        // Required empty public constructor
         mHandler = new Handler(Looper.getMainLooper());
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @return A new instance of fragment VideoParserFragment.
-     */
-    // TODO: Rename and change types and number of parameters
+
     public static VideoParserFragment newInstance() {
+        Log.d(TAG, "newInstance");
         VideoParserFragment fragment = new VideoParserFragment();
         Bundle args = new Bundle();
         fragment.setArguments(args);
@@ -98,6 +92,8 @@ public class VideoParserFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate");
+
     }
 
     @Override
@@ -150,8 +146,10 @@ public class VideoParserFragment extends Fragment {
                              Bundle savedInstanceState) {
         if (mRootView != null) {
             ((ViewGroup) container.getParent()).removeView(mRootView);
+            Log.d(TAG, "onCreateView: reuse");
         } else {
             mRootView = inflater.inflate(R.layout.fragment_video_parser, container, false);
+            Log.d(TAG, "onCreateView: new view");
         }
 
         findView();
