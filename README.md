@@ -3,6 +3,8 @@
  支持提取视频文件音频(aac)  
  支持转换视频封装格式(flv、mp4、mkv、wmv)  
  
+ [<img src="https://play.google.com/intl/en_us/badges/images/generic/en-play-badge.png" alt="Get it on Google Play" height="80">](https://play.google.com/store/apps/details?id=cc.kafuu.bilidownload)
+ 
 # 如何下载
  将bilibili视频地址(也可以是分享链接、BV、AV、EP、SS)复制粘贴到解析页输入框点击解析  
  部分视频以及720p以上的分辨率需登录bilibili账号后下载    
