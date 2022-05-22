@@ -1,7 +1,11 @@
 package cc.kafuu.bilidownload.utils;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
+import android.net.Uri;
 import android.net.http.X509TrustManagerExtensions;
+import android.os.ParcelFileDescriptor;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListAdapter;
@@ -10,6 +14,8 @@ import android.widget.ListView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
@@ -29,6 +35,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.TlsVersion;
 
 public class Utility {
+    private static final String TAG = "Utility";
+
     public static void setListViewHeightBasedOnChildren(ListView listView) {
         //获取ListView对应的Adapter
         ListAdapter listAdapter = listView.getAdapter();
@@ -138,5 +146,33 @@ public class Utility {
                 ((mm < 10) ? ("0" + mm) : String.valueOf(mm)) + ":" +
                 ((ss < 10) ? ("0" + ss) : String.valueOf(ss));
     }
+
+
+    public static boolean copyFile(Context context, Uri oldFile, Uri newPath) {
+        Log.d(TAG, "copyFile: " + oldFile + " Copy " + newPath);
+
+        try {
+            ParcelFileDescriptor pfd;
+
+            pfd = context.getContentResolver().openFileDescriptor(oldFile, "r");
+            try (FileInputStream fileInputStream = new FileInputStream(pfd.getFileDescriptor())) {
+                pfd = context.getContentResolver().openFileDescriptor(newPath, "w");
+                try (FileOutputStream fileOutputStream = new FileOutputStream(pfd.getFileDescriptor())) {
+                    byte[] buffer = new byte[4096];
+                    int byteRead;
+                    while (-1 != (byteRead = fileInputStream.read(buffer))) {
+                        fileOutputStream.write(buffer, 0, byteRead);
+                    }
+                    fileOutputStream.flush();
+                }
+            }
+
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 
 }

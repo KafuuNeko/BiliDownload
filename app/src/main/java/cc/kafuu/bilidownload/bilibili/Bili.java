@@ -27,6 +27,7 @@ public class Bili {
 
     public static void initApplication(Context context) {
         saveDir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+        Log.d(TAG, "initApplication: saveDir=" + saveDir.toString());
     }
 
     public static final OkHttpClient httpClient;

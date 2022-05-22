@@ -1,14 +1,23 @@
 package cc.kafuu.bilidownload;
 
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.FileProvider;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.ContentProvider;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -35,6 +44,7 @@ import cc.kafuu.bilidownload.database.VideoDownloadRecord;
 import cc.kafuu.bilidownload.database.VideoInfo;
 import cc.kafuu.bilidownload.jniexport.JniTools;
 import cc.kafuu.bilidownload.model.DownloadedVideoViewModel;
+import cc.kafuu.bilidownload.service.ExportService;
 import cc.kafuu.bilidownload.utils.ApplicationTools;
 import cc.kafuu.bilidownload.utils.DialogTools;
 import cc.kafuu.bilidownload.utils.Utility;
@@ -70,6 +80,8 @@ public class DownloadedVideoActivity extends BaseActivity {
     private RecyclerView mAudioOperator;
     private RecyclerView mVideoOtherOperator;
 
+    private ActivityResultLauncher<Intent> mExportVideoLauncher;
+    private ActivityResultLauncher<Intent> mExportAudioLauncher;
 
     public static void actionStartForResult(Context context, ActivityResultLauncher<Intent> launcher, long videoRecordId, long downloadRecordId) {
         if (ActivityCollector.contains(DownloadedVideoActivity.class)) {
@@ -106,6 +118,7 @@ public class DownloadedVideoActivity extends BaseActivity {
 
         findView();
         initView();
+        initLauncher();
     }
 
     @Override
@@ -184,6 +197,40 @@ public class DownloadedVideoActivity extends BaseActivity {
 
         reloadOperatorListAdapter();
         reloadAudioInfo();
+
+    }
+
+    private void initLauncher() {
+        mExportVideoLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() == Activity.RESULT_OK) {
+                assert result.getData() != null;
+                startExportService(mModel.downloadRecord.getSaveTo(), result.getData().getData());
+            }
+        });
+
+        mExportAudioLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() == Activity.RESULT_OK) {
+                assert result.getData() != null;
+                startExportService(mModel.downloadRecord.getAudio(), result.getData().getData());
+            }
+        });
+    }
+
+    /**
+     * 启动资源导出服务
+     * */
+    private void startExportService(String source, Uri dest) {
+        File sourceFile = new File(source);
+        if (!sourceFile.exists()) {
+            Toast.makeText(this, R.string.file_not_exist, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Uri sourceUri = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+                ? FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", sourceFile)
+                : Uri.fromFile(sourceFile);
+
+        ExportService.export(this, sourceUri, dest);
     }
 
     private void reloadOperatorListAdapter() {
@@ -192,11 +239,13 @@ public class DownloadedVideoActivity extends BaseActivity {
         adapter = new OperatorListAdapter(this);
         adapter.addItem(R.string.view_video, v -> viewVideo(false));
         adapter.addItem(R.string.send_video, v -> viewVideo(true));
+        adapter.addItem(R.string.export_video, v -> exportResource(true));
         mViewOperator.setAdapter(adapter);
 
         adapter = new OperatorListAdapter(this);
         adapter.addItem(R.string.view_audio, v -> viewAudio(false));
         adapter.addItem(R.string.send_audio, v -> viewAudio(true));
+        adapter.addItem(R.string.export_audio, v -> exportResource(false));
         mAudioOperator.setAdapter(adapter);
 
         adapter = new OperatorListAdapter(this);
@@ -324,10 +373,21 @@ public class DownloadedVideoActivity extends BaseActivity {
             return;
         }
 
+        if (checkAudioExist()) {
+            assert mModel.downloadRecord.getAudio() != null;
+            ApplicationTools.shareOrViewFile(this, mModel.videoInfo.getVideoTitle() + "-" + mModel.videoInfo.getPartTitle(), new File(mModel.downloadRecord.getAudio()), "*/*", !isSend);
+        }
+    }
+
+    /**
+     * 检查Audio是否已提取
+     * 如果还未提取则开始音频提取并返回false
+     * */
+    private boolean checkAudioExist() {
         File saveTo = new File(mModel.downloadRecord.getSaveTo());
         if (!saveTo.exists()) {
             Toast.makeText(this, R.string.file_not_exist, Toast.LENGTH_SHORT).show();
-            return;
+            return false;
         }
 
         File audioFile = (mModel.downloadRecord.getAudio() == null) ? null : new File(mModel.downloadRecord.getAudio());
@@ -336,7 +396,7 @@ public class DownloadedVideoActivity extends BaseActivity {
             String audioFormat = JniTools.getVideoAudioFormat(saveTo.getPath());
             if (audioFormat == null) {
                 Toast.makeText(this, R.string.failed_extract_audio_1, Toast.LENGTH_SHORT).show();
-                return;
+                return false;
             }
 
             final File saveAudioFile = new File(saveTo.getParent() + "/" + new Date().getTime() + "." + audioFormat);
@@ -358,10 +418,35 @@ public class DownloadedVideoActivity extends BaseActivity {
                 }
             }).start();
 
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 导出视频或音频资源到其它目录
+     * */
+    private void exportResource(boolean isVideo) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED
+                || ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
             return;
         }
 
-        ApplicationTools.shareOrViewFile(this, mModel.videoInfo.getVideoTitle() + "-" + mModel.videoInfo.getPartTitle(), audioFile, "*/*", !isSend);
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        if (isVideo) {
+            intent.setType("video/" + mModel.downloadRecord.getSaveTo().substring(mModel.downloadRecord.getSaveTo().lastIndexOf('.') + 1));
+            intent.putExtra(Intent.EXTRA_TITLE, new File(mModel.downloadRecord.getSaveTo()).getName());
+            mExportVideoLauncher.launch(intent);
+        } else {
+            if (checkAudioExist()) {
+                assert mModel.downloadRecord.getAudio() != null;
+                intent.setType("audio/" + mModel.downloadRecord.getAudio().substring(mModel.downloadRecord.getAudio().lastIndexOf('.') + 1));
+                intent.putExtra(Intent.EXTRA_TITLE, new File(mModel.downloadRecord.getAudio()).getName());
+                mExportAudioLauncher.launch(intent);
+            }
+        }
     }
 
     /**

@@ -122,5 +122,13 @@
     <string name="extract_audio_ok">提取音频完成</string>
     <string name="cookie_login">手动输入Cookie</string>
     <string name="checking">正在验证</string>
+    <string name="export_video">导出视频</string>
+    <string name="export_audio">导出音频</string>
+    <string name="file_occupied">文件被占用</string>
+    <string name="resource_exporting">正在导出资源</string>
+    <string name="wait_export">等待导出</string>
+    <string name="export_failure">导出失败</string>
+    <string name="export_failure_queue_full">导出队列已满，无法添加新的导出任务</string>
+    <string name="export_ok">成功导出</string>
 
 </resources>

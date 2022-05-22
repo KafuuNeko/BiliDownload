@@ -4,6 +4,7 @@
     package="cc.kafuu.bilidownload">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
@@ -18,6 +19,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BiliDownload"
         android:usesCleartextTraffic="true">
+
+        <service
+            android:name=".service.ExportService"
+            android:enabled="true"
+            android:exported="true"/>
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -41,33 +47,27 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".BiliLoginActivity"
             android:launchMode="singleTask"
             android:theme="@style/AppTheme" />
-
         <activity
             android:name=".UseClausesActivity"
             android:launchMode="singleTask"
             android:theme="@style/AppTheme" />
-
         <activity
             android:name=".PersonalActivity"
             android:launchMode="singleTask"
             android:theme="@style/AppTheme" />
-
         <activity
             android:name=".DownloadedVideoActivity"
             android:launchMode="singleTask"
             android:theme="@style/AppTheme" />
-
         <activity
             android:name=".FileSelectorActivity"
             android:exported="false"
             android:launchMode="singleTask"
-            android:theme="@style/AppTheme"/>
-
+            android:theme="@style/AppTheme" />
     </application>
 
 </manifest>
