@@ -360,7 +360,7 @@ public class DownloadedVideoActivity extends BaseActivity {
     }
 
     /**
-     * 提取音频
+     * 发送或查看音频
      */
     private void viewAudio(boolean isSend) {
         if (mModel.convertVideoStatus.getValue() == DownloadedVideoViewModel.ConvertVideoStatus.Converting) {
@@ -428,6 +428,11 @@ public class DownloadedVideoActivity extends BaseActivity {
      * 导出视频或音频资源到其它目录
      * */
     private void exportResource(boolean isVideo) {
+        if (mModel.convertVideoStatus.getValue() == DownloadedVideoViewModel.ConvertVideoStatus.Converting) {
+            Toast.makeText(this, R.string.converting_video, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED
                 || ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
@@ -440,6 +445,11 @@ public class DownloadedVideoActivity extends BaseActivity {
             intent.putExtra(Intent.EXTRA_TITLE, new File(mModel.downloadRecord.getSaveTo()).getName());
             mExportVideoLauncher.launch(intent);
         } else {
+            if (mModel.extractingAudioStatus.getValue() == DownloadedVideoViewModel.ExtractingAudioStatus.Extracting) {
+                Toast.makeText(this, R.string.extracting_audio, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             if (checkAudioExist()) {
                 assert mModel.downloadRecord.getAudio() != null;
                 intent.setType("audio/" + mModel.downloadRecord.getAudio().substring(mModel.downloadRecord.getAudio().lastIndexOf('.') + 1));
