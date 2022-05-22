@@ -73,6 +73,10 @@ public class DownloadedVideoActivity extends BaseActivity {
 
 
     public static void actionStartForResult(Fragment fragment, long videoRecordId, long downloadRecordId) {
+        if (ActivityCollector.contains(DownloadedVideoActivity.class)) {
+            return;
+        }
+
         Intent intent = new Intent(fragment.getContext(), DownloadedVideoActivity.class);
 
         intent.putExtra("video_record_id", videoRecordId);

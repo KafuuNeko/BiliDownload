@@ -44,6 +44,10 @@ public class PersonalActivity extends BaseActivity {
     }
 
     public static void actionStartForResult(Fragment fragment) {
+        if (ActivityCollector.contains(PersonalActivity.class)) {
+            return;
+        }
+
         Intent intent = new Intent(fragment.getContext(), PersonalActivity.class);
         fragment.startActivityForResult(intent, RequestCode);
     }

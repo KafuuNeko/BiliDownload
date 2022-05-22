@@ -117,6 +117,9 @@ public class BiliLoginActivity extends BaseActivity {
     }
 
     public static void actionStartForResult(Fragment fragment) {
+        if (ActivityCollector.contains(BiliLoginActivity.class)) {
+            return;
+        }
         Intent intent = new Intent(fragment.getContext(), BiliLoginActivity.class);
         fragment.startActivityForResult(intent, RequestCode);
     }

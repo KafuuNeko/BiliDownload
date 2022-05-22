@@ -131,7 +131,7 @@ int32_t VideoFormatConversion(const std::string& inputFile, const std::string& o
     int32_t frame_index=0;
     //获取AVPacket（Get an AVPacket）
     while ((rc = av_read_frame(ioFormatPair->first, &pkt)) >= 0) {
-        __android_log_print(ANDROID_LOG_DEBUG, "videoFormatConversion", "Get an AVPacket");
+        //__android_log_print(ANDROID_LOG_DEBUG, "videoFormatConversion", "Get an AVPacket");
         AVStream *in_stream = ioFormatPair->first->streams[pkt.stream_index];
         AVStream *out_stream = ioFormatPair->second->streams[pkt.stream_index];
 
