@@ -2,7 +2,7 @@
     <string name="app_name">BVD</string>
 
     <string name="about_title">BVD for Android</string>
-    <string name="version_describe">1.8.3.foss</string>
+    <string name="version_describe">1.9.1.foss</string>
     <string name="about_context">
         By kafuu(kafuuneko@gmail.com)
     </string>
@@ -130,5 +130,6 @@
     <string name="export_failure">导出失败</string>
     <string name="export_failure_queue_full">导出队列已满，无法添加新的导出任务</string>
     <string name="export_ok">成功导出</string>
+    <string name="play_url_request_failure_404">(404) 未找到可下载资源, 可能的原因：未登录账户、您当前账户不支持下载此视频、您当前网络代理(VPN)不支持下载此视频</string>
 
 </resources>

@@ -60,7 +60,11 @@ class ExportService : Service() {
 
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(ExportService::class.java.name, "Export", NotificationManager.IMPORTANCE_DEFAULT)
+            val channel = NotificationChannel(
+                ExportService::class.java.name,
+                "Export",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
             manager.createNotificationChannel(channel)
         }
 
@@ -103,13 +107,21 @@ class ExportService : Service() {
         TODO("Return the communication channel to the service.")
     }
 
+
     fun setForeground(describe: CharSequence) {
         Handler(Looper.getMainLooper()).post {
             val notification = NotificationCompat.Builder(this, ExportService::class.java.name)
                 .setContentTitle(getText(R.string.resource_exporting).toString())
                 .setSmallIcon(R.drawable.ic_baseline_import_export_24)
                 .setContentText(describe)
-                .setContentIntent(PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), 0))
+                .setContentIntent(
+                    PendingIntent.getActivity(
+                        this,
+                        0,
+                        Intent(this, MainActivity::class.java),
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
+                    )
+                )
                 .build()
 
             startForeground(1, notification)
@@ -120,18 +132,30 @@ class ExportService : Service() {
     private fun notify(title: CharSequence, message: CharSequence) {
 
         Handler(Looper.getMainLooper()).post {
-            var id = getSharedPreferences("app", MODE_PRIVATE).getInt(ExportService::class.java.name + ".notify_id", 0xff)
+            var id = getSharedPreferences(
+                "app",
+                MODE_PRIVATE
+            ).getInt(ExportService::class.java.name + ".notify_id", 0xff)
             if (id < 0xff) {
                 id = 0xff
             }
-            getSharedPreferences("app", MODE_PRIVATE).edit().putInt(ExportService::class.java.name + ".notify_id", id + 1).apply()
+            getSharedPreferences("app", MODE_PRIVATE).edit()
+                .putInt(ExportService::class.java.name + ".notify_id", id + 1).apply()
 
-            val notificationBuilder = NotificationCompat.Builder(this, ExportService::class.java.name)
-                .setContentTitle(title)
-                .setSmallIcon(R.drawable.ic_baseline_import_export_24)
-                .setContentText(message)
-                .setContentIntent(PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), 0))
-                .setAutoCancel(true)
+            val notificationBuilder =
+                NotificationCompat.Builder(this, ExportService::class.java.name)
+                    .setContentTitle(title)
+                    .setSmallIcon(R.drawable.ic_baseline_import_export_24)
+                    .setContentText(message)
+                    .setContentIntent(
+                        PendingIntent.getActivity(
+                            this,
+                            0,
+                            Intent(this, MainActivity::class.java),
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
+                        )
+                    )
+                    .setAutoCancel(true)
 
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.notify(id, notificationBuilder.build())

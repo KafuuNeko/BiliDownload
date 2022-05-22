@@ -1,5 +1,8 @@
 package cc.kafuu.bilidownload.bilibili.video;
 
+import android.content.Context;
+import android.util.Log;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -11,13 +14,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.bilibili.Bili;
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 public class BiliVideoPart {
+    private static final String TAG = "BiliVideoPart";
 
     private final BiliVideo mVideo;
     private final long mAv;
@@ -62,8 +68,10 @@ public class BiliVideoPart {
     /**
      * 取得此视频所支持的清晰度视频资源
      * */
-    public void getResource(GetResourceCallback callback) {
-        Bili.httpClient.newCall(Bili.playUrlRequest(mCid, mAv, 0)).enqueue(new Callback() {
+    public void getResource(Context context, GetResourceCallback callback) {
+        final Request request = Bili.playUrlRequest(mCid, mAv, 0);
+        Log.d(TAG, "getResource: " + request.url());
+        Bili.httpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 callback.failure(e.getMessage());
@@ -79,10 +87,11 @@ public class BiliVideoPart {
 
                 try {
                     String json = body.string();
+                    Log.d(TAG, "onResponse: " + json);
                     JsonObject res = new Gson().fromJson(json, JsonObject.class);
                     if (res.get("code").getAsInt() != 0) {
                         if (res.get("code").getAsInt() == -404) {
-                            callback.failure("您还未登录或当前登录的账户不支持下载此视频");
+                            callback.failure(context.getText(R.string.play_url_request_failure_404).toString());
                         } else {
                             callback.failure(res.get("message").getAsString());
                         }

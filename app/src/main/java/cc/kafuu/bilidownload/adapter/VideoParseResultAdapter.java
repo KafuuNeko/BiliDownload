@@ -134,7 +134,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
             progressDialog.setOnKeyListener((dialog1, keyCode, event) -> keyCode == KeyEvent.KEYCODE_SEARCH);
             progressDialog.show();
 
-            part.getResource(new BiliVideoPart.GetResourceCallback() {
+            part.getResource(mActivity, new BiliVideoPart.GetResourceCallback() {
                 @Override
                 public void completed(List<BiliVideoResource> resources) {
                     progressDialog.cancel();
