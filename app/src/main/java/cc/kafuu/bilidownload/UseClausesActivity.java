@@ -3,6 +3,7 @@ package cc.kafuu.bilidownload;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -48,7 +49,7 @@ public class UseClausesActivity extends BaseActivity {
 
         mRefused.setOnClickListener(v -> {
             mUserAgree = false;
-            finish();
+            ActivityCollector.finishAll();
         });
         mAgree.setOnClickListener(v -> {
             mUserAgree = true;
@@ -57,13 +58,22 @@ public class UseClausesActivity extends BaseActivity {
     }
 
     @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (!mUserAgree) {
+                ActivityCollector.finishAll();
+                return true;
+            }
+        }
+
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         getSharedPreferences("app", MODE_PRIVATE).edit().putBoolean("agree_clause_0", mUserAgree).apply();
-
-        if (!mUserAgree) {
-            ActivityCollector.finishAll();
-        }
     }
 
     private String getDisclaimer() {

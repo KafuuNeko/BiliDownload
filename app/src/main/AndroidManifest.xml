@@ -4,7 +4,8 @@
     package="cc.kafuu.bilidownload">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
@@ -30,10 +31,10 @@
 
         <activity
             android:name=".MainActivity"
+            android:exported="true"
             android:launchMode="singleTask"
             android:theme="@style/AppTheme"
-            android:windowSoftInputMode="adjustUnspecified|stateHidden"
-            android:exported="true">
+            android:windowSoftInputMode="adjustUnspecified|stateHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -56,7 +57,14 @@
             android:launchMode="singleTask"
             android:theme="@style/AppTheme" />
 
-        <activity android:name=".DownloadedVideoActivity"
+        <activity
+            android:name=".DownloadedVideoActivity"
+            android:launchMode="singleTask"
+            android:theme="@style/AppTheme" />
+
+        <activity
+            android:name=".FileSelectorActivity"
+            android:exported="false"
             android:launchMode="singleTask"
             android:theme="@style/AppTheme"/>
 

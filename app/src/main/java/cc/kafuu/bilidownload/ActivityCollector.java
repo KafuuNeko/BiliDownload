@@ -35,6 +35,7 @@ public class ActivityCollector {
     }
 
     public static void finishAll() {
+        Log.d(TAG, "finishAll");
         for (Activity activity : activities) {
             if (!activity.isFinishing()) {
                 activity.finish();
