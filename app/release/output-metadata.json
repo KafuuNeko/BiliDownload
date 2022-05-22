@@ -1,30 +1,19 @@
 {
-  "version": 2,
+  "version": 3,
   "artifactType": {
     "type": "APK",
     "kind": "Directory"
   },
   "applicationId": "cc.kafuu.bilidownload",
-  "variantName": "processReleaseResources",
+  "variantName": "release",
   "elements": [
     {
       "type": "UNIVERSAL",
       "filters": [],
-      "versionCode": 15,
-      "versionName": "1.8.2",
+      "attributes": [],
+      "versionCode": 16,
+      "versionName": "1.8.3",
       "outputFile": "app-universal-release.apk"
-    },
-    {
-      "type": "ONE_OF_MANY",
-      "filters": [
-        {
-          "filterType": "ABI",
-          "value": "x86"
-        }
-      ],
-      "versionCode": 15,
-      "versionName": "1.8.2",
-      "outputFile": "app-x86-release.apk"
     },
     {
       "type": "ONE_OF_MANY",
@@ -34,8 +23,9 @@
           "value": "x86_64"
         }
       ],
-      "versionCode": 15,
-      "versionName": "1.8.2",
+      "attributes": [],
+      "versionCode": 16,
+      "versionName": "1.8.3",
       "outputFile": "app-x86_64-release.apk"
     },
     {
@@ -43,12 +33,13 @@
       "filters": [
         {
           "filterType": "ABI",
-          "value": "arm64-v8a"
+          "value": "x86"
         }
       ],
-      "versionCode": 15,
-      "versionName": "1.8.2",
-      "outputFile": "app-arm64-v8a-release.apk"
+      "attributes": [],
+      "versionCode": 16,
+      "versionName": "1.8.3",
+      "outputFile": "app-x86-release.apk"
     },
     {
       "type": "ONE_OF_MANY",
@@ -58,9 +49,24 @@
           "value": "armeabi-v7a"
         }
       ],
-      "versionCode": 15,
-      "versionName": "1.8.2",
+      "attributes": [],
+      "versionCode": 16,
+      "versionName": "1.8.3",
       "outputFile": "app-armeabi-v7a-release.apk"
+    },
+    {
+      "type": "ONE_OF_MANY",
+      "filters": [
+        {
+          "filterType": "ABI",
+          "value": "arm64-v8a"
+        }
+      ],
+      "attributes": [],
+      "versionCode": 16,
+      "versionName": "1.8.3",
+      "outputFile": "app-arm64-v8a-release.apk"
     }
-  ]
+  ],
+  "elementType": "File"
 }
