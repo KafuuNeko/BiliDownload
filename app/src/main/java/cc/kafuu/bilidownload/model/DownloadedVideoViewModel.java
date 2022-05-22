@@ -22,6 +22,11 @@ public class DownloadedVideoViewModel extends ViewModel {
     public MutableLiveData<ConvertVideoStatus> convertVideoStatus = new MutableLiveData<>(ConvertVideoStatus.None);
     public String convertVideoFailureMessage = null;
 
+    public enum VideoFormat {
+        None, MP4, FLV, MKV, WMV
+    }
+    public VideoFormat convertTo = VideoFormat.None;
+
     public enum ExtractingAudioStatus {
         None, Ok, Failure, Extracting
     }

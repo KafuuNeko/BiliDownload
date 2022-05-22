@@ -205,16 +205,20 @@ public class DownloadedVideoActivity extends BaseActivity {
         String currentFormat = mModel.downloadRecord.getSaveTo().substring(mModel.downloadRecord.getSaveTo().lastIndexOf('.') + 1).toLowerCase();
 
         if (!currentFormat.equals("flv")) {
-            adapter.addItem(R.string.convert_to_flv_format, v -> convertVideoFormatCheck("flv"));
+            boolean converting = (mModel.convertVideoStatus.getValue() == DownloadedVideoViewModel.ConvertVideoStatus.Converting && mModel.convertTo == DownloadedVideoViewModel.VideoFormat.FLV);
+            adapter.addItem(R.string.convert_to_flv_format, v -> convertVideoFormatCheck("flv"), converting ? R.color.gray : null);
         }
         if (!currentFormat.equals("mp4")) {
-            adapter.addItem(R.string.convert_to_mp4_format, v -> convertVideoFormatCheck("mp4"));
+            boolean converting = (mModel.convertVideoStatus.getValue() == DownloadedVideoViewModel.ConvertVideoStatus.Converting && mModel.convertTo == DownloadedVideoViewModel.VideoFormat.MP4);
+            adapter.addItem(R.string.convert_to_mp4_format, v -> convertVideoFormatCheck("mp4"), converting ? R.color.gray : null);
         }
         if (!currentFormat.equals("mkv")) {
-            adapter.addItem(R.string.convert_to_mkv_format, v -> convertVideoFormatCheck("mkv"));
+            boolean converting = (mModel.convertVideoStatus.getValue() == DownloadedVideoViewModel.ConvertVideoStatus.Converting && mModel.convertTo == DownloadedVideoViewModel.VideoFormat.MKV);
+            adapter.addItem(R.string.convert_to_mkv_format, v -> convertVideoFormatCheck("mkv"), converting ? R.color.gray : null);
         }
         if (!currentFormat.equals("wmv")) {
-            adapter.addItem(R.string.convert_to_wmv_format, v -> convertVideoFormatCheck("wmv"));
+            boolean converting = (mModel.convertVideoStatus.getValue() == DownloadedVideoViewModel.ConvertVideoStatus.Converting && mModel.convertTo == DownloadedVideoViewModel.VideoFormat.WMV);
+            adapter.addItem(R.string.convert_to_wmv_format, v -> convertVideoFormatCheck("wmv"), converting ? R.color.gray : null);
         }
 
         mVideoFormatOperator.setAdapter(adapter);
@@ -363,7 +367,7 @@ public class DownloadedVideoActivity extends BaseActivity {
 
     /**
      * 确认是否将视频转换到指定类型
-     * */
+     */
     private void convertVideoFormatCheck(String toFormat) {
         if (mModel.convertVideoStatus.getValue() == DownloadedVideoViewModel.ConvertVideoStatus.Converting) {
             Toast.makeText(this, R.string.converting_video, Toast.LENGTH_SHORT).show();
@@ -371,6 +375,21 @@ public class DownloadedVideoActivity extends BaseActivity {
         }
 
         final String oldFormat = mModel.downloadRecord.getSaveTo().substring(mModel.downloadRecord.getSaveTo().lastIndexOf('.') + 1);
+
+        switch (toFormat.toLowerCase()) {
+            case "mp4":
+                mModel.convertTo = DownloadedVideoViewModel.VideoFormat.MP4;
+                break;
+            case "flv":
+                mModel.convertTo = DownloadedVideoViewModel.VideoFormat.FLV;
+                break;
+            case "mkv":
+                mModel.convertTo = DownloadedVideoViewModel.VideoFormat.MKV;
+                break;
+            case "wmv":
+                mModel.convertTo = DownloadedVideoViewModel.VideoFormat.WMV;
+                break;
+        }
 
         if (oldFormat.equals(toFormat)) {
             return;
@@ -383,7 +402,7 @@ public class DownloadedVideoActivity extends BaseActivity {
 
     /**
      * 转换视频到指定格式
-     * */
+     */
     private void convertVideoFormat(final String toFormat) {
         Log.d(TAG, "convertVideoFormat: saveTo " + mModel.downloadRecord.getSaveTo());
 
@@ -436,7 +455,7 @@ public class DownloadedVideoActivity extends BaseActivity {
 
     /**
      * 转换视频状态被改变
-     * */
+     */
     private void onConvertVideoStatusChanged(DownloadedVideoViewModel.ConvertVideoStatus convertVideoStatus) {
         if (convertVideoStatus == DownloadedVideoViewModel.ConvertVideoStatus.Ok) {
             //转换成功，更新显示信息
@@ -445,15 +464,17 @@ public class DownloadedVideoActivity extends BaseActivity {
             Toast.makeText(this, R.string.convert_completed, Toast.LENGTH_SHORT).show();
         } else if (convertVideoStatus == DownloadedVideoViewModel.ConvertVideoStatus.Failure) {
             reloadVideoInfo();
+            reloadOperatorListAdapter();
             Toast.makeText(this, mModel.convertVideoFailureMessage, Toast.LENGTH_SHORT).show();
         } else if (convertVideoStatus == DownloadedVideoViewModel.ConvertVideoStatus.Converting) {
             reloadVideoInfo();
+            reloadOperatorListAdapter();
         }
     }
 
     /**
      * 提取音频状态被改变
-     * */
+     */
     private void onExtractingAudioStatusChanged(DownloadedVideoViewModel.ExtractingAudioStatus extractingAudioStatus) {
         if (extractingAudioStatus == DownloadedVideoViewModel.ExtractingAudioStatus.Ok) {
             reloadAudioInfo();
