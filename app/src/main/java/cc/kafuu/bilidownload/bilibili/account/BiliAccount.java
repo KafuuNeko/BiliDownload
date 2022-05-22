@@ -1,5 +1,7 @@
 package cc.kafuu.bilidownload.bilibili.account;
 
+import android.util.Log;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -11,6 +13,8 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 public class BiliAccount {
+    private static final String TAG = "BiliAccount";
+
     /**
      * 传入Cookie取得用户信息（需要在线程中执行）
      * 用以判断Cookie是否有效，如果有效则返回用户信息，否则返回空
@@ -63,9 +67,12 @@ public class BiliAccount {
 
             ResponseBody body = response.body();
             if (body == null) {
+                Log.d(TAG, "getCookieRequest: Body is null; Response code: " + response.code());
                 return null;
             }
-            return body.string();
+            String data = body.string();
+            Log.d(TAG, "getCookieRequest: " + data);
+            return data;
 
         } catch (IOException e) {
             e.printStackTrace();

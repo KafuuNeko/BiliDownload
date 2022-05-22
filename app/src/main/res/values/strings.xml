@@ -120,5 +120,7 @@
     <string name="audio_code_rate">音频码率</string>
     <string name="converting_video">正在转换视频封装格式</string>
     <string name="extract_audio_ok">提取音频完成</string>
+    <string name="cookie_login">手动输入Cookie</string>
+    <string name="checking">正在验证</string>
 
 </resources>

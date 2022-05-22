@@ -33,6 +33,7 @@
                 android:id="@+id/clauses"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:autoLink="all"
                 android:textSize="18sp" />
 
             <LinearLayout

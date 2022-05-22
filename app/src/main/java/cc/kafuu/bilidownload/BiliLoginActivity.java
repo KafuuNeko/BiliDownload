@@ -1,11 +1,13 @@
 package cc.kafuu.bilidownload;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.CookieManager;
@@ -13,7 +15,9 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
@@ -26,9 +30,12 @@ import cc.kafuu.bilidownload.bilibili.account.BiliAccount;
 
 
 public class BiliLoginActivity extends BaseActivity {
+    private static final String TAG = "BiliLoginActivity";
+
     public static int ResultCodeOk = 0x01;
 
     private ProgressBar mProgressBar;
+    private String mCookie = "";
 
     //private LoginViewModel mModel;
 
@@ -41,6 +48,43 @@ public class BiliLoginActivity extends BaseActivity {
         //mModel = new ViewModelProvider(this).get(LoginViewModel.class);
 
         initView();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_bili_login, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+        } else if (item.getItemId() == R.id.navCookieLogin) {
+            final EditText editText = new EditText(this);
+            editText.setText(mCookie);
+
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+            alertDialogBuilder.setTitle(R.string.cookie_login);
+            alertDialogBuilder.setView(editText);
+            alertDialogBuilder.setPositiveButton(R.string.confirm, (dialog, which) -> {
+                mCookie = editText.getText().toString();
+                Log.d(TAG, "onOptionsItemSelected: " + mCookie);
+
+                String[] domains = mCookie.split(";");
+                for (String domain : domains) {
+                    CookieManager.getInstance().setCookie("https://m.bilibili.com", domain);
+                }
+
+                CookieManager.getInstance().flush();
+
+                Toast.makeText(this, R.string.checking, Toast.LENGTH_SHORT).show();
+                webViewShouldOverrideUrlLoading();
+            });
+            alertDialogBuilder.setNegativeButton(R.string.cancel, null);
+            alertDialogBuilder.show();
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -76,14 +120,6 @@ public class BiliLoginActivity extends BaseActivity {
         setSupportActionBar(findViewById(R.id.toolbar));
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            finish();
-        }
-        return super.onOptionsItemSelected(item);
     }
 
 

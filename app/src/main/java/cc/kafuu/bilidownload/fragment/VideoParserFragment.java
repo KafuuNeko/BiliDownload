@@ -31,8 +31,11 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
 
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONException;
 
 
 import java.io.IOException;
@@ -309,12 +312,23 @@ public class VideoParserFragment extends Fragment {
                     return;
                 }
 
-                JsonObject jsonObject = new Gson().fromJson(body.string(), JsonObject.class);
-                Log.d(TAG, "onResponse: onExitLogin " + jsonObject.toString());
-                if (jsonObject.get("code").getAsInt() != 0) {
-                    mHandler.post(() -> Toast.makeText(getContext(), R.string.exit_login_failure, Toast.LENGTH_SHORT).show());
-                    return;
+                String jsonData = body.string();
+
+                Log.d(TAG, "onResponse: " + jsonData);
+
+                try {
+                    JsonPrimitive jsonPrimitive = new Gson().fromJson(jsonData, JsonPrimitive.class);
+                    if (jsonPrimitive.isJsonObject()) {
+                        Log.d(TAG, "onResponse: onExitLogin " + jsonPrimitive);
+                        if (jsonPrimitive.getAsJsonObject().get("code").getAsInt() != 0) {
+                            mHandler.post(() -> Toast.makeText(getContext(), R.string.exit_login_failure, Toast.LENGTH_SHORT).show());
+                            return;
+                        }
+                    }
+                } catch (JsonParseException e) {
+                    e.printStackTrace();
                 }
+
 
                 Bili.updateHeaders(null);
                 Bili.biliAccount = null;

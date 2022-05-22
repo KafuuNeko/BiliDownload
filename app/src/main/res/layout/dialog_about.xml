@@ -14,7 +14,8 @@
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:layout_margin="15dp"
-            app:srcCompat="@mipmap/ic_launcher" />
+            app:srcCompat="@mipmap/ic_launcher"
+            android:contentDescription="@string/app_name" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -28,7 +29,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:text="@string/about_title"
-                android:textColor="#000000"
+                android:textColor="@color/black"
                 android:textSize="18sp" />
 
             <TextView
@@ -36,14 +37,15 @@
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:text="@string/about_context"
-                android:textColor="#000000" />
+                android:autoLink="email"
+                android:textColor="@color/black" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:text="@string/version_describe"
-                android:textColor="#000000" />
+                android:textColor="@color/black" />
 
         </LinearLayout>
     </LinearLayout>
