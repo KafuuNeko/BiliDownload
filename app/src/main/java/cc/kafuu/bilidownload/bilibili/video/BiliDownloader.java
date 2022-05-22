@@ -2,6 +2,7 @@ package cc.kafuu.bilidownload.bilibili.video;
 
 import android.app.DownloadManager;
 import android.net.Uri;
+import android.util.Log;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +21,8 @@ import okhttp3.Response;
  * Bili资源下载器
  * */
 public class BiliDownloader {
+    private static final String TAG = "BiliDownloader";
+
     private final String mVideoTitle;
     private final String mVideoDescription;
     private final File mSavePath;
@@ -53,12 +56,14 @@ public class BiliDownloader {
 
     public void getDownloadId(DownloadManager downloadManager, GetDownloadIdCallback callback) {
         //发起一个预检请求
-        Request options_request = new Request.Builder().url(mResourceUrl).headers(Bili.downloadHeaders)
+        Log.d(TAG, "getDownloadId: options request " + mResourceUrl);
+        Request optionsRequest = new Request.Builder().url(mResourceUrl).headers(Bili.downloadHeaders)
                 .method("OPTIONS", new FormBody.Builder().build())
                 .build();
-        Bili.httpClient.newCall(options_request).enqueue(new Callback() {
+        Bili.httpClient.newCall(optionsRequest).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                Log.d(TAG, "options request failure: " + e.getMessage());
                 callback.failure(e.getMessage());
             }
 

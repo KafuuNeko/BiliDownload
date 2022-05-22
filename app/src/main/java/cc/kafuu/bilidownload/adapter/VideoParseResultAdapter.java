@@ -143,6 +143,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
 
                 @Override
                 public void failure(String message) {
+                    Log.d(TAG, "failure: " + message);
                     progressDialog.cancel();
                     mHandle.post(() -> Toast.makeText(mActivity, message, Toast.LENGTH_LONG).show());
                 }
@@ -187,6 +188,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
                     downloader.getDownloadId(downloadManager, new BiliDownloader.GetDownloadIdCallback() {
                         @Override
                         public void failure(String message) {
+                            Log.d(TAG, "downloader.getDownloadId failure: " + message);
                             //提交下载任务失败（可能是当前登录的账户不支持下载此资源）
                             mHandle.post(() -> Toast.makeText(mActivity, message, Toast.LENGTH_LONG).show());
                         }

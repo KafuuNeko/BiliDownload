@@ -26,7 +26,6 @@ import cc.kafuu.bilidownload.fragment.VideoParserFragment;
 
 public class MainActivity extends BaseActivity {
     private static final String TAG = "MainActivity";
-    //private static final String TAG = "MainActivity";
 
     private Toolbar mToolbar;
     private BottomNavigationView mBottomNavigationView;
@@ -53,7 +52,7 @@ public class MainActivity extends BaseActivity {
         initFragment(savedInstanceState);
         showFragment(mCurrentFragment);
 
-        UseClausesActivity.clauseInspection(this);
+        UseClausesActivity.clauseInspection(this, false);
     }
 
     @Override
@@ -93,7 +92,7 @@ public class MainActivity extends BaseActivity {
         if (item.getItemId() == R.id.navAbout) {
             new AlertDialog.Builder(this).setView(R.layout.dialog_about).show();
         } else if (item.getItemId() == R.id.navClauses) {
-            startActivityForResult(new Intent(this, UseClausesActivity.class), 1);
+            UseClausesActivity.clauseInspection(this, true);
         }
 
         return super.onOptionsItemSelected(item);

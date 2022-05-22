@@ -29,12 +29,20 @@ public class Bili {
         saveDir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
     }
 
-    public static final OkHttpClient httpClient = Utility.getOkHttpClient();
+    public static final OkHttpClient httpClient;
 
     public static final String UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 EdgiOS/46.3.30 Mobile/15E148 Safari/605.1.15";
     public static Headers generalHeaders;
     public static Headers downloadHeaders;
     public static String biliCookie = null;
+    public static BiliAccount biliAccount = null;
+
+    static {
+        updateHeaders(null);
+        httpClient = Utility.getOkHttpClient();
+    }
+
+
     public static void updateHeaders(String cookie) {
         biliCookie = cookie;
         Headers.Builder generalHeadersBuilder = new Headers.Builder()
@@ -61,11 +69,6 @@ public class Bili {
         generalHeaders = generalHeadersBuilder.build();
         downloadHeaders = downloadHeadersBuilder.build();
     }
-    static {
-        updateHeaders(null);
-    }
-
-    public static BiliAccount biliAccount = null;
 
     public static void requestExitLogin(final okhttp3.Callback callback) {
         if (biliCookie == null) {

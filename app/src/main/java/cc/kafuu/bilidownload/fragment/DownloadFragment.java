@@ -6,22 +6,19 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 
-import androidx.annotation.Nullable;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
 
 import cc.kafuu.bilidownload.DownloadedVideoActivity;
 import cc.kafuu.bilidownload.R;
@@ -33,8 +30,6 @@ import cc.kafuu.bilidownload.adapter.DownloadRecordAdapter;
  * create an instance of this fragment.
  */
 public class DownloadFragment extends Fragment {
-    private static final String TAG = "DownloadFragment";
-
     private Handler mHandler;
 
     private View mRootView = null;
@@ -80,7 +75,7 @@ public class DownloadFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Objects.requireNonNull(getContext()).unregisterReceiver(mBroadcastReceiver);
+        requireContext().unregisterReceiver(mBroadcastReceiver);
     }
 
     @Override
@@ -98,18 +93,6 @@ public class DownloadFragment extends Fragment {
         return mRootView;
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        Log.d(TAG, "onActivityResult: requestCode: " + requestCode + ", requestCode: " + requestCode);
-
-        if (requestCode == DownloadedVideoActivity.RequestCode && resultCode == DownloadedVideoActivity.ResultCodeDeleted) {
-            assert data != null;
-            mVideoDownloadRecordAdapter.removeDownloadRecord(data.getLongExtra("download_record_id", 0), true);
-        }
-    }
-
     private void findView() {
         mDownloadRecordList = mRootView.findViewById(R.id.downloadRecordList);
         mNoDownloadRecordTip = mRootView.findViewById(R.id.noDownloadRecordTip);
@@ -122,9 +105,16 @@ public class DownloadFragment extends Fragment {
 
         IntentFilter filter = new IntentFilter();
         filter.addAction("download.task.create");
-        Objects.requireNonNull(getContext()).registerReceiver(mBroadcastReceiver, filter);
+        requireContext().registerReceiver(mBroadcastReceiver, filter);
 
-        mVideoDownloadRecordAdapter = new DownloadRecordAdapter(this);
+        mVideoDownloadRecordAdapter = new DownloadRecordAdapter(getActivity(), registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            //已下载视频信息页面操作返回
+            if (result.getResultCode() == DownloadedVideoActivity.ResultCodeDeleted) {
+                assert result.getData() != null;
+                mVideoDownloadRecordAdapter.removeDownloadRecord(result.getData().getLongExtra("download_record_id", 0), true);
+            }
+        }));
+
         mVideoDownloadRecordAdapter.setItemCountChangeListener(this::showOrHideTip);
 
         mDownloadRecordList.setAdapter(mVideoDownloadRecordAdapter);

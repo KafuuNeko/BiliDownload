@@ -9,7 +9,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import java.io.BufferedReader;
@@ -96,8 +95,8 @@ public class UseClausesActivity extends BaseActivity {
         return stringBuilder.toString();
     }
 
-    public static void clauseInspection(Context context) {
-        if (!context.getSharedPreferences("app", MODE_PRIVATE).getBoolean("agree_clause_0", false)) {
+    public static void clauseInspection(Context context, boolean positiveOpening) {
+        if (positiveOpening || !context.getSharedPreferences("app", MODE_PRIVATE).getBoolean("agree_clause_0", false)) {
             context.startActivity(new Intent(context, UseClausesActivity.class));
         }
     }

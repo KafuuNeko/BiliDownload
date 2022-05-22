@@ -1,5 +1,7 @@
 package cc.kafuu.bilidownload.bilibili.video;
 
+import android.util.Log;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -18,6 +20,7 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 public class BiliVideoResource {
+    private static final String TAG = "BiliVideoResource";
 
     private final BiliVideoPart mPart;
     //清晰度
@@ -119,6 +122,7 @@ public class BiliVideoResource {
 
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                Log.d(TAG, "onFailure: " + e.getMessage());
                 e.printStackTrace();
                 callback.failure(e.getMessage());
             }

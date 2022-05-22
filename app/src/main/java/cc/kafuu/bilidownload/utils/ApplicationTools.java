@@ -11,6 +11,7 @@ import android.os.Build;
 import androidx.core.content.FileProvider;
 
 import java.io.File;
+import java.util.Objects;
 
 import cc.kafuu.bilidownload.BuildConfig;
 
@@ -58,7 +59,7 @@ public class ApplicationTools {
             return file.length();
         } else if (file.isDirectory()) {
             long count = 0;
-            for (File sub : file.listFiles()) {
+            for (File sub : Objects.requireNonNull(file.listFiles())) {
                 count += totalSpaceUsed(sub);
             }
             return count;

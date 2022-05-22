@@ -1,22 +1,25 @@
 package cc.kafuu.bilidownload;
 
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.viewpager.widget.ViewPager;
+import androidx.viewpager2.widget.ViewPager2;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Pair;
+import android.view.Gravity;
 import android.view.MenuItem;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,8 +34,6 @@ import cc.kafuu.bilidownload.fragment.personal.HistoryFragment;
 import cc.kafuu.bilidownload.utils.DialogTools;
 
 public class PersonalActivity extends BaseActivity {
-    public static int RequestCode = 0x02;
-
     public static int ResultCodeLogout = 0x01;
     public static int ResultCodeVideoClicked = 0x02;
 
@@ -43,13 +44,13 @@ public class PersonalActivity extends BaseActivity {
         initView();
     }
 
-    public static void actionStartForResult(Fragment fragment) {
+    public static void actionStartForResult(Context context, ActivityResultLauncher<Intent> launcher) {
         if (ActivityCollector.contains(PersonalActivity.class)) {
             return;
         }
 
-        Intent intent = new Intent(fragment.getContext(), PersonalActivity.class);
-        fragment.startActivityForResult(intent, RequestCode);
+        Intent intent = new Intent(context, PersonalActivity.class);
+        launcher.launch(intent);
     }
 
     private void initView() {
@@ -57,13 +58,13 @@ public class PersonalActivity extends BaseActivity {
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
 
-        CardView loginBiliCard = findViewById(R.id.loginBiliCard);
-        ImageView userFace = findViewById(R.id.userFace);
-        TextView userName = findViewById(R.id.userName);
-        TextView userSign = findViewById(R.id.userSign);
+        final CardView loginBiliCard = findViewById(R.id.loginBiliCard);
+        final ImageView userFace = findViewById(R.id.userFace);
+        final TextView userName = findViewById(R.id.userName);
+        final TextView userSign = findViewById(R.id.userSign);
 
-        TabLayout tabLayout = findViewById(R.id.tabLayout);
-        ViewPager viewPager = findViewById(R.id.viewPager);
+        final TabLayout tabLayout = findViewById(R.id.tabLayout);
+        final ViewPager2 viewPager = findViewById(R.id.viewPager);
 
         if (Bili.biliAccount == null) {
             finish();
@@ -88,13 +89,35 @@ public class PersonalActivity extends BaseActivity {
         mFragments.add(new Pair<>(getString(R.string.teleplay), FollowFragment.newInstance(BiliFollow.Type.Teleplay)));
 
 
-        viewPager.setAdapter(new PersonalFragmentPagesAdapter(mFragments, getSupportFragmentManager(),  FragmentPagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT));
-        viewPager.setOffscreenPageLimit(Objects.requireNonNull(viewPager.getAdapter()).getCount());
+        viewPager.setAdapter(new PersonalFragmentPagesAdapter(this, mFragments));
+        viewPager.setOffscreenPageLimit(Objects.requireNonNull(viewPager.getAdapter()).getItemCount());
 
-        tabLayout.setupWithViewPager(viewPager, false);
+        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                super.onPageSelected(position);
+                tabLayout.selectTab(tabLayout.getTabAt(position));
+            }
+        });
+
+        TabLayoutMediator mediator = new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
+            TextView tabView = new TextView(PersonalActivity.this);
+            tabView.setText(mFragments.get(position).first);
+            tabView.setGravity(Gravity.CENTER);
+
+            int[][] states = new int[2][];
+            states[0] = new int[]{android.R.attr.state_selected};
+            states[1] = new int[]{};
+            tabView.setTextColor(new ColorStateList(states, new int[]{Color.parseColor("#F888A3"), Color.parseColor("#323232")}));
+
+            tab.setCustomView(tabView);
+        });
+
+        mediator.attach();
 
         loginBiliCard.setOnClickListener(v -> logout());
     }
+
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
@@ -106,7 +129,7 @@ public class PersonalActivity extends BaseActivity {
 
     /**
      * 登出
-     * */
+     */
     private void logout() {
         DialogTools.confirm(this, getString(R.string.exit_login), getString(R.string.exit_login_confirm), (dialog, which) -> {
             setResult(ResultCodeLogout);

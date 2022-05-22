@@ -1,6 +1,7 @@
 package cc.kafuu.bilidownload;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -14,27 +15,22 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
 
 import java.util.Objects;
 
 import cc.kafuu.bilidownload.bilibili.Bili;
 import cc.kafuu.bilidownload.bilibili.account.BiliAccount;
-import cc.kafuu.bilidownload.model.LoginViewModel;
 
 
 public class BiliLoginActivity extends BaseActivity {
-    public static int RequestCode = 0x00;
-
-    public static int ResultCodeCancel = 0x00;
     public static int ResultCodeOk = 0x01;
 
     private ProgressBar mProgressBar;
 
-    private LoginViewModel mModel;
+    //private LoginViewModel mModel;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -42,7 +38,7 @@ public class BiliLoginActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bili_login);
 
-        mModel = new ViewModelProvider(this).get(LoginViewModel.class);
+        //mModel = new ViewModelProvider(this).get(LoginViewModel.class);
 
         initView();
     }
@@ -116,11 +112,12 @@ public class BiliLoginActivity extends BaseActivity {
         return true;
     }
 
-    public static void actionStartForResult(Fragment fragment) {
+    public static void actionStartForResult(Context context, ActivityResultLauncher<Intent> launcher) {
         if (ActivityCollector.contains(BiliLoginActivity.class)) {
             return;
         }
-        Intent intent = new Intent(fragment.getContext(), BiliLoginActivity.class);
-        fragment.startActivityForResult(intent, RequestCode);
+        Intent intent = new Intent(context, BiliLoginActivity.class);
+        launcher.launch(intent);
     }
 }
+

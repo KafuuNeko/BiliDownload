@@ -1,12 +1,13 @@
 package cc.kafuu.bilidownload;
 
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -41,8 +42,6 @@ import cc.kafuu.bilidownload.utils.Utility;
 public class DownloadedVideoActivity extends BaseActivity {
     private static final String TAG = "DownloadedVideoActivity";
 
-    public static int RequestCode = 0x03;
-
     public static int ResultCodeDeleted = 0x01;
 
     private DownloadedVideoViewModel mModel;
@@ -72,17 +71,17 @@ public class DownloadedVideoActivity extends BaseActivity {
     private RecyclerView mVideoOtherOperator;
 
 
-    public static void actionStartForResult(Fragment fragment, long videoRecordId, long downloadRecordId) {
+    public static void actionStartForResult(Context context, ActivityResultLauncher<Intent> launcher, long videoRecordId, long downloadRecordId) {
         if (ActivityCollector.contains(DownloadedVideoActivity.class)) {
             return;
         }
 
-        Intent intent = new Intent(fragment.getContext(), DownloadedVideoActivity.class);
+        Intent intent = new Intent(context, DownloadedVideoActivity.class);
 
         intent.putExtra("video_record_id", videoRecordId);
         intent.putExtra("download_record_id", downloadRecordId);
 
-        fragment.startActivityForResult(intent, RequestCode);
+        launcher.launch(intent);
     }
 
     @Override
