@@ -1,10 +1,12 @@
 package cc.kafuu.bilidownload.fragment.personal;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -34,26 +36,23 @@ import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.adapter.VideoListAdapter;
 import cc.kafuu.bilidownload.bilibili.Bili;
 import cc.kafuu.bilidownload.bilibili.account.BiliFavourite;
+import cc.kafuu.bilidownload.model.FavoriteViewModel;
 
 public class FavoriteFragment extends Fragment implements VideoListAdapter.VideoListItemClickedListener, AdapterView.OnItemSelectedListener {
     private static final String TAG = "FavoriteFragment";
 
+    private FavoriteViewModel mModel;
+
     private View mRootView = null;
-
-    private boolean mLoading = false;
-    private boolean mHasMore = false;
-    private int mNextPage = 1;
-
-    private List<BiliFavourite.Favourite> mFavourites = null;
-    private int mCurrentFavourite = 0;
 
     private Spinner mFavoriteSpinner;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private RecyclerView mVideoList;
     private TextView mNoRecordTip;
 
+
     public FavoriteFragment() {
-        // Required empty public constructor
+
     }
 
     public static FavoriteFragment newInstance() {
@@ -66,8 +65,10 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mModel = new ViewModelProvider(this).get(FavoriteViewModel.class);
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     @Override
     public View onCreateView(@NotNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -80,7 +81,14 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
         findView();
         initView();
 
-        loadFavorite();
+        if (mModel.favourites != null) {
+            Log.d(TAG, "onCreateView: mModel.mFavourites != null");
+            updateFavorite();
+            ((VideoListAdapter) Objects.requireNonNull(mVideoList.getAdapter())).setRecords(mModel.records).notifyDataSetChanged();
+        } else {
+            loadFavorite();
+        }
+
 
         return mRootView;
     }
@@ -96,7 +104,7 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
         mSwipeRefreshLayout.setOnRefreshListener(this::loadFavorite);
 
         mVideoList.setLayoutManager(new LinearLayoutManager(getContext()));
-        mVideoList.setAdapter(new VideoListAdapter(this));
+        mVideoList.setAdapter(new VideoListAdapter(this, mModel.records));
 
         mFavoriteSpinner.setOnItemSelectedListener(FavoriteFragment.this);
 
@@ -113,7 +121,8 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
                 int lastVisible = linearLayoutManager.findLastVisibleItemPosition();
                 Log.d(TAG, "onScrolled: " + total + "-" + lastVisible);
 
-                if (mHasMore && total < lastVisible + 10) {
+                if (mModel.hasMore && total < lastVisible + 10) {
+                    Log.d(TAG, "onScrolled: Need more videos");
                     loadVideos(true);
                 }
             }
@@ -124,37 +133,21 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
      * 加载收藏夹
      * */
     private void loadFavorite() {
-        if (mLoading) {
+        if (mModel.loading) {
             return;
         }
 
-        mLoading = true;
+        mModel.loading = true;
         mSwipeRefreshLayout.setRefreshing(true);
 
         BiliFavourite.getFavourites(Bili.biliAccount.getId(), new BiliFavourite.Callback<BiliFavourite.Favourite>() {
             @Override
             public void completed(List<BiliFavourite.Favourite> favourites, boolean hasMore) {
                 new Handler(Looper.getMainLooper()).post(() -> {
-                    mLoading = false;
+                    mModel.loading = false;
 
-                    mFavourites = favourites;
-
-                    List<Map<String, String>> items = new ArrayList<>();
-
-                    for (BiliFavourite.Favourite favourite : favourites) {
-                        Map<String, String> item = new HashMap<>();
-                        item.put("favouriteName", favourite.title);
-                        item.put("itemCount", String.valueOf(favourite.mediaCount));
-                        items.add(item);
-                    }
-
-                    if (favourites.size() <= mCurrentFavourite) {
-                        mCurrentFavourite = 0;
-                    }
-
-                    mFavoriteSpinner.setAdapter(new SimpleAdapter(getContext(), items, R.layout.spinner_item_favourite, new String[]{"favouriteName", "itemCount"}, new int[]{R.id.favouriteName, R.id.itemCount}));
-                    mFavoriteSpinner.setSelection(mCurrentFavourite);
-
+                    mModel.favourites = favourites;
+                    updateFavorite();
                     loadVideos(false);
                 });
 
@@ -163,7 +156,7 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
             @Override
             public void failure(String message) {
                 new Handler(Looper.getMainLooper()).post(() -> {
-                    mLoading = false;
+                    mModel.loading = false;
                     mSwipeRefreshLayout.setRefreshing(false);
                     Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
                 });
@@ -171,35 +164,58 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
         });
     }
 
+    private void updateFavorite() {
+        List<Map<String, String>> items = new ArrayList<>();
+
+        for (BiliFavourite.Favourite favourite : mModel.favourites) {
+            Map<String, String> item = new HashMap<>();
+            item.put("favouriteName", favourite.title);
+            item.put("itemCount", String.valueOf(favourite.mediaCount));
+            items.add(item);
+        }
+
+        if (mModel.favourites.size() <= mModel.currentFavourite) {
+            mModel.currentFavourite = 0;
+        }
+
+        mFavoriteSpinner.setAdapter(new SimpleAdapter(getContext(), items, R.layout.spinner_item_favourite, new String[]{"favouriteName", "itemCount"}, new int[]{R.id.favouriteName, R.id.itemCount}));
+        mFavoriteSpinner.setSelection(mModel.currentFavourite);
+
+    }
+
     private void loadVideos(boolean loadMore) {
-        if (mLoading) {
+        if (mModel.loading) {
             if (!loadMore) {
                 mSwipeRefreshLayout.setRefreshing(false);
             }
             return;
         }
 
-        mLoading = true;
+        Log.d(TAG, "loadVideos: " + loadMore);
+
+        mModel.loading = true;
 
         if (!loadMore) {
             mSwipeRefreshLayout.setRefreshing(true);
-            mNextPage = 1;
-            mHasMore = true;
+            mModel.nextPage = 1;
+            mModel.hasMore = true;
+            mModel.records.clear();
         }
-        BiliFavourite.getVideos(mFavourites.get(mCurrentFavourite), mNextPage, new BiliFavourite.Callback<BiliFavourite.Video>() {
+        BiliFavourite.getVideos(mModel.favourites.get(mModel.currentFavourite), mModel.nextPage, new BiliFavourite.Callback<BiliFavourite.Video>() {
 
+            @SuppressLint("NotifyDataSetChanged")
             @Override
             public void completed(List<BiliFavourite.Video> videos, boolean hasMore) {
                 new Handler(Looper.getMainLooper()).post(() -> {
-                    mLoading = false;
-                    ++mNextPage;
+                    mModel.loading = false;
+                    ++mModel.nextPage;
 
                     if (!loadMore) {
                         mSwipeRefreshLayout.setRefreshing(false);
                         ((VideoListAdapter) Objects.requireNonNull(mVideoList.getAdapter())).clearRecord();
                     }
 
-                    mHasMore = hasMore;
+                    mModel.hasMore = hasMore;
 
                     for (BiliFavourite.Video video : videos) {
                         VideoListAdapter.Record videoRecord = new VideoListAdapter.Record();
@@ -209,10 +225,10 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
                         videoRecord.title = video.title;
                         videoRecord.videoId = video.bv;
 
-                        ((VideoListAdapter) Objects.requireNonNull(mVideoList.getAdapter())).addRecord(videoRecord);
+                        mModel.records.add(videoRecord);
                     }
 
-                    Objects.requireNonNull(mVideoList.getAdapter()).notifyDataSetChanged();
+                    ((VideoListAdapter) Objects.requireNonNull(mVideoList.getAdapter())).setRecords(mModel.records).notifyDataSetChanged();
                 });
 
                 updateTip();
@@ -221,7 +237,7 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
             @Override
             public void failure(String message) {
                 new Handler(Looper.getMainLooper()).post(() -> {
-                    mLoading = false;
+                    mModel.loading = false;
 
                     if (!loadMore) {
                         mSwipeRefreshLayout.setRefreshing(false);
@@ -251,12 +267,15 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        if (position >= mFavourites.size()) {
+        Log.d(TAG, "onItemSelected: " + position);
+        if (position >= mModel.favourites.size()) {
             return;
         }
 
-        mCurrentFavourite = position;
-        loadVideos(false);
+        if (position != mModel.currentFavourite) {
+            mModel.currentFavourite = position;
+            loadVideos(false);
+        }
     }
 
     @Override

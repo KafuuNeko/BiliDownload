@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -45,6 +46,7 @@ import cc.kafuu.bilidownload.adapter.VideoParseResultAdapter;
 import cc.kafuu.bilidownload.bilibili.Bili;
 import cc.kafuu.bilidownload.bilibili.account.BiliAccount;
 import cc.kafuu.bilidownload.bilibili.video.BiliVideo;
+import cc.kafuu.bilidownload.model.VideoParserViewModel;
 import cc.kafuu.bilidownload.utils.DialogTools;
 import cc.kafuu.bilidownload.utils.ApplicationTools;
 import okhttp3.Call;
@@ -75,9 +77,13 @@ public class VideoParserFragment extends Fragment {
 
     private RecyclerView mVideoInfoList;
 
+    private VideoParserViewModel mModel;
+
 
     public VideoParserFragment() {
         mHandler = new Handler(Looper.getMainLooper());
+
+
     }
 
 
@@ -144,6 +150,7 @@ public class VideoParserFragment extends Fragment {
     @Override
     public View onCreateView(@NotNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
         if (mRootView != null) {
             ((ViewGroup) container.getParent()).removeView(mRootView);
             Log.d(TAG, "onCreateView: reuse");
@@ -151,6 +158,9 @@ public class VideoParserFragment extends Fragment {
             mRootView = inflater.inflate(R.layout.fragment_video_parser, container, false);
             Log.d(TAG, "onCreateView: new view");
         }
+
+        mModel = new ViewModelProvider(this).get(VideoParserViewModel.class);
+
 
         findView();
         initView();
@@ -164,7 +174,7 @@ public class VideoParserFragment extends Fragment {
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         Log.d(TAG, "onActivityResult: requestCode=" + requestCode);
-        if (requestCode == BiliLoginActivity.RequestCode && resultCode == 0 && Bili.biliAccount != null) {
+        if (requestCode == BiliLoginActivity.RequestCode && resultCode == BiliLoginActivity.ResultCodeOk && Bili.biliAccount != null) {
             //登录成功 显示用户头像昵称和签名
             loadUserInfo();
             return;
@@ -257,6 +267,10 @@ public class VideoParserFragment extends Fragment {
         mVideoInfoList.setHasFixedSize(true);
         //设置为不可聚焦
         mVideoInfoList.setFocusable(false);
+
+        if (mModel.biliVideo != null) {
+            parsingVideoCompleted(mModel.biliVideo, null);
+        }
     }
 
     /**
@@ -405,11 +419,14 @@ public class VideoParserFragment extends Fragment {
             return;
         }
 
+        mModel.biliVideo = biliVideos;
+
         mVideoInfoCard.setVisibility(View.VISIBLE);
         mVideoTitle.setText(biliVideos.getTitle());
         mVideoDescribe.setText(biliVideos.getDesc());
 
         mVideoDownloadNotAllowed.setVisibility(biliVideos.allowDownload() ? View.GONE : View.VISIBLE);
+
 
         mVideoInfoList.setAdapter(new VideoParseResultAdapter(getActivity(), biliVideos));
     }

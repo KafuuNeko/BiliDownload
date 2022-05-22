@@ -45,13 +45,13 @@ public class Bili {
                 .add("User-Agent", Bili.UA);
 
         Headers.Builder downloadHeadersBuilder = new Headers.Builder()
-                .add("accept", "*/*")
-                .add("accept-encoding", "gzip, deflate, br")
+                .add("Accept", "*/*")
+                .add("Accept-Language", "gzip, deflate, br")
                 .add("Accept-Language", "zh-CN,zh-Hans;q=0.9")
                 .add("Connection", "keep-alive")
                 .add("Origin", "https://m.bilibili.com")
                 .add("Referer", "https://m.bilibili.com/")
-                .add("user-agent", Bili.UA);
+                .add("User-Agent", Bili.UA);
 
         if (cookie != null) {
             generalHeadersBuilder.add("Cookie", cookie);

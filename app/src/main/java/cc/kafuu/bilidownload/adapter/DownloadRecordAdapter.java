@@ -379,9 +379,17 @@ public class DownloadRecordAdapter extends RecyclerView.Adapter<DownloadRecordAd
 
             //下载失败
             if (mDownloadStatusFlag == DownloadManager.STATUS_FAILED) {
+                int ec = -1;
+                try (Cursor cursor = mDownloadManager.query(new DownloadManager.Query().setFilterById(mBindRecord.getDownloadId()))) {
+                    if (cursor.moveToFirst()) {
+                        int columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_REASON);
+                        ec = cursor.getInt(columnIndex);
+                    }
+                }
+
                 new AlertDialog.Builder(mActivity)
                         .setTitle(mVideoInfo.getVideoTitle())
-                        .setMessage(R.string.download_failure_whether_restart_or_remode)
+                        .setMessage(mActivity.getText(R.string.download_failure_whether_restart_or_remode).toString().replace("%1", String.valueOf(ec)))
                         .setNegativeButton(R.string.cancel, null)
                         .setPositiveButton(R.string.restart, (dialogInterface, i) -> restartTask())
                         .setNeutralButton(R.string.delete, (dialogInterface, i) -> removeDownloadRecord(mBindRecord.getId(), true))

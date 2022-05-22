@@ -1,10 +1,12 @@
 package cc.kafuu.bilidownload.fragment.personal;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -27,13 +29,14 @@ import cc.kafuu.bilidownload.PersonalActivity;
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.adapter.VideoListAdapter;
 import cc.kafuu.bilidownload.bilibili.account.BiliHistory;
+import cc.kafuu.bilidownload.model.HistoryViewModel;
 
 public class HistoryFragment extends Fragment implements VideoListAdapter.VideoListItemClickedListener {
     private static final String TAG = "HistoryFragment";
 
-    private boolean mLoading;
+    private HistoryViewModel mModel;
 
-    private BiliHistory.Cursor mNextCursor;
+    private boolean mLoading;
 
     private View mRootView = null;
 
@@ -56,8 +59,10 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mModel = new ViewModelProvider(this).get(HistoryViewModel.class);
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     @Override
     public View onCreateView(@NotNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -70,7 +75,13 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
 
         findView();
         initView();
-        loadHistory(false);
+        if (mModel.firstLoad) {
+            mModel.firstLoad = false;
+            loadHistory(false);
+        } else {
+            ((VideoListAdapter) Objects.requireNonNull(mHistoryList.getAdapter())).setRecords(mModel.records).notifyDataSetChanged();
+        }
+
 
         return mRootView;
     }
@@ -85,7 +96,7 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
         mSwipeRefreshLayout.setOnRefreshListener(() -> loadHistory(false));
 
         mHistoryList.setLayoutManager(new LinearLayoutManager(getContext()));
-        mHistoryList.setAdapter(new VideoListAdapter(this));
+        mHistoryList.setAdapter(new VideoListAdapter(this, mModel.records));
 
         //当监听到列表快拉到尾部时加载新的历史记录数据
         mHistoryList.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -100,7 +111,7 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
                 int lastVisible = linearLayoutManager.findLastVisibleItemPosition();
                 Log.d(TAG, "onScrolled: " + total + "-" + lastVisible);
 
-                if (mNextCursor != null && total < lastVisible + 10) {
+                if (mModel.nextCursor != null && total < lastVisible + 10) {
                     loadHistory(true);
                 }
             }
@@ -120,16 +131,17 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
 
         if (!loadMore) {
             mSwipeRefreshLayout.setRefreshing(true);
-            mNextCursor = null;
+            mModel.nextCursor = null;
+            mModel.records.clear();
         }
 
-
-        BiliHistory.getHistory(mNextCursor, new BiliHistory.GetHistoryCallback() {
+        BiliHistory.getHistory(mModel.nextCursor, new BiliHistory.GetHistoryCallback() {
+            @SuppressLint("NotifyDataSetChanged")
             @Override
             public void completed(final List<BiliHistory.Record> records, BiliHistory.Cursor nextCursor) {
                 new Handler(Looper.getMainLooper()).post(() -> {
                     mLoading = false;
-                    mNextCursor = nextCursor;
+                    mModel.nextCursor = nextCursor;
 
                     if (!loadMore) {
                         mSwipeRefreshLayout.setRefreshing(false);
@@ -144,10 +156,10 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
                         videoRecord.title = record.title;
                         videoRecord.videoId = record.bv;
 
-                        ((VideoListAdapter) Objects.requireNonNull(mHistoryList.getAdapter())).addRecord(videoRecord);
+                        mModel.records.add(videoRecord);
                     }
 
-                    Objects.requireNonNull(mHistoryList.getAdapter()).notifyDataSetChanged();
+                    ((VideoListAdapter) Objects.requireNonNull(mHistoryList.getAdapter())).setRecords(mModel.records).notifyDataSetChanged();
 
                     //加载的数量不足20且还有未加载完的记录则继续加载更多历史记录
                     if (records.size() < 20 && nextCursor != null) {

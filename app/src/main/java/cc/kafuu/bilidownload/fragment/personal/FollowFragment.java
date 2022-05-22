@@ -1,10 +1,12 @@
 package cc.kafuu.bilidownload.fragment.personal;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -27,19 +29,17 @@ import cc.kafuu.bilidownload.PersonalActivity;
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.adapter.VideoListAdapter;
 import cc.kafuu.bilidownload.bilibili.account.BiliFollow;
+import cc.kafuu.bilidownload.model.FollowViewModel;
 
 
 public class FollowFragment extends Fragment implements VideoListAdapter.VideoListItemClickedListener {
     private static final String TAG = "CartoonFragment";
 
+    private FollowViewModel mModel;
+
     private View mRootView = null;
 
-    private BiliFollow.Type mType;
-
     private boolean mLoading = false;
-
-    private int mPage = 1;
-    private boolean mHasMore = true;
 
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private RecyclerView mVideoList;
@@ -62,21 +62,23 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
 
+        mModel = new ViewModelProvider(this).get(FollowViewModel.class);
+
+        if (getArguments() != null) {
             String type = getArguments().getString("type");
             if (type.equals(BiliFollow.Type.Cartoon.name())) {
-                mType = BiliFollow.Type.Cartoon;
+                mModel.followType = BiliFollow.Type.Cartoon;
             } else {
-                mType = BiliFollow.Type.Teleplay;
+                mModel.followType = BiliFollow.Type.Teleplay;
             }
         }
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     @Override
     public View onCreateView(@NotNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
         if (mRootView != null) {
             ((ViewGroup) container.getParent()).removeView(mRootView);
         } else {
@@ -85,7 +87,13 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
 
         findView();
         initView();
-        loadVideo(false);
+
+        if (mModel.firstLoad) {
+            mModel.firstLoad = false;
+            loadVideo(false);
+        } else {
+            ((VideoListAdapter) Objects.requireNonNull(mVideoList.getAdapter())).setRecords(mModel.records).notifyDataSetChanged();
+        }
 
         return mRootView;
     }
@@ -100,7 +108,7 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
         mSwipeRefreshLayout.setOnRefreshListener(() -> loadVideo(false));
 
         mVideoList.setLayoutManager(new LinearLayoutManager(getContext()));
-        mVideoList.setAdapter(new VideoListAdapter(this));
+        mVideoList.setAdapter(new VideoListAdapter(this, mModel.records));
 
         //当监听到列表快拉到尾部时加载新的历史记录数据
         mVideoList.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -115,7 +123,7 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
                 int lastVisible = linearLayoutManager.findLastVisibleItemPosition();
                 Log.d(TAG, "onScrolled: " + total + "-" + lastVisible);
 
-                if (mHasMore && total < lastVisible + 10) {
+                if (mModel.hasMore && total < lastVisible + 10) {
                     loadVideo(true);
                 }
             }
@@ -134,17 +142,19 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
 
         if (!loadMore) {
             mSwipeRefreshLayout.setRefreshing(true);
-            mPage = 1;
-            mHasMore = true;
+            mModel.page = 1;
+            mModel.hasMore = true;
+            mModel.records.clear();
         }
 
-        BiliFollow.getFollows(mType, mPage, new BiliFollow.GetFollowsCallback() {
+        BiliFollow.getFollows(mModel.followType, mModel.page, new BiliFollow.GetFollowsCallback() {
 
+            @SuppressLint("NotifyDataSetChanged")
             @Override
             public void completed(List<BiliFollow.Record> records) {
                 new Handler(Looper.getMainLooper()).post(() -> {
                     mLoading = false;
-                    ++mPage;
+                    ++mModel.page;
 
                     if (!loadMore) {
                         mSwipeRefreshLayout.setRefreshing(false);
@@ -152,7 +162,7 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
                     }
 
                     if (records.size() == 0) {
-                        mHasMore = false;
+                        mModel.hasMore = false;
                         return;
                     }
 
@@ -164,10 +174,11 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
                         videoRecord.title = record.title;
                         videoRecord.videoId = "ss" + record.seasonId;
 
-                        ((VideoListAdapter) Objects.requireNonNull(mVideoList.getAdapter())).addRecord(videoRecord);
+                        mModel.records.add(videoRecord);
+
                     }
 
-                    mVideoList.getAdapter().notifyDataSetChanged();
+                    ((VideoListAdapter) Objects.requireNonNull(mVideoList.getAdapter())).setRecords(mModel.records).notifyDataSetChanged();
                 });
 
                 updateTip();

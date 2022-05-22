@@ -2,15 +2,15 @@ package cc.kafuu.bilidownload;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -33,6 +33,7 @@ import cc.kafuu.bilidownload.bilibili.BvConvert;
 import cc.kafuu.bilidownload.database.VideoDownloadRecord;
 import cc.kafuu.bilidownload.database.VideoInfo;
 import cc.kafuu.bilidownload.jniexport.JniTools;
+import cc.kafuu.bilidownload.model.DownloadedVideoViewModel;
 import cc.kafuu.bilidownload.utils.ApplicationTools;
 import cc.kafuu.bilidownload.utils.DialogTools;
 import cc.kafuu.bilidownload.utils.Utility;
@@ -44,11 +45,7 @@ public class DownloadedVideoActivity extends BaseActivity {
 
     public static int ResultCodeDeleted = 0x01;
 
-    private VideoInfo mVideoInfo = null;
-    private VideoDownloadRecord mDownloadRecord = null;
-
-    private JsonObject mMediaInfo;
-    private JsonObject mAudioInfo;
+    private DownloadedVideoViewModel mModel;
 
     private ImageView mVideoPic;
     private TextView mVideoTitle;
@@ -89,10 +86,20 @@ public class DownloadedVideoActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_downloaded_video);
 
+        mModel = new ViewModelProvider(this).get(DownloadedVideoViewModel.class);
+
         Intent intent = getIntent();
 
-        mDownloadRecord = LitePal.find(VideoDownloadRecord.class, intent.getLongExtra("download_record_id", 0));
-        mVideoInfo = LitePal.find(VideoInfo.class, intent.getLongExtra("video_record_id", 0));
+        if (mModel.downloadRecord == null) {
+            mModel.downloadRecord = LitePal.find(VideoDownloadRecord.class, intent.getLongExtra("download_record_id", 0));
+        }
+
+        if (mModel.videoInfo == null) {
+            mModel.videoInfo = LitePal.find(VideoInfo.class, intent.getLongExtra("video_record_id", 0));
+        }
+
+        mModel.convertVideoStatus.observe(this, this::onConvertVideoStatusChanged);
+        mModel.extractingAudioStatus.observe(this, this::onExtractingAudioStatusChanged);
 
         findView();
         initView();
@@ -106,8 +113,24 @@ public class DownloadedVideoActivity extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void findView() {
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        //禁止在提取音频或转换视频封装格式时返回上一个Activity
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (mModel.convertVideoStatus.getValue() == DownloadedVideoViewModel.ConvertVideoStatus.Converting) {
+                Toast.makeText(this, R.string.converting_video, Toast.LENGTH_SHORT).show();
+                return true;
+            }
 
+            if (mModel.extractingAudioStatus.getValue() == DownloadedVideoViewModel.ExtractingAudioStatus.Extracting) {
+                Toast.makeText(this, R.string.extracting_audio, Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    private void findView() {
         mVideoPic = findViewById(R.id.videoPic);
         mVideoTitle = findViewById(R.id.videoTitle);
         mPart = findViewById(R.id.part);
@@ -138,11 +161,11 @@ public class DownloadedVideoActivity extends BaseActivity {
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
 
-        Glide.with(this).load(mVideoInfo.getPartPic()).placeholder(R.drawable.ic_2233).centerCrop().into(mVideoPic);
-        mVideoTitle.setText(mVideoInfo.getVideoTitle());
-        mPart.setText(mVideoInfo.getPartTitle());
+        Glide.with(this).load(mModel.videoInfo.getPartPic()).placeholder(R.drawable.ic_2233).centerCrop().into(mVideoPic);
+        mVideoTitle.setText(mModel.videoInfo.getVideoTitle());
+        mPart.setText(mModel.videoInfo.getPartTitle());
         @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        mDownloadTime.setText(simpleDateFormat.format(mDownloadRecord.getStartTime()));
+        mDownloadTime.setText(simpleDateFormat.format(mModel.downloadRecord.getStartTime()));
 
         reloadVideoInfo();
 
@@ -175,7 +198,7 @@ public class DownloadedVideoActivity extends BaseActivity {
 
         adapter = new OperatorListAdapter(this);
 
-        String currentFormat = mDownloadRecord.getSaveTo().substring(mDownloadRecord.getSaveTo().lastIndexOf('.') + 1).toLowerCase();
+        String currentFormat = mModel.downloadRecord.getSaveTo().substring(mModel.downloadRecord.getSaveTo().lastIndexOf('.') + 1).toLowerCase();
 
         if (!currentFormat.equals("flv")) {
             adapter.addItem(R.string.convert_to_flv_format, v -> convertVideoFormatCheck("flv"));
@@ -199,26 +222,32 @@ public class DownloadedVideoActivity extends BaseActivity {
 
     @SuppressLint("SetTextI18n")
     private void reloadVideoInfo() {
-        mMediaInfo = new Gson().fromJson(JniTools.getMediaInfo(mDownloadRecord.getSaveTo()), JsonObject.class);
+        mModel.mediaInfo = new Gson().fromJson(JniTools.getMediaInfo(mModel.downloadRecord.getSaveTo()), JsonObject.class);
 
-        mVideoBv.setText(BvConvert.av2bv(String.valueOf(mVideoInfo.getAvid())));
-        mVideoAvid.setText(String.valueOf(mVideoInfo.getAvid()));
-        mVideoCid.setText(String.valueOf(mVideoInfo.getCid()));
-        mVideoFormat.setText((mDownloadRecord.getSaveTo().substring(mDownloadRecord.getSaveTo().lastIndexOf('.') + 1) + " " + mVideoInfo.getQualityDescription()).toUpperCase());
-        mVideoSize.setText(Utility.getFileSizeString(new File(mDownloadRecord.getSaveTo()).length()));
+        mVideoBv.setText(BvConvert.av2bv(String.valueOf(mModel.videoInfo.getAvid())));
+        mVideoAvid.setText(String.valueOf(mModel.videoInfo.getAvid()));
+        mVideoCid.setText(String.valueOf(mModel.videoInfo.getCid()));
+
+        if (mModel.convertVideoStatus.getValue() != DownloadedVideoViewModel.ConvertVideoStatus.Converting) {
+            mVideoFormat.setText((mModel.downloadRecord.getSaveTo().substring(mModel.downloadRecord.getSaveTo().lastIndexOf('.') + 1) + " " + mModel.videoInfo.getQualityDescription()).toUpperCase());
+        } else {
+            mVideoFormat.setText(R.string.converting_video);
+        }
+
+        mVideoSize.setText(Utility.getFileSizeString(new File(mModel.downloadRecord.getSaveTo()).length()));
 
         mVideoDuration.setText("null");
         mCoderInfo.setText("null");
         mVideoCodeRate.setText("null");
 
-        if (mMediaInfo.get("code").getAsInt() == 0) {
-            mVideoDuration.setText(Utility.secondToTime(mMediaInfo.get("second").getAsLong()));
+        if (mModel.mediaInfo.get("code").getAsInt() == 0) {
+            mVideoDuration.setText(Utility.secondToTime(mModel.mediaInfo.get("second").getAsLong()));
 
-            mVideoCodeRate.setText((mMediaInfo.get("bit_rate").getAsLong() / 1024) + "kbps");
+            mVideoCodeRate.setText((mModel.mediaInfo.get("bit_rate").getAsLong() / 1024) + "kbps");
 
-            if (mMediaInfo.get("streams").isJsonArray()) {
+            if (mModel.mediaInfo.get("streams").isJsonArray()) {
                 StringBuilder coders = new StringBuilder();
-                for (JsonElement element : mMediaInfo.get("streams").getAsJsonArray()) {
+                for (JsonElement element : mModel.mediaInfo.get("streams").getAsJsonArray()) {
                     if (coders.length() != 0) {
                         coders.append(", ");
                     }
@@ -231,21 +260,28 @@ public class DownloadedVideoActivity extends BaseActivity {
 
     @SuppressLint("SetTextI18n")
     private void reloadAudioInfo() {
-        File audioFile = (mDownloadRecord.getAudio() == null) ? null : new File(mDownloadRecord.getAudio());
+        if (mModel.extractingAudioStatus.getValue() == DownloadedVideoViewModel.ExtractingAudioStatus.Extracting) {
+            mAudioFormat.setText(R.string.extracting_audio);
+            mAudioCodeRate.setText(R.string.extracting_audio);
+            mAudioSize.setText(R.string.extracting_audio);
+            return;
+        }
+
+        File audioFile = (mModel.downloadRecord.getAudio() == null) ? null : new File(mModel.downloadRecord.getAudio());
 
         if (audioFile == null || !audioFile.exists()) {
             mAudioFormat.setText(R.string.audio_not_extract);
             mAudioSize.setText(R.string.audio_not_extract);
             mAudioCodeRate.setText(R.string.audio_not_extract);
         } else {
-            mAudioInfo = new Gson().fromJson(JniTools.getMediaInfo(audioFile.getPath()), JsonObject.class);
+            mModel.audioInfo = new Gson().fromJson(JniTools.getMediaInfo(audioFile.getPath()), JsonObject.class);
 
             mAudioCodeRate.setText("null");
-            if (mAudioInfo.get("code").getAsLong() == 0) {
-                mAudioCodeRate.setText((mAudioInfo.get("bit_rate").getAsLong() / 1024) + "kbps");
+            if (mModel.audioInfo.get("code").getAsLong() == 0) {
+                mAudioCodeRate.setText((mModel.audioInfo.get("bit_rate").getAsLong() / 1024) + "kbps");
             }
 
-            mAudioFormat.setText(audioFile.getPath().substring(mDownloadRecord.getSaveTo().lastIndexOf('.') + 1).toUpperCase());
+            mAudioFormat.setText(audioFile.getPath().substring(mModel.downloadRecord.getSaveTo().lastIndexOf('.') + 1).toUpperCase());
             mAudioSize.setText(Utility.getFileSizeString(audioFile.length()));
         }
     }
@@ -254,25 +290,40 @@ public class DownloadedVideoActivity extends BaseActivity {
      * 发送或查看视频
      */
     private void viewVideo(boolean isSend) {
-        File file = new File(mDownloadRecord.getSaveTo());
+        if (mModel.convertVideoStatus.getValue() == DownloadedVideoViewModel.ConvertVideoStatus.Converting) {
+            Toast.makeText(this, R.string.converting_video, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        File file = new File(mModel.downloadRecord.getSaveTo());
         if (!file.exists()) {
             Toast.makeText(this, R.string.file_not_exist, Toast.LENGTH_SHORT).show();
             return;
         }
-        ApplicationTools.shareOrViewFile(this, mVideoInfo.getVideoTitle() + "-" + mVideoInfo.getPartTitle(), file, "*/*", !isSend);
+        ApplicationTools.shareOrViewFile(this, mModel.videoInfo.getVideoTitle() + "-" + mModel.videoInfo.getPartTitle(), file, "*/*", !isSend);
     }
 
     /**
      * 提取音频
      */
     private void viewAudio(boolean isSend) {
-        File saveTo = new File(mDownloadRecord.getSaveTo());
+        if (mModel.convertVideoStatus.getValue() == DownloadedVideoViewModel.ConvertVideoStatus.Converting) {
+            Toast.makeText(this, R.string.converting_video, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (mModel.extractingAudioStatus.getValue() == DownloadedVideoViewModel.ExtractingAudioStatus.Extracting) {
+            Toast.makeText(this, R.string.extracting_audio, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        File saveTo = new File(mModel.downloadRecord.getSaveTo());
         if (!saveTo.exists()) {
             Toast.makeText(this, R.string.file_not_exist, Toast.LENGTH_SHORT).show();
             return;
         }
 
-        File audioFile = (mDownloadRecord.getAudio() == null) ? null : new File(mDownloadRecord.getAudio());
+        File audioFile = (mModel.downloadRecord.getAudio() == null) ? null : new File(mModel.downloadRecord.getAudio());
 
         if (audioFile == null || !audioFile.exists()) {
             String audioFormat = JniTools.getVideoAudioFormat(saveTo.getPath());
@@ -281,36 +332,41 @@ public class DownloadedVideoActivity extends BaseActivity {
                 return;
             }
 
-            final ProgressDialog progressDialog = new ProgressDialog(this);
-            progressDialog.setMessage(this.getText(R.string.extracting_audio));
-            progressDialog.setCancelable(false);
-            progressDialog.show();
-
             final File saveAudioFile = new File(saveTo.getParent() + "/" + new Date().getTime() + "." + audioFormat);
-            mDownloadRecord.setAudio(saveAudioFile.getPath());
-            mDownloadRecord.saveOrUpdate("id=?", String.valueOf(mDownloadRecord.getId()));
+            mModel.downloadRecord.setAudio(saveAudioFile.getPath());
+            mModel.downloadRecord.saveOrUpdate("id=?", String.valueOf(mModel.downloadRecord.getId()));
 
+            CharSequence failureMessage = getText(R.string.failed_extract_audio_2).toString();
             new Thread(() -> {
+                //改变状态为正在提取音频
+                mModel.extractingAudioStatus.postValue(DownloadedVideoViewModel.ExtractingAudioStatus.Extracting);
+                //提取音频
                 int rc = JniTools.extractAudio(saveTo.getPath(), saveAudioFile.getPath());
-                progressDialog.cancel();
+                //检查状态
                 if (rc == 0) {
-                    new Handler(getMainLooper()).post(() -> {
-                        reloadAudioInfo();
-                        viewAudio(isSend);
-                    });
+                    mModel.extractingAudioStatus.postValue(DownloadedVideoViewModel.ExtractingAudioStatus.Ok);
                 } else {
-                    new Handler(getMainLooper()).post(() -> Toast.makeText(this, getText(R.string.failed_extract_audio_2).toString().replace("%ec", String.valueOf(rc)), Toast.LENGTH_SHORT).show());
+                    mModel.extractingAudioFailureMessage = failureMessage.toString().replace("%ec", String.valueOf(rc));
+                    mModel.extractingAudioStatus.postValue(DownloadedVideoViewModel.ExtractingAudioStatus.Failure);
                 }
             }).start();
 
             return;
         }
 
-        ApplicationTools.shareOrViewFile(this, mVideoInfo.getVideoTitle() + "-" + mVideoInfo.getPartTitle(), audioFile, "*/*", !isSend);
+        ApplicationTools.shareOrViewFile(this, mModel.videoInfo.getVideoTitle() + "-" + mModel.videoInfo.getPartTitle(), audioFile, "*/*", !isSend);
     }
 
+    /**
+     * 确认是否将视频转换到指定类型
+     * */
     private void convertVideoFormatCheck(String toFormat) {
-        final String oldFormat = mDownloadRecord.getSaveTo().substring(mDownloadRecord.getSaveTo().lastIndexOf('.') + 1);
+        if (mModel.convertVideoStatus.getValue() == DownloadedVideoViewModel.ConvertVideoStatus.Converting) {
+            Toast.makeText(this, R.string.converting_video, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        final String oldFormat = mModel.downloadRecord.getSaveTo().substring(mModel.downloadRecord.getSaveTo().lastIndexOf('.') + 1);
 
         if (oldFormat.equals(toFormat)) {
             return;
@@ -318,65 +374,102 @@ public class DownloadedVideoActivity extends BaseActivity {
 
         String message = getText(R.string.video_convert_tip).toString().replace("%args1", oldFormat).replace("%args2", toFormat);
 
-        DialogTools.confirm(this, mVideoInfo.getVideoTitle(), message, (dialog, which) -> convertVideoFormat(toFormat), null);
+        DialogTools.confirm(this, mModel.videoInfo.getVideoTitle(), message, (dialog, which) -> convertVideoFormat(toFormat), null);
     }
 
+    /**
+     * 转换视频到指定格式
+     * */
     private void convertVideoFormat(final String toFormat) {
-        Log.d(TAG, "convertVideoFormat: saveTo " + mDownloadRecord.getSaveTo());
+        Log.d(TAG, "convertVideoFormat: saveTo " + mModel.downloadRecord.getSaveTo());
 
-        if (mDownloadRecord.getConverting() != null) {
-            Log.d(TAG, "convertVideoFormat: getConverting " + mDownloadRecord.getConverting());
+        if (mModel.downloadRecord.getConverting() != null) {
+            Log.d(TAG, "convertVideoFormat: getConverting " + mModel.downloadRecord.getConverting());
         }
 
-        if (mDownloadRecord.getConverting() != null) {
-            File file = new File(mDownloadRecord.getConverting());
+        if (mModel.downloadRecord.getConverting() != null) {
+            File file = new File(mModel.downloadRecord.getConverting());
             if (file.exists() && !file.delete()) {
                 Toast.makeText(this, R.string.convert_failure_1, Toast.LENGTH_LONG).show();
                 return;
             }
         }
 
-        final File convertSaveTo = new File(new File(mDownloadRecord.getSaveTo()).getParent() + "/" + new Date().getTime() + "." + toFormat);
+        final File convertSaveTo = new File(new File(mModel.downloadRecord.getSaveTo()).getParent() + "/" + new Date().getTime() + "." + toFormat);
+        //记录转换格式后保存的文件
+        mModel.downloadRecord.setConverting(convertSaveTo.getPath());
+        mModel.downloadRecord.saveOrUpdate("id=?", String.valueOf(mModel.downloadRecord.getId()));
 
-        Log.d(TAG, "convertVideoFormat: saveTo " + convertSaveTo.toString());
+        Log.d(TAG, "convertVideoFormat: saveTo " + convertSaveTo);
 
-        mDownloadRecord.setConverting(convertSaveTo.getPath());
-        mDownloadRecord.saveOrUpdate("id=?", String.valueOf(mDownloadRecord.getId()));
-
-        final ProgressDialog progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage(getText(R.string.convert_progress_title));
-        progressDialog.setCancelable(false);
-        progressDialog.show();
-
+        final CharSequence[] failureMessage = {
+                getText(R.string.convert_failure_2),
+                getText(R.string.convert_failure_3)
+        };
         Thread thread = new Thread(() -> {
-            int rc = JniTools.videoFormatConversion(mDownloadRecord.getSaveTo(), convertSaveTo.getPath());
+            mModel.convertVideoStatus.postValue(DownloadedVideoViewModel.ConvertVideoStatus.Converting);
 
-            progressDialog.cancel();
+            int rc = JniTools.videoFormatConversion(mModel.downloadRecord.getSaveTo(), convertSaveTo.getPath());
+
             if (rc != 0) {
-                new Handler(getMainLooper()).post(() -> Toast.makeText(this, R.string.convert_failure_2, Toast.LENGTH_LONG).show());
-            } else if (!new File(mDownloadRecord.getSaveTo()).delete()) {
-                new Handler(getMainLooper()).post(() -> Toast.makeText(this, R.string.convert_failure_3, Toast.LENGTH_LONG).show());
+                mModel.convertVideoFailureMessage = failureMessage[0].toString();
+                mModel.convertVideoStatus.postValue(DownloadedVideoViewModel.ConvertVideoStatus.Failure);
+            } else if (!new File(mModel.downloadRecord.getSaveTo()).delete()) {
+                mModel.convertVideoFailureMessage = failureMessage[1].toString();
+                mModel.convertVideoStatus.postValue(DownloadedVideoViewModel.ConvertVideoStatus.Failure);
             } else {
-                new Handler(getMainLooper()).post(() -> {
-                    mDownloadRecord.setSaveTo(convertSaveTo.getPath());
-                    mDownloadRecord.setConverting(null);
-                    mDownloadRecord.saveOrUpdate("id=?", String.valueOf(mDownloadRecord.getId()));
 
-                    //转换成功，更新显示信息
-                    reloadVideoInfo();
-                    reloadOperatorListAdapter();
+                mModel.downloadRecord.setSaveTo(convertSaveTo.getPath());
+                mModel.downloadRecord.setConverting(null);
+                mModel.downloadRecord.saveOrUpdate("id=?", String.valueOf(mModel.downloadRecord.getId()));
 
-                    Toast.makeText(this, R.string.convert_completed, Toast.LENGTH_SHORT).show();
-                }); //重新加载数据
+                mModel.convertVideoStatus.postValue(DownloadedVideoViewModel.ConvertVideoStatus.Ok);
             }
         });
 
         thread.start();
     }
 
+    /**
+     * 转换视频状态被改变
+     * */
+    private void onConvertVideoStatusChanged(DownloadedVideoViewModel.ConvertVideoStatus convertVideoStatus) {
+        if (convertVideoStatus == DownloadedVideoViewModel.ConvertVideoStatus.Ok) {
+            //转换成功，更新显示信息
+            reloadVideoInfo();
+            reloadOperatorListAdapter();
+            Toast.makeText(this, R.string.convert_completed, Toast.LENGTH_SHORT).show();
+        } else if (convertVideoStatus == DownloadedVideoViewModel.ConvertVideoStatus.Failure) {
+            reloadVideoInfo();
+            Toast.makeText(this, mModel.convertVideoFailureMessage, Toast.LENGTH_SHORT).show();
+        } else if (convertVideoStatus == DownloadedVideoViewModel.ConvertVideoStatus.Converting) {
+            reloadVideoInfo();
+        }
+    }
+
+    /**
+     * 提取音频状态被改变
+     * */
+    private void onExtractingAudioStatusChanged(DownloadedVideoViewModel.ExtractingAudioStatus extractingAudioStatus) {
+        if (extractingAudioStatus == DownloadedVideoViewModel.ExtractingAudioStatus.Ok) {
+            reloadAudioInfo();
+            Toast.makeText(this, R.string.extract_audio_ok, Toast.LENGTH_SHORT).show();
+        } else if (extractingAudioStatus == DownloadedVideoViewModel.ExtractingAudioStatus.Failure) {
+            reloadAudioInfo();
+            Toast.makeText(this, mModel.extractingAudioFailureMessage, Toast.LENGTH_SHORT).show();
+        } else if (extractingAudioStatus == DownloadedVideoViewModel.ExtractingAudioStatus.Extracting) {
+            reloadAudioInfo();
+        }
+    }
+
     private void deleteVideo() {
-        DialogTools.confirm(this, mVideoInfo.getVideoTitle(), this.getText(R.string.delete_download_record_confirm), (dialog, which) -> {
-            setResult(ResultCodeDeleted, new Intent().putExtra("download_record_id", mDownloadRecord.getId()));
+        if (mModel.convertVideoStatus.getValue() == DownloadedVideoViewModel.ConvertVideoStatus.Converting) {
+            Toast.makeText(this, R.string.converting_video, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        DialogTools.confirm(this, mModel.videoInfo.getVideoTitle(), this.getText(R.string.delete_download_record_confirm), (dialog, which) -> {
+            setResult(ResultCodeDeleted, new Intent().putExtra("download_record_id", mModel.downloadRecord.getId()));
             finish();
         }, null);
     }

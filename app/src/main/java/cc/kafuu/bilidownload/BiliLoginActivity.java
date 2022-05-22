@@ -17,24 +17,32 @@ import android.widget.ProgressBar;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import java.util.Objects;
 
 import cc.kafuu.bilidownload.bilibili.Bili;
 import cc.kafuu.bilidownload.bilibili.account.BiliAccount;
+import cc.kafuu.bilidownload.model.LoginViewModel;
 
 
 public class BiliLoginActivity extends BaseActivity {
     public static int RequestCode = 0x00;
 
+    public static int ResultCodeCancel = 0x00;
+    public static int ResultCodeOk = 0x01;
+
     private ProgressBar mProgressBar;
+
+    private LoginViewModel mModel;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bili_login);
-        setResult(-1);
+
+        mModel = new ViewModelProvider(this).get(LoginViewModel.class);
 
         initView();
     }
@@ -100,7 +108,7 @@ public class BiliLoginActivity extends BaseActivity {
         }
 
         if (Bili.biliAccount != null) {
-            setResult(0);
+            setResult(ResultCodeOk);
             Bili.updateHeaders(cookie);
             finish();
         }

@@ -2,6 +2,7 @@ package cc.kafuu.bilidownload;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
@@ -35,16 +36,6 @@ public class PersonalActivity extends BaseActivity {
     public static int ResultCodeLogout = 0x01;
     public static int ResultCodeVideoClicked = 0x02;
 
-    //private CardView mLoginBiliCard;
-    private ImageView mUserFace;
-    private TextView mUserName;
-    private TextView mUserSign;
-
-    private TabLayout mTabLayout;
-    private ViewPager mViewPager;
-
-    private Button mLogout;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,15 +53,13 @@ public class PersonalActivity extends BaseActivity {
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
 
-        //mLoginBiliCard = findViewById(R.id.loginBiliCard);
-        mUserFace = findViewById(R.id.userFace);
-        mUserName = findViewById(R.id.userName);
-        mUserSign = findViewById(R.id.userSign);
+        CardView loginBiliCard = findViewById(R.id.loginBiliCard);
+        ImageView userFace = findViewById(R.id.userFace);
+        TextView userName = findViewById(R.id.userName);
+        TextView userSign = findViewById(R.id.userSign);
 
-        mTabLayout = findViewById(R.id.tabLayout);
-        mViewPager = findViewById(R.id.viewPager);
-
-        mLogout = findViewById(R.id.logout);
+        TabLayout tabLayout = findViewById(R.id.tabLayout);
+        ViewPager viewPager = findViewById(R.id.viewPager);
 
         if (Bili.biliAccount == null) {
             finish();
@@ -78,12 +67,12 @@ public class PersonalActivity extends BaseActivity {
         }
 
         //加载头像/昵称/个性签名
-        Glide.with(this).load(Bili.biliAccount.getFace()).placeholder(R.drawable.ic_2233).into(mUserFace);
-        mUserName.setText(Bili.biliAccount.getUserName());
+        Glide.with(this).load(Bili.biliAccount.getFace()).placeholder(R.drawable.ic_2233).into(userFace);
+        userName.setText(Bili.biliAccount.getUserName());
         if (Bili.biliAccount.getSign() == null || Bili.biliAccount.getSign().length() == 0) {
-            mUserSign.setText(getText(R.string.no_sign));
+            userSign.setText(getText(R.string.no_sign));
         } else {
-            mUserSign.setText(Bili.biliAccount.getSign());
+            userSign.setText(Bili.biliAccount.getSign());
         }
 
         List<Pair<CharSequence, Fragment>> mFragments = new ArrayList<>();
@@ -95,12 +84,12 @@ public class PersonalActivity extends BaseActivity {
         mFragments.add(new Pair<>(getString(R.string.teleplay), FollowFragment.newInstance(BiliFollow.Type.Teleplay)));
 
 
-        mViewPager.setAdapter(new PersonalFragmentPagesAdapter(mFragments, getSupportFragmentManager(),  FragmentPagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT));
-        mViewPager.setOffscreenPageLimit(Objects.requireNonNull(mViewPager.getAdapter()).getCount());
+        viewPager.setAdapter(new PersonalFragmentPagesAdapter(mFragments, getSupportFragmentManager(),  FragmentPagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT));
+        viewPager.setOffscreenPageLimit(Objects.requireNonNull(viewPager.getAdapter()).getCount());
 
-        mTabLayout.setupWithViewPager(mViewPager, false);
+        tabLayout.setupWithViewPager(viewPager, false);
 
-        mLogout.setOnClickListener(v -> logout());
+        loginBiliCard.setOnClickListener(v -> logout());
     }
 
     @Override

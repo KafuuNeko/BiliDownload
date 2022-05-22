@@ -55,7 +55,7 @@
     <string name="download_running">正在下载</string>
     <string name="download_unknown">未知状态</string>
     <string name="download_item_undefined">此下载记录缺失，是否删除？</string>
-    <string name="download_failure_whether_restart_or_remode">任务下载失败，是否重启任务？</string>
+    <string name="download_failure_whether_restart_or_remode">任务下载失败，错误代码‘%1’。是否重启任务？</string>
     <string name="restart">重启</string>
     <string name="stop">停止</string>
     <string name="cancel_download_confirm">是否取消这个下载任务？</string>
@@ -118,5 +118,7 @@
     <string name="coder_info">编码信息</string>
     <string name="video_code_rate">视频码率</string>
     <string name="audio_code_rate">音频码率</string>
+    <string name="converting_video">正在转换视频封装格式</string>
+    <string name="extract_audio_ok">提取音频完成</string>
 
 </resources>

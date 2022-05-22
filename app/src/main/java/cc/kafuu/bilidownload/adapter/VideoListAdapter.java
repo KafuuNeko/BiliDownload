@@ -28,15 +28,21 @@ public class VideoListAdapter extends RecyclerView.Adapter<VideoListAdapter.Inne
         public String info;
     }
 
-    private List<Record> mRecords = new ArrayList<>();
+    private List<Record> mRecords;
     private final VideoListItemClickedListener mListItemClickedListener;
 
     public interface VideoListItemClickedListener {
         void onVideoListItemClicked(Record record);
     }
 
-    public VideoListAdapter(VideoListItemClickedListener listItemClickedListener) {
+    public VideoListAdapter(VideoListItemClickedListener listItemClickedListener, List<Record> records) {
         mListItemClickedListener = listItemClickedListener;
+        mRecords = records;
+    }
+
+    public VideoListAdapter setRecords(List<Record> records) {
+        mRecords = records;
+        return this;
     }
 
     @NonNull
@@ -53,10 +59,6 @@ public class VideoListAdapter extends RecyclerView.Adapter<VideoListAdapter.Inne
     @Override
     public int getItemCount() {
         return mRecords.size();
-    }
-
-    public void addRecord(Record record) {
-        mRecords.add(record);
     }
 
     public void clearRecord() {
