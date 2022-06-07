@@ -131,16 +131,20 @@ class ExportService : Service() {
     @SuppressLint("UnspecifiedImmutableFlag")
     private fun notify(title: CharSequence, message: CharSequence) {
 
+
         Handler(Looper.getMainLooper()).post {
             var id = getSharedPreferences(
                 "app",
                 MODE_PRIVATE
-            ).getInt(ExportService::class.java.name + ".notify_id", 0xff)
+            ).getInt( "${ExportService::class.java.name}.notify_id", 0xff)
+
             if (id < 0xff) {
                 id = 0xff
             }
             getSharedPreferences("app", MODE_PRIVATE).edit()
-                .putInt(ExportService::class.java.name + ".notify_id", id + 1).apply()
+                .putInt("${ExportService::class.java.name}.notify_id", id + 1).apply()
+
+            Log.d(TAG, "notify: ${ExportService::class.java.name}.notify_id = $id")
 
             val notificationBuilder =
                 NotificationCompat.Builder(this, ExportService::class.java.name)
