@@ -1,3 +1,10 @@
 bilibili video resource downloader
 
-https://github.com/KafuuNeko/BiliDownload
+<h3>Features</h3>
+Downloading all kinds of video from bilibili (user-uploaded video, bangumi, TV series, amd movies)
+Extracting audio from the video (aac)
+Converting package formats of the video (flv、mp4、mkv、wmv)
+
+<h3>Uasge</h3>
+Input the bilibili video address (or the share link, BV, AV, EP, and SS）in the input box of the parse tab, the tap "parse"
+Some video and video with resolution higher than 720p requires login.
