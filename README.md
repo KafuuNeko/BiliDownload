@@ -4,7 +4,7 @@
  支持转换视频封装格式(flv、mp4、mkv、wmv)  
  
  [<img src="https://play.google.com/intl/en_us/badges/images/generic/en-play-badge.png" alt="Get it on Google Play" height="80">](https://play.google.com/store/apps/details?id=cc.kafuu.bilidownload) 
- [<img alt="Get it on F-Droid" src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" width="240">](https://f-droid.org/packages/cc.kafuu.bilidownload) or [Releases](https://github.com/KafuuNeko/BiliDownload/releases)
+ [<img alt="Get it on F-Droid" src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" height="80">](https://f-droid.org/packages/cc.kafuu.bilidownload) or [Releases](https://github.com/KafuuNeko/BiliDownload/releases)
  
 # 如何下载
  将bilibili视频地址(也可以是分享链接、BV、AV、EP、SS)复制粘贴到解析页输入框点击解析  
