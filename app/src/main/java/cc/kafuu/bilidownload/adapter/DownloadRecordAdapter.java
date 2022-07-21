@@ -83,24 +83,18 @@ public class DownloadRecordAdapter extends RecyclerView.Adapter<DownloadRecordAd
         }
     }
 
-
-
     @SuppressLint("NotifyDataSetChanged")
     public void reloadRecords() {
         mRecords = LitePal.findAll(VideoDownloadRecord.class);
 
         //删除无效数据
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            mRecords.removeIf(record -> !checkRecord(record));
-        } else {
-            List<VideoDownloadRecord> newRecords = new ArrayList<>();
-            for (VideoDownloadRecord record : mRecords) {
-                if (checkRecord(record)) {
-                    newRecords.add(record);
-                }
+        List<VideoDownloadRecord> newRecords = new ArrayList<>();
+        for (VideoDownloadRecord record : mRecords) {
+            if (record.isDownloadComplete() || checkRecord(record)) {
+                newRecords.add(record);
             }
-            mRecords = newRecords;
         }
+        mRecords = newRecords;
 
         notifyDataSetChanged();
         itemChange();
@@ -108,6 +102,7 @@ public class DownloadRecordAdapter extends RecyclerView.Adapter<DownloadRecordAd
 
     /**
      * 校验记录是否有效
+     * 如果已下载完成则无需检查
      * 如果记录无效则删除并返回false
      * */
     private boolean checkRecord(VideoDownloadRecord record) {
@@ -141,6 +136,7 @@ public class DownloadRecordAdapter extends RecyclerView.Adapter<DownloadRecordAd
         return mRecords.size();
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     public void removeDownloadRecord(long downloadRecordId, boolean changeItems) {
 
         VideoDownloadRecord videoDownloadRecord = LitePal.find(VideoDownloadRecord.class, downloadRecordId);
@@ -238,6 +234,7 @@ public class DownloadRecordAdapter extends RecyclerView.Adapter<DownloadRecordAd
             if (mDownloadStatusFlag != DownloadManager.STATUS_SUCCESSFUL) {
                 mUpdate = new Timer();
                 mUpdate.schedule(new TimerTask() {
+                    @SuppressLint("NotifyDataSetChanged")
                     @Override
                     public void run() {
                         mHandle.post(() -> {
@@ -291,6 +288,23 @@ public class DownloadRecordAdapter extends RecyclerView.Adapter<DownloadRecordAd
                 return false;
             }
 
+            //下载时间
+            @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            mDownloadInfo.setText(simpleDateFormat.format(mBindRecord.getStartTime()));
+
+            //如果下载完成则直接显示完成，无需再查找记录
+            if (mBindRecord.isDownloadComplete()) {
+                mDownloadStatusFlag = DownloadManager.STATUS_SUCCESSFUL;
+
+                mDownloadProgress.setVisibility(View.GONE);
+                mDownloadStatus.setText(R.string.download_complete);
+                mDownloadStatus.setTextColor(ContextCompat.getColor(mActivity, R.color.green));
+
+                Log.d(TAG, "loadingDownloadInfo: isDownloadComplete [" + mBindRecord.getSaveTo() + "]");
+                return true;
+            }
+
+            //未下载完成则检查下载记录
             try (Cursor cursor = mDownloadManager.query(new DownloadManager.Query().setFilterById(mBindRecord.getDownloadId()))) {
                 if (cursor == null || !cursor.moveToNext()) {
                     if (failureRemoveItem) {
@@ -305,10 +319,6 @@ public class DownloadRecordAdapter extends RecyclerView.Adapter<DownloadRecordAd
 
                 long completedSize = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
                 long totalSize = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
-
-                //下载时间
-                @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                mDownloadInfo.setText(simpleDateFormat.format(mBindRecord.getStartTime()));
 
                 //下载状态
                 if (mDownloadStatusFlag == DownloadManager.STATUS_RUNNING) {
@@ -330,8 +340,12 @@ public class DownloadRecordAdapter extends RecyclerView.Adapter<DownloadRecordAd
                     mDownloadStatus.setTextColor(ContextCompat.getColor(mActivity, R.color.red));
 
                 } else if (mDownloadStatusFlag == DownloadManager.STATUS_SUCCESSFUL){
+                    //检查到下载完成，更新记录
                     mDownloadStatus.setText(R.string.download_complete);
                     mDownloadStatus.setTextColor(ContextCompat.getColor(mActivity, R.color.green));
+
+                    mBindRecord.setDownloadComplete(true);
+                    mBindRecord.saveOrUpdate("id=?", String.valueOf(mBindRecord.getId()));
 
                 } else {
                     mDownloadStatusFlag = -1;

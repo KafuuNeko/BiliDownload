@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <litepal>
     <dbname value="video"/>
-    <version value="4" />
+    <version value="5" />
 
     <list>
         <mapping class="cc.kafuu.bilidownload.database.VideoDownloadRecord" />

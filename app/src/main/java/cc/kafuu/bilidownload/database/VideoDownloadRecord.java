@@ -24,6 +24,8 @@ public class VideoDownloadRecord extends LitePalSupport {
     @Column(defaultValue = "NULL")
     private String audio = null;
 
+    public boolean downloadComplete;
+
     public VideoDownloadRecord(long downloadId, long avid, long cid, int quality, String saveTo) {
         this.downloadId = downloadId;
 
@@ -86,4 +88,13 @@ public class VideoDownloadRecord extends LitePalSupport {
     public void setAudio(String audio) {
         this.audio = (audio == null) ? "NULL" : audio;
     }
+
+    public void setDownloadComplete(boolean downloadComplete) {
+        this.downloadComplete = downloadComplete;
+    }
+
+    public boolean isDownloadComplete() {
+        return downloadComplete;
+    }
+
 }
