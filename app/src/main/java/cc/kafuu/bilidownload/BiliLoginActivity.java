@@ -115,7 +115,7 @@ public class BiliLoginActivity extends BaseActivity {
         webSettings.setJavaScriptEnabled(true);
         // 让JavaScript可以自动打开windows
         webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
-        mWebView.loadUrl("https://passport.bilibili.com/login");
+        mWebView.loadUrl("https://passport.bilibili.com/h5-app/passport/login");
 
         setSupportActionBar(findViewById(R.id.toolbar));
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
