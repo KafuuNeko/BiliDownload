@@ -442,7 +442,11 @@ public class DownloadedVideoActivity extends BaseActivity {
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         if (isVideo) {
             intent.setType("video/" + mModel.downloadRecord.getSaveTo().substring(mModel.downloadRecord.getSaveTo().lastIndexOf('.') + 1));
-            intent.putExtra(Intent.EXTRA_TITLE, new File(mModel.downloadRecord.getSaveTo()).getName());
+            intent.putExtra(Intent.EXTRA_TITLE,
+                    String.format("%s(%s-%s)-Video",
+                            BvConvert.av2bv(String.valueOf(mModel.videoInfo.getAvid())),
+                            mModel.videoInfo.getVideoTitle(),
+                            mModel.videoInfo.getPartTitle()));
             mExportVideoLauncher.launch(intent);
         } else {
             if (mModel.extractingAudioStatus.getValue() == DownloadedVideoViewModel.ExtractingAudioStatus.Extracting) {
@@ -453,7 +457,11 @@ public class DownloadedVideoActivity extends BaseActivity {
             if (checkAudioExist()) {
                 assert mModel.downloadRecord.getAudio() != null;
                 intent.setType("audio/" + mModel.downloadRecord.getAudio().substring(mModel.downloadRecord.getAudio().lastIndexOf('.') + 1));
-                intent.putExtra(Intent.EXTRA_TITLE, new File(mModel.downloadRecord.getAudio()).getName());
+                intent.putExtra(Intent.EXTRA_TITLE,
+                        String.format("%s(%s-%s)-Audio",
+                                BvConvert.av2bv(String.valueOf(mModel.videoInfo.getAvid())),
+                                mModel.videoInfo.getVideoTitle(),
+                                mModel.videoInfo.getPartTitle()));
                 mExportAudioLauncher.launch(intent);
             }
         }

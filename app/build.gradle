@@ -11,8 +11,8 @@ android {
         applicationId "cc.kafuu.bilidownload"
         minSdkVersion 21
         targetSdkVersion 31
-        versionCode 18
-        versionName "1.9.2"
+        versionCode 19
+        versionName "1.9.3"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
