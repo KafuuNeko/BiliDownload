@@ -2,6 +2,7 @@ package cc.kafuu.bilidownload;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.Toolbar;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
@@ -28,6 +29,7 @@ import java.util.Objects;
 import cc.kafuu.bilidownload.adapter.PersonalFragmentPagesAdapter;
 import cc.kafuu.bilidownload.bilibili.Bili;
 import cc.kafuu.bilidownload.bilibili.account.BiliFollow;
+import cc.kafuu.bilidownload.bilibili.account.BiliUserCard;
 import cc.kafuu.bilidownload.fragment.personal.FollowFragment;
 import cc.kafuu.bilidownload.fragment.personal.FavoriteFragment;
 import cc.kafuu.bilidownload.fragment.personal.HistoryFragment;
@@ -37,26 +39,59 @@ public class PersonalActivity extends BaseActivity {
     public static int ResultCodeLogout = 0x01;
     public static int ResultCodeVideoClicked = 0x02;
 
+    private long mUserId;
+    private String mUserFace;
+    private String mUserName;
+    private String mUserSign;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_personal);
+        Intent intent = getIntent();
+
+        mUserId = intent.getLongExtra("accountId", Bili.biliAccount.getId());
+        mUserFace = intent.getStringExtra("accountFace");
+        mUserName = intent.getStringExtra("accountName");
+        mUserSign = intent.getStringExtra("accountSign");
+
         initView();
+
     }
 
     public static void actionStartForResult(Context context, ActivityResultLauncher<Intent> launcher) {
+        actionStartForResult(context, launcher, null);
+    }
+
+    public static void actionStartForResult(Context context, ActivityResultLauncher<Intent> launcher, BiliUserCard userCard) {
         if (ActivityCollector.contains(PersonalActivity.class)) {
             return;
         }
 
         Intent intent = new Intent(context, PersonalActivity.class);
+        if (userCard != null) {
+            intent.putExtra("accountId", userCard.getId());
+            intent.putExtra("accountFace", userCard.getFace());
+            intent.putExtra("accountName", userCard.getName());
+            intent.putExtra("accountSign", userCard.getSign());
+        } else {
+            intent.putExtra("accountId", Bili.biliAccount.getId());
+            intent.putExtra("accountFace", Bili.biliAccount.getFace());
+            intent.putExtra("accountName", Bili.biliAccount.getUserName());
+            intent.putExtra("accountSign", Bili.biliAccount.getSign());
+        }
+
         launcher.launch(intent);
     }
 
     private void initView() {
-        setSupportActionBar(findViewById(R.id.toolbar));
+        final Toolbar toolbar = findViewById(R.id.toolbar);
+
+        setSupportActionBar(toolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
+
+        toolbar.setTitle(mUserName);
 
         final CardView loginBiliCard = findViewById(R.id.loginBiliCard);
         final ImageView userFace = findViewById(R.id.userFace);
@@ -72,22 +107,24 @@ public class PersonalActivity extends BaseActivity {
         }
 
         //加载头像/昵称/个性签名
-        Glide.with(this).load(Bili.biliAccount.getFace()).placeholder(R.drawable.ic_2233).into(userFace);
-        userName.setText(Bili.biliAccount.getUserName());
-        if (Bili.biliAccount.getSign() == null || Bili.biliAccount.getSign().length() == 0) {
+        Glide.with(this).load(mUserFace).placeholder(R.drawable.ic_2233).into(userFace);
+        userName.setText(mUserName);
+
+        if (mUserSign == null || mUserSign.length() == 0) {
             userSign.setText(getText(R.string.no_sign));
         } else {
-            userSign.setText(Bili.biliAccount.getSign());
+            userSign.setText(mUserSign);
         }
 
         List<Pair<CharSequence, Fragment>> mFragments = new ArrayList<>();
 
-        mFragments.add(new Pair<>(getString(R.string.history), HistoryFragment.newInstance()));
-        mFragments.add(new Pair<>(getString(R.string.favorite), FavoriteFragment.newInstance()));
+        if (mUserId == Bili.biliAccount.getId()) {
+            mFragments.add(new Pair<>(getString(R.string.history), HistoryFragment.newInstance()));
+        }
 
-        mFragments.add(new Pair<>(getString(R.string.cartoon), FollowFragment.newInstance(BiliFollow.Type.Cartoon)));
-        mFragments.add(new Pair<>(getString(R.string.teleplay), FollowFragment.newInstance(BiliFollow.Type.Teleplay)));
-
+        mFragments.add(new Pair<>(getString(R.string.favorite), FavoriteFragment.newInstance(mUserId)));
+        mFragments.add(new Pair<>(getString(R.string.cartoon), FollowFragment.newInstance(mUserId, BiliFollow.Type.Cartoon)));
+        mFragments.add(new Pair<>(getString(R.string.teleplay), FollowFragment.newInstance(mUserId, BiliFollow.Type.Teleplay)));
 
         viewPager.setAdapter(new PersonalFragmentPagesAdapter(this, mFragments));
         viewPager.setOffscreenPageLimit(Objects.requireNonNull(viewPager.getAdapter()).getItemCount());

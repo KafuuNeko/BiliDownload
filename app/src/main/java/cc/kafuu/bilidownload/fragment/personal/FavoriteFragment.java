@@ -50,14 +50,10 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
     private RecyclerView mVideoList;
     private TextView mNoRecordTip;
 
-
-    public FavoriteFragment() {
-
-    }
-
-    public static FavoriteFragment newInstance() {
+    public static FavoriteFragment newInstance(long accountId) {
         FavoriteFragment fragment = new FavoriteFragment();
         Bundle args = new Bundle();
+        args.putLong("accountId", accountId);
         fragment.setArguments(args);
         return fragment;
     }
@@ -88,7 +84,6 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
         } else {
             loadFavorite();
         }
-
 
         return mRootView;
     }
@@ -140,13 +135,20 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
         mModel.loading = true;
         mSwipeRefreshLayout.setRefreshing(true);
 
-        BiliFavourite.getFavourites(Bili.biliAccount.getId(), new BiliFavourite.Callback<BiliFavourite.Favourite>() {
+        assert getArguments() != null;
+        BiliFavourite.getFavourites(getArguments().getLong("accountId"), new BiliFavourite.Callback<BiliFavourite.Favourite>() {
             @Override
             public void completed(List<BiliFavourite.Favourite> favourites, boolean hasMore) {
                 new Handler(Looper.getMainLooper()).post(() -> {
                     mModel.loading = false;
 
                     mModel.favourites = favourites;
+                    if (favourites.size() == 0) {
+                        mSwipeRefreshLayout.setRefreshing(false);
+                        mFavoriteSpinner.setVisibility(View.GONE);
+                        updateTip();
+                        return;
+                    }
                     updateFavorite();
                     loadVideos(false);
                 });
@@ -158,7 +160,7 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
                 new Handler(Looper.getMainLooper()).post(() -> {
                     mModel.loading = false;
                     mSwipeRefreshLayout.setRefreshing(false);
-                    Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+                    mNoRecordTip.setText(message);
                 });
             }
         });
@@ -184,6 +186,7 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
     }
 
     private void loadVideos(boolean loadMore) {
+
         if (mModel.loading) {
             if (!loadMore) {
                 mSwipeRefreshLayout.setRefreshing(false);
@@ -201,6 +204,8 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
             mModel.hasMore = true;
             mModel.records.clear();
         }
+
+
         BiliFavourite.getVideos(mModel.favourites.get(mModel.currentFavourite), mModel.nextPage, new BiliFavourite.Callback<BiliFavourite.Video>() {
 
             @SuppressLint("NotifyDataSetChanged")
@@ -251,17 +256,22 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
     }
 
     private void updateTip() {
-        new Handler(Looper.getMainLooper()).post(() -> mNoRecordTip.setVisibility((Objects.requireNonNull(mVideoList.getAdapter()).getItemCount() == 0) ? View.VISIBLE : View.GONE));
+        new Handler(Looper.getMainLooper()).post(() ->
+                mNoRecordTip.setVisibility(
+                        mModel.favourites.size() == 0 || (Objects.requireNonNull(mVideoList.getAdapter()).getItemCount() == 0)
+                                ? View.VISIBLE
+                                : View.GONE)
+        );
     }
 
     @Override
     public void onVideoListItemClicked(VideoListAdapter.Record record) {
-        if (Objects.requireNonNull(getActivity()).isDestroyed()) {
+        if (requireActivity().isDestroyed()) {
             return;
         }
 
-        getActivity().setResult(PersonalActivity.ResultCodeVideoClicked, new Intent().putExtra("video_id", record.videoId));
-        getActivity().finish();
+        requireActivity().setResult(PersonalActivity.ResultCodeVideoClicked, new Intent().putExtra("video_id", record.videoId));
+        requireActivity().finish();
     }
 
 

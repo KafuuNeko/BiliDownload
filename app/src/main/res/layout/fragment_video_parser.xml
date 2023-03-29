@@ -107,6 +107,18 @@
                         android:textStyle="bold"
                         android:visibility="gone" />
 
+                    <TextView
+                        android:id="@+id/uploader"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clickable="false"
+                        android:gravity="right|center_vertical"
+                        android:textAllCaps="false"
+                        android:textColor="#2196F3"
+                        android:textStyle="italic"
+                        app:drawableEndCompat="@drawable/baseline_arrow_forward_ios_24"
+                        tools:ignore="RtlHardcoded" />
+
                 </LinearLayout>
 
             </androidx.cardview.widget.CardView>

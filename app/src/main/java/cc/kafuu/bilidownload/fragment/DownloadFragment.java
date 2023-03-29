@@ -24,11 +24,6 @@ import cc.kafuu.bilidownload.DownloadedVideoActivity;
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.adapter.DownloadRecordAdapter;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link DownloadFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class DownloadFragment extends Fragment {
     private Handler mHandler;
 
@@ -52,13 +47,6 @@ public class DownloadFragment extends Fragment {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @return A new instance of fragment DownloadFragment.
-     */
-    // TODO: Rename and change types and number of parameters
     public static DownloadFragment newInstance() {
         DownloadFragment fragment = new DownloadFragment();
         Bundle args = new Bundle();

@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cc.kafuu.bilidownload.bilibili.Bili;
+import cc.kafuu.bilidownload.bilibili.account.BiliUserCard;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Request;
@@ -132,11 +133,15 @@ public class BiliVideo {
     //视频片段（分集）
     private final List<BiliVideoPart> mParts;
 
+    private final BiliUserCard mUploaderCard;
+
+
     private BiliVideo(@NonNull JsonObject data, boolean isSeason) {
         mParts = new ArrayList<>();
 
         if (!isSeason) {
             JsonObject view = data.getAsJsonObject("View");
+            JsonObject card = data.get("Card").getAsJsonObject().get("card").getAsJsonObject();
             JsonObject rights = view.getAsJsonObject("rights");
 
             mVideoAddress = view.get("bvid").getAsString();
@@ -144,6 +149,10 @@ public class BiliVideo {
             mPicUrl = view.get("pic").getAsString();
             mTitle = view.get("title").getAsString();
             mDesc = view.get("desc").getAsString();
+
+            String cardSign = card.get("sign").isJsonNull() ? null : card.get("sign").getAsString();
+
+            mUploaderCard = new BiliUserCard(card.get("mid").getAsLong(), card.get("name").getAsString(), card.get("face").getAsString(), cardSign);
 
             mAllowDownload = rights.get("download").getAsInt();
 
@@ -158,6 +167,8 @@ public class BiliVideo {
             }
         } else {
             JsonObject rights = data.getAsJsonObject("rights");
+
+            mUploaderCard = null;
 
             mVideoAddress = "ss" + data.get("season_id").getAsLong();
             mVideoId = data.get("season_id").getAsLong();
@@ -204,6 +215,10 @@ public class BiliVideo {
 
     public List<BiliVideoPart> getParts() {
         return mParts;
+    }
+
+    public BiliUserCard getUploaderCard() {
+        return mUploaderCard;
     }
 
     @NotNull

@@ -43,8 +43,8 @@ public class BiliFollow {
     /**
      * 取得用户追的番剧或电视剧
      * */
-    public static void getFollows(Type type, int pn, GetFollowsCallback callback) {
-        String url = "https://api.bilibili.com/x/space/bangumi/follow/list?type= " + ((type == Type.Cartoon) ? 1 : 2) + " &follow_status=0&pn=" + pn + "&ps=15&vmid=" + Bili.biliAccount.getId();
+    public static void getFollows(long uid, Type type, int pn, GetFollowsCallback callback) {
+        String url = "https://api.bilibili.com/x/space/bangumi/follow/list?type= " + ((type == Type.Cartoon) ? 1 : 2) + " &follow_status=0&pn=" + pn + "&ps=15&vmid=" + uid;
         Request request = new Request.Builder().url(url).headers(Bili.generalHeaders).build();
 
         Bili.httpClient.newCall(request).enqueue(new Callback() {
@@ -64,6 +64,11 @@ public class BiliFollow {
 
                 JsonObject jsonBody = new Gson().fromJson(Objects.requireNonNull(response.body()).string(), JsonObject.class);
                 Log.d(TAG, "onResponse: " + jsonBody.toString());
+
+                if (jsonBody.get("code").getAsLong() != 0) {
+                    callback.failure(jsonBody.get("message").getAsString());
+                    return;
+                }
 
                 JsonObject jsonData = jsonBody.get("data").getAsJsonObject();
                 JsonArray jsonList = jsonData.get("list").getAsJsonArray();

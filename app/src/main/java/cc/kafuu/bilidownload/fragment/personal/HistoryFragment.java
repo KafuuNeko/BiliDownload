@@ -194,12 +194,12 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
      * */
     @Override
     public void onVideoListItemClicked(VideoListAdapter.Record record) {
-        if (Objects.requireNonNull(getActivity()).isDestroyed()) {
+        if (requireActivity().isDestroyed()) {
             return;
         }
 
-        getActivity().setResult(PersonalActivity.ResultCodeVideoClicked, new Intent().putExtra("video_id", record.videoId));
-        getActivity().finish();
+        requireActivity().setResult(PersonalActivity.ResultCodeVideoClicked, new Intent().putExtra("video_id", record.videoId));
+        requireActivity().finish();
     }
 
     private void updateTip() {

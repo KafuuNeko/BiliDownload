@@ -82,7 +82,6 @@ class ExportService : Service() {
                 (DocumentFile::fromSingleUri)(this@ExportService, destination)?.name?.let {
                     notify(getText(R.string.export_failure), it)
                 }
-
             } else {
                 try {
                     queue.add(Pair(source, destination))

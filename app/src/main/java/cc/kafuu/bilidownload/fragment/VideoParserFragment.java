@@ -77,6 +77,7 @@ public class VideoParserFragment extends Fragment {
     private TextView mVideoTitle;
     private TextView mVideoDescribe;
     private TextView mVideoDownloadNotAllowed;
+    private TextView mUploader;
 
     private RecyclerView mVideoInfoList;
 
@@ -225,6 +226,7 @@ public class VideoParserFragment extends Fragment {
         mVideoTitle = mRootView.findViewById(R.id.videoTitle);
         mVideoDescribe = mRootView.findViewById(R.id.videoDescribe);
         mVideoDownloadNotAllowed = mRootView.findViewById(R.id.videoDownloadNotAllowed);
+        mUploader = mRootView.findViewById(R.id.uploader);
 
         mVideoInfoList = mRootView.findViewById(R.id.videoInfoList);
     }
@@ -243,6 +245,10 @@ public class VideoParserFragment extends Fragment {
         mVideoInfoCard.setVisibility(View.GONE);
 
         mVideoInfoList.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        mUploader.setOnClickListener(view -> {
+            PersonalActivity.actionStartForResult(getContext(), mPersonalActivityResultLaunch, mModel.biliVideo.getUploaderCard());
+        });
 
         //将此列表设置为嵌套列表
         mVideoInfoList.setNestedScrollingEnabled(false);
@@ -444,7 +450,8 @@ public class VideoParserFragment extends Fragment {
         mVideoDescribe.setText(biliVideos.getDesc());
 
         mVideoDownloadNotAllowed.setVisibility(biliVideos.allowDownload() ? View.GONE : View.VISIBLE);
-
+        mUploader.setVisibility(biliVideos.getUploaderCard() == null ? View.GONE : View.VISIBLE);
+        mUploader.setText(biliVideos.getUploaderCard() == null ? "bilibili" : biliVideos.getUploaderCard().getName());
 
         mVideoInfoList.setAdapter(new VideoParseResultAdapter(getActivity(), biliVideos));
     }

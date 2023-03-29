@@ -51,10 +51,11 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
     }
 
 
-    public static FollowFragment newInstance(BiliFollow.Type type) {
+    public static FollowFragment newInstance(long accountId, BiliFollow.Type type) {
         FollowFragment fragment = new FollowFragment();
         Bundle args = new Bundle();
         args.putString("type", type.name());
+        args.putLong("accountId", accountId);
         fragment.setArguments(args);
         return fragment;
     }
@@ -147,7 +148,8 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
             mModel.records.clear();
         }
 
-        BiliFollow.getFollows(mModel.followType, mModel.page, new BiliFollow.GetFollowsCallback() {
+        assert getArguments() != null;
+        BiliFollow.getFollows(getArguments().getLong("accountId"), mModel.followType, mModel.page, new BiliFollow.GetFollowsCallback() {
 
             @SuppressLint("NotifyDataSetChanged")
             @Override
@@ -193,7 +195,7 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
                         mSwipeRefreshLayout.setRefreshing(false);
                     }
 
-                    Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+                    mNoRecordTip.setText(message);
                 });
                 updateTip();
             }
@@ -203,12 +205,12 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
 
     @Override
     public void onVideoListItemClicked(VideoListAdapter.Record record) {
-        if (Objects.requireNonNull(getActivity()).isDestroyed()) {
+        if (requireActivity().isDestroyed()) {
             return;
         }
 
-        getActivity().setResult(PersonalActivity.ResultCodeVideoClicked, new Intent().putExtra("video_id", record.videoId));
-        getActivity().finish();
+        requireActivity().setResult(PersonalActivity.ResultCodeVideoClicked, new Intent().putExtra("video_id", record.videoId));
+        requireActivity().finish();
     }
 
     private void updateTip() {
