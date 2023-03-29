@@ -21,26 +21,26 @@ public class VideoListAdapter extends RecyclerView.Adapter<VideoListAdapter.Inne
 
     private static final String TAG = "HistoryListAdapter";
 
-    public static class Record {
+    public static class VideoRecord {
         public String title;
         public String videoId;
         public String cover;
         public String info;
     }
 
-    private List<Record> mRecords;
+    private List<VideoRecord> mRecords;
     private final VideoListItemClickedListener mListItemClickedListener;
 
     public interface VideoListItemClickedListener {
-        void onVideoListItemClicked(Record record);
+        void onVideoListItemClicked(VideoRecord record);
     }
 
-    public VideoListAdapter(VideoListItemClickedListener listItemClickedListener, List<Record> records) {
+    public VideoListAdapter(VideoListItemClickedListener listItemClickedListener, List<VideoRecord> records) {
         mListItemClickedListener = listItemClickedListener;
         mRecords = records;
     }
 
-    public VideoListAdapter setRecords(List<Record> records) {
+    public VideoListAdapter setRecords(List<VideoRecord> records) {
         mRecords = records;
         return this;
     }
@@ -66,7 +66,7 @@ public class VideoListAdapter extends RecyclerView.Adapter<VideoListAdapter.Inne
     }
 
     public class InnerHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        private Record mRecord;
+        private VideoRecord mRecord;
 
         private final CardView mItem;
         private final ImageView mVideoPic;
@@ -86,7 +86,7 @@ public class VideoListAdapter extends RecyclerView.Adapter<VideoListAdapter.Inne
             mItem.setOnClickListener(this);
         }
 
-        public void bind(final Record record) {
+        public void bind(final VideoRecord record) {
             mRecord = record;
 
             Glide.with(mItem).load(record.cover).placeholder(R.drawable.ic_2233).centerCrop().into(mVideoPic);

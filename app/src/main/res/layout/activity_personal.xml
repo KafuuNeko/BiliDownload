@@ -24,6 +24,7 @@
         android:layout_height="50dp"
         android:layout_marginHorizontal="15dp"
         android:layout_marginTop="10dp"
+        app:tabMode="scrollable"
         android:contentDescription="@string/app_name" />
 
     <androidx.viewpager2.widget.ViewPager2

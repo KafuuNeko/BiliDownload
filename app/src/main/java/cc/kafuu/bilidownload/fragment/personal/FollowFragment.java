@@ -18,7 +18,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -169,7 +168,7 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
                     }
 
                     for (BiliFollow.Record record : records) {
-                        VideoListAdapter.Record videoRecord = new VideoListAdapter.Record();
+                        VideoListAdapter.VideoRecord videoRecord = new VideoListAdapter.VideoRecord();
 
                         videoRecord.info = record.evaluate;
                         videoRecord.cover = record.cover;
@@ -204,7 +203,7 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
     }
 
     @Override
-    public void onVideoListItemClicked(VideoListAdapter.Record record) {
+    public void onVideoListItemClicked(VideoListAdapter.VideoRecord record) {
         if (requireActivity().isDestroyed()) {
             return;
         }

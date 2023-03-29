@@ -33,6 +33,7 @@ import cc.kafuu.bilidownload.bilibili.account.BiliUserCard;
 import cc.kafuu.bilidownload.fragment.personal.FollowFragment;
 import cc.kafuu.bilidownload.fragment.personal.FavoriteFragment;
 import cc.kafuu.bilidownload.fragment.personal.HistoryFragment;
+import cc.kafuu.bilidownload.fragment.personal.MyVideoFragment;
 import cc.kafuu.bilidownload.utils.DialogTools;
 
 public class PersonalActivity extends BaseActivity {
@@ -43,6 +44,7 @@ public class PersonalActivity extends BaseActivity {
     private String mUserFace;
     private String mUserName;
     private String mUserSign;
+    private boolean mMyself;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,10 +52,16 @@ public class PersonalActivity extends BaseActivity {
         setContentView(R.layout.activity_personal);
         Intent intent = getIntent();
 
-        mUserId = intent.getLongExtra("accountId", Bili.biliAccount.getId());
+        mMyself = intent.getBooleanExtra("myself", false);
+        mUserId = intent.getLongExtra("accountId", 0);
         mUserFace = intent.getStringExtra("accountFace");
         mUserName = intent.getStringExtra("accountName");
         mUserSign = intent.getStringExtra("accountSign");
+
+        if (mMyself && Bili.biliAccount == null) {
+            finish();
+            return;
+        }
 
         initView();
 
@@ -70,11 +78,13 @@ public class PersonalActivity extends BaseActivity {
 
         Intent intent = new Intent(context, PersonalActivity.class);
         if (userCard != null) {
+            intent.putExtra("myself", Bili.biliAccount != null && userCard.getId() == Bili.biliAccount.getId());
             intent.putExtra("accountId", userCard.getId());
             intent.putExtra("accountFace", userCard.getFace());
             intent.putExtra("accountName", userCard.getName());
             intent.putExtra("accountSign", userCard.getSign());
         } else {
+            intent.putExtra("myself", true);
             intent.putExtra("accountId", Bili.biliAccount.getId());
             intent.putExtra("accountFace", Bili.biliAccount.getFace());
             intent.putExtra("accountName", Bili.biliAccount.getUserName());
@@ -101,11 +111,6 @@ public class PersonalActivity extends BaseActivity {
         final TabLayout tabLayout = findViewById(R.id.tabLayout);
         final ViewPager2 viewPager = findViewById(R.id.viewPager);
 
-        if (Bili.biliAccount == null) {
-            finish();
-            return;
-        }
-
         //加载头像/昵称/个性签名
         Glide.with(this).load(mUserFace).placeholder(R.drawable.ic_2233).into(userFace);
         userName.setText(mUserName);
@@ -118,10 +123,10 @@ public class PersonalActivity extends BaseActivity {
 
         List<Pair<CharSequence, Fragment>> mFragments = new ArrayList<>();
 
-        if (mUserId == Bili.biliAccount.getId()) {
+        if (Bili.biliAccount != null && mUserId == Bili.biliAccount.getId()) {
             mFragments.add(new Pair<>(getString(R.string.history), HistoryFragment.newInstance()));
         }
-
+        mFragments.add(new Pair<>(getString(R.string.uploaded_video), MyVideoFragment.newInstance(mUserId)));
         mFragments.add(new Pair<>(getString(R.string.favorite), FavoriteFragment.newInstance(mUserId)));
         mFragments.add(new Pair<>(getString(R.string.cartoon), FollowFragment.newInstance(mUserId, BiliFollow.Type.Cartoon)));
         mFragments.add(new Pair<>(getString(R.string.teleplay), FollowFragment.newInstance(mUserId, BiliFollow.Type.Teleplay)));
@@ -168,6 +173,9 @@ public class PersonalActivity extends BaseActivity {
      * 登出
      */
     private void logout() {
+        if (!mMyself) {
+            return;
+        }
         DialogTools.confirm(this, getString(R.string.exit_login), getString(R.string.exit_login_confirm), (dialog, which) -> {
             setResult(ResultCodeLogout);
             finish();

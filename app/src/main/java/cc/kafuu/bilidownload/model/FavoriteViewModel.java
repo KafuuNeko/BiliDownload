@@ -17,5 +17,5 @@ public class FavoriteViewModel extends ViewModel {
     public boolean hasMore = false;
     public int nextPage = 1;
 
-    public List<VideoListAdapter.Record> records = new ArrayList<>();
+    public List<VideoListAdapter.VideoRecord> records = new ArrayList<>();
 }

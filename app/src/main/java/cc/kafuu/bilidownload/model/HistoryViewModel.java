@@ -12,5 +12,5 @@ public class HistoryViewModel extends ViewModel {
     public boolean firstLoad = true;
 
     public BiliHistory.Cursor nextCursor;
-    public List<VideoListAdapter.Record> records = new ArrayList<>();
+    public List<VideoListAdapter.VideoRecord> records = new ArrayList<>();
 }

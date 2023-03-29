@@ -34,7 +34,6 @@ import java.util.Objects;
 import cc.kafuu.bilidownload.PersonalActivity;
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.adapter.VideoListAdapter;
-import cc.kafuu.bilidownload.bilibili.Bili;
 import cc.kafuu.bilidownload.bilibili.account.BiliFavourite;
 import cc.kafuu.bilidownload.model.FavoriteViewModel;
 
@@ -223,7 +222,7 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
                     mModel.hasMore = hasMore;
 
                     for (BiliFavourite.Video video : videos) {
-                        VideoListAdapter.Record videoRecord = new VideoListAdapter.Record();
+                        VideoListAdapter.VideoRecord videoRecord = new VideoListAdapter.VideoRecord();
 
                         videoRecord.info = video.intro;
                         videoRecord.cover = video.cover;
@@ -265,7 +264,7 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
     }
 
     @Override
-    public void onVideoListItemClicked(VideoListAdapter.Record record) {
+    public void onVideoListItemClicked(VideoListAdapter.VideoRecord record) {
         if (requireActivity().isDestroyed()) {
             return;
         }

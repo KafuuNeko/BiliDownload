@@ -18,7 +18,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
+
 
 import org.jetbrains.annotations.NotNull;
 
@@ -28,30 +28,28 @@ import java.util.Objects;
 import cc.kafuu.bilidownload.PersonalActivity;
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.adapter.VideoListAdapter;
-import cc.kafuu.bilidownload.bilibili.account.BiliHistory;
-import cc.kafuu.bilidownload.model.HistoryViewModel;
+import cc.kafuu.bilidownload.bilibili.account.BiliSpace;
+import cc.kafuu.bilidownload.model.MyVideoViewModel;
 
-public class HistoryFragment extends Fragment implements VideoListAdapter.VideoListItemClickedListener {
-    private static final String TAG = "HistoryFragment";
 
-    private HistoryViewModel mModel;
+public class MyVideoFragment extends Fragment implements VideoListAdapter.VideoListItemClickedListener {
+    private static final String TAG = "CartoonFragment";
 
-    private boolean mLoading;
+    private MyVideoViewModel mModel;
 
     private View mRootView = null;
 
+    private boolean mLoading = false;
+
     private SwipeRefreshLayout mSwipeRefreshLayout;
-    private RecyclerView mHistoryList;
+    private RecyclerView mVideoList;
     private TextView mNoRecordTip;
 
 
-    public HistoryFragment() {
-        // Required empty public constructor
-    }
-
-    public static HistoryFragment newInstance() {
-        HistoryFragment fragment = new HistoryFragment();
+    public static MyVideoFragment newInstance(long accountId) {
+        MyVideoFragment fragment = new MyVideoFragment();
         Bundle args = new Bundle();
+        args.putLong("accountId", accountId);
         fragment.setArguments(args);
         return fragment;
     }
@@ -59,14 +57,13 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mModel = new ViewModelProvider(this).get(HistoryViewModel.class);
+        mModel = new ViewModelProvider(this).get(MyVideoViewModel.class);
     }
 
     @SuppressLint("NotifyDataSetChanged")
     @Override
     public View onCreateView(@NotNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
         if (mRootView != null) {
             ((ViewGroup) container.getParent()).removeView(mRootView);
         } else {
@@ -75,51 +72,50 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
 
         findView();
         initView();
+
         if (mModel.firstLoad) {
             mModel.firstLoad = false;
-            loadHistory(false);
+            loadVideo(false);
         } else {
-            ((VideoListAdapter) Objects.requireNonNull(mHistoryList.getAdapter())).setRecords(mModel.records).notifyDataSetChanged();
+            ((VideoListAdapter) Objects.requireNonNull(mVideoList.getAdapter())).setRecords(mModel.records).notifyDataSetChanged();
         }
-
 
         return mRootView;
     }
 
     private void findView() {
         mSwipeRefreshLayout = mRootView.findViewById(R.id.swipeRefreshLayout);
-        mHistoryList = mRootView.findViewById(R.id.videoList);
+        mVideoList = mRootView.findViewById(R.id.videoList);
         mNoRecordTip = mRootView.findViewById(R.id.noRecordTip);
     }
 
     private void initView() {
-        mSwipeRefreshLayout.setOnRefreshListener(() -> loadHistory(false));
+        mSwipeRefreshLayout.setOnRefreshListener(() -> loadVideo(false));
 
-        mHistoryList.setLayoutManager(new LinearLayoutManager(getContext()));
-        mHistoryList.setAdapter(new VideoListAdapter(this, mModel.records));
+        mVideoList.setLayoutManager(new LinearLayoutManager(getContext()));
+        mVideoList.setAdapter(new VideoListAdapter(this, mModel.records));
 
-        //当监听到列表快拉到尾部时加载新的历史记录数据
-        mHistoryList.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        //当监听到列表快拉到尾部时加载新的记录数据
+        mVideoList.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
 
-                LinearLayoutManager linearLayoutManager =  (LinearLayoutManager) mHistoryList.getLayoutManager();
+                LinearLayoutManager linearLayoutManager =  (LinearLayoutManager) mVideoList.getLayoutManager();
 
                 assert linearLayoutManager != null;
                 int total = linearLayoutManager.getItemCount();
                 int lastVisible = linearLayoutManager.findLastVisibleItemPosition();
                 Log.d(TAG, "onScrolled: " + total + "-" + lastVisible);
 
-                if (mModel.nextCursor != null && total < lastVisible + 10) {
-                    loadHistory(true);
+                if (mModel.hasMore && total < lastVisible + 10) {
+                    loadVideo(true);
                 }
             }
         });
-
     }
 
-    private void loadHistory(boolean loadMore) {
+    private void loadVideo(boolean loadMore) {
         if (mLoading) {
             if (!loadMore) {
                 mSwipeRefreshLayout.setRefreshing(false);
@@ -131,41 +127,44 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
 
         if (!loadMore) {
             mSwipeRefreshLayout.setRefreshing(true);
-            mModel.nextCursor = null;
+            mModel.page = 1;
+            mModel.hasMore = true;
             mModel.records.clear();
         }
 
-        BiliHistory.getHistory(mModel.nextCursor, new BiliHistory.GetHistoryCallback() {
+        assert getArguments() != null;
+        BiliSpace.getSpaceVideos(getArguments().getLong("accountId"), mModel.page, 0, new BiliSpace.GetSpaceVideosCallback() {
+
             @SuppressLint("NotifyDataSetChanged")
             @Override
-            public void completed(final List<BiliHistory.Record> records, BiliHistory.Cursor nextCursor) {
+            public void completed(List<BiliSpace.VideoRecord> records) {
                 new Handler(Looper.getMainLooper()).post(() -> {
                     mLoading = false;
-                    mModel.nextCursor = nextCursor;
+                    ++mModel.page;
 
                     if (!loadMore) {
                         mSwipeRefreshLayout.setRefreshing(false);
-                        ((VideoListAdapter) Objects.requireNonNull(mHistoryList.getAdapter())).clearRecord();
+                        ((VideoListAdapter) Objects.requireNonNull(mVideoList.getAdapter())).clearRecord();
                     }
 
-                    for (BiliHistory.Record record : records) {
+                    if (records.size() == 0) {
+                        mModel.hasMore = false;
+                        return;
+                    }
+
+                    for (BiliSpace.VideoRecord record : records) {
                         VideoListAdapter.VideoRecord videoRecord = new VideoListAdapter.VideoRecord();
 
-                        videoRecord.info = record.author;
-                        videoRecord.cover = record.cover;
+                        videoRecord.info = record.description;
+                        videoRecord.cover = record.pic;
                         videoRecord.title = record.title;
-                        videoRecord.videoId = record.bv;
+                        videoRecord.videoId = record.bvid;
 
                         mModel.records.add(videoRecord);
+
                     }
 
-                    ((VideoListAdapter) Objects.requireNonNull(mHistoryList.getAdapter())).setRecords(mModel.records).notifyDataSetChanged();
-
-                    //加载的数量不足20且还有未加载完的记录则继续加载更多历史记录
-                    if (records.size() < 20 && nextCursor != null) {
-                        loadHistory(true);
-                    }
-
+                    ((VideoListAdapter) Objects.requireNonNull(mVideoList.getAdapter())).setRecords(mModel.records).notifyDataSetChanged();
                 });
 
                 updateTip();
@@ -180,18 +179,14 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
                         mSwipeRefreshLayout.setRefreshing(false);
                     }
 
-                    Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+                    mNoRecordTip.setText(message);
                 });
-
                 updateTip();
             }
         });
 
     }
 
-    /**
-     * 视频列表项目被点击
-     * */
     @Override
     public void onVideoListItemClicked(VideoListAdapter.VideoRecord record) {
         if (requireActivity().isDestroyed()) {
@@ -203,6 +198,6 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
     }
 
     private void updateTip() {
-        new Handler(Looper.getMainLooper()).post(() -> mNoRecordTip.setVisibility((Objects.requireNonNull(mHistoryList.getAdapter()).getItemCount() == 0) ? View.VISIBLE : View.GONE));
+        new Handler(Looper.getMainLooper()).post(() -> mNoRecordTip.setVisibility((Objects.requireNonNull(mVideoList.getAdapter()).getItemCount() == 0) ? View.VISIBLE : View.GONE));
     }
 }
