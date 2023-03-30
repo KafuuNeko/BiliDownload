@@ -15,12 +15,14 @@ import java.util.List;
 import java.util.Objects;
 
 import cc.kafuu.bilidownload.bilibili.Bili;
+import cc.kafuu.bilidownload.bilibili.account.callback.IGetHistoryCallback;
+import cc.kafuu.bilidownload.bilibili.model.BiliVideo;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class BiliHistory {
+public class BiliHistoryParser {
     private static final String TAG = "BiliHistory";
     //https://api.bilibili.com/x/web-interface/history/cursor?max=&view_at=&business=archive
 
@@ -30,19 +32,7 @@ public class BiliHistory {
         public long viewAt;
     }
 
-    public static class Record {
-        public String title;
-        public String bv;
-        public String cover;
-        public String author;
-    }
-
-    public interface GetHistoryCallback {
-        void completed(List<Record> records, Cursor nextCursor);
-        void failure(String message);
-    }
-
-    public static void getHistory(Cursor cursor, final GetHistoryCallback callback) {
+    public static void getHistory(Cursor cursor, final IGetHistoryCallback callback) {
         String url = "https://api.bilibili.com/x/web-interface/history/cursor";
         if (cursor != null) {
             url += "?business=" + cursor.business + "&max=" + cursor.max + "&view_at=" + cursor.viewAt;
@@ -85,7 +75,7 @@ public class BiliHistory {
                     nextCursor = null;
                 }
 
-                List<Record> records = new ArrayList<>();
+                List<BiliVideo> records = new ArrayList<>();
                 JsonArray jsonList = jsonData.get("list").getAsJsonArray();
                 for (JsonElement element : jsonList) {
                     if (!element.getAsJsonObject().get("history").getAsJsonObject().get("business").getAsString().equals("archive")) {
@@ -93,11 +83,11 @@ public class BiliHistory {
                         continue;
                     }
 
-                    Record record = new Record();
-                    record.title = element.getAsJsonObject().get("title").getAsString();
-                    record.cover = element.getAsJsonObject().get("cover").getAsString();
-                    record.author = element.getAsJsonObject().get("author_name").getAsString();
-                    record.bv = element.getAsJsonObject().get("history").getAsJsonObject().get("bvid").getAsString();
+                    BiliVideo record = new BiliVideo();
+                    record.setTitle(element.getAsJsonObject().get("title").getAsString());
+                    record.setCover(element.getAsJsonObject().get("cover").getAsString());
+                    record.setInfo(element.getAsJsonObject().get("author_name").getAsString());
+                    record.setVideoId(element.getAsJsonObject().get("history").getAsJsonObject().get("bvid").getAsString());
                     records.add(record);
                 }
 

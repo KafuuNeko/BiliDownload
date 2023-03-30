@@ -27,7 +27,11 @@ import java.util.Objects;
 import cc.kafuu.bilidownload.PersonalActivity;
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.adapter.VideoListAdapter;
-import cc.kafuu.bilidownload.bilibili.account.BiliFollow;
+import cc.kafuu.bilidownload.bilibili.account.BiliFollowParser;
+import cc.kafuu.bilidownload.bilibili.account.callback.IGetFollowsCallback;
+import cc.kafuu.bilidownload.bilibili.model.BiliFollowVideo;
+import cc.kafuu.bilidownload.bilibili.model.BiliVideo;
+import cc.kafuu.bilidownload.bilibili.model.BiliFollowType;
 import cc.kafuu.bilidownload.model.FollowViewModel;
 
 
@@ -50,7 +54,7 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
     }
 
 
-    public static FollowFragment newInstance(long accountId, BiliFollow.Type type) {
+    public static FollowFragment newInstance(long accountId, BiliFollowType type) {
         FollowFragment fragment = new FollowFragment();
         Bundle args = new Bundle();
         args.putString("type", type.name());
@@ -67,10 +71,10 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
 
         if (getArguments() != null) {
             String type = getArguments().getString("type");
-            if (type.equals(BiliFollow.Type.Cartoon.name())) {
-                mModel.followType = BiliFollow.Type.Cartoon;
+            if (type.equals(BiliFollowType.Cartoon.name())) {
+                mModel.followType = BiliFollowType.Cartoon;
             } else {
-                mModel.followType = BiliFollow.Type.Teleplay;
+                mModel.followType = BiliFollowType.Teleplay;
             }
         }
     }
@@ -148,11 +152,11 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
         }
 
         assert getArguments() != null;
-        BiliFollow.getFollows(getArguments().getLong("accountId"), mModel.followType, mModel.page, new BiliFollow.GetFollowsCallback() {
+        BiliFollowParser.getFollows(getArguments().getLong("accountId"), mModel.followType, mModel.page, new IGetFollowsCallback() {
 
             @SuppressLint("NotifyDataSetChanged")
             @Override
-            public void completed(List<BiliFollow.Record> records) {
+            public void completed(List<BiliFollowVideo> records) {
                 new Handler(Looper.getMainLooper()).post(() -> {
                     mLoading = false;
                     ++mModel.page;
@@ -167,17 +171,7 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
                         return;
                     }
 
-                    for (BiliFollow.Record record : records) {
-                        VideoListAdapter.VideoRecord videoRecord = new VideoListAdapter.VideoRecord();
-
-                        videoRecord.info = record.evaluate;
-                        videoRecord.cover = record.cover;
-                        videoRecord.title = record.title;
-                        videoRecord.videoId = "ss" + record.seasonId;
-
-                        mModel.records.add(videoRecord);
-
-                    }
+                    mModel.records.addAll(records);
 
                     ((VideoListAdapter) Objects.requireNonNull(mVideoList.getAdapter())).setRecords(mModel.records).notifyDataSetChanged();
                 });
@@ -203,12 +197,12 @@ public class FollowFragment extends Fragment implements VideoListAdapter.VideoLi
     }
 
     @Override
-    public void onVideoListItemClicked(VideoListAdapter.VideoRecord record) {
+    public void onVideoListItemClicked(BiliVideo record) {
         if (requireActivity().isDestroyed()) {
             return;
         }
 
-        requireActivity().setResult(PersonalActivity.ResultCodeVideoClicked, new Intent().putExtra("video_id", record.videoId));
+        requireActivity().setResult(PersonalActivity.ResultCodeVideoClicked, new Intent().putExtra("video_id", record.getVideoId()));
         requireActivity().finish();
     }
 

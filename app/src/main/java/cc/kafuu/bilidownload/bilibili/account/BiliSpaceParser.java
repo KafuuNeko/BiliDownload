@@ -15,33 +15,16 @@ import java.util.List;
 import java.util.Objects;
 
 import cc.kafuu.bilidownload.bilibili.Bili;
+import cc.kafuu.bilidownload.bilibili.account.callback.IGetSpaceVideosCallback;
+import cc.kafuu.bilidownload.bilibili.model.BiliVideo;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class BiliSpace {
+public class BiliSpaceParser {
     private static final String TAG = "BiliSpace";
 
-    //视频稿件记录
-    public static class VideoRecord {
-        //稿件av号
-        public long avid;
-        //稿件bv号
-        public String bvid;
-        //稿件封面图片
-        public String pic;
-        //稿件标题
-        public String title;
-        //稿件描述
-        public String description;
-    }
-
-
-    public interface GetSpaceVideosCallback {
-        void completed(List<VideoRecord> records);
-        void failure(String message);
-    }
 
     /**
      * 取得用户所有投稿视频
@@ -52,7 +35,7 @@ public class BiliSpace {
      *            分区tid为所筛选的分区
      * @param callback 结果回调
      * */
-    public static void getSpaceVideos(long uid, int pn, int tid, GetSpaceVideosCallback callback) {
+    public static void getSpaceVideos(long uid, int pn, int tid, IGetSpaceVideosCallback callback) {
         String url = "https://api.bilibili.com/x/space/wbi/arc/search?mid=" + uid + "&ps=10&pn=" + pn + "&tid=" + tid;
         Request request = new Request.Builder().url(url).headers(Bili.generalHeaders).build();
         Bili.httpClient.newCall(request).enqueue(new Callback() {
@@ -84,17 +67,15 @@ public class BiliSpace {
 
                 JsonArray vlist = list.get("vlist").getAsJsonArray();
 
-                List<VideoRecord> records = new ArrayList<>();
+                List<BiliVideo> records = new ArrayList<>();
                 for (JsonElement element : vlist) {
                     JsonObject object = element.getAsJsonObject();
 
-                    VideoRecord record = new VideoRecord();
-                    record.avid = object.get("aid").getAsLong();
-                    record.bvid = object.get("bvid").getAsString();
-                    record.title = object.get("title").getAsString();
-                    record.description = object.get("description").getAsString();
-                    record.pic = object.get("pic").getAsString();
-
+                    BiliVideo record = new BiliVideo();
+                    record.setVideoId(object.get("bvid").getAsString());
+                    record.setTitle(object.get("title").getAsString());
+                    record.setInfo(object.get("description").getAsString());
+                    record.setCover(object.get("pic").getAsString());
                     records.add(record);
                 }
 

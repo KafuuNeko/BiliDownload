@@ -5,11 +5,11 @@ import androidx.lifecycle.ViewModel;
 import java.util.ArrayList;
 import java.util.List;
 
-import cc.kafuu.bilidownload.adapter.VideoListAdapter;
-import cc.kafuu.bilidownload.bilibili.account.BiliFavourite;
+import cc.kafuu.bilidownload.bilibili.model.BiliVideo;
+import cc.kafuu.bilidownload.bilibili.model.BiliFavourite;
 
 public class FavoriteViewModel extends ViewModel {
-    public List<BiliFavourite.Favourite> favourites = null;
+    public List<BiliFavourite> favourites = null;
 
     public int currentFavourite = 0;
 
@@ -17,5 +17,5 @@ public class FavoriteViewModel extends ViewModel {
     public boolean hasMore = false;
     public int nextPage = 1;
 
-    public List<VideoListAdapter.VideoRecord> records = new ArrayList<>();
+    public List<BiliVideo> records = new ArrayList<>();
 }

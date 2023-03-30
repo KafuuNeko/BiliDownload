@@ -7,7 +7,6 @@ import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -40,8 +39,10 @@ import java.util.TimerTask;
 import cc.kafuu.bilidownload.DownloadedVideoActivity;
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.bilibili.BvConvert;
-import cc.kafuu.bilidownload.bilibili.video.BiliDownloader;
-import cc.kafuu.bilidownload.bilibili.video.BiliVideoResource;
+import cc.kafuu.bilidownload.bilibili.video.BiliVideoDownloader;
+import cc.kafuu.bilidownload.bilibili.video.BiliVideoResourceParser;
+import cc.kafuu.bilidownload.bilibili.video.callback.IGetDownloadIdCallback;
+import cc.kafuu.bilidownload.bilibili.video.callback.IGetDownloaderCallback;
 import cc.kafuu.bilidownload.database.VideoDownloadRecord;
 import cc.kafuu.bilidownload.database.VideoInfo;
 import cc.kafuu.bilidownload.utils.DialogTools;
@@ -438,16 +439,16 @@ public class DownloadRecordAdapter extends RecyclerView.Adapter<DownloadRecordAd
          * */
         private void restartTask() {
             //通过Cid/Avid/Quality重新获取下载源
-            BiliVideoResource.getDownloadUrl(mVideoInfo.getVideoTitle(),
+            BiliVideoResourceParser.getDownloadUrl(mVideoInfo.getVideoTitle(),
                     mVideoInfo.getPartTitle(),
                     mBindRecord.getCid(),
                     mBindRecord.getAvid(),
                     mBindRecord.getQuality(),
                     new File(mBindRecord.getSaveTo()),
-                    new BiliVideoResource.GetDownloaderCallback() {
+                    new IGetDownloaderCallback() {
                 @Override
-                public void completed(BiliDownloader downloader) {
-                    downloader.getDownloadId(mDownloadManager, new BiliDownloader.GetDownloadIdCallback() {
+                public void completed(BiliVideoDownloader downloader) {
+                    downloader.getDownloadId(mDownloadManager, new IGetDownloadIdCallback() {
                         @Override
                         public void failure(String message) {
                             mHandle.post(() -> Toast.makeText(mActivity, message, Toast.LENGTH_SHORT).show());

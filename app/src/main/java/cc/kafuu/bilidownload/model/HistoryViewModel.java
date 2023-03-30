@@ -5,12 +5,12 @@ import androidx.lifecycle.ViewModel;
 import java.util.ArrayList;
 import java.util.List;
 
-import cc.kafuu.bilidownload.adapter.VideoListAdapter;
-import cc.kafuu.bilidownload.bilibili.account.BiliHistory;
+import cc.kafuu.bilidownload.bilibili.account.BiliHistoryParser;
+import cc.kafuu.bilidownload.bilibili.model.BiliVideo;
 
 public class HistoryViewModel extends ViewModel {
     public boolean firstLoad = true;
 
-    public BiliHistory.Cursor nextCursor;
-    public List<VideoListAdapter.VideoRecord> records = new ArrayList<>();
+    public BiliHistoryParser.Cursor nextCursor;
+    public List<BiliVideo> records = new ArrayList<>();
 }

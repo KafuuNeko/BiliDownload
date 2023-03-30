@@ -1,16 +1,20 @@
-package cc.kafuu.bilidownload.bilibili.account;
+package cc.kafuu.bilidownload.bilibili.model;
 
-public class BiliUserCard {
+public class BiliUser {
     //上传者id
-    private long mId;
+    protected long mId;
     //上传者名称
-    private String mName;
+    protected String mName;
     //上传者头像
-    private String mFace;
+    protected String mFace;
     //上传者签名
-    private String mSign;
+    protected String mSign;
 
-    public BiliUserCard(long id, String name, String face, String sign) {
+    public BiliUser() {
+
+    }
+
+    public BiliUser(long id, String name, String face, String sign) {
         mId = id;
         mName = name;
         mFace = face;

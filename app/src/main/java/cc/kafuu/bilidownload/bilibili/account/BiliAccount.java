@@ -8,11 +8,12 @@ import com.google.gson.JsonObject;
 import java.io.IOException;
 
 import cc.kafuu.bilidownload.bilibili.Bili;
+import cc.kafuu.bilidownload.bilibili.model.BiliUser;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-public class BiliAccount {
+public final class BiliAccount extends BiliUser {
     private static final String TAG = "BiliAccount";
 
     /**
@@ -80,26 +81,19 @@ public class BiliAccount {
         return null;
     }
 
-    //用户ID
-    private final long mId;
-    //用户头像
-    private final String mFace;
-    //用户名称
-    private final String mUserName;
+
     //用户ID bili_xxxxxx
-    private final String mUserId;
-    //用户签名
-    private final String mSign;
+    private String mUserId;
     //用户生日
-    private final String mBirthday;
-    //用户型别
-    private final String mSex;
+    private String mBirthday;
+    //用户性别
+    private String mSex;
     //用户排名
-    private final String mRank;
+    private String mRank;
 
     private BiliAccount(JsonObject accountData, JsonObject navData) {
         this.mId = accountData.get("mid").getAsLong();
-        this.mUserName = accountData.get("uname").getAsString();
+        this.mName = accountData.get("uname").getAsString();
         this.mUserId = accountData.get("userid").getAsString();
         this.mSign = accountData.get("sign").getAsString();
         this.mBirthday = accountData.get("birthday").getAsString();
@@ -109,35 +103,36 @@ public class BiliAccount {
         this.mFace = navData.get("face").getAsString();
     }
 
-    public long getId() {
-        return mId;
-    }
-
-    public String getFace() {
-        return mFace;
-    }
 
     public String getBirthday() {
         return mBirthday;
+    }
+
+    public void setBirthday(String mBirthday) {
+        this.mBirthday = mBirthday;
     }
 
     public String getRank() {
         return mRank;
     }
 
+    public void setRank(String mRank) {
+        this.mRank = mRank;
+    }
+
     public String getSex() {
         return mSex;
     }
 
-    public String getSign() {
-        return mSign;
+    public void setSex(String mSex) {
+        this.mSex = mSex;
     }
 
     public String getUserId() {
         return mUserId;
     }
 
-    public String getUserName() {
-        return mUserName;
+    public void setUserId(String mUserId) {
+        this.mUserId = mUserId;
     }
 }

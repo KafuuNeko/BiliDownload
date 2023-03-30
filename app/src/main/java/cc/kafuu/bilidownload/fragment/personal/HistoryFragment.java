@@ -28,7 +28,9 @@ import java.util.Objects;
 import cc.kafuu.bilidownload.PersonalActivity;
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.adapter.VideoListAdapter;
-import cc.kafuu.bilidownload.bilibili.account.BiliHistory;
+import cc.kafuu.bilidownload.bilibili.account.BiliHistoryParser;
+import cc.kafuu.bilidownload.bilibili.account.callback.IGetHistoryCallback;
+import cc.kafuu.bilidownload.bilibili.model.BiliVideo;
 import cc.kafuu.bilidownload.model.HistoryViewModel;
 
 public class HistoryFragment extends Fragment implements VideoListAdapter.VideoListItemClickedListener {
@@ -135,10 +137,10 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
             mModel.records.clear();
         }
 
-        BiliHistory.getHistory(mModel.nextCursor, new BiliHistory.GetHistoryCallback() {
+        BiliHistoryParser.getHistory(mModel.nextCursor, new IGetHistoryCallback() {
             @SuppressLint("NotifyDataSetChanged")
             @Override
-            public void completed(final List<BiliHistory.Record> records, BiliHistory.Cursor nextCursor) {
+            public void completed(final List<BiliVideo> records, BiliHistoryParser.Cursor nextCursor) {
                 new Handler(Looper.getMainLooper()).post(() -> {
                     mLoading = false;
                     mModel.nextCursor = nextCursor;
@@ -148,16 +150,7 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
                         ((VideoListAdapter) Objects.requireNonNull(mHistoryList.getAdapter())).clearRecord();
                     }
 
-                    for (BiliHistory.Record record : records) {
-                        VideoListAdapter.VideoRecord videoRecord = new VideoListAdapter.VideoRecord();
-
-                        videoRecord.info = record.author;
-                        videoRecord.cover = record.cover;
-                        videoRecord.title = record.title;
-                        videoRecord.videoId = record.bv;
-
-                        mModel.records.add(videoRecord);
-                    }
+                    mModel.records.addAll(records);
 
                     ((VideoListAdapter) Objects.requireNonNull(mHistoryList.getAdapter())).setRecords(mModel.records).notifyDataSetChanged();
 
@@ -193,12 +186,12 @@ public class HistoryFragment extends Fragment implements VideoListAdapter.VideoL
      * 视频列表项目被点击
      * */
     @Override
-    public void onVideoListItemClicked(VideoListAdapter.VideoRecord record) {
+    public void onVideoListItemClicked(BiliVideo record) {
         if (requireActivity().isDestroyed()) {
             return;
         }
 
-        requireActivity().setResult(PersonalActivity.ResultCodeVideoClicked, new Intent().putExtra("video_id", record.videoId));
+        requireActivity().setResult(PersonalActivity.ResultCodeVideoClicked, new Intent().putExtra("video_id", record.getVideoId()));
         requireActivity().finish();
     }
 

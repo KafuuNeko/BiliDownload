@@ -16,31 +16,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cc.kafuu.bilidownload.R;
+import cc.kafuu.bilidownload.bilibili.model.BiliVideo;
 
 public class VideoListAdapter extends RecyclerView.Adapter<VideoListAdapter.InnerHolder>{
 
     private static final String TAG = "HistoryListAdapter";
 
-    public static class VideoRecord {
-        public String title;
-        public String videoId;
-        public String cover;
-        public String info;
-    }
-
-    private List<VideoRecord> mRecords;
+    private List<BiliVideo> mRecords;
     private final VideoListItemClickedListener mListItemClickedListener;
 
     public interface VideoListItemClickedListener {
-        void onVideoListItemClicked(VideoRecord record);
+        void onVideoListItemClicked(BiliVideo record);
     }
 
-    public VideoListAdapter(VideoListItemClickedListener listItemClickedListener, List<VideoRecord> records) {
+    public VideoListAdapter(VideoListItemClickedListener listItemClickedListener, List<BiliVideo> records) {
         mListItemClickedListener = listItemClickedListener;
         mRecords = records;
     }
 
-    public VideoListAdapter setRecords(List<VideoRecord> records) {
+    public VideoListAdapter setRecords(List<BiliVideo> records) {
         mRecords = records;
         return this;
     }
@@ -66,7 +60,7 @@ public class VideoListAdapter extends RecyclerView.Adapter<VideoListAdapter.Inne
     }
 
     public class InnerHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        private VideoRecord mRecord;
+        private BiliVideo mRecord;
 
         private final CardView mItem;
         private final ImageView mVideoPic;
@@ -86,13 +80,13 @@ public class VideoListAdapter extends RecyclerView.Adapter<VideoListAdapter.Inne
             mItem.setOnClickListener(this);
         }
 
-        public void bind(final VideoRecord record) {
+        public void bind(final BiliVideo record) {
             mRecord = record;
 
-            Glide.with(mItem).load(record.cover).placeholder(R.drawable.ic_2233).centerCrop().into(mVideoPic);
-            mVideoTitle.setText(record.title);
-            mInfo.setText(record.info);
-            mVideoId.setText(record.videoId);
+            Glide.with(mItem).load(record.getCover()).placeholder(R.drawable.ic_2233).centerCrop().into(mVideoPic);
+            mVideoTitle.setText(record.getTitle());
+            mInfo.setText(record.getInfo());
+            mVideoId.setText(record.getVideoId());
         }
 
         @Override

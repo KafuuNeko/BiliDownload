@@ -15,20 +15,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cc.kafuu.bilidownload.bilibili.Bili;
-import cc.kafuu.bilidownload.bilibili.account.BiliUserCard;
+import cc.kafuu.bilidownload.bilibili.model.BiliUser;
+import cc.kafuu.bilidownload.bilibili.video.callback.IVideoParsingCallback;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-public class BiliVideo {
+public class BiliVideoParser {
     private static final String TAG = "BiliVideo";
 
     /**
      * 通过BV号解析下载地址
      * */
-    public static void fromVideoId(final String videoId, final VideoParsingCallback callback) {
+    public static void fromVideoId(final String videoId, final IVideoParsingCallback callback) {
         if (videoId.length() < 3) {
             callback.failure("Id format error");
             return;
@@ -91,7 +92,7 @@ public class BiliVideo {
      *
      * @param isSeason 是否是ss或ep，不同协议结果不同，分析方式不一样
      * */
-    private static void analyzingResponse(@NonNull Response response, final VideoParsingCallback callback, boolean isSeason) throws IOException {
+    private static void analyzingResponse(@NonNull Response response, final IVideoParsingCallback callback, boolean isSeason) throws IOException {
         ResponseBody body = response.body();
         if (body == null) {
             callback.failure("Request is returned empty");
@@ -113,7 +114,7 @@ public class BiliVideo {
         if (data == null) {
             callback.failure("Video data is returned empty");
         } else {
-            callback.completed(new BiliVideo(data, isSeason));
+            callback.completed(new BiliVideoParser(data, isSeason));
         }
     }
 
@@ -131,12 +132,12 @@ public class BiliVideo {
     //视频是否允许下载
     private final int mAllowDownload;
     //视频片段（分集）
-    private final List<BiliVideoPart> mParts;
+    private final List<BiliVideoPartParser> mParts;
 
-    private final BiliUserCard mUploaderCard;
+    private final BiliUser mUploaderCard;
 
 
-    private BiliVideo(@NonNull JsonObject data, boolean isSeason) {
+    private BiliVideoParser(@NonNull JsonObject data, boolean isSeason) {
         mParts = new ArrayList<>();
 
         if (!isSeason) {
@@ -152,7 +153,7 @@ public class BiliVideo {
 
             String cardSign = card.get("sign").isJsonNull() ? null : card.get("sign").getAsString();
 
-            mUploaderCard = new BiliUserCard(card.get("mid").getAsLong(), card.get("name").getAsString(), card.get("face").getAsString(), cardSign);
+            mUploaderCard = new BiliUser(card.get("mid").getAsLong(), card.get("name").getAsString(), card.get("face").getAsString(), cardSign);
 
             mAllowDownload = rights.get("download").getAsInt();
 
@@ -163,7 +164,7 @@ public class BiliVideo {
                 String partName = page.get("part").getAsString();
                 String partDuration = page.get("duration").getAsString();
 
-                mParts.add(new BiliVideoPart(BiliVideo.this, mVideoId, cid, mPicUrl, partName, partDuration));
+                mParts.add(new BiliVideoPartParser(BiliVideoParser.this, mVideoId, cid, mPicUrl, partName, partDuration));
             }
         } else {
             JsonObject rights = data.getAsJsonObject("rights");
@@ -184,7 +185,7 @@ public class BiliVideo {
                 String partName = episode.get("long_title").getAsString();
                 String partDuration = episode.get("share_copy").getAsString();
 
-                mParts.add(new BiliVideoPart(BiliVideo.this, episode.get("aid").getAsLong(), cid, episode.get("cover").getAsString(), partName, partDuration));
+                mParts.add(new BiliVideoPartParser(BiliVideoParser.this, episode.get("aid").getAsLong(), cid, episode.get("cover").getAsString(), partName, partDuration));
             }
         }
     }
@@ -213,11 +214,11 @@ public class BiliVideo {
         return mPicUrl;
     }
 
-    public List<BiliVideoPart> getParts() {
+    public List<BiliVideoPartParser> getParts() {
         return mParts;
     }
 
-    public BiliUserCard getUploaderCard() {
+    public BiliUser getUploaderCard() {
         return mUploaderCard;
     }
 
@@ -227,8 +228,4 @@ public class BiliVideo {
         return "VideoAddress: " + getVideoAddress() + ", VideoId: " + getVideoId() + ", Title: " + getTitle() + ", Desc: " + getDesc() + ", Pic: " + getPicUrl();
     }
 
-    public interface VideoParsingCallback {
-        void completed(BiliVideo biliVideos);
-        void failure(String message);
-    }
 }

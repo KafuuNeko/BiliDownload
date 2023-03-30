@@ -130,7 +130,7 @@ public class BiliLoginActivity extends BaseActivity {
 
         Thread thread = new Thread(() -> {
             Bili.biliAccount = BiliAccount.getAccount(cookie);
-            Log.d("ViewWeb", Bili.biliAccount == null ? "不是有效Cookie" : "登录成功: " + Bili.biliAccount.getUserName());
+            Log.d("ViewWeb", Bili.biliAccount == null ? "不是有效Cookie" : "登录成功: " + Bili.biliAccount.getName());
         });
         thread.start();
         try {

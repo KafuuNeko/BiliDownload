@@ -28,7 +28,9 @@ import java.util.Objects;
 import cc.kafuu.bilidownload.PersonalActivity;
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.adapter.VideoListAdapter;
-import cc.kafuu.bilidownload.bilibili.account.BiliSpace;
+import cc.kafuu.bilidownload.bilibili.account.BiliSpaceParser;
+import cc.kafuu.bilidownload.bilibili.account.callback.IGetSpaceVideosCallback;
+import cc.kafuu.bilidownload.bilibili.model.BiliVideo;
 import cc.kafuu.bilidownload.model.MyVideoViewModel;
 
 
@@ -133,11 +135,11 @@ public class MyVideoFragment extends Fragment implements VideoListAdapter.VideoL
         }
 
         assert getArguments() != null;
-        BiliSpace.getSpaceVideos(getArguments().getLong("accountId"), mModel.page, 0, new BiliSpace.GetSpaceVideosCallback() {
+        BiliSpaceParser.getSpaceVideos(getArguments().getLong("accountId"), mModel.page, 0, new IGetSpaceVideosCallback() {
 
             @SuppressLint("NotifyDataSetChanged")
             @Override
-            public void completed(List<BiliSpace.VideoRecord> records) {
+            public void completed(List<BiliVideo> records) {
                 new Handler(Looper.getMainLooper()).post(() -> {
                     mLoading = false;
                     ++mModel.page;
@@ -152,17 +154,7 @@ public class MyVideoFragment extends Fragment implements VideoListAdapter.VideoL
                         return;
                     }
 
-                    for (BiliSpace.VideoRecord record : records) {
-                        VideoListAdapter.VideoRecord videoRecord = new VideoListAdapter.VideoRecord();
-
-                        videoRecord.info = record.description;
-                        videoRecord.cover = record.pic;
-                        videoRecord.title = record.title;
-                        videoRecord.videoId = record.bvid;
-
-                        mModel.records.add(videoRecord);
-
-                    }
+                    mModel.records.addAll(records);
 
                     ((VideoListAdapter) Objects.requireNonNull(mVideoList.getAdapter())).setRecords(mModel.records).notifyDataSetChanged();
                 });
@@ -188,12 +180,12 @@ public class MyVideoFragment extends Fragment implements VideoListAdapter.VideoL
     }
 
     @Override
-    public void onVideoListItemClicked(VideoListAdapter.VideoRecord record) {
+    public void onVideoListItemClicked(BiliVideo record) {
         if (requireActivity().isDestroyed()) {
             return;
         }
 
-        requireActivity().setResult(PersonalActivity.ResultCodeVideoClicked, new Intent().putExtra("video_id", record.videoId));
+        requireActivity().setResult(PersonalActivity.ResultCodeVideoClicked, new Intent().putExtra("video_id", record.getVideoId()));
         requireActivity().finish();
     }
 

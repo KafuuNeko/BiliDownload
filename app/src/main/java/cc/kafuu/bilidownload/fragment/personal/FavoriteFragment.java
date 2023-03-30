@@ -34,7 +34,10 @@ import java.util.Objects;
 import cc.kafuu.bilidownload.PersonalActivity;
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.adapter.VideoListAdapter;
-import cc.kafuu.bilidownload.bilibili.account.BiliFavourite;
+import cc.kafuu.bilidownload.bilibili.account.BiliFavouriteParser;
+import cc.kafuu.bilidownload.bilibili.account.callback.IGetFavouriteCallback;
+import cc.kafuu.bilidownload.bilibili.model.BiliVideo;
+import cc.kafuu.bilidownload.bilibili.model.BiliFavourite;
 import cc.kafuu.bilidownload.model.FavoriteViewModel;
 
 public class FavoriteFragment extends Fragment implements VideoListAdapter.VideoListItemClickedListener, AdapterView.OnItemSelectedListener {
@@ -135,9 +138,9 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
         mSwipeRefreshLayout.setRefreshing(true);
 
         assert getArguments() != null;
-        BiliFavourite.getFavourites(getArguments().getLong("accountId"), new BiliFavourite.Callback<BiliFavourite.Favourite>() {
+        BiliFavouriteParser.getFavourites(getArguments().getLong("accountId"), new IGetFavouriteCallback<BiliFavourite>() {
             @Override
-            public void completed(List<BiliFavourite.Favourite> favourites, boolean hasMore) {
+            public void completed(List<BiliFavourite> favourites, boolean hasMore) {
                 new Handler(Looper.getMainLooper()).post(() -> {
                     mModel.loading = false;
 
@@ -168,7 +171,7 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
     private void updateFavorite() {
         List<Map<String, String>> items = new ArrayList<>();
 
-        for (BiliFavourite.Favourite favourite : mModel.favourites) {
+        for (BiliFavourite favourite : mModel.favourites) {
             Map<String, String> item = new HashMap<>();
             item.put("favouriteName", favourite.title);
             item.put("itemCount", String.valueOf(favourite.mediaCount));
@@ -205,11 +208,11 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
         }
 
 
-        BiliFavourite.getVideos(mModel.favourites.get(mModel.currentFavourite), mModel.nextPage, new BiliFavourite.Callback<BiliFavourite.Video>() {
+        BiliFavouriteParser.getVideos(mModel.favourites.get(mModel.currentFavourite), mModel.nextPage, new IGetFavouriteCallback<BiliVideo>() {
 
             @SuppressLint("NotifyDataSetChanged")
             @Override
-            public void completed(List<BiliFavourite.Video> videos, boolean hasMore) {
+            public void completed(List<BiliVideo> videos, boolean hasMore) {
                 new Handler(Looper.getMainLooper()).post(() -> {
                     mModel.loading = false;
                     ++mModel.nextPage;
@@ -221,16 +224,7 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
 
                     mModel.hasMore = hasMore;
 
-                    for (BiliFavourite.Video video : videos) {
-                        VideoListAdapter.VideoRecord videoRecord = new VideoListAdapter.VideoRecord();
-
-                        videoRecord.info = video.intro;
-                        videoRecord.cover = video.cover;
-                        videoRecord.title = video.title;
-                        videoRecord.videoId = video.bv;
-
-                        mModel.records.add(videoRecord);
-                    }
+                    mModel.records.addAll(videos);
 
                     ((VideoListAdapter) Objects.requireNonNull(mVideoList.getAdapter())).setRecords(mModel.records).notifyDataSetChanged();
                 });
@@ -264,12 +258,12 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
     }
 
     @Override
-    public void onVideoListItemClicked(VideoListAdapter.VideoRecord record) {
+    public void onVideoListItemClicked(BiliVideo record) {
         if (requireActivity().isDestroyed()) {
             return;
         }
 
-        requireActivity().setResult(PersonalActivity.ResultCodeVideoClicked, new Intent().putExtra("video_id", record.videoId));
+        requireActivity().setResult(PersonalActivity.ResultCodeVideoClicked, new Intent().putExtra("video_id", record.getVideoId()));
         requireActivity().finish();
     }
 

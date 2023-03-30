@@ -16,23 +16,24 @@ import java.util.List;
 
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.bilibili.Bili;
+import cc.kafuu.bilidownload.bilibili.video.callback.IGetResourceCallback;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-public class BiliVideoPart {
+public class BiliVideoPartParser {
     private static final String TAG = "BiliVideoPart";
 
-    private final BiliVideo mVideo;
+    private final BiliVideoParser mVideo;
     private final long mAv;
     private final long mCid;
     private final String mPic;
     private final String mPartName;
     private final String mPartDuration;
 
-    public BiliVideoPart(BiliVideo video, long av, long cid, String pic, String partName, String partDuration) {
+    public BiliVideoPartParser(BiliVideoParser video, long av, long cid, String pic, String partName, String partDuration) {
         this.mVideo = video;
         this.mAv = av;
         this.mCid = cid;
@@ -61,14 +62,14 @@ public class BiliVideoPart {
         return mPartName;
     }
 
-    public BiliVideo getVideo() {
+    public BiliVideoParser getVideo() {
         return mVideo;
     }
 
     /**
      * 取得此视频所支持的清晰度视频资源
      * */
-    public void getResource(Context context, GetResourceCallback callback) {
+    public void getResource(Context context, IGetResourceCallback callback) {
         final Request request = Bili.playUrlRequest(mCid, mAv, 0);
         Log.d(TAG, "getResource: " + request.url());
         Bili.httpClient.newCall(request).enqueue(new Callback() {
@@ -103,7 +104,7 @@ public class BiliVideoPart {
 
                     JsonArray support_formats = data.getAsJsonArray("support_formats");
 
-                    List<BiliVideoResource> resources = new ArrayList<>();
+                    List<BiliVideoResourceParser> resources = new ArrayList<>();
 
                     for (JsonElement element : support_formats) {
                         JsonObject format = element.getAsJsonObject();
@@ -111,7 +112,7 @@ public class BiliVideoPart {
                         int quality = format.get("quality").getAsInt();
                         String new_description = format.get("new_description").getAsString();
 
-                        resources.add(new BiliVideoResource(BiliVideoPart.this, quality, format.get("format").getAsString(), new_description));
+                        resources.add(new BiliVideoResourceParser(BiliVideoPartParser.this, quality, format.get("format").getAsString(), new_description));
                     }
 
                     callback.completed(resources);
@@ -124,8 +125,4 @@ public class BiliVideoPart {
         });
     }
 
-    public interface GetResourceCallback {
-        void completed(List<BiliVideoResource> resources);
-        void failure(String message);
-    }
 }

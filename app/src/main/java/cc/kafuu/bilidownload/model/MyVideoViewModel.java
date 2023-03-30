@@ -5,13 +5,12 @@ import androidx.lifecycle.ViewModel;
 import java.util.ArrayList;
 import java.util.List;
 
-import cc.kafuu.bilidownload.adapter.VideoListAdapter;
-import cc.kafuu.bilidownload.bilibili.account.BiliFollow;
+import cc.kafuu.bilidownload.bilibili.model.BiliVideo;
 
 public class MyVideoViewModel extends ViewModel {
     public boolean firstLoad = true;
 
-    public List<VideoListAdapter.VideoRecord> records = new ArrayList<>();
+    public List<BiliVideo> records = new ArrayList<>();
 
     public int page = 1;
     public boolean hasMore = true;

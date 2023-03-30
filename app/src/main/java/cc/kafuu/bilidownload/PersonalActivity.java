@@ -28,8 +28,8 @@ import java.util.Objects;
 
 import cc.kafuu.bilidownload.adapter.PersonalFragmentPagesAdapter;
 import cc.kafuu.bilidownload.bilibili.Bili;
-import cc.kafuu.bilidownload.bilibili.account.BiliFollow;
-import cc.kafuu.bilidownload.bilibili.account.BiliUserCard;
+import cc.kafuu.bilidownload.bilibili.model.BiliUser;
+import cc.kafuu.bilidownload.bilibili.model.BiliFollowType;
 import cc.kafuu.bilidownload.fragment.personal.FollowFragment;
 import cc.kafuu.bilidownload.fragment.personal.FavoriteFragment;
 import cc.kafuu.bilidownload.fragment.personal.HistoryFragment;
@@ -71,7 +71,7 @@ public class PersonalActivity extends BaseActivity {
         actionStartForResult(context, launcher, null);
     }
 
-    public static void actionStartForResult(Context context, ActivityResultLauncher<Intent> launcher, BiliUserCard userCard) {
+    public static void actionStartForResult(Context context, ActivityResultLauncher<Intent> launcher, BiliUser userCard) {
         if (ActivityCollector.contains(PersonalActivity.class)) {
             return;
         }
@@ -87,7 +87,7 @@ public class PersonalActivity extends BaseActivity {
             intent.putExtra("myself", true);
             intent.putExtra("accountId", Bili.biliAccount.getId());
             intent.putExtra("accountFace", Bili.biliAccount.getFace());
-            intent.putExtra("accountName", Bili.biliAccount.getUserName());
+            intent.putExtra("accountName", Bili.biliAccount.getName());
             intent.putExtra("accountSign", Bili.biliAccount.getSign());
         }
 
@@ -128,8 +128,8 @@ public class PersonalActivity extends BaseActivity {
         }
         mFragments.add(new Pair<>(getString(R.string.uploaded_video), MyVideoFragment.newInstance(mUserId)));
         mFragments.add(new Pair<>(getString(R.string.favorite), FavoriteFragment.newInstance(mUserId)));
-        mFragments.add(new Pair<>(getString(R.string.cartoon), FollowFragment.newInstance(mUserId, BiliFollow.Type.Cartoon)));
-        mFragments.add(new Pair<>(getString(R.string.teleplay), FollowFragment.newInstance(mUserId, BiliFollow.Type.Teleplay)));
+        mFragments.add(new Pair<>(getString(R.string.cartoon), FollowFragment.newInstance(mUserId, BiliFollowType.Cartoon)));
+        mFragments.add(new Pair<>(getString(R.string.teleplay), FollowFragment.newInstance(mUserId, BiliFollowType.Teleplay)));
 
         viewPager.setAdapter(new PersonalFragmentPagesAdapter(this, mFragments));
         viewPager.setOffscreenPageLimit(Objects.requireNonNull(viewPager.getAdapter()).getItemCount());

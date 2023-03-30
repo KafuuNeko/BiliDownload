@@ -22,7 +22,7 @@ import cc.kafuu.bilidownload.R;
 public class OperatorListAdapter extends RecyclerView.Adapter<OperatorListAdapter.InnerHolder> {
     private final Context mContext;
     private final List<Pair<CharSequence, View.OnClickListener>> mOperators;
-    private Map<Integer, Integer> mColorMap = new HashMap<>();
+    private final Map<Integer, Integer> mColorMap = new HashMap<>();
 
     public OperatorListAdapter(Context context) {
         mOperators = new ArrayList<>();

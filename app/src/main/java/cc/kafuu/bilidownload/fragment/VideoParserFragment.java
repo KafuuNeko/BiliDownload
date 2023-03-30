@@ -31,12 +31,10 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 
 import org.jetbrains.annotations.NotNull;
-import org.json.JSONException;
 
 
 import java.io.IOException;
@@ -49,7 +47,8 @@ import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.adapter.VideoParseResultAdapter;
 import cc.kafuu.bilidownload.bilibili.Bili;
 import cc.kafuu.bilidownload.bilibili.account.BiliAccount;
-import cc.kafuu.bilidownload.bilibili.video.BiliVideo;
+import cc.kafuu.bilidownload.bilibili.video.BiliVideoParser;
+import cc.kafuu.bilidownload.bilibili.video.callback.IVideoParsingCallback;
 import cc.kafuu.bilidownload.model.VideoParserViewModel;
 import cc.kafuu.bilidownload.utils.DialogTools;
 import cc.kafuu.bilidownload.utils.ApplicationTools;
@@ -186,7 +185,7 @@ public class VideoParserFragment extends Fragment {
             Thread thread = new Thread(() -> {
                 Bili.biliAccount = BiliAccount.getAccount(cookie);
 
-                Log.d(TAG, Bili.biliAccount == null ? "不是有效Cookie" : "登录成功: " + Bili.biliAccount.getUserName());
+                Log.d(TAG, Bili.biliAccount == null ? "不是有效Cookie" : "登录成功: " + Bili.biliAccount.getName());
 
                 Bili.updateHeaders(cookie);
                 mHandler.post(() -> {
@@ -195,7 +194,7 @@ public class VideoParserFragment extends Fragment {
                         return;
                     }
                     Glide.with(requireContext()).load(Bili.biliAccount.getFace()).placeholder(R.drawable.ic_2233).into(mUserFace);
-                    mUserName.setText(Bili.biliAccount.getUserName());
+                    mUserName.setText(Bili.biliAccount.getName());
                     if (Bili.biliAccount.getSign() == null || Bili.biliAccount.getSign().length() == 0) {
                         mUserSign.setText(getText(R.string.no_sign));
                     } else {
@@ -207,7 +206,7 @@ public class VideoParserFragment extends Fragment {
 
         } else if (Bili.biliAccount != null && Bili.biliCookie != null) {
             Glide.with(requireContext()).load(Bili.biliAccount.getFace()).placeholder(R.drawable.ic_2233).into(mUserFace);
-            mUserName.setText(Bili.biliAccount.getUserName());
+            mUserName.setText(Bili.biliAccount.getName());
             if (Bili.biliAccount.getSign() == null || Bili.biliAccount.getSign().length() == 0) {
                 mUserSign.setText(getText(R.string.no_sign));
             } else {
@@ -253,8 +252,8 @@ public class VideoParserFragment extends Fragment {
 
         mVideoInfoList.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        mUploaderFace.setOnClickListener(view -> PersonalActivity.actionStartForResult(getContext(), mPersonalActivityResultLaunch, mModel.biliVideo.getUploaderCard()));
-        mUploader.setOnClickListener(view -> PersonalActivity.actionStartForResult(getContext(), mPersonalActivityResultLaunch, mModel.biliVideo.getUploaderCard()));
+        mUploaderFace.setOnClickListener(view -> PersonalActivity.actionStartForResult(getContext(), mPersonalActivityResultLaunch, mModel.biliVideoParser.getUploaderCard()));
+        mUploader.setOnClickListener(view -> PersonalActivity.actionStartForResult(getContext(), mPersonalActivityResultLaunch, mModel.biliVideoParser.getUploaderCard()));
 
         //将此列表设置为嵌套列表
         mVideoInfoList.setNestedScrollingEnabled(false);
@@ -262,8 +261,8 @@ public class VideoParserFragment extends Fragment {
         //设置为不可聚焦
         mVideoInfoList.setFocusable(false);
 
-        if (mModel.biliVideo != null) {
-            parsingVideoCompleted(mModel.biliVideo, null);
+        if (mModel.biliVideoParser != null) {
+            parsingVideoCompleted(mModel.biliVideoParser, null);
         }
 
 
@@ -406,9 +405,9 @@ public class VideoParserFragment extends Fragment {
             return;
         }
 
-        BiliVideo.VideoParsingCallback callback = new BiliVideo.VideoParsingCallback() {
+        IVideoParsingCallback callback = new IVideoParsingCallback() {
             @Override
-            public void completed(BiliVideo biliVideos) {
+            public void completed(BiliVideoParser biliVideos) {
                 Log.d(TAG, "onCompleted: " + biliVideos.toString());
                 mHandler.post(() -> parsingVideoCompleted(biliVideos, null));
             }
@@ -421,7 +420,7 @@ public class VideoParserFragment extends Fragment {
         };
 
         changeEnableStatus(false);
-        BiliVideo.fromVideoId(videoId, callback);
+        BiliVideoParser.fromVideoId(videoId, callback);
     }
 
     /**
@@ -442,31 +441,31 @@ public class VideoParserFragment extends Fragment {
      * 视频地址解析完成
      * 显示解析的信息
      */
-    private void parsingVideoCompleted(BiliVideo biliVideos, String message) {
+    private void parsingVideoCompleted(BiliVideoParser biliVideosParser, String message) {
         changeEnableStatus(true);
-        if (biliVideos == null) {
+        if (biliVideosParser == null) {
             DialogTools.notify(getContext(), getString(R.string.error), message);
             return;
         }
 
-        mModel.biliVideo = biliVideos;
+        mModel.biliVideoParser = biliVideosParser;
 
         mVideoInfoCard.setVisibility(View.VISIBLE);
-        mVideoTitle.setText(biliVideos.getTitle());
-        mVideoDescribe.setText(biliVideos.getDesc());
+        mVideoTitle.setText(biliVideosParser.getTitle());
+        mVideoDescribe.setText(biliVideosParser.getDesc());
 
-        mVideoDownloadNotAllowed.setVisibility(biliVideos.allowDownload() ? View.GONE : View.VISIBLE);
-        mUploaderCard.setVisibility(biliVideos.getUploaderCard() == null ? View.GONE : View.VISIBLE);
-        mUploader.setText(biliVideos.getUploaderCard() == null ? "bilibili" : biliVideos.getUploaderCard().getName());
-        if (biliVideos.getUploaderCard() != null) {
+        mVideoDownloadNotAllowed.setVisibility(biliVideosParser.allowDownload() ? View.GONE : View.VISIBLE);
+        mUploaderCard.setVisibility(biliVideosParser.getUploaderCard() == null ? View.GONE : View.VISIBLE);
+        mUploader.setText(biliVideosParser.getUploaderCard() == null ? "bilibili" : biliVideosParser.getUploaderCard().getName());
+        if (biliVideosParser.getUploaderCard() != null) {
             Glide.with(this)
-                    .load(biliVideos.getUploaderCard().getFace())
+                    .load(biliVideosParser.getUploaderCard().getFace())
                     .placeholder(R.drawable.ic_2233)
                     .circleCrop()
                     .into(mUploaderFace);
         }
 
-        mVideoInfoList.setAdapter(new VideoParseResultAdapter(getActivity(), biliVideos));
+        mVideoInfoList.setAdapter(new VideoParseResultAdapter(getActivity(), biliVideosParser));
     }
 
 }

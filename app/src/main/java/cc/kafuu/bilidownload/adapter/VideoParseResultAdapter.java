@@ -1,14 +1,11 @@
 package cc.kafuu.bilidownload.adapter;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DownloadManager;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -21,17 +18,19 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
 import cc.kafuu.bilidownload.R;
 import cc.kafuu.bilidownload.bilibili.Bili;
-import cc.kafuu.bilidownload.bilibili.video.BiliDownloader;
-import cc.kafuu.bilidownload.bilibili.video.BiliVideo;
-import cc.kafuu.bilidownload.bilibili.video.BiliVideoPart;
-import cc.kafuu.bilidownload.bilibili.video.BiliVideoResource;
+import cc.kafuu.bilidownload.bilibili.video.BiliVideoDownloader;
+import cc.kafuu.bilidownload.bilibili.video.BiliVideoParser;
+import cc.kafuu.bilidownload.bilibili.video.BiliVideoPartParser;
+import cc.kafuu.bilidownload.bilibili.video.BiliVideoResourceParser;
+import cc.kafuu.bilidownload.bilibili.video.callback.IGetDownloadIdCallback;
+import cc.kafuu.bilidownload.bilibili.video.callback.IGetDownloaderCallback;
+import cc.kafuu.bilidownload.bilibili.video.callback.IGetResourceCallback;
 import cc.kafuu.bilidownload.database.VideoDownloadRecord;
 
 public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResultAdapter.InnerHolder> {
@@ -39,13 +38,13 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
 
     private final Handler mHandle;
     private final Activity mActivity;
-    private final BiliVideo mBiliVideo;
+    private final BiliVideoParser mBiliVideoParser;
 
-    public VideoParseResultAdapter(Activity activity, BiliVideo biliVideo) {
+    public VideoParseResultAdapter(Activity activity, BiliVideoParser biliVideoParser) {
         mHandle = new Handler(Looper.getMainLooper());
 
         this.mActivity = activity;
-        this.mBiliVideo = biliVideo;
+        this.mBiliVideoParser = biliVideoParser;
     }
 
     @NonNull
@@ -57,7 +56,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
 
     @Override
     public void onBindViewHolder(@NonNull VideoParseResultAdapter.InnerHolder holder, int position) {
-        BiliVideoPart part = mBiliVideo.getParts().get(position);
+        BiliVideoPartParser part = mBiliVideoParser.getParts().get(position);
         holder.setPageTitle("P" + (position + 1) + " " + part.getPartName());
         holder.bindPart(part);
     }
@@ -69,7 +68,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
 
     @Override
     public int getItemCount() {
-        return mBiliVideo.getParts().size();
+        return mBiliVideoParser.getParts().size();
     }
 
 
@@ -91,7 +90,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
             mPageTitle.setText(title);
         }
 
-        public void bindPart(BiliVideoPart part) {
+        public void bindPart(BiliVideoPartParser part) {
             mItem.setOnClickListener(v -> onItemClick(part));
         }
 
@@ -99,7 +98,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
          * 用户选择视频片段后调用此函数
          * 此函数将加载此片段的所有下载源
          * */
-        private void onItemClick(final BiliVideoPart part) {
+        private void onItemClick(final BiliVideoPartParser part) {
             if (part.getVideo().allowDownload()) {
                 getResources(part);
                 return;
@@ -116,7 +115,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
         /**
          * 获取资源
          * */
-        private void getResources(final BiliVideoPart part) {
+        private void getResources(final BiliVideoPartParser part) {
             if (part == null) {
                 return;
             }
@@ -128,9 +127,9 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
             progressDialog.setOnKeyListener((dialog1, keyCode, event) -> keyCode == KeyEvent.KEYCODE_SEARCH);
             progressDialog.show();
 
-            part.getResource(mActivity, new BiliVideoPart.GetResourceCallback() {
+            part.getResource(mActivity, new IGetResourceCallback() {
                 @Override
-                public void completed(List<BiliVideoResource> resources) {
+                public void completed(List<BiliVideoResourceParser> resources) {
                     progressDialog.cancel();
                     mHandle.post(() -> getResourcesCompleted(part, resources));
                 }
@@ -148,7 +147,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
          * 取得判断所有加载源后调用此过程
          * 此过程将继续引导用户选择视频下载源（清晰度）
          * */
-        private void getResourcesCompleted(final BiliVideoPart part, List<BiliVideoResource> resources) {
+        private void getResourcesCompleted(final BiliVideoPartParser part, List<BiliVideoResourceParser> resources) {
 
             CharSequence[] items = new CharSequence[resources.size()];
             for (int i = 0; i < resources.size(); ++i) {
@@ -165,7 +164,7 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
          * 用户选择要下载的视频源（清晰度）后调用此函数
          * 将立即开始下载资源
          * */
-        private void onResourcesSelected(final BiliVideoPart part, final BiliVideoResource resource) {
+        private void onResourcesSelected(final BiliVideoPartParser part, final BiliVideoResourceParser resource) {
             //保存跟目录是否可访问
             if (!Bili.saveDir.exists() && !Bili.saveDir.mkdirs()) {
                 new AlertDialog.Builder(mActivity).setTitle(part.getPartName()).setMessage(mActivity.getString(R.string.external_storage_device_cannot_be_accessed)).show();
@@ -174,12 +173,12 @@ public class VideoParseResultAdapter extends RecyclerView.Adapter<VideoParseResu
             final DownloadManager downloadManager = (DownloadManager) mActivity.getSystemService(Context.DOWNLOAD_SERVICE);
 
             //开始获取资源下载器
-            resource.download(new BiliVideoResource.GetDownloaderCallback() {
+            resource.download(new IGetDownloaderCallback() {
                 @Override
-                public void completed(final BiliDownloader downloader) {
+                public void completed(final BiliVideoDownloader downloader) {
                     //取得资源下载器
                     //调用资源下载器的getDownloadId将下载任务交给系统下载管理器并取得ID
-                    downloader.getDownloadId(downloadManager, new BiliDownloader.GetDownloadIdCallback() {
+                    downloader.getDownloadId(downloadManager, new IGetDownloadIdCallback() {
                         @Override
                         public void failure(String message) {
                             Log.d(TAG, "downloader.getDownloadId failure: " + message);

@@ -13,16 +13,17 @@ import java.io.IOException;
 import java.util.Date;
 
 import cc.kafuu.bilidownload.bilibili.Bili;
+import cc.kafuu.bilidownload.bilibili.video.callback.IGetDownloaderCallback;
 import cc.kafuu.bilidownload.database.VideoInfo;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-public class BiliVideoResource {
+public class BiliVideoResourceParser {
     private static final String TAG = "BiliVideoResource";
 
-    private final BiliVideoPart mPart;
+    private final BiliVideoPartParser mPart;
     //清晰度
     private final int mQuality;
     //格式
@@ -30,7 +31,7 @@ public class BiliVideoResource {
     //描述
     private final String mDescription;
 
-    protected BiliVideoResource(BiliVideoPart part, final int quality, final String format, final String description)
+    protected BiliVideoResourceParser(BiliVideoPartParser part, final int quality, final String format, final String description)
     {
         this.mPart = part;
         this.mQuality = quality;
@@ -57,7 +58,7 @@ public class BiliVideoResource {
         info.saveOrUpdate();
     }
 
-    public BiliVideoPart getPart() {
+    public BiliVideoPartParser getPart() {
         return mPart;
     }
 
@@ -82,12 +83,7 @@ public class BiliVideoResource {
     }
 
 
-    public interface GetDownloaderCallback {
-        void completed(BiliDownloader downloader);
-        void failure(String message);
-    }
-
-    public static void getDownloadUrl(String videoTitle, String partTitle, long cid, long avid, int quality, final File saveTo, GetDownloaderCallback callback) {
+    public static void getDownloadUrl(String videoTitle, String partTitle, long cid, long avid, int quality, final File saveTo, IGetDownloaderCallback callback) {
         Bili.httpClient.newCall(Bili.playUrlRequest(cid, avid, quality)).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
@@ -117,7 +113,7 @@ public class BiliVideoResource {
 
                 String url = durl.get(0).getAsJsonObject().get("url").getAsString();
 
-                callback.completed(new BiliDownloader(videoTitle, partTitle, saveTo, url));
+                callback.completed(new BiliVideoDownloader(videoTitle, partTitle, saveTo, url));
             }
 
             @Override
@@ -134,7 +130,7 @@ public class BiliVideoResource {
      *
      * @param callback 下载状态回调
      * */
-    public void download(final GetDownloaderCallback callback, File saveTo)
+    public void download(final IGetDownloaderCallback callback, File saveTo)
     {
         if (saveTo == null) {
             String fileSuffix = mFormat.contains("flv") ? "flv" : mFormat;

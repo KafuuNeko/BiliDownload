@@ -15,28 +15,17 @@ import java.util.List;
 import java.util.Objects;
 
 import cc.kafuu.bilidownload.bilibili.Bili;
+import cc.kafuu.bilidownload.bilibili.account.callback.IGetFavouriteCallback;
+import cc.kafuu.bilidownload.bilibili.model.BiliVideo;
 import okhttp3.Call;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class BiliFavourite {
+public class BiliFavouriteParser {
     private static final String TAG = "BiliFavourite";
 
-    public interface Callback<T> {
-        void completed(List<T> list, boolean hasMore);
-        void failure(String message);
-    }
-
-    public static class Favourite {
-        public long id;
-        public long fid;
-        public long mid;
-        public String title;
-        public long mediaCount;
-    }
-
     //https://api.bilibili.com/x/v3/fav/folder/created/list-all?up_mid=25552898&jsonp=jsonp 获取收藏列表
-    public static void getFavourites(long mid, final Callback<Favourite> callback) {
+    public static void getFavourites(long mid, final IGetFavouriteCallback<cc.kafuu.bilidownload.bilibili.model.BiliFavourite> callback) {
         Request request = new Request.Builder()
                 .url("https://api.bilibili.com/x/v3/fav/folder/created/list-all?up_mid=" + mid + "&jsonp=jsonp ")
                 .headers(Bili.generalHeaders)
@@ -65,13 +54,13 @@ public class BiliFavourite {
                     return;
                 }
 
-                List<Favourite> favourites = new ArrayList<>();
+                List<cc.kafuu.bilidownload.bilibili.model.BiliFavourite> favourites = new ArrayList<>();
 
                 JsonElement data = body.get("data");
                 if (!data.isJsonNull()) {
                     JsonArray list = data.getAsJsonObject().get("list").getAsJsonArray();
                     for (JsonElement element : list) {
-                        Favourite info = new Favourite();
+                        cc.kafuu.bilidownload.bilibili.model.BiliFavourite info = new cc.kafuu.bilidownload.bilibili.model.BiliFavourite();
                         info.id = element.getAsJsonObject().get("id").getAsLong();
                         info.fid = element.getAsJsonObject().get("fid").getAsLong();
                         info.mid = element.getAsJsonObject().get("mid").getAsLong();
@@ -88,14 +77,8 @@ public class BiliFavourite {
     }
 
     //https://api.bilibili.com/x/v3/fav/resource/list?media_id=426737898&pn=1&ps=20&keyword=&order=mtime&type=0&tid=0&platform=web&jsonp=jsonp 获取收藏内容
-    public static class Video {
-        public String title;
-        public String bv;
-        public String cover;
-        public String intro;
-    }
 
-    public static void getVideos(Favourite favourite, int pn, final Callback<Video> callback) {
+    public static void getVideos(cc.kafuu.bilidownload.bilibili.model.BiliFavourite favourite, int pn, final IGetFavouriteCallback<BiliVideo> callback) {
         Request request = new Request.Builder()
                 .url("https://api.bilibili.com/x/v3/fav/resource/list?media_id=" + favourite.id + "&pn=" + pn + "&ps=20&keyword=&order=mtime&type=0&tid=0&platform=web&jsonp=jsonp ")
                 .headers(Bili.generalHeaders)
@@ -125,7 +108,7 @@ public class BiliFavourite {
                     return;
                 }
 
-                List<Video> videos = new ArrayList<>();
+                List<BiliVideo> videos = new ArrayList<>();
                 boolean hasMore = false;
 
                 JsonElement jsonData = jsonBody.get("data").getAsJsonObject();
@@ -133,12 +116,12 @@ public class BiliFavourite {
 
                     JsonArray jsonMedias = jsonData.getAsJsonObject().get("medias").getAsJsonArray();
                     for (JsonElement element : jsonMedias) {
-                        Video video = new Video();
+                        BiliVideo video = new BiliVideo();
 
-                        video.title = element.getAsJsonObject().get("title").getAsString();
-                        video.intro = element.getAsJsonObject().get("intro").getAsString();
-                        video.cover = element.getAsJsonObject().get("cover").getAsString();
-                        video.bv = element.getAsJsonObject().get("bvid").getAsString();
+                        video.setTitle(element.getAsJsonObject().get("title").getAsString());
+                        video.setInfo(element.getAsJsonObject().get("intro").getAsString());
+                        video.setCover(element.getAsJsonObject().get("cover").getAsString());
+                        video.setVideoId(element.getAsJsonObject().get("bvid").getAsString());
 
                         videos.add(video);
                     }

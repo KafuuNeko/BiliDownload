@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 
 import cc.kafuu.bilidownload.bilibili.Bili;
+import cc.kafuu.bilidownload.bilibili.video.callback.IGetDownloadIdCallback;
 import kotlin.Pair;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -20,7 +21,7 @@ import okhttp3.Response;
 /**
  * Bili资源下载器
  * */
-public class BiliDownloader {
+public class BiliVideoDownloader {
     private static final String TAG = "BiliDownloader";
 
     private final String mVideoTitle;
@@ -36,7 +37,7 @@ public class BiliDownloader {
      * @param resourceUrl 资源下载地址
      *
      * */
-    public BiliDownloader(String videoTitle, String videoDescription, File savePath, String resourceUrl) {
+    public BiliVideoDownloader(String videoTitle, String videoDescription, File savePath, String resourceUrl) {
         this.mVideoTitle = videoTitle;
         this.mVideoDescription = videoDescription;
         this.mSavePath = savePath;
@@ -47,14 +48,8 @@ public class BiliDownloader {
         return mSavePath;
     }
 
-    public interface GetDownloadIdCallback {
-        void failure(String message);
-        void completed(long id);
-    }
 
-
-
-    public void getDownloadId(DownloadManager downloadManager, GetDownloadIdCallback callback) {
+    public void getDownloadId(DownloadManager downloadManager, IGetDownloadIdCallback callback) {
         //发起一个预检请求
         Log.d(TAG, "getDownloadId: options request " + mResourceUrl);
         Request optionsRequest = new Request.Builder().url(mResourceUrl).headers(Bili.downloadHeaders)
