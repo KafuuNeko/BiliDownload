@@ -61,11 +61,11 @@ public class BiliFavouriteParser {
                     JsonArray list = data.getAsJsonObject().get("list").getAsJsonArray();
                     for (JsonElement element : list) {
                         cc.kafuu.bilidownload.bilibili.model.BiliFavourite info = new cc.kafuu.bilidownload.bilibili.model.BiliFavourite();
-                        info.id = element.getAsJsonObject().get("id").getAsLong();
-                        info.fid = element.getAsJsonObject().get("fid").getAsLong();
-                        info.mid = element.getAsJsonObject().get("mid").getAsLong();
-                        info.title = element.getAsJsonObject().get("title").getAsString();
-                        info.mediaCount = element.getAsJsonObject().get("media_count").getAsLong();
+                        info.setId(element.getAsJsonObject().get("id").getAsLong());
+                        info.setFid(element.getAsJsonObject().get("fid").getAsLong());
+                        info.setMid(element.getAsJsonObject().get("mid").getAsLong());
+                        info.setTitle(element.getAsJsonObject().get("title").getAsString());
+                        info.setMediaCount(element.getAsJsonObject().get("media_count").getAsLong());
 
                         favourites.add(info);
                     }
@@ -77,10 +77,9 @@ public class BiliFavouriteParser {
     }
 
     //https://api.bilibili.com/x/v3/fav/resource/list?media_id=426737898&pn=1&ps=20&keyword=&order=mtime&type=0&tid=0&platform=web&jsonp=jsonp 获取收藏内容
-
     public static void getVideos(cc.kafuu.bilidownload.bilibili.model.BiliFavourite favourite, int pn, final IGetFavouriteCallback<BiliVideo> callback) {
         Request request = new Request.Builder()
-                .url("https://api.bilibili.com/x/v3/fav/resource/list?media_id=" + favourite.id + "&pn=" + pn + "&ps=20&keyword=&order=mtime&type=0&tid=0&platform=web&jsonp=jsonp ")
+                .url("https://api.bilibili.com/x/v3/fav/resource/list?media_id=" + favourite.getId() + "&pn=" + pn + "&ps=20&keyword=&order=mtime&type=0&tid=0&platform=web&jsonp=jsonp ")
                 .headers(Bili.generalHeaders)
                 .build();
         Log.d(TAG, "getVideos: " + request.url());

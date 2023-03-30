@@ -173,8 +173,8 @@ public class FavoriteFragment extends Fragment implements VideoListAdapter.Video
 
         for (BiliFavourite favourite : mModel.favourites) {
             Map<String, String> item = new HashMap<>();
-            item.put("favouriteName", favourite.title);
-            item.put("itemCount", String.valueOf(favourite.mediaCount));
+            item.put("favouriteName", favourite.getTitle());
+            item.put("itemCount", String.valueOf(favourite.getMediaCount()));
             items.add(item);
         }
 
