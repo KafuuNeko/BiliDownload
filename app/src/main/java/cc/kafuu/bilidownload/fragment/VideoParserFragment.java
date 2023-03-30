@@ -88,6 +88,21 @@ public class VideoParserFragment extends Fragment {
     ActivityResultLauncher<Intent> mLoginActivityResultLaunch;
     ActivityResultLauncher<Intent> mPersonalActivityResultLaunch;
 
+    //解析成功回调
+    IVideoParsingCallback mParsingCallback = new IVideoParsingCallback() {
+        @Override
+        public void completed(BiliVideoParser biliVideos) {
+            Log.d(TAG, "onCompleted: " + biliVideos.toString());
+            mHandler.post(() -> parsingVideoCompleted(biliVideos, null));
+        }
+
+        @Override
+        public void failure(String message) {
+            Log.d(TAG, "onFailure: onFailure " + message);
+            mHandler.post(() -> parsingVideoCompleted(null, message));
+        }
+    };
+
     public VideoParserFragment() {
         mHandler = new Handler(Looper.getMainLooper());
     }
@@ -180,6 +195,7 @@ public class VideoParserFragment extends Fragment {
     private void loadUserInfo() {
         final String cookie = CookieManager.getInstance().getCookie("https://m.bilibili.com");
         if (cookie != null && (Bili.biliAccount == null || Bili.biliCookie == null)) {
+            //还未获取用户信息但存在cookie，则尝试使用cookie获取用户信息
             mLoginBiliCard.setEnabled(false);
 
             Thread thread = new Thread(() -> {
@@ -193,25 +209,27 @@ public class VideoParserFragment extends Fragment {
                     if (Bili.biliAccount == null) {
                         return;
                     }
-                    Glide.with(requireContext()).load(Bili.biliAccount.getFace()).placeholder(R.drawable.ic_2233).into(mUserFace);
-                    mUserName.setText(Bili.biliAccount.getName());
-                    if (Bili.biliAccount.getSign() == null || Bili.biliAccount.getSign().length() == 0) {
-                        mUserSign.setText(getText(R.string.no_sign));
-                    } else {
-                        mUserSign.setText(Bili.biliAccount.getSign());
-                    }
+                    showUserInfo();
                 });
             });
             thread.start();
 
         } else if (Bili.biliAccount != null && Bili.biliCookie != null) {
-            Glide.with(requireContext()).load(Bili.biliAccount.getFace()).placeholder(R.drawable.ic_2233).into(mUserFace);
-            mUserName.setText(Bili.biliAccount.getName());
-            if (Bili.biliAccount.getSign() == null || Bili.biliAccount.getSign().length() == 0) {
-                mUserSign.setText(getText(R.string.no_sign));
-            } else {
-                mUserSign.setText(Bili.biliAccount.getSign());
-            }
+            showUserInfo();
+        }
+    }
+
+    /**
+     * 显示用户信息
+     * 调用此函数前必须确保Bili.biliAccount非空
+     * */
+    private void showUserInfo() {
+        Glide.with(requireContext()).load(Bili.biliAccount.getFace()).placeholder(R.drawable.ic_2233).into(mUserFace);
+        mUserName.setText(Bili.biliAccount.getName());
+        if (Bili.biliAccount.getSign() == null || Bili.biliAccount.getSign().length() == 0) {
+            mUserSign.setText(getText(R.string.no_sign));
+        } else {
+            mUserSign.setText(Bili.biliAccount.getSign());
         }
     }
 
@@ -371,29 +389,9 @@ public class VideoParserFragment extends Fragment {
         if (mVideoAddress.getText() != null) {
             String addressStr = mVideoAddress.getText().toString();
 
+            //如果是分享地址则获取重定向后的新地址解析
             if (addressStr.contains("https://b23.tv/")) {
-                Pattern pattern = Pattern.compile("https://b23.tv/.*");
-                Matcher matcher = pattern.matcher(addressStr);
-
-                if (!matcher.find()) {
-                    Toast.makeText(getContext(), getText(R.string.video_address_format_incorrect), Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                Bili.redirection(matcher.group(), new Bili.RedirectionCallback() {
-                    @Override
-                    public void onFailure(String message) {
-                        mHandler.post(() -> Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show());
-                    }
-
-                    @Override
-                    public void onCompleted(String location) {
-                        mHandler.post(() -> {
-                            mVideoAddress.setText(getInputId(location));
-                            parsingVideoAddress();
-                        });
-                    }
-                });
+                redirection(addressStr);
                 return;
             }
 
@@ -405,22 +403,37 @@ public class VideoParserFragment extends Fragment {
             return;
         }
 
-        IVideoParsingCallback callback = new IVideoParsingCallback() {
-            @Override
-            public void completed(BiliVideoParser biliVideos) {
-                Log.d(TAG, "onCompleted: " + biliVideos.toString());
-                mHandler.post(() -> parsingVideoCompleted(biliVideos, null));
-            }
-
-            @Override
-            public void failure(String message) {
-                Log.d(TAG, "onFailure: onFailure " + message);
-                mHandler.post(() -> parsingVideoCompleted(null, message));
-            }
-        };
 
         changeEnableStatus(false);
-        BiliVideoParser.fromVideoId(videoId, callback);
+        BiliVideoParser.fromVideoId(videoId, mParsingCallback);
+    }
+
+    /**
+     * 重定向分享地址，并在获取重定向地址后开始解析
+     * */
+    private void redirection(String addressStr) {
+        Pattern pattern = Pattern.compile("https://b23.tv/.*");
+        Matcher matcher = pattern.matcher(addressStr);
+
+        if (!matcher.find()) {
+            Toast.makeText(getContext(), getText(R.string.video_address_format_incorrect), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Bili.redirection(matcher.group(), new Bili.RedirectionCallback() {
+            @Override
+            public void onFailure(String message) {
+                mHandler.post(() -> Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show());
+            }
+
+            @Override
+            public void onCompleted(String location) {
+                mHandler.post(() -> {
+                    mVideoAddress.setText(getInputId(location));
+                    parsingVideoAddress();
+                });
+            }
+        });
     }
 
     /**
