@@ -107,17 +107,33 @@
                         android:textStyle="bold"
                         android:visibility="gone" />
 
-                    <TextView
-                        android:id="@+id/uploader"
+                    <LinearLayout
+                        android:id="@+id/uploaderCard"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:clickable="false"
                         android:gravity="right|center_vertical"
-                        android:textAllCaps="false"
-                        android:textColor="#2196F3"
-                        android:textStyle="italic"
-                        app:drawableEndCompat="@drawable/baseline_arrow_forward_ios_24"
-                        tools:ignore="RtlHardcoded" />
+                        tools:ignore="RtlHardcoded">
+
+                        <ImageView
+                            android:id="@+id/uploaderFace"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginRight="5dp"/>
+
+                        <TextView
+                            android:id="@+id/uploader"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:clickable="false"
+                            android:gravity="center_vertical"
+                            android:textAllCaps="false"
+                            android:textColor="#2196F3"
+                            android:textStyle="italic"
+                            app:drawableEndCompat="@drawable/baseline_arrow_forward_ios_24"
+                            tools:ignore="RtlHardcoded" />
+                    </LinearLayout>
+
+
 
                 </LinearLayout>
 

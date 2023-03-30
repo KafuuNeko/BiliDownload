@@ -25,6 +25,7 @@ import android.webkit.CookieManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -77,7 +78,9 @@ public class VideoParserFragment extends Fragment {
     private TextView mVideoTitle;
     private TextView mVideoDescribe;
     private TextView mVideoDownloadNotAllowed;
+    private LinearLayout mUploaderCard;
     private TextView mUploader;
+    private ImageView mUploaderFace;
 
     private RecyclerView mVideoInfoList;
 
@@ -226,7 +229,11 @@ public class VideoParserFragment extends Fragment {
         mVideoTitle = mRootView.findViewById(R.id.videoTitle);
         mVideoDescribe = mRootView.findViewById(R.id.videoDescribe);
         mVideoDownloadNotAllowed = mRootView.findViewById(R.id.videoDownloadNotAllowed);
+
+
+        mUploaderCard = mRootView.findViewById(R.id.uploaderCard);
         mUploader = mRootView.findViewById(R.id.uploader);
+        mUploaderFace = mRootView.findViewById(R.id.uploaderFace);
 
         mVideoInfoList = mRootView.findViewById(R.id.videoInfoList);
     }
@@ -246,9 +253,8 @@ public class VideoParserFragment extends Fragment {
 
         mVideoInfoList.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        mUploader.setOnClickListener(view -> {
-            PersonalActivity.actionStartForResult(getContext(), mPersonalActivityResultLaunch, mModel.biliVideo.getUploaderCard());
-        });
+        mUploaderFace.setOnClickListener(view -> PersonalActivity.actionStartForResult(getContext(), mPersonalActivityResultLaunch, mModel.biliVideo.getUploaderCard()));
+        mUploader.setOnClickListener(view -> PersonalActivity.actionStartForResult(getContext(), mPersonalActivityResultLaunch, mModel.biliVideo.getUploaderCard()));
 
         //将此列表设置为嵌套列表
         mVideoInfoList.setNestedScrollingEnabled(false);
@@ -450,8 +456,15 @@ public class VideoParserFragment extends Fragment {
         mVideoDescribe.setText(biliVideos.getDesc());
 
         mVideoDownloadNotAllowed.setVisibility(biliVideos.allowDownload() ? View.GONE : View.VISIBLE);
-        mUploader.setVisibility(biliVideos.getUploaderCard() == null ? View.GONE : View.VISIBLE);
+        mUploaderCard.setVisibility(biliVideos.getUploaderCard() == null ? View.GONE : View.VISIBLE);
         mUploader.setText(biliVideos.getUploaderCard() == null ? "bilibili" : biliVideos.getUploaderCard().getName());
+        if (biliVideos.getUploaderCard() != null) {
+            Glide.with(this)
+                    .load(biliVideos.getUploaderCard().getFace())
+                    .placeholder(R.drawable.ic_2233)
+                    .circleCrop()
+                    .into(mUploaderFace);
+        }
 
         mVideoInfoList.setAdapter(new VideoParseResultAdapter(getActivity(), biliVideos));
     }
