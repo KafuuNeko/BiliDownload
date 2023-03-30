@@ -35,20 +35,20 @@ public class BiliVideo {
         }
 
         //通过给定Id类型选择Api
-        String type = videoId.substring(0, 2);
+        String type = videoId.substring(0, 2).toUpperCase();
         String requestUrl;
 
         switch (type) {
-            case "ss":
+            case "SS":
                 requestUrl = "https://api.bilibili.com/pgc/view/web/h5/season?season_id=" + videoId.substring(2);
                 break;
-            case "ep":
+            case "EP":
                 requestUrl = "https://api.bilibili.com/pgc/view/web/h5/season?ep_id=" + videoId.substring(2);
                 break;
             case "BV":
                 requestUrl = "https://api.bilibili.com/x/web-interface/view/detail?aid=&bvid=" + videoId;
                 break;
-            case "av":
+            case "AV":
                 requestUrl = "https://api.bilibili.com/x/web-interface/view/detail?aid=" + videoId.substring(2) + "&bvid=";
                 break;
             default:
@@ -58,7 +58,7 @@ public class BiliVideo {
 
         //判断使用的Api是不是https://api.bilibili.com/pgc/view/web/h5/season
         //不同的Api返回结果解析方式也不同
-        boolean isSeason = type.equals("ss") | type.equals("ep");
+        boolean isSeason = type.equals("SS") | type.equals("EP");
 
         try {
             //构造访问

@@ -428,7 +428,7 @@ public class VideoParserFragment extends Fragment {
      * 取得用户要获取的视频的BV号或AV号
      */
     private String getInputId(String address) {
-        Pattern pattern = Pattern.compile("(BV.{10})|((av|ep|ss)\\d*)");
+        Pattern pattern = Pattern.compile("(BV.{10})|((av|ep|ss|AV|EP|SS)\\d*)");
         Matcher matcher = pattern.matcher(address);
 
         if (!matcher.find()) {
