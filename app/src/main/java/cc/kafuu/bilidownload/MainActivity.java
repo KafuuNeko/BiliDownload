@@ -78,7 +78,7 @@ public class MainActivity extends BaseActivity {
 
     private void initView() {
         setSupportActionBar(mToolbar);
-        mBottomNavigationView.setOnNavigationItemSelectedListener(this::bottomNavigationItemSelected);
+        mBottomNavigationView.setOnItemSelectedListener(this::bottomNavigationItemSelected);
     }
 
     @Override
