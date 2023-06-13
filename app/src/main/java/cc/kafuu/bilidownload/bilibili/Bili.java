@@ -103,7 +103,8 @@ public class Bili {
      * Api: https://api.bilibili.com/x/player/playurl
      * */
     public static Request playUrlRequest(long cid, long avid, int quality) {
-        String url = "https://api.bilibili.com/x/player/playurl?cid=" + cid + "&avid=" + avid + "&otype=json&fourk=1";
+        int fnval = 16 | 64 | 128 | 256 | 512 | 1024 | 2048 ;
+        String url = "https://api.bilibili.com/x/player/playurl?cid=" + cid + "&avid=" + avid + "&otype=json&fourk=1&fnval="+fnval;
         if (quality != 0) {
             url += "&qn=" + quality;
         }
