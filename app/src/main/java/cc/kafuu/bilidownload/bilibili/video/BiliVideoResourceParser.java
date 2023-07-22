@@ -105,15 +105,33 @@ public class BiliVideoResourceParser {
                     return;
                 }
 
-                JsonArray durl = data.getAsJsonArray("durl");
-                if (durl.size() == 0) {
+                JsonObject dash_data = data.getAsJsonObject("dash");
+                if (dash_data == null) {
                     callback.failure("Video player source is empty");
                     return;
                 }
 
-                String url = durl.get(0).getAsJsonObject().get("url").getAsString();
+                JsonArray videos = dash_data.getAsJsonArray("video");
+                if (videos.size() == 0) {
+                    callback.failure("Video player source is empty");
+                    return;
+                }
 
-                callback.completed(new BiliVideoDownloader(videoTitle, partTitle, saveTo, url));
+                for (int i = 0; i < videos.size(); i++) {
+                    JsonObject video = videos.get(i).getAsJsonObject();
+                    if (video.get("id").getAsInt() == quality) {
+                        JsonArray urls = video.getAsJsonArray("backup_url");
+                        if (urls.size() == 0) {
+                            callback.failure("Video player source is empty");
+                            return;
+                        }
+                        String url = urls.get(0).getAsString();
+                        callback.completed(new BiliVideoDownloader(videoTitle, partTitle, saveTo, url));
+                        return;
+                    }
+                }
+
+                callback.failure("Video player source is empty");
             }
 
             @Override
