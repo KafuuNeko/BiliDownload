@@ -11,6 +11,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.CookieManager;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -34,8 +35,9 @@ public class BiliLoginActivity extends BaseActivity {
 
     public static int ResultCodeOk = 0x01;
 
-    private ProgressBar mProgressBar;
     private String mCookie = "";
+
+    private ProgressBar mProgress;
 
     //private LoginViewModel mModel;
 
@@ -89,8 +91,8 @@ public class BiliLoginActivity extends BaseActivity {
 
     @SuppressLint("SetJavaScriptEnabled")
     private void initView() {
+        mProgress = findViewById(R.id.progress);
         WebView mWebView = findViewById(R.id.webView);
-        mProgressBar = findViewById(R.id.progressBar);
 
         mWebView.setWebViewClient(new WebViewClient(){
             @Override
@@ -101,15 +103,30 @@ public class BiliLoginActivity extends BaseActivity {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
-                mProgressBar.setVisibility(View.VISIBLE);
+                mProgress.setVisibility(ProgressBar.VISIBLE);
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                mProgressBar.setVisibility(View.GONE);
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return super.shouldOverrideUrlLoading(view, url);
             }
         });
+
+        mWebView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onProgressChanged(WebView view, int newProgress) {
+                mProgress.setProgress(newProgress);
+                if (newProgress == 100) {
+                    mProgress.setVisibility(ProgressBar.GONE);
+                }
+            }
+        });
+
         WebSettings webSettings = mWebView.getSettings();
         // 让WebView能够执行javaScript
         webSettings.setJavaScriptEnabled(true);
@@ -125,7 +142,6 @@ public class BiliLoginActivity extends BaseActivity {
         mWebView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                mProgressBar.setVisibility(View.GONE);
                 webViewShouldOverrideUrlLoading();
                 return false;
             }

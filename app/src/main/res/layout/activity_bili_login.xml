@@ -17,6 +17,8 @@
         app:title="@string/bili_login"
         app:titleTextColor="@color/white" />
 
+
+
     <WebView
         android:id="@+id/webView"
         android:layout_width="0dp"
@@ -27,12 +29,13 @@
         app:layout_constraintTop_toBottomOf="@+id/toolbar" />
 
     <ProgressBar
-        android:id="@+id/progressBar"
-        style="?android:attr/progressBarStyle"
-        android:layout_width="wrap_content"
+        android:id="@+id/progress"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="@+id/webView"
-        app:layout_constraintEnd_toEndOf="@+id/webView"
-        app:layout_constraintStart_toStartOf="@+id/webView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/toolbar" />
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>
