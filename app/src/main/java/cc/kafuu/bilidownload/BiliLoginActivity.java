@@ -120,6 +120,16 @@ public class BiliLoginActivity extends BaseActivity {
         setSupportActionBar(findViewById(R.id.toolbar));
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
+
+
+        mWebView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                mProgressBar.setVisibility(View.GONE);
+                webViewShouldOverrideUrlLoading();
+                return false;
+            }
+        });
     }
 
 
