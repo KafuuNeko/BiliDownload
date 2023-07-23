@@ -105,13 +105,13 @@ public class BiliVideoResourceParser {
                     return;
                 }
 
-                JsonObject dash_data = data.getAsJsonObject("dash");
-                if (dash_data == null) {
+                JsonObject dash = data.getAsJsonObject("dash");
+                if (dash == null) {
                     callback.failure("Video player source is empty");
                     return;
                 }
 
-                JsonArray videos = dash_data.getAsJsonArray("video");
+                JsonArray videos = dash.getAsJsonArray("video");
                 if (videos.size() == 0) {
                     callback.failure("Video player source is empty");
                     return;
@@ -120,12 +120,7 @@ public class BiliVideoResourceParser {
                 for (int i = 0; i < videos.size(); i++) {
                     JsonObject video = videos.get(i).getAsJsonObject();
                     if (video.get("id").getAsInt() == quality) {
-                        JsonArray urls = video.getAsJsonArray("backup_url");
-                        if (urls.size() == 0) {
-                            callback.failure("Video player source is empty");
-                            return;
-                        }
-                        String url = urls.get(0).getAsString();
+                        String url = video.get("base_url").getAsString();
                         callback.completed(new BiliVideoDownloader(videoTitle, partTitle, saveTo, url));
                         return;
                     }
