@@ -11,11 +11,15 @@ import com.google.gson.JsonObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import cc.kafuu.bilidownload.bilibili.Bili;
+import cc.kafuu.bilidownload.bilibili.Wbi;
 import cc.kafuu.bilidownload.bilibili.account.callback.IGetSpaceVideosCallback;
+import cc.kafuu.bilidownload.bilibili.account.callback.IGetWbiCallback;
 import cc.kafuu.bilidownload.bilibili.model.BiliVideo;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -36,7 +40,29 @@ public class BiliSpaceParser {
      * @param callback 结果回调
      * */
     public static void getSpaceVideos(long uid, int pn, int tid, IGetSpaceVideosCallback callback) {
-        String url = "https://api.bilibili.com/x/space/wbi/arc/search?mid=" + uid + "&ps=10&pn=" + pn + "&tid=" + tid;
+        Wbi.getWbi(new IGetWbiCallback() {
+            @Override
+            public void completed(String imgUrl, String subUrl) {
+                wbiLoaded(imgUrl, subUrl, uid, pn, tid, callback);
+            }
+
+            @Override
+            public void failure(String message) {
+                callback.failure(message);
+            }
+        });
+    }
+
+    private static void wbiLoaded(String imgUrl, String subUrl, long uid, int pn, int tid, IGetSpaceVideosCallback callback) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("mid", uid);
+        map.put("ps", "10");
+        map.put("pn", pn);
+        map.put("tid", tid);
+
+        String param = Wbi.param(imgUrl, imgUrl, map);
+        Log.d(TAG, "wbiLoaded: " + param);
+        String url = "http://api.bilibili.com/x/space/arc/search?" + param;
         Request request = new Request.Builder().url(url).headers(Bili.generalHeaders).build();
         Bili.httpClient.newCall(request).enqueue(new Callback() {
 

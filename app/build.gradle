@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId "cc.kafuu.bilidownload"
-        minSdkVersion 21
+        minSdkVersion 24
         targetSdkVersion 31
         versionCode 19
         versionName "1.9.3"
@@ -127,6 +127,9 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.9.0'
     implementation 'com.squareup.okhttp3:okhttp:4.9.3'
     implementation 'org.litepal.guolindev:core:3.2.3'
+
+    // https://mvnrepository.com/artifact/cn.hutool/hutool-all
+    implementation 'cn.hutool:hutool-all:5.8.20'
 
     //implementation fileTree(includes: ['*.jar', '*.aar'], dir: 'libs')
 }
