@@ -1,12 +1,17 @@
 package cc.kafuu.bilidownload.fragment;
 
+import static android.content.Context.RECEIVER_EXPORTED;
+import static android.content.Context.RECEIVER_NOT_EXPORTED;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -86,6 +91,7 @@ public class DownloadFragment extends Fragment {
         mNoDownloadRecordTip = mRootView.findViewById(R.id.noDownloadRecordTip);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     private void initView() {
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, true);
         linearLayoutManager.setStackFromEnd(true);
@@ -93,7 +99,7 @@ public class DownloadFragment extends Fragment {
 
         IntentFilter filter = new IntentFilter();
         filter.addAction("download.task.create");
-        requireContext().registerReceiver(mBroadcastReceiver, filter);
+        requireContext().registerReceiver(mBroadcastReceiver, filter, RECEIVER_EXPORTED);
 
         mVideoDownloadRecordAdapter = new DownloadRecordAdapter(getActivity(), registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
             //已下载视频信息页面操作返回

@@ -4,15 +4,15 @@ plugins {
 }
 
 android {
-    compileSdkVersion 31
-    buildToolsVersion "31.0.0"
+    compileSdk 34
+    buildToolsVersion '34.0.0'
 
     defaultConfig {
         applicationId "cc.kafuu.bilidownload"
         minSdkVersion 24
-        targetSdkVersion 31
-        versionCode 19
-        versionName "1.9.3"
+        targetSdkVersion 34
+        versionCode 20
+        versionName "1.9.4"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
@@ -90,8 +90,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     ndkVersion '23.1.7779620'
 
