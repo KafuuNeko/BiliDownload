@@ -1,73 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="cc.kafuu.bilidownload">
-
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission
-        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        tools:ignore="ScopedStorage" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    xmlns:tools="http://schemas.android.com/tools">
 
     <application
         android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.BiliDownload"
-        android:usesCleartextTraffic="true">
-
-        <service
-            android:name=".service.ExportService"
-            android:enabled="true"
-            android:exported="true"/>
-
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="cc.kafuu.bilidownload.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider>
-
+        tools:targetApi="31">
         <activity
             android:name=".MainActivity"
-            android:exported="true"
-            android:launchMode="singleTask"
-            android:theme="@style/AppTheme"
-            android:windowSoftInputMode="adjustUnspecified|stateHidden">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".BiliLoginActivity"
-            android:launchMode="singleTask"
-            android:theme="@style/AppTheme" />
-        <activity
-            android:name=".UseClausesActivity"
-            android:launchMode="singleTask"
-            android:theme="@style/AppTheme" />
-        <activity
-            android:name=".PersonalActivity"
-            android:launchMode="singleTask"
-            android:theme="@style/AppTheme" />
-        <activity
-            android:name=".DownloadedVideoActivity"
-            android:launchMode="singleTask"
-            android:theme="@style/AppTheme" />
-        <activity
-            android:name=".FileSelectorActivity"
-            android:exported="false"
-            android:launchMode="singleTask"
-            android:theme="@style/AppTheme" />
     </application>
 
 </manifest>

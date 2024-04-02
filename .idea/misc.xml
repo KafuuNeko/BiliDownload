@@ -1,23 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="DesignSurface">
-    <option name="filePathToZoomLevelMap">
-      <map>
-        <entry key="..\:/Users/kafuu/Documents/GitHub/BiliDownload/app/src/main/res/layout/activity_bili_login.xml" value="0.221875" />
-        <entry key="..\:/Users/kafuu/Documents/GitHub/BiliDownload/app/src/main/res/layout/activity_downloaded_video.xml" value="0.21822916666666667" />
-        <entry key="..\:/Users/kafuu/Documents/GitHub/BiliDownload/app/src/main/res/layout/activity_file.xml" value="0.22291666666666668" />
-        <entry key="..\:/Users/kafuu/Documents/GitHub/BiliDownload/app/src/main/res/layout/activity_file_selector.xml" value="0.221875" />
-        <entry key="..\:/Users/kafuu/Documents/GitHub/BiliDownload/app/src/main/res/layout/activity_main.xml" value="0.20729166666666668" />
-        <entry key="..\:/Users/kafuu/Documents/GitHub/BiliDownload/app/src/main/res/layout/activity_personal.xml" value="0.29983792544570503" />
-        <entry key="..\:/Users/kafuu/Documents/GitHub/BiliDownload/app/src/main/res/layout/dialog_about.xml" value="0.221875" />
-        <entry key="..\:/Users/kafuu/Documents/GitHub/BiliDownload/app/src/main/res/layout/fragment_blank.xml" value="0.1" />
-        <entry key="..\:/Users/kafuu/Documents/GitHub/BiliDownload/app/src/main/res/layout/fragment_video_parser.xml" value="0.13768115942028986" />
-        <entry key="..\:/Users/kafuu/Documents/GitHub/BiliDownload/app/src/main/res/layout/list_item_download_record.xml" value="0.21822916666666667" />
-        <entry key="..\:/Users/kafuu/Documents/GitHub/BiliDownload/app/src/main/res/menu/menu_bili_login.xml" value="0.22083333333333333" />
-        <entry key="..\:/Users/kafuu/Documents/GitHub/BiliDownload/app/src/main/res/menu/menu_main_appinfo.xml" value="0.221875" />
-      </map>
-    </option>
-  </component>
   <component name="ExternalStorageConfigurationManager" enabled="true" />
   <component name="ProjectRootManager" version="2" languageLevel="JDK_17" default="true" project-jdk-name="jbr-17" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />

@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/navVideoParser" android:title="解析" android:icon="@drawable/ic_analyse"/>
-    <item android:id="@+id/navDownloadList" android:title="下载" android:icon="@drawable/ic_download"/>
-</menu>
