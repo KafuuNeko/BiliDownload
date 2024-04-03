@@ -22,10 +22,7 @@ android {
                 cppFlags += "-std=c++17"
             }
             ndk {
-                abiFilters.add("armeabi-v7a")
-                abiFilters.add("arm64-v8a")
-                abiFilters.add("x86_64")
-                abiFilters.add("x86")
+                abiFilters.addAll(arrayOf("armeabi-v7a", "arm64-v8a", "x86_64", "x86"))
             }
         }
 
@@ -37,45 +34,22 @@ android {
 
         packaging {
             jniLibs {
-                pickFirsts.apply {
-                    add("lib/arm64-v8a/libavcodec.so")
-                    add("lib/arm64-v8a/libavdevice.so")
-                    add("lib/arm64-v8a/libavfilter.so")
-                    add("lib/arm64-v8a/libavformat.so")
-                    add("lib/arm64-v8a/libavutil.so")
-                    add("lib/arm64-v8a/libswresample.so")
-                    add("lib/arm64-v8a/libswscale.so")
-
-                    add("lib/armeabi-v7a/libavcodec.so")
-                    add("lib/armeabi-v7a/libavdevice.so")
-                    add("lib/armeabi-v7a/libavfilter.so")
-                    add("lib/armeabi-v7a/libavformat.so")
-                    add("lib/armeabi-v7a/libavutil.so")
-                    add("lib/armeabi-v7a/libswresample.so")
-                    add("lib/armeabi-v7a/libswscale.so")
-
-                    add("lib/x86_64/libavcodec.so")
-                    add("lib/x86_64/libavdevice.so")
-                    add("lib/x86_64/libavfilter.so")
-                    add("lib/x86_64/libavformat.so")
-                    add("lib/x86_64/libavutil.so")
-                    add("lib/x86_64/libswresample.so")
-                    add("lib/x86_64/libswscale.so")
-
-                    add("lib/x86/libavcodec.so")
-                    add("lib/x86/libavdevice.so")
-                    add("lib/x86/libavfilter.so")
-                    add("lib/x86/libavformat.so")
-                    add("lib/x86/libavutil.so")
-                    add("lib/x86/libswresample.so")
-                    add("lib/x86/libswscale.so")
+                val jniLibs = arrayOf(
+                    "libavcodec.so",
+                    "libavdevice.so",
+                    "libavfilter.so",
+                    "libavformat.so",
+                    "libavutil.so",
+                    "libswresample.so",
+                    "libswscale.so"
+                )
+                ndk.abiFilters.forEach { abi ->
+                    jniLibs.forEach { lib ->
+                        pickFirsts.add("lib/$abi/$lib")
+                    }
                 }
-
             }
-
         }
-
-
     }
 
     buildTypes {
@@ -115,7 +89,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
