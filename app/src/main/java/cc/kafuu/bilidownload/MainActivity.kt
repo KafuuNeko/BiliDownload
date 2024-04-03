@@ -3,8 +3,7 @@ package cc.kafuu.bilidownload
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import android.widget.TextView
-import cc.kafuu.bilidownload.common.jniexport.JniTools
+import cc.kafuu.bilidownload.common.jniexport.FFMpegJNI
 import cc.kafuu.bilidownload.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -21,7 +20,10 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.sampleText.text = JniTools.ffmpegInfo()
+        binding.sampleText.text = FFMpegJNI.ffmpegInfo()
+
+//        FFMpegJNI.videoFormatConversion("${getExternalFilesDir("tests")}/test.mp4", "${getExternalFilesDir("tests")}/test.flv")
+//        Log.d(TAG, "onCreate: ")
 
     }
 }
