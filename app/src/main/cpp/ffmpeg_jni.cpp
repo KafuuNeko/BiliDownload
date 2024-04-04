@@ -37,3 +37,17 @@ FFMPEG_JNI_FUNC(jstring, getMediaInfo)(JNIEnv *env, jobject obj, jstring from) {
     ffmpeg::AvFormat avFormat(env->GetStringUTFChars(from, JNI_FALSE));
     return env->NewStringUTF(avFormat.getFormat().c_str());
 }
+
+FFMPEG_JNI_FUNC(jboolean, mergeAudioAndVideo)(JNIEnv *env, jobject thiz,
+                                              jstring output,
+                                              jstring audio,
+                                              jstring video) {
+    bool status = ffmpeg::mergeAVFormatContexts(
+            env->GetStringUTFChars(output, JNI_FALSE),
+            {
+                    ffmpeg::getFormat(env->GetStringUTFChars(audio, JNI_FALSE)),
+                    ffmpeg::getFormat(env->GetStringUTFChars(video, JNI_FALSE))
+            }
+    );
+    return status ? JNI_TRUE : JNI_FALSE;
+}

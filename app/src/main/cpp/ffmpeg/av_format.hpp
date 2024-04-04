@@ -3,6 +3,7 @@
 #include <string>
 #include <memory>
 #include <string>
+#include <vector>
 
 extern "C" {
 #include "libavformat/avformat.h"
@@ -28,10 +29,18 @@ namespace ffmpeg {
             return ec;
         }
 
+        std::shared_ptr<AVFormatContext> getFormatContext() const noexcept {
+            return mInputFormatCtx;
+        }
+
     private:
         std::shared_ptr<AVFormatContext> mInputFormatCtx;
         int32_t ec = 0;
     };
+
+    bool mergeAVFormatContexts(const std::string &output, const std::initializer_list<AvFormat> &formats);
+
+    AvFormat getFormat(const char *filename);
 }
 
 

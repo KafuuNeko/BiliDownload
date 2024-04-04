@@ -10,6 +10,7 @@ extern "C" {
 
 #include "android_log.hpp"
 #include <memory>
+#include <map>
 
 namespace ffmpeg::utils {
 
@@ -30,7 +31,7 @@ namespace ffmpeg::utils {
      * @note 此函数不仅复制流的编解码器参数，还会根据输出格式上下文的要求设置全局头部标志（如果必要）。
      *       如果找不到对应的编解码器或者在复制参数过程中遇到错误，函数会返回相应的错误码。
      */
-    inline int copyStreamSettings(
+    static int copyStreamSettings(
             AVFormatContext *inputCtx,
             AVFormatContext *outputCtx,
             std::function<bool(size_t index, AVStream *stream)> filter = nullptr) {
@@ -91,7 +92,7 @@ namespace ffmpeg::utils {
      * @param filter 筛选拷贝的packet
      * @return int 成功返回0，失败返回非0错误码。
      */
-    inline int copyAndConvertPackets(
+    static int copyAndConvertPackets(
             AVFormatContext *inputCtx,
             AVFormatContext *outputCtx,
             std::function<bool(size_t index, AVPacket *packet)> filter = nullptr) {
@@ -118,12 +119,65 @@ namespace ffmpeg::utils {
             // 写入调整后的数据包到输出流
             rc = av_interleaved_write_frame(outputCtx, &pkt);
             if (rc < 0) {
-                log::error(TAG, "Error maxing packet");
+                log::error(TAG, "Error maxing packet, error code: %d", rc);
                 av_packet_unref(&pkt);
                 return rc;
             }
             av_packet_unref(&pkt);
             frameIndex++;
+        }
+
+        return 0;
+    }
+
+    /**
+     * 合并多个AVFormatContext到一个输出AVFormatContext中。
+     *
+     * 此函数旨在将多个视频流（每个由AVFormatContext表示）合并到一个输出视频文件中，
+     * 它通过复制流设置、写入文件头、复制并转换视频包，最后写入文件尾部来完成合并过程。
+     *
+     * @param output 指向输出的AVFormatContext结构体的指针，所有输入流将合并到此处。
+     * @param contexts 所有要合并的AVFormatContext的指针。
+     *
+     * @return 成功时返回0，失败时返回负数错误码。
+     */
+    template<typename Container>
+    static int32_t mergeAVFormatContexts(AVFormatContext *output, const Container &contexts) {
+        int32_t rc;
+        std::map<AVFormatContext *, size_t> indexMap;
+
+        // 复制context设置
+        for (auto &ctx : contexts) {
+            indexMap[ctx] = output->nb_streams;
+            if ((rc = copyStreamSettings(ctx, output)) < 0) {
+                log::error(TAG, "Failed to copy video stream settings, error code: %d", rc);
+                return rc;
+            }
+        }
+
+        // 写输出文件头
+        if ((rc = avformat_write_header(output, NULL)) < 0) {
+            log::error(TAG, "Failed to write output file header, error code: %d", rc);
+            return rc;
+        }
+
+        // 复制context packets
+        for (auto &ctx : contexts) {
+            auto packetFilter = [&](size_t index, AVPacket *packet)->bool {
+                // 重新映射steam index
+                packet->stream_index = packet->stream_index + indexMap[ctx];
+                return true;
+            };
+            if ((rc = copyAndConvertPackets(ctx, output, packetFilter)) < 0) {
+                log::error(TAG, "Failed to copy and convert video packets, error code: %d", rc);
+                return rc;
+            }
+        }
+
+        // 写输出文件尾
+        if ((rc = av_write_trailer(output)) < 0) {
+            log::error(TAG, "Failed to write output file trailer, error code: %d", rc);
+            return rc;
         }
 
         return 0;
@@ -146,7 +200,7 @@ namespace ffmpeg::utils {
      *
      * @note 函数内部使用了一个自定义删除器，确保在资源不再需要时能够自动调用avformat_close_input释放资源。
      */
-    auto avformatAllocOutputContextUniquePtr(
+    inline auto avformatAllocOutputContextUniquePtr(
             AVOutputFormat *outputFormat,
             const char *formatName,
             const char *filename,
@@ -184,7 +238,7 @@ namespace ffmpeg::utils {
      *
      * @note 函数内部使用了一个自定义删除器，确保在资源不再需要时能够自动调用avformat_close_input释放资源。
      */
-    auto avformatOpenInputPtr(
+    inline auto avformatOpenInputPtr(
             const char *url,
             AVInputFormat *fmt,
             AVDictionary **options,

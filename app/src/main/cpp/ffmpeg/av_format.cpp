@@ -1,6 +1,8 @@
 //
 // Created by kafuu on 2024/4/3.
 //
+#include <vector>
+
 #include "android_log.hpp"
 #include "av_format.hpp"
 #include "ffmpeg_utils.hpp"
@@ -124,4 +126,39 @@ std::string AvFormat::getFormat() {
     return "";
 }
 
+bool ffmpeg::mergeAVFormatContexts(const std::string &output, const std::initializer_list<AvFormat> &formats) {
+    int32_t ec = 0;
+    auto outputContext = utils::avformatAllocOutputContextUniquePtr(
+            nullptr,
+            nullptr,
+            output.c_str(),
+            &ec);
 
+    if (!outputContext) {
+        log::error(TAG, "Cannot alloc output context, error code: %d", ec);
+        return false;
+    }
+
+    if (!(outputContext->oformat->flags & AVFMT_NOFILE)) {
+        ec = avio_open(&(outputContext->pb), output.c_str(), AVIO_FLAG_WRITE);
+        if (ec < 0) {
+            log::error(TAG, "Could not open output file '%s'", output.c_str());
+            return false;
+        }
+    }
+
+    std::vector<AVFormatContext*> contexts;
+    for (auto& format : formats) {
+        contexts.emplace_back(format.getFormatContext().get());
+    }
+
+    if ((ec = utils::mergeAVFormatContexts(outputContext.get(), contexts) < 0)) {
+        log::error(TAG, "Failed to merge AVFormatContexts, error code: %d", ec);
+    }
+
+    return ec == 0;
+}
+
+AvFormat ffmpeg::getFormat(const char *filename) {
+    return AvFormat(filename);
+}
