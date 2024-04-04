@@ -112,7 +112,7 @@ std::string AvFormat::getAudioFormat() {
                 codec = avcodec_find_encoder(in_stream->codecpar->codec_id);
             }
             if (codec == nullptr) {
-                __android_log_print(ANDROID_LOG_DEBUG, "getVideoAudioFormat", "Not found codec");
+                log::error(TAG, "Not found codec");
                 break;
             } else {
                 return codec->name;
