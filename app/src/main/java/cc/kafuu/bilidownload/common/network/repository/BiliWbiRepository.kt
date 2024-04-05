@@ -8,13 +8,8 @@ class BiliWbiRepository(private val biliApiService: BiliApiService) : BiliReposi
         private const val TAG = "BiliWbiRepository"
     }
 
-    fun syncGetWbiKey(): Pair<String, String>? {
-        return biliApiService.getWbiInterfaceNav().execute({ code, errorCode, errorMessage ->
-            Log.e(
-                TAG,
-                "syncGetWbiKey: Error occurred. HTTP Status Code: $code, API Error Code: $errorCode, Message: $errorMessage"
-            )
-        }) {
+    fun syncGetWbiKey(onFailure: ((Int, Int, String) -> Unit)? = null): Pair<String, String>? {
+        return biliApiService.getWbiInterfaceNav().execute(onFailure) {
             val wbiImg = it.wbiImg
 
             val imgKey = wbiImg.imgUrl.substringAfter("wbi/").substringBefore(".")
