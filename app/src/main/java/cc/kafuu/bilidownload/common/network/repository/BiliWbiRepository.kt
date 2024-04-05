@@ -3,19 +3,21 @@ package cc.kafuu.bilidownload.common.network.repository
 import android.util.Log
 import cc.kafuu.bilidownload.common.network.service.BiliApiService
 
-class BiliWbiRepository(private val biliApiService: BiliApiService) : BiliRepository() {
+class BiliWbiRepository(biliApiService: BiliApiService) : BiliRepository(biliApiService) {
     companion object {
         private const val TAG = "BiliWbiRepository"
+
+        private fun String.extractBetweenWbiAndDot(): String {
+            return this.substringAfter("wbi/").substringBefore(".")
+        }
     }
 
     fun syncGetWbiKey(onFailure: ((Int, Int, String) -> Unit)? = null): Pair<String, String>? {
         return biliApiService.getWbiInterfaceNav().execute(onFailure) {
-            val wbiImg = it.wbiImg
-
-            val imgKey = wbiImg.imgUrl.substringAfter("wbi/").substringBefore(".")
-            val subKey = wbiImg.subUrl.substringAfter("wbi/").substringBefore(".")
-
-            Pair(imgKey, subKey)
+            Pair(
+                it.wbiImg.imgUrl.extractBetweenWbiAndDot(),
+                it.wbiImg.subUrl.extractBetweenWbiAndDot()
+            )
         }
     }
 }

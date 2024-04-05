@@ -3,11 +3,12 @@ package cc.kafuu.bilidownload.common.network.repository
 import android.util.Log
 import cc.kafuu.bilidownload.common.core.ServerCallback
 import cc.kafuu.bilidownload.common.network.model.BiliRespond
+import cc.kafuu.bilidownload.common.network.service.BiliApiService
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-open class BiliRepository {
+open class BiliRepository(protected val biliApiService: BiliApiService) {
     companion object {
         private const val TAG = "BiliRepository"
     }

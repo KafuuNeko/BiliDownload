@@ -12,8 +12,8 @@ interface BiliApiService {
     fun getWbiInterfaceNav(): Call<BiliRespond<BiliWbiData>>
 
     @GET("x/player/playurl")
-    fun getVideoStreamUrl(
-        @Query("avid") avid: String?,
+    fun getPlayStream(
+        @Query("avid") avid: Long?,
         @Query("bvid") bvid: String?,
         @Query("cid") cid: Long,
         @Query("qn") qn: Int? = null,
