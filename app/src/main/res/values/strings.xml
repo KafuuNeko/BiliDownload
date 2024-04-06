@@ -6,4 +6,7 @@
     <string name="audio_description_dolby_atmos">杜比全景声</string>
     <string name="audio_description_hi_res_lossless">Hi-Res无损</string>
     <string name="audio_description_unknown">未知</string>
+    <string name="notification_bvd_downloading">正在下载...</string>
+    <string name="notification_channel_name">下载服务</string>
+    <string name="notification_title_download_foreground">BVD正在下载</string>
 </resources>

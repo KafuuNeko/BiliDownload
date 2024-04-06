@@ -30,7 +30,7 @@ abstract class AppDatabase : RoomDatabase() {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "BiliDownload.db" // 数据库名称
+                    "app.db" // 数据库名称
                 ).build()
                 INSTANCE = instance
                 // 返回实例

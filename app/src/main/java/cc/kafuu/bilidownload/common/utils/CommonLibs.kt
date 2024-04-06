@@ -6,7 +6,6 @@ import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
-import androidx.room.Room
 import cc.kafuu.bilidownload.common.data.database.AppDatabase
 import java.io.File
 
@@ -29,7 +28,7 @@ object CommonLibs {
 
     fun requireContext() = mContext ?: throw IllegalStateException("Program not running")
 
-    fun requireAppDatabase() = mAppDatabase?: throw IllegalStateException("Program not running")
+    fun requireAppDatabase() = mAppDatabase ?: throw IllegalStateException("Program not running")
 
     private fun requireExternalFilesDir(type: String, relativePath: String = ""): File {
         val root = requireContext().getExternalFilesDir(type)

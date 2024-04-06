@@ -28,9 +28,6 @@ interface DownloadTaskDao {
     @Query("SELECT * FROM DownloadTaskEntity WHERE downloadTaskId = :downloadTaskId")
     suspend fun getDownloadTaskByDownloadTaskId(downloadTaskId: Long): DownloadTaskEntity?
 
-    @Query("SELECT * FROM DownloadTaskEntity WHERE isDownloadComplete = :isComplete")
-    suspend fun getDownloadsByCompletionStatus(isComplete: Boolean): List<DownloadTaskEntity>
-
     @Query("DELETE FROM DownloadTaskEntity")
     suspend fun deleteAll()
 }
