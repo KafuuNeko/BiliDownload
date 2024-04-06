@@ -2,6 +2,7 @@ package cc.kafuu.bilidownload.common.network.repository
 
 import cc.kafuu.bilidownload.common.core.IServerCallback
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
+import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
 import cc.kafuu.bilidownload.common.network.service.BiliApiService
 
 class BiliVideoRepository(biliApiService: BiliApiService) : BiliRepository(biliApiService) {
@@ -21,7 +22,7 @@ class BiliVideoRepository(biliApiService: BiliApiService) : BiliRepository(biliA
     fun getPlayStreamDash(
         bvid: String,
         cid: Long,
-        qn: Int,
+        qn: Int?,
         callback: IServerCallback<BiliPlayStreamDash>
     ) {
         biliApiService.getPlayStream(null, bvid, cid, qn, FNVAL_FLAGS).enqueue(callback) {
@@ -29,14 +30,12 @@ class BiliVideoRepository(biliApiService: BiliApiService) : BiliRepository(biliA
         }
     }
 
-    fun getPlayStreamDash(
-        avid: Long,
+    fun getPlayStreamData(
+        bvid: String,
         cid: Long,
-        qn: Int,
-        callback: IServerCallback<BiliPlayStreamDash>
+        qn: Int?,
+        callback: IServerCallback<BiliPlayStreamData>
     ) {
-        biliApiService.getPlayStream(avid, null, cid, qn, FNVAL_FLAGS).enqueue(callback) {
-            it.dash
-        }
+        biliApiService.getPlayStream(null, bvid, cid, qn, FNVAL_FLAGS).enqueue(callback) { it }
     }
 }

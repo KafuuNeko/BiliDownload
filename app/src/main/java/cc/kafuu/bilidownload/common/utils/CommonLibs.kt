@@ -18,11 +18,7 @@ object CommonLibs {
 
     fun init(context: Context) {
         mContext = context
-        mAppDatabase = Room.databaseBuilder(
-            context,
-            AppDatabase::class.java,
-            "BiliDownload.db"
-        ).build()
+        mAppDatabase = AppDatabase.getDatabase(context)
     }
 
     fun getString(@StringRes id: Int) = requireContext().resources?.getString(id).toString()
@@ -46,6 +42,6 @@ object CommonLibs {
         }
     }
 
-    fun requireDownloadCacheDir() = requireExternalFilesDir("cache", "download")
+    fun requireDownloadCacheDir(sub: String) = requireExternalFilesDir("cache", "download/$sub")
 
 }

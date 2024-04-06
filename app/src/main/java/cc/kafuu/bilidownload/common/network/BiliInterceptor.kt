@@ -38,11 +38,7 @@ class BiliInterceptor(
                 url(originalHttpUrl.newBuilder().query(it).build())
             }
             getLatestCookies()?.let { addHeader("Cookie", it) }
-            addHeader("User-Agent", NetworkConfig.BILI_UA)
-            addHeader("Accept", "application/json, text/plain, */*")
-            addHeader("Accept-Language", "zh-CN,zh-Hans;q=0.9")
-            addHeader("Origin", "https://m.bilibili.com")
-            addHeader("Referer", "https://m.bilibili.com/")
+            NetworkConfig.GENERAL_HEADERS.forEach { (key, value) -> addHeader(key, value) }
         }.build()
 
         Log.d(TAG, "Ready request: $request")

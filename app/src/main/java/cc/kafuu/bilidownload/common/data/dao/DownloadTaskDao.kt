@@ -1,6 +1,5 @@
 package cc.kafuu.bilidownload.common.data.dao
 
-import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -21,13 +20,16 @@ interface DownloadTaskDao {
     suspend fun delete(downloadTask: DownloadTaskEntity)
 
     @Query("SELECT * FROM DownloadTaskEntity")
-    fun getAllDownloadTask(): LiveData<List<DownloadTaskEntity>>
+    suspend fun getAllDownloadTask(): List<DownloadTaskEntity>
 
     @Query("SELECT * FROM DownloadTaskEntity WHERE id = :id")
-    fun getDownloadTaskById(id: Long): LiveData<DownloadTaskEntity>
+    suspend fun getDownloadTaskById(id: Long): DownloadTaskEntity?
+
+    @Query("SELECT * FROM DownloadTaskEntity WHERE downloadTaskId = :downloadTaskId")
+    suspend fun getDownloadTaskByDownloadTaskId(downloadTaskId: Long): DownloadTaskEntity?
 
     @Query("SELECT * FROM DownloadTaskEntity WHERE isDownloadComplete = :isComplete")
-    fun getDownloadsByCompletionStatus(isComplete: Boolean): LiveData<List<DownloadTaskEntity>>
+    suspend fun getDownloadsByCompletionStatus(isComplete: Boolean): List<DownloadTaskEntity>
 
     @Query("DELETE FROM DownloadTaskEntity")
     suspend fun deleteAll()

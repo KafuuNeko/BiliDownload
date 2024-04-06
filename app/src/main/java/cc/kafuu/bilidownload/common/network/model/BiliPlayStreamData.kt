@@ -30,9 +30,9 @@ data class BiliPlayStreamDash(
 
 // 视频信息
 data class BiliPlayStreamResource(
-    val id: Int,
+    val id: Long,
     @SerializedName("baseUrl")
-    val baseUrl: String,
+    val baseUrl: String?,
     @SerializedName("backupUrl")
     val backupUrl: List<String>?,
     val bandwidth: Long,
@@ -50,7 +50,15 @@ data class BiliPlayStreamResource(
     val segmentBase: BiliPlayStreamSegmentBase,
     @SerializedName("codecid")
     val codecId: Int
-)
+) {
+    fun getStreamUrl(): String {
+        baseUrl?.let { return it }
+        if (!backupUrl.isNullOrEmpty()) {
+            return backupUrl[0]
+        }
+        throw IllegalArgumentException("No stream url")
+    }
+}
 
 // SegmentBase 信息
 data class BiliPlayStreamSegmentBase(
