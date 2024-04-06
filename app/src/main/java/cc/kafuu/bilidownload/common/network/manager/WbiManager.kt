@@ -64,9 +64,11 @@ class WbiManager(private val getLatestWbiKey: () -> Pair<String, String>?) : IWb
      *
      * @note 此函数可能会同步调用网络请求，应在非UI线程中执行。
      *
+     * @throws IllegalStateException 如果请求WBI更新失败。
+     *
      * @param urlPath 请求的URL路径。
      * @param params 请求的参数映射，可以为null。
-     * @return 带有WBI签名的请求参数字符串，如果不需要签名或请求WBI失败，则返回null。
+     * @return 带有WBI签名的请求参数字符串，如果不需要签名则返回null。
      */
     override fun generateSignature(urlPath: String, params: Map<String, Any>?): String? {
         Log.d(TAG, "generateSignature: $urlPath, $params")
@@ -77,8 +79,7 @@ class WbiManager(private val getLatestWbiKey: () -> Pair<String, String>?) : IWb
 
         // 尝试请求更新Wbi
         if (!checkUpdateWbi()) {
-            Log.d(TAG, "param: failed to request wbi, url: $urlPath")
-            return null
+            throw IllegalStateException("WbiManager: Wbi request failed, path: $urlPath")
         }
 
         val param = StringJoiner("&")
