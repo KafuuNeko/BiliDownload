@@ -9,4 +9,6 @@
     <string name="notification_bvd_downloading">正在下载...</string>
     <string name="notification_channel_name">下载服务</string>
     <string name="notification_title_download_foreground">BVD正在下载</string>
+    <string name="notification_title_download_end">下载任务结束</string>
+    <string name="notification_title_download_inventory">共 %d 个任务 - 成功：%d，失败：%d，取消：%d。</string>
 </resources>

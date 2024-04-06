@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 data class DownloadTaskEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
     var downloadTaskId: Long? = null,
-    val isDownloadComplete: Boolean,
+    var isDownloadComplete: Boolean?,
     val biliBvid: String,
     val biliCid: Long,
     val biliQn: Int,

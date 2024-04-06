@@ -1,6 +1,5 @@
 package cc.kafuu.bilidownload.common.manager
 
-import android.content.Context
 import android.util.Log
 import cc.kafuu.bilidownload.common.core.IServerCallback
 import cc.kafuu.bilidownload.common.data.entity.DownloadTaskEntity
@@ -12,45 +11,74 @@ import com.arialyy.annotations.DownloadGroup
 import com.arialyy.aria.core.Aria
 import com.arialyy.aria.core.common.HttpOption
 import com.arialyy.aria.core.task.DownloadGroupTask
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.runBlocking
 
-class DownloadManager(context: Context) {
+class DownloadManager {
     companion object {
         private const val TAG = "DownloadManager"
+
+        enum class TaskStatus(val code: Int, val isEndStatus: Boolean) {
+            FAILURE(0, true),
+            COMPLETED(1, true),
+            STOPPED(2, false),
+            WAITING(3, false),
+            EXECUTING(4, false),
+            PREPROCESSING(5, false),
+            PREPROCESSING_COMPLETED(6, false),
+            CANCELLED(7, true);
+
+            companion object {
+                fun fromCode(code: Int): TaskStatus = entries.find { it.code == code }
+                    ?: throw IllegalArgumentException("Invalid code")
+            }
+        }
     }
 
     init {
-        Aria.init(context)
+        Aria.download(this).register()
     }
 
-    val taskNumber = MutableStateFlow(0)
+    val mStatusListener: MutableList<IDownloadStatusListener> = mutableListOf()
+    private val mEntityMap = hashMapOf<Long, DownloadTaskEntity>()
 
-    private val mEntityMap = mutableMapOf<Long, DownloadTaskEntity>()
+    fun register(listener: IDownloadStatusListener) {
+        if (!mStatusListener.contains(listener)) {
+            mStatusListener.add(listener)
+        }
+    }
+
+    fun unregister(listener: IDownloadStatusListener) {
+        mStatusListener.remove(listener)
+    }
 
     @DownloadGroup.onTaskComplete
     @DownloadGroup.onTaskCancel
     @DownloadGroup.onTaskFail
-    fun handleTaskEnd(task: DownloadGroupTask) {
-        taskNumber.value -= 1
-        mEntityMap.remove(task.entity.id)
-        Log.d(TAG, "task download end, task: $task")
-    }
-
     @DownloadGroup.onTaskRunning
-    fun handleSubTaskRunning(task: DownloadGroupTask) {
-        mEntityMap[task.entity.id]?.let {
-            Log.d(TAG, "downloading, task id:${task.entity.id}, percent: ${task.percent}")
-        } ?: Log.e(TAG, "entity map could not find the task, task id: ${task.entity.id}")
-    }
-
     @DownloadGroup.onTaskStop
-    fun handleTaskStop(task: DownloadGroupTask) {
-        Log.d(TAG, "task download stop, task: $task")
+    fun handleTaskEnd(task: DownloadGroupTask) {
+        Log.d(
+            TAG,
+            "Task [D${task.entity.id}] download ended, status: ${TaskStatus.fromCode(task.state)}"
+        )
+        val entity = mEntityMap[task.entity.id]!!
+        val status = TaskStatus.fromCode(task.state)
+        mStatusListener.forEach { it.onDownloadStatusChange(entity, task, status) }
+        if (status == TaskStatus.COMPLETED || status == TaskStatus.CANCELLED || status == TaskStatus.FAILURE) {
+            mEntityMap.remove(task.entity.id)
+        }
     }
 
+    /**
+     * 请求下载指定任务的视频资源。
+     *
+     * @param task 包含下载任务必要信息的`DownloadTaskEntity`对象。
+     *
+     * @note 此函数在内部通过异步回调处理网络响应，因此不会立即返回下载结果。
+     *
+     */
     fun requestDownload(task: DownloadTaskEntity) {
         Log.d(TAG, "requestDownload: $task")
+
         NetworkManager.biliVideoRepository.getPlayStreamDash(
             task.biliBvid,
             task.biliCid,
@@ -62,25 +90,72 @@ class DownloadManager(context: Context) {
                     message: String,
                     data: BiliPlayStreamDash
                 ) {
-                    startDownload(task, data)
+                    onGetPlayStreamDashDone(task, httpCode, code, message, data)
                 }
 
                 override fun onFailure(httpCode: Int, code: Int, message: String) {
                     Log.e(TAG, "onFailure: httpCode = $httpCode, code = $code, message = $message")
+                    mStatusListener.forEach { it.onRequestFailed(task, httpCode, code, message) }
                 }
-            })
-        taskNumber.value += 1
+            }
+        )
     }
 
-    private fun startDownload(task: DownloadTaskEntity, dash: BiliPlayStreamDash) {
-        Log.d(TAG, "startDownload: task:$task, dash:$dash")
+    /**
+     * 当获取播放流信息完成时调用此函数。
+     *
+     * 该函数负责处理从BiliPlayStreamDash获取的播放流信息。它尝试根据返回的数据启动下载任务。
+     * 如果在处理过程中遇到任何异常（例如，无法找到对应的视频或音频资源），则会通知所有注册的状态监听器请求失败。
+     *
+     * @param task 当前需要下载的任务实体，包含了下载所需的所有相关信息。
+     * @param httpCode 服务器响应的HTTP状态码。
+     * @param code 业务相关的状态码。
+     * @param message 服务器响应的状态消息或错误消息。
+     * @param data 从服务器获取的播放流数据，包含视频和音频资源的详细信息。
+     *
+     * @throws Exception 如果在获取下载资源的URL过程中遇到问题，例如找不到指定的视频或音频ID对应的资源，则会抛出异常。
+     */
+    fun onGetPlayStreamDashDone(
+        task: DownloadTaskEntity,
+        httpCode: Int,
+        code: Int,
+        message: String,
+        data: BiliPlayStreamDash
+    ) {
+        try {
+            doStartDownload(task, getDownloadResourceUrls(task, data))
+        } catch (e: Exception) {
+            mStatusListener.forEach {
+                it.onRequestFailed(task, httpCode, code, e.message ?: "unknown error")
+            }
+        }
+    }
+
+    /**
+     * 获取下载资源的URL列表。
+     *
+     * 此函数用于从给定的BiliPlayStreamDash对象中检索视频和音频流的URL。
+     * 它会根据DownloadTaskEntity中指定的dashVideoId和dashAudioId来查找对应的视频和音频资源。
+     *
+     * @param task DownloadTaskEntity对象，包含需要下载的视频和音频的ID信息。
+     * @param dash BiliPlayStreamDash对象，包含视频和音频流的详细信息。
+     * @return 包含视频和音频流URL的列表。如果找到对应的视频和音频资源，此列表将包含两个元素；否则，将抛出IllegalArgumentException。
+     * @throws IllegalArgumentException 如果无法在dash参数提供的视频或音频资源中找到与task参数指定的ID匹配的项，则抛出此异常。
+     */
+    private fun getDownloadResourceUrls(
+        task: DownloadTaskEntity,
+        dash: BiliPlayStreamDash
+    ): List<String> {
         val videoDash = dash.video.find { it.id == task.dashVideoId }
             ?: throw IllegalArgumentException("Video(${task.dashVideoId}) not found")
         val audioDash = dash.audio.find { it.id == task.dashAudioId }
             ?: throw IllegalArgumentException("Audio(${task.dashAudioId}) not found")
+        return listOf(videoDash.getStreamUrl(), audioDash.getStreamUrl())
+    }
 
+    private fun doStartDownload(task: DownloadTaskEntity, resourceUrls: List<String>) {
         task.downloadTaskId = Aria.download(this)
-            .loadGroup(listOf(videoDash.getStreamUrl(), audioDash.getStreamUrl()))
+            .loadGroup(resourceUrls)
             .option(HttpOption().apply {
                 NetworkConfig.DOWNLOAD_HEADERS.forEach { (key, value) -> addHeader(key, value) }
                 NetworkConfig.biliCookies?.let { addHeader("Cookie", it) }
@@ -89,10 +164,8 @@ class DownloadManager(context: Context) {
             .unknownSize()
             .create()
 
+        Log.d(TAG, "Task [D${task.downloadTaskId}] start download")
         mEntityMap[task.downloadTaskId!!] = task
-
-        Log.d(TAG, "startDownload: ${task.downloadTaskId}")
-
-        runBlocking { CommonLibs.requireAppDatabase().downloadTaskDao().update(task) }
+        mStatusListener.forEach { it.onStartDownload(task, task.downloadTaskId!!) }
     }
 }
