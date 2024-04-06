@@ -5,7 +5,7 @@ import androidx.room.PrimaryKey
 import java.io.Serializable
 
 @Entity
-data class DownloadHistoryEntity (
+data class DownloadTaskEntity (
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
     val taskId: Long? = null,
     val isDownloadComplete: Boolean,

@@ -3,7 +3,7 @@ package cc.kafuu.bilidownload.service
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import cc.kafuu.bilidownload.common.data.entity.DownloadHistoryEntity
+import cc.kafuu.bilidownload.common.data.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
 import cc.kafuu.bilidownload.common.utils.SerializationUtils.getSerializable
 import com.arialyy.annotations.DownloadGroup
@@ -33,7 +33,7 @@ class DownloadService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        intent?.getSerializable("requestData", DownloadHistoryEntity::class.java)?.let {
+        intent?.getSerializable("requestData", DownloadTaskEntity::class.java)?.let {
             requestDownload(it)
         }
         return super.onStartCommand(intent, flags, startId)
@@ -50,7 +50,7 @@ class DownloadService : Service() {
         mTaskNumber.value -= 1
     }
 
-    private fun requestDownload(data: DownloadHistoryEntity) {
+    private fun requestDownload(data: DownloadTaskEntity) {
 //        val taskId = Aria.download(this).loadGroup(urls)
 //            .setDirPath(CommonLibs.requireDownloadCacheDir().path).create()
 //        mDownloadIdSet.add(taskId)

@@ -6,22 +6,16 @@ import cc.kafuu.bilidownload.common.network.service.BiliApiService
 
 class BiliVideoRepository(biliApiService: BiliApiService) : BiliRepository(biliApiService) {
     companion object {
-        private const val TAG = "VideoStreamRepository"
-
-        object FnvalFlags {
-            const val FORMAT_MP4 = 1
-            const val FORMAT_DASH = 16
-            const val REQUIRE_HDR = 64
-            const val REQUIRE_4K = 128
-            const val REQUIRE_DOLBY_AUDIO = 256
-            const val REQUIRE_DOLBY_VISION = 512
-            const val REQUIRE_8K = 1024
-            const val REQUIRE_AV1 = 2048
-        }
-
-        const val DEFAULT_FLAGS = FnvalFlags.FORMAT_DASH or FnvalFlags.REQUIRE_HDR or
-                FnvalFlags.REQUIRE_4K or FnvalFlags.REQUIRE_DOLBY_AUDIO or
-                FnvalFlags.REQUIRE_DOLBY_VISION or FnvalFlags.REQUIRE_8K or FnvalFlags.REQUIRE_AV1
+        val FNVAL_FLAGS = listOf(
+//            1,    // MP4 格式，仅 H.264 编码（与 FLV、DASH 格式互斥）
+            16,     // DASH 格式	，与 MP4、FLV 格式互斥
+            64,     // 是否需求 HDR 视频，需求 DASH 格式，仅 H.265 编码，需要qn=125，大会员认证
+            128,    // 是否需求 4K 分辨率，该值与fourk字段协同作用，需要qn=120，大会员认证
+            256,    // 是否需求杜比音频，是否需求杜比音频，需求 DASH 格式，大会员认证
+            512,    // 是否需求杜比视界，需求 DASH 格式，大会员认证
+            1024,   // 是否需求 8K 分辨率，需求 DASH 格式，需要qn=127，大会员认证
+            2048    // 是否需求 AV1 编码，需求 DASH 格式
+        ).reduce { acc, flag -> acc or flag }
     }
 
     fun getPlayStreamDash(
@@ -30,7 +24,7 @@ class BiliVideoRepository(biliApiService: BiliApiService) : BiliRepository(biliA
         qn: Int,
         callback: IServerCallback<BiliPlayStreamDash>
     ) {
-        biliApiService.getPlayStream(null, bvid, cid, qn, DEFAULT_FLAGS).enqueue(callback) {
+        biliApiService.getPlayStream(null, bvid, cid, qn, FNVAL_FLAGS).enqueue(callback) {
             it.dash
         }
     }
@@ -41,7 +35,7 @@ class BiliVideoRepository(biliApiService: BiliApiService) : BiliRepository(biliA
         qn: Int,
         callback: IServerCallback<BiliPlayStreamDash>
     ) {
-        biliApiService.getPlayStream(avid, null, cid, qn, DEFAULT_FLAGS).enqueue(callback) {
+        biliApiService.getPlayStream(avid, null, cid, qn, FNVAL_FLAGS).enqueue(callback) {
             it.dash
         }
     }
