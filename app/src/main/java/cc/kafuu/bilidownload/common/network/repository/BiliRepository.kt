@@ -1,7 +1,7 @@
 package cc.kafuu.bilidownload.common.network.repository
 
 import android.util.Log
-import cc.kafuu.bilidownload.common.core.ServerCallback
+import cc.kafuu.bilidownload.common.core.IServerCallback
 import cc.kafuu.bilidownload.common.network.model.BiliRespond
 import cc.kafuu.bilidownload.common.network.service.BiliApiService
 import retrofit2.Call
@@ -14,7 +14,7 @@ open class BiliRepository(protected val biliApiService: BiliApiService) {
     }
 
     protected fun <T, D> Call<BiliRespond<T>>.enqueue(
-        callback: ServerCallback<D>,
+        callback: IServerCallback<D>,
         processingData: (T) -> D
     ) {
         enqueue(object : Callback<BiliRespond<T>> {

@@ -3,7 +3,7 @@ package cc.kafuu.bilidownload.common.network.model
 import com.google.gson.annotations.SerializedName
 
 // Bili取视频流响应
-data class BiliStreamData(
+data class BiliPlayStreamData(
     val quality: Int,
     val format: String,
     @SerializedName("timelength")
@@ -14,22 +14,22 @@ data class BiliStreamData(
     val acceptDescription: List<String>,
     @SerializedName("accept_quality")
     val acceptQuality: List<Int>,
-    val dash: BiliStreamDash
+    val dash: BiliPlayStreamDash
 )
 
 // 外层 Dash 对象
-data class BiliStreamDash(
+data class BiliPlayStreamDash(
     val duration: Int,
     @SerializedName("minBufferTime")
     val minBufferTime: Double,
-    val video: List<BiliStreamResource>,
-    val audio: List<BiliStreamResource>,
+    val video: List<BiliPlayStreamResource>,
+    val audio: List<BiliPlayStreamResource>,
     @SerializedName("support_formats")
-    val supportFormats: List<BiliStreamSupportFormat>
+    val supportFormats: List<BiliPlayStreamSupportFormat>
 )
 
 // 视频信息
-data class BiliStreamResource(
+data class BiliPlayStreamResource(
     val id: Int,
     @SerializedName("baseUrl")
     val baseUrl: String,
@@ -47,13 +47,13 @@ data class BiliStreamResource(
     @SerializedName("startWithSap")
     val startWithSap: Int,
     @SerializedName("SegmentBase")
-    val segmentBase: BiliStreamSegmentBase,
+    val segmentBase: BiliPlayStreamSegmentBase,
     @SerializedName("codecid")
     val codecId: Int
 )
 
 // SegmentBase 信息
-data class BiliStreamSegmentBase(
+data class BiliPlayStreamSegmentBase(
     @SerializedName("Initialization")
     val initialization: String,
     @SerializedName("indexRange")
@@ -61,7 +61,7 @@ data class BiliStreamSegmentBase(
 )
 
 // 支持的格式
-data class BiliStreamSupportFormat(
+data class BiliPlayStreamSupportFormat(
     val quality: Int,
     val format: String,
     @SerializedName("new_description")

@@ -1,6 +1,6 @@
 package cc.kafuu.bilidownload.common.network.service
 import cc.kafuu.bilidownload.common.network.model.BiliRespond
-import cc.kafuu.bilidownload.common.network.model.BiliStreamData
+import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
 import cc.kafuu.bilidownload.common.network.model.BiliWbiData
 import retrofit2.Call
 import retrofit2.http.GET
@@ -22,5 +22,5 @@ interface BiliApiService {
         @Query("fourk") fourk: Int? = 1,
         @Query("platform") platform: String? = null,
         @Query("high_quality") highQuality: Int? = null
-    ): Call<BiliRespond<BiliStreamData>>
+    ): Call<BiliRespond<BiliPlayStreamData>>
 }

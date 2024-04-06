@@ -11,7 +11,7 @@ class WbiManager(private val getLatestWbiKey: () -> Pair<String, String>?) : IWb
 
         // TODO: 需要WBI的API路径
         private val NEED_WBI_PATH = setOf(
-            "x/web-interface/nav"
+            "/x/space/arc/search"
         )
 
         private val mixinKeyEncTab = intArrayOf(
@@ -69,6 +69,8 @@ class WbiManager(private val getLatestWbiKey: () -> Pair<String, String>?) : IWb
      * @return 带有WBI签名的请求参数字符串，如果不需要签名或请求WBI失败，则返回null。
      */
     override fun generateSignature(urlPath: String, params: Map<String, Any>?): String? {
+        Log.d(TAG, "generateSignature: $urlPath, $params")
+
         if (!NEED_WBI_PATH.contains(urlPath)) {
             return null
         }

@@ -1,7 +1,7 @@
 package cc.kafuu.bilidownload.common.network.repository
 
-import cc.kafuu.bilidownload.common.core.ServerCallback
-import cc.kafuu.bilidownload.common.network.model.BiliStreamDash
+import cc.kafuu.bilidownload.common.core.IServerCallback
+import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
 import cc.kafuu.bilidownload.common.network.service.BiliApiService
 
 class BiliVideoRepository(biliApiService: BiliApiService) : BiliRepository(biliApiService) {
@@ -24,26 +24,24 @@ class BiliVideoRepository(biliApiService: BiliApiService) : BiliRepository(biliA
                 FnvalFlags.REQUIRE_DOLBY_VISION or FnvalFlags.REQUIRE_8K or FnvalFlags.REQUIRE_AV1
     }
 
-    private fun getPlayStreamDash(
+    fun getPlayStreamDash(
         bvid: String,
         cid: Long,
         qn: Int,
-        fnval: Int = DEFAULT_FLAGS,
-        callback: ServerCallback<BiliStreamDash>
+        callback: IServerCallback<BiliPlayStreamDash>
     ) {
-        biliApiService.getPlayStream(null, bvid, cid, qn, fnval).enqueue(callback) {
+        biliApiService.getPlayStream(null, bvid, cid, qn, DEFAULT_FLAGS).enqueue(callback) {
             it.dash
         }
     }
 
-    private fun getPlayStreamDash(
+    fun getPlayStreamDash(
         avid: Long,
         cid: Long,
         qn: Int,
-        fnval: Int = DEFAULT_FLAGS,
-        callback: ServerCallback<BiliStreamDash>
+        callback: IServerCallback<BiliPlayStreamDash>
     ) {
-        biliApiService.getPlayStream(avid, null, cid, qn, fnval).enqueue(callback) {
+        biliApiService.getPlayStream(avid, null, cid, qn, DEFAULT_FLAGS).enqueue(callback) {
             it.dash
         }
     }

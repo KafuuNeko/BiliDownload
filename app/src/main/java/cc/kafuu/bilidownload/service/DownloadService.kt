@@ -4,7 +4,7 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import cc.kafuu.bilidownload.common.data.entity.DownloadHistoryEntity
-import cc.kafuu.bilidownload.common.network.model.BiliStreamData
+import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
 import cc.kafuu.bilidownload.common.utils.SerializationUtils.getSerializable
 import com.arialyy.annotations.DownloadGroup
 import com.arialyy.aria.core.Aria
@@ -58,7 +58,7 @@ class DownloadService : Service() {
 
     }
 
-    private fun startDownload(data: BiliStreamData) {
+    private fun startDownload(data: BiliPlayStreamData) {
 
     }
 }
