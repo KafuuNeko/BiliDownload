@@ -3,30 +3,33 @@ package cc.kafuu.bilidownload.common.core
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.result.ActivityResult
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import androidx.annotation.LayoutRes
-import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import cc.kafuu.bilidownload.common.manager.ActivityStackManager
 import cc.kafuu.bilidownload.model.ActivityJumpData
 
-
-abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
+abstract class CoreFragment<V : ViewDataBinding, VM : CoreViewModel>(
     private val vmClass: Class<VM>,
     @LayoutRes private val layoutId: Int,
     private val viewModelId: Int
-) : AppCompatActivity() {
+) : Fragment() {
+
     protected lateinit var mViewDataBinding: V
     protected lateinit var mViewModel: VM
 
-    protected abstract fun initViews()
+    abstract fun initViews()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        ActivityStackManager.pushActivity(this)
-        mViewDataBinding = DataBindingUtil.setContentView(this, layoutId)
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        mViewDataBinding = DataBindingUtil.inflate(inflater, layoutId, container, false)
         mViewModel = ViewModelProvider(this)[vmClass]
         if (viewModelId != 0) {
             mViewDataBinding.setVariable(viewModelId, mViewModel)
@@ -34,24 +37,14 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
         mViewDataBinding.lifecycleOwner = this
         initActJumpData()
         initViews()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        if (isFinishing) {
-            ActivityStackManager.removeActivity(this)
-        }
-    }
-
-    fun finishActivity(activityResult: ActivityResult? = null) {
-        mViewModel.finishActivity(activityResult)
+        return mViewDataBinding.root
     }
 
     private fun initActJumpData() {
         if (mViewModel.activityJumpLiveData.hasObservers()) {
             return
         }
-        mViewModel.activityJumpLiveData.observe(this) {
+        mViewModel.activityJumpLiveData.observe(viewLifecycleOwner) {
             onActivityJumpLiveDataChange(it)
         }
     }
@@ -63,7 +56,7 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
 
         jumpData.targetClass?.let { targetClass ->
             (jumpData.targetIntent ?: Intent()).apply {
-                component = ComponentName(this@CoreActivity, targetClass)
+                component = ComponentName(requireActivity(), targetClass)
             }.also { targetIntent ->
                 startActivity(targetIntent)
             }
@@ -71,9 +64,9 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
 
         if (jumpData.finishCurrent) {
             jumpData.activityResult?.let { activityResult ->
-                setResult(activityResult.resultCode, activityResult.data)
+                requireActivity().setResult(activityResult.resultCode, activityResult.data)
             }
-            finish()
+            requireActivity().finish()
         }
 
         jumpData.isDeprecated = true

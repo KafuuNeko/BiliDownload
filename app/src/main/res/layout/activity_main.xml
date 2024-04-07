@@ -20,6 +20,7 @@
         tools:context=".view.activity.MainActivity">
 
         <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/vp2_content"
             android:layout_width="0dp"
             android:layout_height="0dp"
             app:layout_constraintBottom_toTopOf="@+id/ll_main_tab"
@@ -39,6 +40,7 @@
                 android:id="@+id/rb_home"
                 style="@style/style_main_tab"
                 android:checked="@{viewModel.tabPositionLiveData==MainTabType.TAB_HOME}"
+                android:onClick="@{()->viewModel.doChangeTabPosition(MainTabType.TAB_HOME)}"
                 android:drawableTop="@drawable/selector_tab_home"
                 android:gravity="center"
                 android:text="@string/rb_home_text" />
@@ -47,6 +49,7 @@
                 android:id="@+id/rb_me"
                 style="@style/style_main_tab"
                 android:checked="@{viewModel.tabPositionLiveData==MainTabType.TAB_ME}"
+                android:onClick="@{()->viewModel.doChangeTabPosition(MainTabType.TAB_ME)}"
                 android:drawableTop="@drawable/selector_tab_me"
                 android:gravity="center"
                 android:text="@string/rb_me_text" />

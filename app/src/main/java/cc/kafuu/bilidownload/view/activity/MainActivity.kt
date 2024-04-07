@@ -1,20 +1,17 @@
 package cc.kafuu.bilidownload.view.activity
 
-import android.util.Log
+import androidx.fragment.app.Fragment
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
+import cc.kafuu.bilidownload.common.adapter.FragmentAdapter
 import cc.kafuu.bilidownload.common.core.CoreActivity
-import cc.kafuu.bilidownload.common.core.IServerCallback
-import cc.kafuu.bilidownload.common.data.entity.DownloadTaskEntity
-import cc.kafuu.bilidownload.common.jniexport.FFMpegJNI
-import cc.kafuu.bilidownload.common.network.manager.NetworkManager
-import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
-import cc.kafuu.bilidownload.common.utils.CommonLibs
 import cc.kafuu.bilidownload.databinding.ActivityMainBinding
-import cc.kafuu.bilidownload.service.DownloadService
+import cc.kafuu.bilidownload.model.MainTabType
+import cc.kafuu.bilidownload.view.fragment.HomeFragment
+import cc.kafuu.bilidownload.view.fragment.MeFragment
 import cc.kafuu.bilidownload.viewmodel.MainViewModel
-import kotlinx.coroutines.runBlocking
 
+@Suppress("DEPRECATED_IDENTITY_EQUALS")
 class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
     MainViewModel::class.java,
     R.layout.activity_main,
@@ -25,7 +22,7 @@ class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
         private const val TAG = "MainActivity"
     }
 
-    override fun init() {
+//    override fun initViews() {
 //        mViewDataBinding.sampleText.text = FFMpegJNI.ffmpegInfo()
 //
 //
@@ -75,5 +72,28 @@ class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
 //                "/storage/emulated/0/Android/data/cc.kafuu.bilidownload/files/cache/download/task-e10/1169319048-1-30032.mp4"),
 //            arrayOf()
 //        )
+//    }
+
+    override fun initViews() {
+        mViewDataBinding.vp2Content.apply {
+            adapter = FragmentAdapter(supportFragmentManager, lifecycle).apply {
+                addFragmentView(getFragments())
+            }
+            isUserInputEnabled = false
+            currentItem = MainTabType.TAB_HOME
+        }
+        mViewDataBinding.rbHome.apply {
+            isChecked = true
+        }
+        mViewModel.tabPositionLiveData.observe(this) { position ->
+            if (mViewDataBinding.vp2Content.currentItem !== position) {
+                mViewDataBinding.vp2Content.setCurrentItem(position, false)
+            }
+        }
     }
+
+    private fun getFragments() = listOf(
+        HomeFragment.newInstance(),
+        MeFragment.newInstance()
+    )
 }

@@ -6,4 +6,8 @@ import cc.kafuu.bilidownload.model.MainTabType
 
 class MainViewModel: CoreViewModel() {
     val tabPositionLiveData = MutableLiveData(MainTabType.TAB_HOME)
+
+    fun doChangeTabPosition(@MainTabType position: Int) {
+        tabPositionLiveData.value = position
+    }
 }
