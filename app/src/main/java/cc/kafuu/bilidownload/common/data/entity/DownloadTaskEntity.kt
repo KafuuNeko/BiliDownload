@@ -2,6 +2,11 @@ package cc.kafuu.bilidownload.common.data.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
+import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
+import cc.kafuu.bilidownload.common.utils.CommonLibs
+import cc.kafuu.bilidownload.common.utils.MimeTypeUtils
+import java.io.File
 
 @Entity
 data class DownloadTaskEntity(
@@ -10,13 +15,14 @@ data class DownloadTaskEntity(
     var status: Int = STATUS_PREPARE,
     val biliBvid: String,
     val biliCid: Long,
-    val biliQn: Int,
     val dashVideoId: Long,
     val dashVideoMimeType: String,
     val dashVideoCodecs: String,
+    val dashVideoCodecId: Long,
     val dashAudioId: Long,
     val dashAudioMimeType: String,
     val dashAudioCodecs: String,
+    val dashAudioCodecId: Long,
 ) {
     companion object {
         // 准备好下载
@@ -40,23 +46,53 @@ data class DownloadTaskEntity(
         fun createEntity(
             bvid: String,
             cid: Long,
-            qn: Int,
             videoId: Long,
             videoMimeType: String,
             videoCodecs: String,
+            videoCodecId: Long,
             audioId: Long,
             audioMimeType: String,
-            audioCodecs: String
+            audioCodecs: String,
+            audioCodecId: Long
         ) = DownloadTaskEntity(
             biliBvid = bvid,
             biliCid = cid,
-            biliQn = qn,
             dashVideoId = videoId,
             dashVideoMimeType = videoMimeType,
             dashVideoCodecs = videoCodecs,
+            dashVideoCodecId = videoCodecId,
             dashAudioId = audioId,
             dashAudioMimeType = audioMimeType,
-            dashAudioCodecs = audioCodecs
+            dashAudioCodecs = audioCodecs,
+            dashAudioCodecId = audioCodecId
+        )
+
+        fun createEntity(
+            bvid: String,
+            cid: Long,
+            video: BiliPlayStreamResource,
+            audio: BiliPlayStreamResource
+        ) = DownloadTaskEntity(
+            biliBvid = bvid,
+            biliCid = cid,
+            dashVideoId = video.id,
+            dashVideoMimeType = video.mimeType,
+            dashVideoCodecs = video.codecs,
+            dashVideoCodecId = video.codecId,
+            dashAudioId = audio.id,
+            dashAudioMimeType = audio.mimeType,
+            dashAudioCodecs = audio.codecs,
+            dashAudioCodecId = audio.codecId
         )
     }
+
+
+    fun getDefaultOutputFile(): File? {
+        // 根据mimetype取得文件后缀名
+        val suffix = MimeTypeUtils.getExtensionFromMimeType(dashVideoMimeType)
+            ?: return null
+        // 取得合成文件输出路径
+        return File(CommonLibs.requireResourcesDir(), "${id}.$suffix")
+    }
+
 }

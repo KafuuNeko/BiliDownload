@@ -30,9 +30,8 @@ class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
 
 
         NetworkManager.biliVideoRepository.getPlayStreamData(
-            "BV1Fz4y1v7tJ",
-            1169319048,
-            null,
+            "BV1Ai4y197Wt",
+            481763422,
             object :
                 IServerCallback<BiliPlayStreamData> {
                 override fun onSuccess(
@@ -46,19 +45,17 @@ class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
                         "onSuccess: httpCode: $httpCode, code: $code, message: $message, data: $data"
                     )
 
+                    Log.d(
+                        TAG,
+                        "onSuccess: ${data.dash.video.map { "${it.id}, ${it.codecs}, ${it.mimeType}" }}}"
+                    )
                     runBlocking {
-                        val videoDash = data.dash.video[0]
-                        val audioDash = data.dash.audio[1]
                         val taskId = CommonLibs.requireAppDatabase().downloadTaskDao().insert(
                             DownloadTaskEntity.createEntity(
-                                "BV1Fz4y1v7tJ", 1169319048,
-                                qn = data.acceptQuality[0],
-                                videoId =  videoDash.id,
-                                videoMimeType =  videoDash.mimeType,
-                                videoCodecs = videoDash.codecs,
-                                audioId = audioDash.id,
-                                audioMimeType = audioDash.mimeType,
-                                audioCodecs = audioDash.codecs
+                                "BV1Ai4y197Wt",
+                                481763422,
+                                data.dash.video[2],
+                                data.dash.audio[2]
                             )
                         )
                         DownloadService.startDownload(this@MainActivity, taskId)

@@ -49,7 +49,7 @@ data class BiliPlayStreamResource(
     @SerializedName("SegmentBase")
     val segmentBase: BiliPlayStreamSegmentBase,
     @SerializedName("codecid")
-    val codecId: Int
+    val codecId: Long
 ) {
     fun getStreamUrl(): String {
         baseUrl?.let { return it }

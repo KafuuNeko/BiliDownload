@@ -11,4 +11,13 @@
     <string name="notification_title_download_foreground">BVD正在下载</string>
     <string name="notification_title_download_end">下载任务结束</string>
     <string name="notification_title_download_inventory">共 %d 个任务 - 成功：%d，失败：%d，取消：%d。</string>
+    <string name="notification_cancelled_download_title">取消下载任务</string>
+    <string name="notification_cancelled_download_message">您已取消了%s的下载任务</string>
+    <string name="notification_download_failed_title">下载失败</string>
+    <string name="notification_download_failed_message">任务%s下载失败</string>
+    <string name="notification_synthesis_failed_title">合成失败</string>
+    <string name="notification_synthesis_failed_message">任务%s合成资源失败</string>
+    <string name="notification_request_failed_title">下载请求失败</string>
+    <string name="notification_request_failed_message">任务%s下载请求失败，请求代码[%d], 返回代码[%d]，错误信息[%s]</string>
+    <string name="notification_downloading_title">正在下载%s</string>
 </resources>

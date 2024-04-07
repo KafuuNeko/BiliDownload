@@ -114,7 +114,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
 
-    //w
+    //retrofit
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
 

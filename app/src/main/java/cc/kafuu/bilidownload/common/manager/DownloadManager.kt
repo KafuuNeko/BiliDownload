@@ -84,7 +84,6 @@ class DownloadManager {
         NetworkManager.biliVideoRepository.getPlayStreamDash(
             entity.biliBvid,
             entity.biliCid,
-            entity.biliQn,
             object : IServerCallback<BiliPlayStreamDash> {
                 override fun onSuccess(
                     httpCode: Int,
@@ -148,10 +147,12 @@ class DownloadManager {
         task: DownloadTaskEntity,
         dash: BiliPlayStreamDash
     ): List<String> {
-        val videoDash = dash.video.find { it.id == task.dashVideoId }
-            ?: throw IllegalArgumentException("Video(${task.dashVideoId}) not found")
-        val audioDash = dash.audio.find { it.id == task.dashAudioId }
-            ?: throw IllegalArgumentException("Audio(${task.dashAudioId}) not found")
+        val videoDash =
+            dash.video.find { it.id == task.dashVideoId && it.codecId == task.dashVideoCodecId }
+                ?: throw IllegalArgumentException("Video(${task.dashVideoId}) not found")
+        val audioDash =
+            dash.audio.find { it.id == task.dashAudioId && it.codecId == task.dashAudioCodecId }
+                ?: throw IllegalArgumentException("Audio(${task.dashAudioId}) not found")
         return listOf(videoDash.getStreamUrl(), audioDash.getStreamUrl())
     }
 

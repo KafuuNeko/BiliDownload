@@ -22,10 +22,9 @@ class BiliVideoRepository(biliApiService: BiliApiService) : BiliRepository(biliA
     fun getPlayStreamDash(
         bvid: String,
         cid: Long,
-        qn: Int?,
         callback: IServerCallback<BiliPlayStreamDash>
     ) {
-        biliApiService.getPlayStream(null, bvid, cid, qn, FNVAL_FLAGS).enqueue(callback) {
+        biliApiService.getPlayStream(null, bvid, cid, null, FNVAL_FLAGS).enqueue(callback) {
             it.dash
         }
     }
@@ -33,9 +32,8 @@ class BiliVideoRepository(biliApiService: BiliApiService) : BiliRepository(biliA
     fun getPlayStreamData(
         bvid: String,
         cid: Long,
-        qn: Int?,
         callback: IServerCallback<BiliPlayStreamData>
     ) {
-        biliApiService.getPlayStream(null, bvid, cid, qn, FNVAL_FLAGS).enqueue(callback) { it }
+        biliApiService.getPlayStream(null, bvid, cid, null, FNVAL_FLAGS).enqueue(callback) { it }
     }
 }

@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import cc.kafuu.bilidownload.common.data.dao.DownloadTaskDao
+import cc.kafuu.bilidownload.common.data.dao.ResourceDao
 import cc.kafuu.bilidownload.common.data.entity.BiliVideoMainEntity
 import cc.kafuu.bilidownload.common.data.entity.BiliVideoPartEntity
 import cc.kafuu.bilidownload.common.data.entity.DownloadTaskEntity
@@ -40,4 +41,5 @@ abstract class AppDatabase : RoomDatabase() {
     }
 
     abstract fun downloadTaskDao(): DownloadTaskDao
+    abstract fun resourceDao(): ResourceDao
 }
