@@ -3,14 +3,17 @@ package cc.kafuu.bilidownload.common.jniexport
 object FFMpegJNI {
     init {
         System.loadLibrary("ffmpeg-lib")
+        init()
     }
+
+    external fun init()
 
     external fun ffmpegInfo(): String
     external fun videoFormatConversion(from: String, to: String): Int
     external fun extractAudio(from: String, to: String): Int
     external fun getVideoAudioFormat(from: String): String
 
-    external fun mergeAudioAndVideo(output: String, audio: String, video: String): Boolean
+    external fun mergeMedia(output: String, resources: Array<String>, mimeTypes: Array<String>? = null): Boolean
 
     /**
      * 返回示例

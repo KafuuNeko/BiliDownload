@@ -3,6 +3,7 @@ import com.android.build.api.dsl.Packaging
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    id("com.google.devtools.ksp") version "1.9.21-1.0.15"
     id("kotlin-kapt")
 }
 
@@ -87,6 +88,9 @@ android {
             isUniversalApk = true
         }
     }
+    packaging {
+        resources.excludes.add("META-INF/INDEX.LIST")
+    }
 }
 
 dependencies {
@@ -95,12 +99,31 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.material)
     implementation(libs.androidx.constraintlayout)
 
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
+
+    //gson
+    implementation(libs.google.gson)
+
     //coroutines
+    implementation(libs.androidx.room.ktx)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
+
+    //retrofit
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+
+    //Aria
+    implementation(libs.aria.core)
+    kapt(libs.aria.compiler)
+
+    //hutool crypto
+    implementation(libs.hutool.crypto)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
