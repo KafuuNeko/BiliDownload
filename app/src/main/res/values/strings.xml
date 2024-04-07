@@ -20,4 +20,6 @@
     <string name="notification_request_failed_title">下载请求失败</string>
     <string name="notification_request_failed_message">任务%s下载请求失败，请求代码[%d], 返回代码[%d]，错误信息[%s]</string>
     <string name="notification_downloading_title">正在下载%s</string>
+    <string name="rb_home_text">主页</string>
+    <string name="rb_me_text">我的</string>
 </resources>
