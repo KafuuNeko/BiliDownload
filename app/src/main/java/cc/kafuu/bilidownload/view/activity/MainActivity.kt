@@ -30,8 +30,8 @@ class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
 
 
         NetworkManager.biliVideoRepository.getPlayStreamData(
-            "BV1e34y1V7EF",
-            1290262561L,
+            "BV1Fz4y1v7tJ",
+            1169319048,
             null,
             object :
                 IServerCallback<BiliPlayStreamData> {
@@ -47,10 +47,18 @@ class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
                     )
 
                     runBlocking {
+                        val videoDash = data.dash.video[0]
+                        val audioDash = data.dash.audio[1]
                         val taskId = CommonLibs.requireAppDatabase().downloadTaskDao().insert(
-                            DownloadTaskEntity(
-                                0, null, false, "BV1e34y1V7EF", 1290262561L,
-                                data.acceptQuality[0], data.dash.video[0].id, data.dash.audio[0].id
+                            DownloadTaskEntity.createEntity(
+                                "BV1Fz4y1v7tJ", 1169319048,
+                                qn = data.acceptQuality[0],
+                                videoId =  videoDash.id,
+                                videoMimeType =  videoDash.mimeType,
+                                videoCodecs = videoDash.codecs,
+                                audioId = audioDash.id,
+                                audioMimeType = audioDash.mimeType,
+                                audioCodecs = audioDash.codecs
                             )
                         )
                         DownloadService.startDownload(this@MainActivity, taskId)
@@ -64,5 +72,11 @@ class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
                 }
 
             })
+//        FFMpegJNI.mergeMedia("/storage/emulated/0/Android/data/cc.kafuu.bilidownload/files/cache/download/task-e10/merge2.mp4",
+//            arrayOf(
+//                "/storage/emulated/0/Android/data/cc.kafuu.bilidownload/files/cache/download/task-e10/1169319048-1-30216.mp4",
+//                "/storage/emulated/0/Android/data/cc.kafuu.bilidownload/files/cache/download/task-e10/1169319048-1-30032.mp4"),
+//            arrayOf()
+//        )
     }
 }

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef AV_FORMAT_H
+#define AV_FORMAT_H
 
 #include <string>
 #include <memory>
@@ -13,7 +14,7 @@ extern "C" {
 namespace ffmpeg {
     class AvFormat {
     public:
-        AvFormat(const std::string &filename);
+        AvFormat(const std::string &filename, AVInputFormat *fmt = nullptr);
 
         bool extract(const std::string &outputFilename,
                      std::function<bool(size_t index, AVStream *stream)> streamFilter = nullptr,
@@ -38,10 +39,9 @@ namespace ffmpeg {
         int32_t ec = 0;
     };
 
-    bool mergeAVFormatContexts(const std::string &output, const std::initializer_list<AvFormat> &formats);
+    bool mergeAVFormatContexts(const std::string &output, const std::vector<AvFormat> &formats);
 
-    AvFormat getFormat(const char *filename);
+    AvFormat getFormat(const std::string &filename, AVInputFormat *fmt = nullptr);
 }
 
-
-
+#endif

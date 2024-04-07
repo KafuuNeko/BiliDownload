@@ -50,11 +50,13 @@ class DownloadManager {
         mStatusListener.remove(listener)
     }
 
+    @Synchronized
     @DownloadGroup.onTaskComplete
     @DownloadGroup.onTaskCancel
     @DownloadGroup.onTaskFail
     @DownloadGroup.onTaskRunning
     @DownloadGroup.onTaskStop
+    @DownloadGroup.onTaskStart
     fun handleTaskEnd(task: DownloadGroupTask) {
         Log.d(
             TAG,
@@ -63,7 +65,7 @@ class DownloadManager {
         val entity = mEntityMap[task.entity.id]!!
         val status = TaskStatus.fromCode(task.state)
         mStatusListener.forEach { it.onDownloadStatusChange(entity, task, status) }
-        if (status == TaskStatus.COMPLETED || status == TaskStatus.CANCELLED || status == TaskStatus.FAILURE) {
+        if (status.isEndStatus) {
             mEntityMap.remove(task.entity.id)
         }
     }
@@ -76,13 +78,13 @@ class DownloadManager {
      * @note 此函数在内部通过异步回调处理网络响应，因此不会立即返回下载结果。
      *
      */
-    fun requestDownload(task: DownloadTaskEntity) {
-        Log.d(TAG, "requestDownload: $task")
+    fun requestDownload(entity: DownloadTaskEntity) {
+        Log.d(TAG, "Task [E${entity.id}] request download")
 
         NetworkManager.biliVideoRepository.getPlayStreamDash(
-            task.biliBvid,
-            task.biliCid,
-            task.biliQn,
+            entity.biliBvid,
+            entity.biliCid,
+            entity.biliQn,
             object : IServerCallback<BiliPlayStreamDash> {
                 override fun onSuccess(
                     httpCode: Int,
@@ -90,12 +92,12 @@ class DownloadManager {
                     message: String,
                     data: BiliPlayStreamDash
                 ) {
-                    onGetPlayStreamDashDone(task, httpCode, code, message, data)
+                    onGetPlayStreamDashDone(entity, httpCode, code, message, data)
                 }
 
                 override fun onFailure(httpCode: Int, code: Int, message: String) {
                     Log.e(TAG, "onFailure: httpCode = $httpCode, code = $code, message = $message")
-                    mStatusListener.forEach { it.onRequestFailed(task, httpCode, code, message) }
+                    mStatusListener.forEach { it.onRequestFailed(entity, httpCode, code, message) }
                 }
             }
         )
@@ -116,17 +118,17 @@ class DownloadManager {
      * @throws Exception 如果在获取下载资源的URL过程中遇到问题，例如找不到指定的视频或音频ID对应的资源，则会抛出异常。
      */
     fun onGetPlayStreamDashDone(
-        task: DownloadTaskEntity,
+        entity: DownloadTaskEntity,
         httpCode: Int,
         code: Int,
         message: String,
         data: BiliPlayStreamDash
     ) {
         try {
-            doStartDownload(task, getDownloadResourceUrls(task, data))
+            doStartDownload(entity, getDownloadResourceUrls(entity, data))
         } catch (e: Exception) {
             mStatusListener.forEach {
-                it.onRequestFailed(task, httpCode, code, e.message ?: "unknown error")
+                it.onRequestFailed(entity, httpCode, code, e.message ?: "unknown error")
             }
         }
     }
@@ -153,19 +155,18 @@ class DownloadManager {
         return listOf(videoDash.getStreamUrl(), audioDash.getStreamUrl())
     }
 
-    private fun doStartDownload(task: DownloadTaskEntity, resourceUrls: List<String>) {
-        task.downloadTaskId = Aria.download(this)
+    @Synchronized
+    private fun doStartDownload(entity: DownloadTaskEntity, resourceUrls: List<String>) {
+        entity.downloadTaskId = Aria.download(this)
             .loadGroup(resourceUrls)
             .option(HttpOption().apply {
                 NetworkConfig.DOWNLOAD_HEADERS.forEach { (key, value) -> addHeader(key, value) }
                 NetworkConfig.biliCookies?.let { addHeader("Cookie", it) }
             })
-            .setDirPath(CommonLibs.requireDownloadCacheDir("task-${task.id}").path)
+            .setDirPath(CommonLibs.requireDownloadCacheDir(entity.id).path)
             .unknownSize()
             .create()
-
-        Log.d(TAG, "Task [D${task.downloadTaskId}] start download")
-        mEntityMap[task.downloadTaskId!!] = task
-        mStatusListener.forEach { it.onStartDownload(task, task.downloadTaskId!!) }
+        mEntityMap[entity.downloadTaskId!!] = entity
+        Log.d(TAG, "Task [D${entity.downloadTaskId}] start download")
     }
 }

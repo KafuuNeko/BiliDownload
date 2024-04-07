@@ -11,7 +11,7 @@ using namespace ffmpeg;
 
 static auto TAG = "AvFormat";
 
-AvFormat::AvFormat(const std::string &filename) {
+AvFormat::AvFormat(const std::string &filename, AVInputFormat *fmt) {
     //尝试打开输入文件（fmt置空，自动通过文件名检测格式）
     mInputFormatCtx = utils::avformatOpenInputPtr(filename.c_str(), nullptr, nullptr, &ec);
     if (!mInputFormatCtx) {
@@ -126,7 +126,7 @@ std::string AvFormat::getFormat() {
     return "";
 }
 
-bool ffmpeg::mergeAVFormatContexts(const std::string &output, const std::initializer_list<AvFormat> &formats) {
+bool ffmpeg::mergeAVFormatContexts(const std::string &output, const std::vector<AvFormat> &formats) {
     int32_t ec = 0;
     auto outputContext = utils::avformatAllocOutputContextUniquePtr(
             nullptr,
@@ -159,6 +159,6 @@ bool ffmpeg::mergeAVFormatContexts(const std::string &output, const std::initial
     return ec == 0;
 }
 
-AvFormat ffmpeg::getFormat(const char *filename) {
-    return AvFormat(filename);
+AvFormat ffmpeg::getFormat(const std::string &filename, AVInputFormat *fmt) {
+    return AvFormat(filename, fmt);
 }

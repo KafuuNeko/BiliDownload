@@ -15,8 +15,10 @@ abstract class NotificationHelper(protected val mContext: Context) {
         private const val NOTIFICATION_ID_KEY = "notification_id"
     }
 
-    private val prefs: SharedPreferences = mContext.getSharedPreferences("notification_id", Context.MODE_PRIVATE)
-
+    private val prefs: SharedPreferences =
+        mContext.getSharedPreferences("notification_id", Context.MODE_PRIVATE)
+    protected val mNotificationManager =
+        mContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
     protected abstract fun getChannelId(): String
     protected abstract fun getChannelName(): CharSequence

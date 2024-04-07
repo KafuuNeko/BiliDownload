@@ -22,9 +22,7 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
     }
 
     fun showMessageNotification(title: CharSequence, message: CharSequence) {
-        val notificationManager =
-            mContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(
+        mNotificationManager.notify(
             getNewNotificationId(), getNotificationBuild(
                 R.drawable.ic_download, title, message
             ).build()

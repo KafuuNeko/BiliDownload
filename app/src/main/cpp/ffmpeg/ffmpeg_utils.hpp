@@ -1,7 +1,12 @@
 //
 // Created by kafuu on 2024/4/3.
 //
-#pragma once
+#ifndef FFMPEG_UTILS_H
+#define FFMPEG_UTILS_H
+
+#include <memory>
+#include <map>
+#include <string>
 
 extern "C" {
 #include "libavformat/avformat.h"
@@ -9,12 +14,39 @@ extern "C" {
 }
 
 #include "android_log.hpp"
-#include <memory>
-#include <map>
+
 
 namespace ffmpeg::utils {
 
-    constexpr auto TAG = "ffmpeg_utils";
+    constexpr auto TAG = "FFMpegUtils";
+
+    static AVInputFormat *findFormatForMimeType(const std::string &mimeType) {
+        // MIME 类型到 FFmpeg 格式名称的映射
+        static const std::map<std::string, std::string> mime_to_format = {
+                {"audio/mp4",        "mp4"},
+                {"video/mp4",        "mp4"},
+                {"audio/aac",        "aac"},
+                {"audio/mpeg",       "mp3"},
+                {"audio/ogg",        "ogg"},
+                {"video/ogg",        "ogg"},
+                {"audio/wav",        "wav"},
+                {"audio/webm",       "webm"},
+                {"video/webm",       "webm"},
+                {"audio/x-flac",     "flac"},
+                {"audio/x-ms-wma",   "asf"},
+                {"video/x-msvideo",  "avi"},
+                {"video/x-matroska", "matroska"},
+                {"video/quicktime",  "mov"},
+                {"video/x-flv",      "flv"},
+                {"video/x-ms-wmv",   "asf"},
+        };
+        auto it = mime_to_format.find(mimeType);
+        if (it != mime_to_format.end()) {
+            return av_find_input_format(it->second.data());
+        } else {
+            return nullptr;
+        }
+    }
 
     /**
      * @brief 复制输入流的设置到输出流。
@@ -75,6 +107,12 @@ namespace ffmpeg::utils {
                 log::error(TAG, "Failed to copy codec context to outStream codec-par context");
                 return rc;
             }
+
+            // 设置输出流的帧率与输入流相同
+            outStream->r_frame_rate = inStream->r_frame_rate;
+            outStream->avg_frame_rate = inStream->avg_frame_rate;
+
+            avcodec_free_context(&codecCtx);
         }
 
         return 0;
@@ -90,19 +128,30 @@ namespace ffmpeg::utils {
      * @param inputCtx 输入流的AVFormatContext。
      * @param outputCtx 输出流的AVFormatContext。
      * @param filter 筛选拷贝的packet
+     * @param indexMap 输入流索引->输出流索引映射函数
+     *
      * @return int 成功返回0，失败返回非0错误码。
      */
     static int copyAndConvertPackets(
             AVFormatContext *inputCtx,
             AVFormatContext *outputCtx,
-            std::function<bool(size_t index, AVPacket *packet)> filter = nullptr) {
+            std::function<bool(size_t index, AVPacket *packet)> filter = nullptr,
+            std::function<size_t(size_t inputStreamIndex)> indexMap = nullptr) {
         AVPacket pkt;
         int32_t rc;
         size_t frameIndex = 0;
 
         while ((rc = av_read_frame(inputCtx, &pkt)) >= 0) {
-            AVStream *inStream = inputCtx->streams[pkt.stream_index];
-            AVStream *outStream = outputCtx->streams[pkt.stream_index];
+            size_t inputStreamIndex = pkt.stream_index;
+            size_t outputStreamIndex = pkt.stream_index;
+
+            // 若是存在映射函数则将输入流索引映射到输出流索引
+            if (indexMap) {
+                outputStreamIndex = indexMap(inputStreamIndex);
+            }
+
+            AVStream *inStream = inputCtx->streams[inputStreamIndex];
+            AVStream *outStream = outputCtx->streams[outputStreamIndex];
 
             if (filter && !filter(frameIndex, &pkt)) {
                 continue;
@@ -116,10 +165,15 @@ namespace ffmpeg::utils {
             pkt.duration = av_rescale_q(pkt.duration, inStream->time_base, outStream->time_base);
             pkt.pos = -1;
 
+            // 确保调整后的数据包的流索引是正确的
+//            pkt.stream_index = av_find_best_stream(outputCtx, inStream->codecpar->codec_type, -1,
+//                                                   -1, NULL, 0);
+            pkt.stream_index = outputStreamIndex;
+
             // 写入调整后的数据包到输出流
             rc = av_interleaved_write_frame(outputCtx, &pkt);
             if (rc < 0) {
-                log::error(TAG, "Error maxing packet, error code: %d", rc);
+                log::error(TAG, "Error muxing packet, error code: %d", rc);
                 av_packet_unref(&pkt);
                 return rc;
             }
@@ -147,7 +201,7 @@ namespace ffmpeg::utils {
         std::map<AVFormatContext *, size_t> indexMap;
 
         // 复制context设置
-        for (auto &ctx : contexts) {
+        for (auto &ctx: contexts) {
             indexMap[ctx] = output->nb_streams;
             if ((rc = copyStreamSettings(ctx, output)) < 0) {
                 log::error(TAG, "Failed to copy video stream settings, error code: %d", rc);
@@ -162,13 +216,12 @@ namespace ffmpeg::utils {
         }
 
         // 复制context packets
-        for (auto &ctx : contexts) {
-            auto packetFilter = [&](size_t index, AVPacket *packet)->bool {
+        for (auto &ctx: contexts) {
+            auto indexMapLambda = [&](size_t index) -> size_t {
                 // 重新映射steam index
-                packet->stream_index = packet->stream_index + indexMap[ctx];
-                return true;
+                return index + indexMap[ctx];
             };
-            if ((rc = copyAndConvertPackets(ctx, output, packetFilter)) < 0) {
+            if ((rc = copyAndConvertPackets(ctx, output, nullptr, indexMapLambda)) < 0) {
                 log::error(TAG, "Failed to copy and convert video packets, error code: %d", rc);
                 return rc;
             }
@@ -256,3 +309,5 @@ namespace ffmpeg::utils {
         return std::unique_ptr<AVFormatContext, decltype(deleter)>(inputContext, deleter);
     }
 }
+
+#endif

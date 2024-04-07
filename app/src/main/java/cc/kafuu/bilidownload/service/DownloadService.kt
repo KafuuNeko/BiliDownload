@@ -7,17 +7,20 @@ import android.content.Intent
 import android.os.IBinder
 import android.util.Log
 import cc.kafuu.bilidownload.common.data.entity.DownloadTaskEntity
+import cc.kafuu.bilidownload.common.jniexport.FFMpegJNI
 import cc.kafuu.bilidownload.common.manager.DownloadManager
 import cc.kafuu.bilidownload.common.manager.IDownloadStatusListener
 import cc.kafuu.bilidownload.common.utils.CommonLibs
+import cc.kafuu.bilidownload.common.utils.MimeTypeUtils
 import cc.kafuu.bilidownload.notification.DownloadNotification
 import com.arialyy.aria.core.Aria
 import com.arialyy.aria.core.task.DownloadGroupTask
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import java.io.File
 import kotlin.properties.Delegates
 
 class DownloadService : Service(), IDownloadStatusListener {
@@ -57,6 +60,7 @@ class DownloadService : Service(), IDownloadStatusListener {
         super.onDestroy()
         Aria.download(this).unRegister()
         mDownloadManager.unregister(this)
+        mServiceScope.cancel()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -73,18 +77,20 @@ class DownloadService : Service(), IDownloadStatusListener {
     override fun onBind(intent: Intent?): IBinder? = null
 
     /**
-     * 开始请求下载资源 */
+     * 开始请求下载资源
+     * @param taskId entity id
+     * */
     private suspend fun doRequestDownload(taskId: Long) {
         mDownloadTaskDao.getDownloadTaskById(taskId)?.let {
             mDownloadManager.requestDownload(it)
         } ?: {
-            Log.e(TAG, "Task [D$taskId] get download task entity failed")
+            Log.e(TAG, "Task [E$taskId] get download task entity failed")
             mRunningTaskCount--
         }
     }
 
     /**
-     * 请求下载资源失败*/
+     * 请求下载资源失败 */
     override fun onRequestFailed(
         entity: DownloadTaskEntity,
         httpCode: Int,
@@ -95,24 +101,87 @@ class DownloadService : Service(), IDownloadStatusListener {
     }
 
     /**
-     * 开始下载资源 */
-    override fun onStartDownload(entity: DownloadTaskEntity, downloadTaskId: Long) {
-        Log.d(TAG, "Task [D$downloadTaskId] start download")
-    }
-
-    /**
      * 下载状态改变 */
     override fun onDownloadStatusChange(
         entity: DownloadTaskEntity,
         task: DownloadGroupTask,
         status: DownloadManager.Companion.TaskStatus
     ) {
-        Log.d(TAG, "Task [D${task.entity.id}] status change, status: $status")
-        // 是终止态
-        if (status.isEndStatus) {
-            mRunningTaskCount--
+        Log.d(TAG, "Task [D${task.entity.id}, E${entity.id}] status change, status: $status")
+        mServiceScope.launch {
+            when (status) {
+                DownloadManager.Companion.TaskStatus.PREPROCESSING_COMPLETED -> onPreprocessingCompleted(
+                    entity,
+                    task
+                )
+
+                DownloadManager.Companion.TaskStatus.FAILURE -> onDownloadFailed(entity, task)
+                DownloadManager.Companion.TaskStatus.COMPLETED -> onDownloadCompleted(entity, task)
+                DownloadManager.Companion.TaskStatus.EXECUTING -> onDownloadExecuting(entity, task)
+                DownloadManager.Companion.TaskStatus.CANCELLED -> onDownloadCancelled(entity, task)
+                else -> Unit
+            }
+            // 是终止态
+            if (status.isEndStatus) {
+                mRunningTaskCount--
+            }
         }
     }
 
+    private suspend fun onPreprocessingCompleted(
+        entity: DownloadTaskEntity,
+        task: DownloadGroupTask
+    ) {
+        mDownloadTaskDao.update(entity.apply {
+            status = DownloadTaskEntity.STATUS_DOWNLOADING
+        })
+    }
 
+    private suspend fun onDownloadFailed(entity: DownloadTaskEntity, task: DownloadGroupTask) {
+        mDownloadTaskDao.update(entity.apply {
+            status = DownloadTaskEntity.STATUS_DOWNLOAD_FAILED
+        })
+    }
+
+    private suspend fun onDownloadCompleted(entity: DownloadTaskEntity, task: DownloadGroupTask) {
+        mDownloadTaskDao.update(entity.apply {
+            status = DownloadTaskEntity.STATUS_SYNTHESIS
+        })
+
+        val outFileSuffix = MimeTypeUtils.getExtensionFromMimeType(entity.dashVideoMimeType)
+        if (outFileSuffix == null) {
+            mDownloadTaskDao.update(entity.apply {
+                status = DownloadTaskEntity.STATUS_SYNTHESIS_FAILED
+            })
+            return
+        }
+
+        val mergeStatus = FFMpegJNI.mergeMedia(
+            File(CommonLibs.requireResourcesDir(), "${entity.id}.$outFileSuffix").path,
+            task.entity.subEntities.map { it.filePath }.toTypedArray()
+        )
+
+        if (mergeStatus) {
+            // 清理缓存
+            val cacheDir = CommonLibs.requireDownloadCacheDir(entity.id)
+            cacheDir.deleteRecursively()
+            cacheDir.deleteOnExit()
+        }
+
+        mDownloadTaskDao.update(entity.apply {
+            status =
+                if (mergeStatus) DownloadTaskEntity.STATUS_COMPLETED else DownloadTaskEntity.STATUS_SYNTHESIS_FAILED
+        })
+    }
+
+    private fun onDownloadExecuting(entity: DownloadTaskEntity, task: DownloadGroupTask) {
+        Log.d(
+            TAG,
+            "Task [D${task.entity.id}, E${entity.id}] status change, percent: ${task.percent}%"
+        )
+    }
+
+    private suspend fun onDownloadCancelled(entity: DownloadTaskEntity, task: DownloadGroupTask) {
+        mDownloadTaskDao.delete(entity)
+    }
 }

@@ -41,6 +41,6 @@ object CommonLibs {
         }
     }
 
-    fun requireDownloadCacheDir(sub: String) = requireExternalFilesDir("cache", "download/$sub")
-
+    fun requireDownloadCacheDir(entityId: Long) = requireExternalFilesDir("cache", "download/task-e$entityId")
+    fun requireResourcesDir() = requireExternalFilesDir("resources")
 }
