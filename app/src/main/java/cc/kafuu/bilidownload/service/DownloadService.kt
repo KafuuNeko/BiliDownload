@@ -55,7 +55,10 @@ class DownloadService : Service(), IDownloadStatusListener {
         mDownloadNotification = DownloadNotification(this)
 
         mDownloadManager.register(this)
-        mDownloadNotification.startForeground(this)
+        startForeground(
+            mDownloadNotification.getChannelNotificationId(),
+            mDownloadNotification.getForegroundNotification()
+        )
     }
 
     override fun onDestroy() {

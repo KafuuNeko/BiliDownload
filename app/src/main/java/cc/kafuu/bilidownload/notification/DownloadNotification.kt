@@ -1,11 +1,10 @@
 package cc.kafuu.bilidownload.notification
 
-import android.annotation.SuppressLint
+import android.app.Notification
 import android.content.Context
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.data.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.utils.CommonLibs
-import cc.kafuu.bilidownload.service.DownloadService
 
 class DownloadNotification(context: Context) : NotificationHelper(context) {
 
@@ -15,15 +14,12 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
     override fun getChannelId() = "download_channel"
     override fun getChannelName() = CommonLibs.getString(R.string.notification_bvd_downloading)
 
-    @SuppressLint("ForegroundServiceType")
-    fun startForeground(service: DownloadService) {
-        service.startForeground(
-            getFixedNotificationId(getChannelId()), getNotificationBuild(
-                R.drawable.ic_download,
-                CommonLibs.getString(R.string.notification_title_download_foreground),
-            ).build()
-        )
-    }
+    fun getChannelNotificationId(): Int = getFixedNotificationId(getChannelId())
+
+    fun getForegroundNotification(): Notification = getNotificationBuild(
+        R.drawable.ic_download,
+        CommonLibs.getString(R.string.notification_title_download_foreground),
+    ).build()
 
     private fun showEntityMessageNotification(
         entity: DownloadTaskEntity,
@@ -50,7 +46,7 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
         if (percent == null) {
             mNotificationManager.cancel(id)
             mNotificationId.remove(entity.id)
-            return;
+            return
         }
 
         getNotificationBuild(
