@@ -73,7 +73,7 @@ class DownloadManager {
     /**
      * 请求下载指定任务的视频资源。
      *
-     * @param task 包含下载任务必要信息的`DownloadTaskEntity`对象。
+     * @param entity 包含下载任务必要信息的`DownloadTaskEntity`对象。
      *
      * @note 此函数在内部通过异步回调处理网络响应，因此不会立即返回下载结果。
      *
@@ -108,7 +108,7 @@ class DownloadManager {
      * 该函数负责处理从BiliPlayStreamDash获取的播放流信息。它尝试根据返回的数据启动下载任务。
      * 如果在处理过程中遇到任何异常（例如，无法找到对应的视频或音频资源），则会通知所有注册的状态监听器请求失败。
      *
-     * @param task 当前需要下载的任务实体，包含了下载所需的所有相关信息。
+     * @param entity 当前需要下载的任务实体，包含了下载所需的所有相关信息。
      * @param httpCode 服务器响应的HTTP状态码。
      * @param code 业务相关的状态码。
      * @param message 服务器响应的状态消息或错误消息。
@@ -138,21 +138,21 @@ class DownloadManager {
      * 此函数用于从给定的BiliPlayStreamDash对象中检索视频和音频流的URL。
      * 它会根据DownloadTaskEntity中指定的dashVideoId和dashAudioId来查找对应的视频和音频资源。
      *
-     * @param task DownloadTaskEntity对象，包含需要下载的视频和音频的ID信息。
+     * @param entity DownloadTaskEntity对象，包含需要下载的视频和音频的ID信息。
      * @param dash BiliPlayStreamDash对象，包含视频和音频流的详细信息。
      * @return 包含视频和音频流URL的列表。如果找到对应的视频和音频资源，此列表将包含两个元素；否则，将抛出IllegalArgumentException。
      * @throws IllegalArgumentException 如果无法在dash参数提供的视频或音频资源中找到与task参数指定的ID匹配的项，则抛出此异常。
      */
     private fun getDownloadResourceUrls(
-        task: DownloadTaskEntity,
+        entity: DownloadTaskEntity,
         dash: BiliPlayStreamDash
     ): List<String> {
         val videoDash =
-            dash.video.find { it.id == task.dashVideoId && it.codecId == task.dashVideoCodecId }
-                ?: throw IllegalArgumentException("Video(${task.dashVideoId}) not found")
+            dash.video.find { it.id == entity.dashVideoId && it.codecId == entity.dashVideoCodecId }
+                ?: throw IllegalArgumentException("Video(${entity.dashVideoId}) not found")
         val audioDash =
-            dash.audio.find { it.id == task.dashAudioId && it.codecId == task.dashAudioCodecId }
-                ?: throw IllegalArgumentException("Audio(${task.dashAudioId}) not found")
+            dash.audio.find { it.id == entity.dashAudioId && it.codecId == entity.dashAudioCodecId }
+                ?: throw IllegalArgumentException("Audio(${entity.dashAudioId}) not found")
         return listOf(videoDash.getStreamUrl(), audioDash.getStreamUrl())
     }
 

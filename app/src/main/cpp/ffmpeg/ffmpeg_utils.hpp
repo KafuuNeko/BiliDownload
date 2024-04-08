@@ -20,6 +20,17 @@ namespace ffmpeg::utils {
 
     constexpr auto TAG = "FFMpegUtils";
 
+    /**
+     * @brief 根据 MIME 类型查找相应的 AVInputFormat。
+     *
+     * 此函数接收一个 MIME 类型的字符串，并尝试在一个静态映射表中查找对应的 FFmpeg 格式名称。
+     * 映射表包含了常见的音频和视频 MIME 类型到 FFmpeg 格式名称的对应关系。
+     * 如果找到了对应的格式名称，则使用 av_find_input_format() 函数尝试获取相应的 AVInputFormat 指针；
+     * 如果没有找到或者 FFmpeg 中不支持该格式，函数将返回 nullptr。
+     *
+     * @param mimeType 需要查找的 MIME 类型字符串。
+     * @return 如果找到相应的格式并且 FFmpeg 支持，则返回对应的 AVInputFormat 指针；否则返回 nullptr。
+     */
     static AVInputFormat *findFormatForMimeType(const std::string &mimeType) {
         // MIME 类型到 FFmpeg 格式名称的映射
         static const std::map<std::string, std::string> mime_to_format = {
@@ -185,7 +196,7 @@ namespace ffmpeg::utils {
     }
 
     /**
-     * 合并多个AVFormatContext到一个输出AVFormatContext中。
+     * @brief 合并多个AVFormatContext到一个输出AVFormatContext中。
      *
      * 此函数旨在将多个视频流（每个由AVFormatContext表示）合并到一个输出视频文件中，
      * 它通过复制流设置、写入文件头、复制并转换视频包，最后写入文件尾部来完成合并过程。
@@ -237,7 +248,7 @@ namespace ffmpeg::utils {
     }
 
     /**
-     * 创建并返回一个管理AVFormatContext资源的std::unique_ptr。
+     * @brief 创建并返回一个管理AVFormatContext资源的std::unique_ptr。
      *
      * 该函数尝试创建一个AVFormatContext，该上下文用于输出媒体文件。创建过程中使用的参数包括输出格式、格式名称和文件名。
      * 创建成功后，返回的std::unique_ptr确保了资源在不再使用时能够被自动释放，包括关闭相关的IO上下文和释放AVFormatContext。
@@ -277,7 +288,7 @@ namespace ffmpeg::utils {
     }
 
     /**
-     * 尝试打开指定的媒体文件或流，并返回一个管理AVFormatContext的std::unique_ptr。
+     * @brief 尝试打开指定的媒体文件或流，并返回一个管理AVFormatContext的std::unique_ptr。
      *
      * @param url 指向媒体资源的URL，可以是文件路径或网络流地址。
      * @param fmt 指定输入格式的AVInputFormat，如果为nullptr，则自动探测格式。
