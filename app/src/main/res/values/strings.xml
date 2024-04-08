@@ -22,4 +22,7 @@
     <string name="notification_downloading_title">正在下载%s</string>
     <string name="rb_home_text">主页</string>
     <string name="rb_me_text">我的</string>
+    <string name="iv_profile_content_description">用户头像</string>
+    <string name="et_search_hint">BV/AV/分享链接/搜索</string>
+    <string name="tl_page_selector_content_description">主页子视图选择器</string>
 </resources>

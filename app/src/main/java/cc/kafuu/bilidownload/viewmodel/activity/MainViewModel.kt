@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.viewmodel
+package cc.kafuu.bilidownload.viewmodel.activity
 
 import androidx.lifecycle.MutableLiveData
 import cc.kafuu.bilidownload.common.core.CoreViewModel

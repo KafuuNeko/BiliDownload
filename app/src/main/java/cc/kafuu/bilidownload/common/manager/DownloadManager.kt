@@ -162,7 +162,7 @@ class DownloadManager {
             .loadGroup(resourceUrls)
             .option(HttpOption().apply {
                 NetworkConfig.DOWNLOAD_HEADERS.forEach { (key, value) -> addHeader(key, value) }
-                NetworkConfig.biliCookies?.let { addHeader("Cookie", it) }
+                BiliManager.cookies.value?.let { addHeader("Cookie", it) }
             })
             .setDirPath(CommonLibs.requireDownloadCacheDir(entity.id).path)
             .unknownSize()

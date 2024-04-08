@@ -125,6 +125,10 @@ dependencies {
     //hutool crypto
     implementation(libs.hutool.crypto)
 
+    //Glide
+    implementation(libs.github.glide)
+
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

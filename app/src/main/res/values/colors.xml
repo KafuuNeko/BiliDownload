@@ -10,6 +10,8 @@
     <color name="secondary_color_variant">#5C83CF</color>
     <color name="on_secondary_color">#FFFFFF</color>
 
+    <color name="transparent">#00FFFFFF</color>
+
     <color name="text_default_color">#707070</color>
 
     <color name="black">#FF000000</color>

@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload.common.network
 
+import cc.kafuu.bilidownload.common.manager.BiliManager
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.manager.WbiManager
 import cc.kafuu.bilidownload.common.network.service.BiliApiService
@@ -24,14 +25,12 @@ object NetworkConfig {
         put("Connection", "keep-alive")
     }
 
-    var biliCookies: String? = null
-
     private val wbiManager = WbiManager() {
         return@WbiManager NetworkManager.biliWbiResponse.syncGetWbiKey()
     }
 
     private val biliInterceptor = BiliInterceptor(wbiManager) {
-        return@BiliInterceptor biliCookies
+        return@BiliInterceptor BiliManager.cookies.value
     }
 
     val biliService: BiliApiService by lazy {

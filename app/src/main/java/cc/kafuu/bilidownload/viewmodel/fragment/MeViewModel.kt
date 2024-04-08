@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.viewmodel
+package cc.kafuu.bilidownload.viewmodel.fragment
 
 import cc.kafuu.bilidownload.common.core.CoreViewModel
 

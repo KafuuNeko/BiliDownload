@@ -1,6 +1,5 @@
 package cc.kafuu.bilidownload.view.activity
 
-import androidx.fragment.app.Fragment
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.adapter.FragmentAdapter
@@ -9,7 +8,7 @@ import cc.kafuu.bilidownload.databinding.ActivityMainBinding
 import cc.kafuu.bilidownload.model.MainTabType
 import cc.kafuu.bilidownload.view.fragment.HomeFragment
 import cc.kafuu.bilidownload.view.fragment.MeFragment
-import cc.kafuu.bilidownload.viewmodel.MainViewModel
+import cc.kafuu.bilidownload.viewmodel.activity.MainViewModel
 
 @Suppress("DEPRECATED_IDENTITY_EQUALS")
 class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(

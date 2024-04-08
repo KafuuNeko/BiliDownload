@@ -1,21 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
+        <variable
+            name="viewModel"
+            type="cc.kafuu.bilidownload.viewmodel.fragment.HomeViewModel" />
+
+        <import type="cc.kafuu.bilidownload.common.manager.BiliManager"/>
+
+        <import type="cc.kafuu.bilidownload.common.utils.ViewDataBindingUtilsKt" />
 
     </data>
 
-    <FrameLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".view.fragment.HomeFragment">
 
-        <!-- TODO: Update blank fragment layout -->
-        <TextView
+        <LinearLayout
+            android:id="@+id/ll_top_bar"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="Home" />
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
-    </FrameLayout>
+            <ImageView
+                android:id="@+id/iv_profile"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:layout_marginVertical="8dp"
+                android:contentDescription="@string/iv_profile_content_description"
+                app:bindPlaceholder="@{@drawable/ic_2233}"
+                app:bindProfileAccount="@{BiliManager.INSTANCE.account}"
+                app:bindTransformation="@{viewModel.circleCrop}" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginVertical="12dp"
+                android:layout_weight="1"
+                android:background="@drawable/ic_shape_search_bg"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="5dp"
+                android:text="@string/et_search_hint"
+                android:textColor="@color/text_default_color"
+                app:drawableStartCompat="@drawable/ic_search" />
+        </LinearLayout>
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tl_page_selector"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:contentDescription="@string/tl_page_selector_content_description"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ll_top_bar"
+            app:tabBackground="@color/transparent"
+            app:tabIndicatorColor="@color/primary_color"
+            app:tabIndicatorFullWidth="false"
+            app:tabIndicatorHeight="4dp"
+            app:tabMode="scrollable"
+            app:tabRippleColor="@color/transparent" />
+
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/vp2_home"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tl_page_selector" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
