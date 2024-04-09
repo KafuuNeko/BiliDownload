@@ -19,7 +19,7 @@ import com.bumptech.glide.load.resource.bitmap.FitCenter
 
 @BindingAdapter(value = ["bindDataList"])
 fun bindDataList(recyclerView: RecyclerView, data: List<Any>?) {
-    (recyclerView.adapter as? CoreRVAdapter<*, *>)?.setDataList(data)
+    (recyclerView.adapter as? CoreRVAdapter<*>)?.setDataList(data)
 }
 
 @BindingAdapter(

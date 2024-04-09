@@ -24,9 +24,9 @@ class HomeFragment : CoreFragment<FragmentHomeBinding, HomeViewModel>(
             adapter = FragmentAdapter(activity?.supportFragmentManager!!, lifecycle).apply {
                 addFragmentView(
                     listOf(
-                        MeFragment.newInstance(),
-                        MeFragment.newInstance(),
-                        MeFragment.newInstance()
+                        HistoryFragment.newInstance(),
+                        HistoryFragment.newInstance(),
+                        HistoryFragment.newInstance()
                     )
                 )
             }

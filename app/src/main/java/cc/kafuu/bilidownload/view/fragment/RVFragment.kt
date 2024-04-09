@@ -4,6 +4,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.core.CoreFragment
+import cc.kafuu.bilidownload.common.core.CoreRVAdapter
 import cc.kafuu.bilidownload.common.manager.RVVisibleListener
 import cc.kafuu.bilidownload.databinding.FragmentRvBinding
 import cc.kafuu.bilidownload.viewmodel.fragment.RVViewModel
@@ -14,10 +15,10 @@ open abstract class RVFragment<VM : RVViewModel>(
     vmClass: Class<VM>
 ) : CoreFragment<FragmentRvBinding, VM>(
     vmClass,
-    R.layout.fragment_me,
+    R.layout.fragment_rv,
     BR.viewModel
 ) {
-    abstract fun getRVAdapter(): androidx.recyclerview.widget.RecyclerView.Adapter<*>?
+    abstract fun getRVAdapter(): CoreRVAdapter<*>?
     abstract fun getRVLayoutManager(): androidx.recyclerview.widget.RecyclerView.LayoutManager?
 
     override fun initViews() {
