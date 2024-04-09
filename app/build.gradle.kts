@@ -102,6 +102,7 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.material)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.design)
 
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
@@ -127,6 +128,12 @@ dependencies {
 
     //Glide
     implementation(libs.github.glide)
+
+    //SmartRefreshLayout
+    implementation(libs.refresh.layout.kernel)
+    //经典刷新头与经典加载
+    implementation(libs.refresh.header.classics)
+    implementation(libs.refresh.footer.classics)
 
 
     testImplementation(libs.junit)

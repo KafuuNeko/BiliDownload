@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="viewModel"
+            type="cc.kafuu.bilidownload.viewmodel.fragment.RVViewModel" />
+
+        <import type="cc.kafuu.bilidownload.common.manager.BiliManager"/>
+        <import type="cc.kafuu.bilidownload.common.utils.ViewDataBindingUtilsKt" />
+    </data>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.scwang.smart.refresh.layout.SmartRefreshLayout
+            android:id="@+id/refresh_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/white"
+            app:srlAccentColor="@color/white"
+            app:srlEnablePreviewInEditMode="true"
+            app:srlPrimaryColor="@color/white">
+
+            <com.scwang.smart.refresh.header.ClassicsHeader
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_content"
+                android:overScrollMode="never"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                bindDataList="@{viewModel.listMutableLiveData}"
+                android:background="@color/white"/>
+
+            <com.scwang.smart.refresh.footer.ClassicsFooter
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+        </com.scwang.smart.refresh.layout.SmartRefreshLayout>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/iv_top"
+            android:padding="8dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="20dp"
+            android:background="@drawable/shape_circle"
+            android:src="@drawable/ic_top"
+            android:visibility="gone"
+            tools:visibility="visible"/>
+
+        <include
+            layout="@layout/include_loading"
+            android:id="@+id/fl_loading"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:data="@{viewModel.loadingMessageMutableLiveData}"
+            tools:visibility="gone" />
+
+    </FrameLayout>
+</layout>

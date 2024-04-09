@@ -2,6 +2,7 @@
 agp = "8.3.1"
 ariaCompiler = "3.8.16"
 ariaCoreVersion = "3.8.16"
+design = "28.0.0"
 fragmentKtx = "1.6.2"
 glideVersion = "4.16.0"
 gsonVersion = "2.10.1"
@@ -16,6 +17,7 @@ kotlinxCoroutinesCore = "1.7.3"
 lifecycleLivedataKtx = "2.7.0"
 material = "1.11.0"
 constraintlayout = "2.1.4"
+refreshLayoutKernel = "2.1.0"
 retrofit = "2.11.0"
 roomRuntime = "2.6.1"
 workRuntimeKtx = "2.9.0"
@@ -32,6 +34,7 @@ androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version
 aria-compiler = { module = "me.laoyuyu.aria:compiler", version.ref = "ariaCompiler" }
 aria-core = { module = "me.laoyuyu.aria:core", version.ref = "ariaCoreVersion" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
+design = { module = "com.android.support:design", version.ref = "design" }
 github-glide = { module = "com.github.bumptech.glide:glide", version.ref = "glideVersion" }
 google-gson = { module = "com.google.code.gson:gson", version.ref = "gsonVersion" }
 hutool-crypto = { module = "cn.hutool:hutool-crypto", version.ref = "hutoolCrypto" }
@@ -43,6 +46,9 @@ kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutine
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+refresh-footer-classics = { module = "io.github.scwang90:refresh-footer-classics", version.ref = "refreshLayoutKernel" }
+refresh-header-classics = { module = "io.github.scwang90:refresh-header-classics", version.ref = "refreshLayoutKernel" }
+refresh-layout-kernel = { module = "io.github.scwang90:refresh-layout-kernel", version.ref = "refreshLayoutKernel" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 
 [plugins]
