@@ -30,6 +30,8 @@ class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
         private const val TAG = "MainActivity"
     }
 
+    var first: Boolean = true
+
     fun downloadTest() {
         NetworkManager.biliVideoRepository.getPlayStreamData(
             "BV1Ai4y197Wt",
@@ -96,6 +98,12 @@ class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
         mViewModel.tabPositionLiveData.observe(this) { position ->
             if (mViewDataBinding.vp2Content.currentItem !== position) {
                 mViewDataBinding.vp2Content.setCurrentItem(position, false)
+            } else {
+                if (first) {
+                    first = false
+                } else {
+                    downloadTest()
+                }
             }
         }
     }

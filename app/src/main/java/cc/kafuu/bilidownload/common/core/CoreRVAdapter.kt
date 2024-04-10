@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload.common.core
 
+import android.annotation.SuppressLint
 import android.content.Context
 import androidx.databinding.ViewDataBinding
 import androidx.recyclerview.widget.RecyclerView
@@ -35,8 +36,10 @@ abstract class CoreRVAdapter<VM : CoreViewModel>(
 
     override fun getDataCount(): Int = mDataList?.size ?: 0
 
+    @SuppressLint("NotifyDataSetChanged")
     override fun setDataList(list: List<Any>?) {
         mDataList = list
+        notifyDataSetChanged()
     }
 
     /**

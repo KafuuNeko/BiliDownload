@@ -34,6 +34,14 @@ open abstract class RVFragment<VM : RVViewModel>(
         ivTop.setOnClickListener { resetScrollPosition(false) }
     }
 
+    fun setEnableRefresh(enable: Boolean) {
+        mViewDataBinding.refreshLayout.setEnableRefresh(enable)
+    }
+
+    fun setEnableLoadMore(enable: Boolean) {
+        mViewDataBinding.refreshLayout.setEnableLoadMore(enable)
+    }
+
     fun setOnRefreshListener(refreshListener: OnRefreshListener?) {
         mViewDataBinding.refreshLayout.setOnRefreshListener(refreshListener)
     }

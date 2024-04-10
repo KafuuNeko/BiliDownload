@@ -20,14 +20,11 @@
             android:id="@+id/refresh_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/white"
-            app:srlAccentColor="@color/white"
-            app:srlEnablePreviewInEditMode="true"
-            app:srlPrimaryColor="@color/white">
+            android:background="@color/white">
 
             <com.scwang.smart.refresh.header.ClassicsHeader
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"/>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_content"
