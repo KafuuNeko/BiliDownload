@@ -12,24 +12,23 @@ import com.arialyy.aria.core.Aria
 import com.arialyy.aria.core.common.HttpOption
 import com.arialyy.aria.core.task.DownloadGroupTask
 
-class DownloadManager {
-    companion object {
-        private const val TAG = "DownloadManager"
+object DownloadManager {
 
-        enum class TaskStatus(val code: Int, val isEndStatus: Boolean) {
-            FAILURE(0, true),
-            COMPLETED(1, true),
-            STOPPED(2, false),
-            WAITING(3, false),
-            EXECUTING(4, false),
-            PREPROCESSING(5, false),
-            PREPROCESSING_COMPLETED(6, false),
-            CANCELLED(7, true);
+    private const val TAG = "DownloadManager"
 
-            companion object {
-                fun fromCode(code: Int): TaskStatus = entries.find { it.code == code }
-                    ?: throw IllegalArgumentException("Invalid code")
-            }
+    enum class TaskStatus(val code: Int, val isEndStatus: Boolean) {
+        FAILURE(0, true),
+        COMPLETED(1, true),
+        STOPPED(2, false),
+        WAITING(3, false),
+        EXECUTING(4, false),
+        PREPROCESSING(5, false),
+        PREPROCESSING_COMPLETED(6, false),
+        CANCELLED(7, true);
+
+        companion object {
+            fun fromCode(code: Int): TaskStatus = entries.find { it.code == code }
+                ?: throw IllegalArgumentException("Invalid code")
         }
     }
 

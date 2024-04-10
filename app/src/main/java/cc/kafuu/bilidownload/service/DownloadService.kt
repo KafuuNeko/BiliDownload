@@ -43,18 +43,15 @@ class DownloadService : Service(), IDownloadStatusListener {
         stopSelf()
     }
 
-    private lateinit var mDownloadManager: DownloadManager
     private lateinit var mDownloadNotification: DownloadNotification
-
 
     @SuppressLint("ForegroundServiceType")
     override fun onCreate() {
         Aria.download(this).register()
 
-        mDownloadManager = DownloadManager()
         mDownloadNotification = DownloadNotification(this)
 
-        mDownloadManager.register(this)
+        DownloadManager.register(this)
         startForeground(
             mDownloadNotification.getChannelNotificationId(),
             mDownloadNotification.getForegroundNotification()
@@ -64,7 +61,7 @@ class DownloadService : Service(), IDownloadStatusListener {
     override fun onDestroy() {
         super.onDestroy()
         Aria.download(this).unRegister()
-        mDownloadManager.unregister(this)
+        DownloadManager.unregister(this)
         mServiceScope.cancel()
     }
 
@@ -87,7 +84,7 @@ class DownloadService : Service(), IDownloadStatusListener {
      * */
     private suspend fun doRequestDownload(taskId: Long) {
         mDownloadTaskDao.getDownloadTaskById(taskId)?.let {
-            mDownloadManager.requestDownload(it)
+            DownloadManager.requestDownload(it)
         } ?: {
             Log.e(TAG, "Task [E$taskId] get download task entity failed")
             mRunningTaskCount--
@@ -111,20 +108,19 @@ class DownloadService : Service(), IDownloadStatusListener {
     override fun onDownloadStatusChange(
         entity: DownloadTaskEntity,
         task: DownloadGroupTask,
-        status: DownloadManager.Companion.TaskStatus
+        status: DownloadManager.TaskStatus
     ) {
         Log.d(TAG, "Task [D${task.entity.id}, E${entity.id}] status change, status: $status")
         mServiceScope.launch {
             when (status) {
-                DownloadManager.Companion.TaskStatus.PREPROCESSING_COMPLETED -> onPreprocessingCompleted(
+                DownloadManager.TaskStatus.PREPROCESSING_COMPLETED -> onPreprocessingCompleted(
                     entity,
                     task
                 )
-
-                DownloadManager.Companion.TaskStatus.FAILURE -> onDownloadFailed(entity, task)
-                DownloadManager.Companion.TaskStatus.COMPLETED -> onDownloadCompleted(entity, task)
-                DownloadManager.Companion.TaskStatus.EXECUTING -> onDownloadExecuting(entity, task)
-                DownloadManager.Companion.TaskStatus.CANCELLED -> onDownloadCancelled(entity, task)
+                DownloadManager.TaskStatus.FAILURE -> onDownloadFailed(entity, task)
+                DownloadManager.TaskStatus.COMPLETED -> onDownloadCompleted(entity, task)
+                DownloadManager.TaskStatus.EXECUTING -> onDownloadExecuting(entity, task)
+                DownloadManager.TaskStatus.CANCELLED -> onDownloadCancelled(entity, task)
                 else -> Unit
             }
             // 是终止态
