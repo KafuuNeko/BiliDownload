@@ -3,6 +3,8 @@ package cc.kafuu.bilidownload.common.network.repository
 import cc.kafuu.bilidownload.common.core.IServerCallback
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
+import cc.kafuu.bilidownload.common.network.model.BiliRespond
+import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.network.service.BiliApiService
 
 class BiliVideoRepository(biliApiService: BiliApiService) : BiliRepository(biliApiService) {
@@ -35,5 +37,13 @@ class BiliVideoRepository(biliApiService: BiliApiService) : BiliRepository(biliA
         callback: IServerCallback<BiliPlayStreamData>
     ) {
         biliApiService.getPlayStream(null, bvid, cid, null, FNVAL_FLAGS).enqueue(callback) { it }
+    }
+
+    fun getVideoDetail(bvid: String, callback: IServerCallback<BiliVideoData>) {
+        biliApiService.getVideoDetail(null, bvid).enqueue(callback) { it }
+    }
+
+    fun syncGetVideoDetail(bvid: String, onFailure: ((Int, Int, String) -> Unit)? = null): BiliVideoData? {
+        return biliApiService.getVideoDetail(null, bvid).execute(onFailure) { it }
     }
 }
