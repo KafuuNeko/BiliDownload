@@ -1,15 +1,20 @@
 package cc.kafuu.bilidownload.common.network
 
 import android.util.Log
-import cc.kafuu.bilidownload.common.network.manager.IWbiManager
 import okhttp3.Interceptor
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.Response
+import java.io.IOException
 
 class BiliInterceptor(
-    private val wbiManager: IWbiManager,
     private val getLatestCookies: () -> String?
 ) : Interceptor {
-    private val TAG = "BiliInterceptor"
+    companion object {
+        private const val TAG = "BiliInterceptor"
+    }
+
+    private var mCachedCookies: String? = null
 
     /**
      * 拦截发出的网络请求，对请求进行处理，添加必要的签名、Cookie和HTTP头部信息。
@@ -23,21 +28,13 @@ class BiliInterceptor(
      * @return Response 返回经过处理的请求的响应。
      */
     override fun intercept(chain: Interceptor.Chain): Response {
-        val originalRequest = chain.request()
-        val originalHttpUrl = originalRequest.url()
-        val paramMap = HashMap<String, String>().apply {
-            for (i in 0 until originalHttpUrl.querySize()) {
-                put(
-                    originalHttpUrl.queryParameterName(i),
-                    originalHttpUrl.queryParameterValue(i)
-                )
+        val request = chain.request().newBuilder().apply {
+            // 获取最新cookie，若是不存在则访问网站获取默认cookie
+            getLatestCookies()?.let {
+                addHeader("Cookie", it)
+            } ?: getDefaultCookiesByBili()?.let {
+                addHeader("Cookie", it)
             }
-        }
-        val request = originalRequest.newBuilder().apply {
-            wbiManager.generateSignature(originalHttpUrl.encodedPath(), paramMap)?.let {
-                url(originalHttpUrl.newBuilder().query(it).build())
-            }
-            getLatestCookies()?.let { addHeader("Cookie", it) }
             NetworkConfig.GENERAL_HEADERS.forEach { (key, value) -> addHeader(key, value) }
         }.build()
 
@@ -46,6 +43,27 @@ class BiliInterceptor(
         return chain.proceed(request).also {
             Log.d(TAG, "End of request: $it")
         }
+    }
+
+    private fun getDefaultCookiesByBili(): String? {
+        if (mCachedCookies == null) {
+            val client = OkHttpClient.Builder().build() // 创建一个新的客户端实例
+            val request = Request.Builder().url(NetworkConfig.BILI_URL).apply {
+                NetworkConfig.GENERAL_HEADERS.forEach { (key, value) ->
+                    addHeader(key, value)
+                }
+                header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
+                header("Accept-Encoding", "gzip, deflate, br, zstd")
+            }.build()
+            try {
+                val response = client.newCall(request).execute() // 同步调用
+                mCachedCookies = response.headers("Set-Cookie").joinToString("; ")
+                Log.d(TAG, "Refreshed code: ${response.code()} default cookies: $mCachedCookies")
+            } catch (e: IOException) {
+                Log.e(TAG, "Failed to fetch cookies from ${NetworkConfig.BILI_URL}", e)
+            }
+        }
+        return mCachedCookies
     }
 
 }
