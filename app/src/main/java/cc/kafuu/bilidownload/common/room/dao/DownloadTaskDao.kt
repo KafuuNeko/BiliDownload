@@ -7,6 +7,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 
 @Dao
@@ -25,6 +26,18 @@ interface DownloadTaskDao {
 
     @Query("SELECT * FROM DownloadTaskEntity WHERE status IN (:statuses) ORDER BY id DESC")
     fun getLatestDownloadTaskLiveData(vararg statuses: Int): LiveData<List<DownloadTaskEntity>>
+
+    @Query(
+        """
+        SELECT task.*, video.title, video.description, video.cover, part.partTitle
+        FROM DownloadTaskEntity task
+        INNER JOIN BiliVideoMainEntity video ON task.biliBvid = video.biliBvid
+        INNER JOIN BiliVideoPartEntity part ON task.biliBvid = part.biliBvid AND task.biliCid = part.biliCid
+        WHERE task.status IN (:statuses)
+        ORDER BY task.id DESC
+    """
+    )
+    fun getDownloadTasksWithVideoDetails(vararg statuses: Int): List<DownloadTaskWithVideoDetails>
 
     @Query("SELECT * FROM DownloadTaskEntity WHERE id = :id")
     suspend fun getDownloadTaskById(id: Long): DownloadTaskEntity?

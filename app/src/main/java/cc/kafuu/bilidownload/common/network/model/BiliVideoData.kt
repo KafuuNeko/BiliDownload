@@ -4,9 +4,9 @@ import com.google.gson.annotations.SerializedName
 
 data class BiliVideoData(
     @SerializedName("bvid") val bvid: String,
-    @SerializedName("aid") val aid: Int,
+    @SerializedName("aid") val aid: Long,
     @SerializedName("videos") val videos: Int,
-    @SerializedName("tid") val tid: Int,
+    @SerializedName("tid") val tid: Long,
     @SerializedName("tname") val tName: String,
     @SerializedName("copyright") val copyright: Int,
     @SerializedName("pic") val pic: String,
@@ -49,7 +49,7 @@ data class BiliVideoRights(
 )
 
 data class BiliVideoOwner(
-    @SerializedName("mid") val mid: Int,
+    @SerializedName("mid") val mid: Long,
     @SerializedName("name") val name: String,
     @SerializedName("face") val face: String
 )
@@ -76,7 +76,7 @@ data class BiliVideoDimension(
 )
 
 data class BiliVideoPage(
-    @SerializedName("cid") val cid: Int,
+    @SerializedName("cid") val cid: Long,
     @SerializedName("page") val page: Int,
     @SerializedName("from") val from: String,
     @SerializedName("part") val part: String,
@@ -92,7 +92,7 @@ data class BiliVideoSubtitle(
 )
 
 data class BiliVideoSubtitleItem(
-    @SerializedName("id") val id: Int,
+    @SerializedName("id") val id: Long,
     @SerializedName("lan") val lan: String,
     @SerializedName("lan_doc") val lanDoc: String,
     @SerializedName("is_lock") val isLock: Boolean,
@@ -102,7 +102,7 @@ data class BiliVideoSubtitleItem(
 )
 
 data class BiliVideoSubtitleAuthor(
-    @SerializedName("mid") val mid: Int,
+    @SerializedName("mid") val mid: Long,
     @SerializedName("name") val name: String,
     @SerializedName("sex") val sex: String,
     @SerializedName("face") val face: String,
@@ -114,7 +114,7 @@ data class BiliVideoSubtitleAuthor(
 )
 
 data class BiliVideoStaff(
-    @SerializedName("mid") val mid: Int,
+    @SerializedName("mid") val mid: Long,
     @SerializedName("title") val title: String,
     @SerializedName("name") val name: String,
     @SerializedName("face") val face: String,

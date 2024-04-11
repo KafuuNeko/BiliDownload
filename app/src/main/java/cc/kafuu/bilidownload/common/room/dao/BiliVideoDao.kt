@@ -6,10 +6,35 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import cc.kafuu.bilidownload.common.room.entity.BiliVideoMainEntity
 import cc.kafuu.bilidownload.common.room.entity.BiliVideoPartEntity
 
 @Dao
-interface BiliVideoPartDao {
+interface BiliVideoDao {
+    // 插入一个或多个BiliVideoMainEntity，如果存在冲突，则替换
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(vararg video: BiliVideoMainEntity)
+
+    // 更新已存在的BiliVideoMainEntity
+    @Update
+    suspend fun update(video: BiliVideoMainEntity)
+
+    // 删除一个BiliVideoMainEntity
+    @Delete
+    suspend fun delete(video: BiliVideoMainEntity)
+
+    // 通过bvid删除单个视频信息
+    @Query("DELETE FROM BiliVideoMainEntity WHERE biliBvid = :bvid")
+    suspend fun deleteVideoByBvid(bvid: String)
+
+    // 通过bvid查询单个视频信息
+    @Query("SELECT * FROM BiliVideoMainEntity WHERE biliBvid = :bvid")
+    suspend fun getVideoByBvid(bvid: String): BiliVideoMainEntity?
+
+    // 查询所有视频信息
+    @Query("SELECT * FROM BiliVideoMainEntity")
+    suspend fun getAllVideos(): List<BiliVideoMainEntity>
+
     // 插入一个或多个BiliVideoPartEntity，如果存在冲突，则替换
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(vararg videoParts: BiliVideoPartEntity)
@@ -23,7 +48,7 @@ interface BiliVideoPartDao {
     suspend fun delete(videoPart: BiliVideoPartEntity)
 
     // 通过bvid查询一个BiliVideoPartEntity
-    @Query("SELECT * FROM BiliVideoPartEntity WHERE bvid = :bvid")
+    @Query("SELECT * FROM BiliVideoPartEntity WHERE biliBvid = :bvid")
     suspend fun getVideoPartByBvid(bvid: String): BiliVideoPartEntity
 
     // 查询所有BiliVideoPartEntity

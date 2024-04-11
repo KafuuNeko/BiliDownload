@@ -2,9 +2,9 @@ package cc.kafuu.bilidownload.common.room.entity
 
 import androidx.room.Entity
 
-@Entity(primaryKeys = ["bvid", "cid"])
+@Entity(primaryKeys = ["biliBvid", "biliCid"])
 data class BiliVideoPartEntity(
-    val bvid: String,
-    val cid: Long,
+    val biliBvid: String,
+    val biliCid: Long,
     val partTitle: String,
 )

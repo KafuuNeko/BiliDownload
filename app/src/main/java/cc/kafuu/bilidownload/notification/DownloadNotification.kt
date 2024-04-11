@@ -108,4 +108,18 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
                 .format("${entity.biliBvid}(${entity.id})", httpCode, code, message),
         )
     }
+
+    fun notificationGetVideoDetailsFailed(
+        entity: DownloadTaskEntity,
+        responseCode: Int,
+        returnCode: Int,
+        message: String
+    ) {
+        showEntityMessageNotification(
+            entity,
+            CommonLibs.getString(R.string.notification_get_video_details_failed_title),
+            CommonLibs.getString(R.string.notification_get_video_details_failed_message)
+                .format(responseCode, returnCode, message)
+        )
+    }
 }

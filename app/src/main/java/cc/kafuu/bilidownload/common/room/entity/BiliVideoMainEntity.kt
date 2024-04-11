@@ -5,7 +5,7 @@ import androidx.room.PrimaryKey
 
 @Entity
 data class BiliVideoMainEntity(
-    @PrimaryKey val bvid: String,
+    @PrimaryKey val biliBvid: String,
     val title: String,
     val description: String,
     val cover: String,
