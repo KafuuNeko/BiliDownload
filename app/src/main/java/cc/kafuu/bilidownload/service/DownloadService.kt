@@ -208,7 +208,6 @@ class DownloadService : Service(), IDownloadStatusListener {
         // 更新状态为正在合成
         mDownloadTaskDao.update(entity.apply {
             status = DownloadTaskEntity.STATUS_SYNTHESIS
-            progress = 100
         })
 
         val syntheticStatus = if (doSynthetic(entity, task)) {
@@ -268,9 +267,6 @@ class DownloadService : Service(), IDownloadStatusListener {
             "Task [D${task.entity.id}, E${entity.id}] status change, percent: ${task.percent}%"
         )
         mDownloadNotification.updateDownloadProgress(entity, task.percent)
-        mDownloadTaskDao.update(entity.apply {
-            progress = task.percent
-        })
     }
 
     private suspend fun onDownloadCancelled(entity: DownloadTaskEntity, task: DownloadGroupTask) {

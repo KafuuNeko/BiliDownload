@@ -58,6 +58,16 @@ abstract class CoreRVAdapter<VM : CoreViewModel>(
         holder.onBinding(getItemData(position), position)
     }
 
+    override fun onViewAttachedToWindow(holder: CoreRVHolder<*>) {
+        super.onViewAttachedToWindow(holder)
+        holder.onViewAttachedToWindow()
+    }
+
+    override fun onViewDetachedFromWindow(holder: CoreRVHolder<*>) {
+        super.onViewDetachedFromWindow(holder)
+        holder.onViewDetachedFromWindow()
+    }
+
     override fun getItemId(position: Int) = position.toLong()
 
     override fun getItemCount(): Int = getDataCount()

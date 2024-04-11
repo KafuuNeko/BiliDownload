@@ -140,6 +140,7 @@
                     android:id="@+id/iv_status_image"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
+                    android:layout_marginHorizontal="10dp"
                     android:src="@{viewModel.getStatusIcon(data)}"
                     android:contentDescription="@string/iv_download_status_image_content_description"
                     tools:src="@drawable/ic_download_done_cloud"/>
@@ -149,11 +150,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:minWidth="50dp"
                     android:text="@{viewModel.getStatusText(data)}"
                     android:textColor="@color/secondary_color"
-                    android:textSize="12sp"
-                    bindVisible="@{data.downloadTask.status == DownloadTaskEntity.STATUS_DOWNLOADING}"/>
+                    android:textSize="10sp"
+                    tools:text="100%"
+                    bindVisible="@{data.downloadTask.status == DownloadTaskEntity.STATUS_DOWNLOADING}"
+                    tools:ignore="SmallSp" />
 
             </LinearLayout>
 

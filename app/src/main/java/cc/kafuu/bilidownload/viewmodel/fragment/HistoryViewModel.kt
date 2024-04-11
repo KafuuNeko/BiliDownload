@@ -6,6 +6,7 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.utils.CommonLibs
+import com.arialyy.aria.core.Aria
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 
 class HistoryViewModel : RVViewModel() {
@@ -33,7 +34,9 @@ class HistoryViewModel : RVViewModel() {
     }
 
     fun getStatusText(task: DownloadTaskWithVideoDetails): String {
-        return "${task.downloadTask.progress}%"
+        val percent =
+            task.downloadTask.downloadTaskId?.let { Aria.download(this).loadGroup(it).percent }
+        return "${percent ?: 0}%"
     }
 
 }
