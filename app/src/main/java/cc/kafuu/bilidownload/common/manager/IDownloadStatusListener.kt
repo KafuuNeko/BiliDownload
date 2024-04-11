@@ -1,6 +1,6 @@
 package cc.kafuu.bilidownload.common.manager
 
-import cc.kafuu.bilidownload.common.data.entity.DownloadTaskEntity
+import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import com.arialyy.aria.core.task.DownloadGroupTask
 
 interface IDownloadStatusListener {

@@ -4,7 +4,7 @@ import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.adapter.FragmentAdapter
 import cc.kafuu.bilidownload.common.core.CoreFragment
-import cc.kafuu.bilidownload.common.data.entity.DownloadTaskEntity
+import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.utils.CommonLibs
 import cc.kafuu.bilidownload.databinding.FragmentHomeBinding
 import cc.kafuu.bilidownload.viewmodel.fragment.HomeViewModel

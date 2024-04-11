@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.common.data.entity
+package cc.kafuu.bilidownload.common.room.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

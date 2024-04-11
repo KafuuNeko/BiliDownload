@@ -1,8 +1,7 @@
 package cc.kafuu.bilidownload.viewmodel.fragment
 
-import android.util.Log
 import androidx.lifecycle.LiveData
-import cc.kafuu.bilidownload.common.data.entity.DownloadTaskEntity
+import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.utils.CommonLibs
 
 class HistoryViewModel : RVViewModel() {

@@ -3,7 +3,7 @@ package cc.kafuu.bilidownload.notification
 import android.app.Notification
 import android.content.Context
 import cc.kafuu.bilidownload.R
-import cc.kafuu.bilidownload.common.data.entity.DownloadTaskEntity
+import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.utils.CommonLibs
 
 class DownloadNotification(context: Context) : NotificationHelper(context) {

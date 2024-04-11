@@ -6,8 +6,7 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.adapter.FragmentAdapter
 import cc.kafuu.bilidownload.common.core.CoreActivity
 import cc.kafuu.bilidownload.common.core.IServerCallback
-import cc.kafuu.bilidownload.common.data.entity.DownloadTaskEntity
-import cc.kafuu.bilidownload.common.jniexport.FFMpegJNI
+import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
 import cc.kafuu.bilidownload.common.utils.CommonLibs

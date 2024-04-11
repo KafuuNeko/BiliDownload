@@ -2,7 +2,7 @@ package cc.kafuu.bilidownload.common.manager
 
 import android.util.Log
 import cc.kafuu.bilidownload.common.core.IServerCallback
-import cc.kafuu.bilidownload.common.data.entity.DownloadTaskEntity
+import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.network.NetworkConfig
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash

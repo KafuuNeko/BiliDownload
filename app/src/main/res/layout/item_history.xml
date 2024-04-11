@@ -10,7 +10,7 @@
 
         <variable
             name="data"
-            type="cc.kafuu.bilidownload.common.data.entity.DownloadTaskEntity" />
+            type="cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity" />
 
     </data>
 

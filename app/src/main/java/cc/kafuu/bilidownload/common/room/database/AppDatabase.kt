@@ -1,17 +1,17 @@
-package cc.kafuu.bilidownload.common.data.database
+package cc.kafuu.bilidownload.common.room.database
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import cc.kafuu.bilidownload.common.data.dao.BiliVideoMainDao
-import cc.kafuu.bilidownload.common.data.dao.BiliVideoPartDao
-import cc.kafuu.bilidownload.common.data.dao.DownloadTaskDao
-import cc.kafuu.bilidownload.common.data.dao.ResourceDao
-import cc.kafuu.bilidownload.common.data.entity.BiliVideoMainEntity
-import cc.kafuu.bilidownload.common.data.entity.BiliVideoPartEntity
-import cc.kafuu.bilidownload.common.data.entity.DownloadTaskEntity
-import cc.kafuu.bilidownload.common.data.entity.ResourceEntity
+import cc.kafuu.bilidownload.common.room.dao.BiliVideoMainDao
+import cc.kafuu.bilidownload.common.room.dao.BiliVideoPartDao
+import cc.kafuu.bilidownload.common.room.dao.DownloadTaskDao
+import cc.kafuu.bilidownload.common.room.dao.ResourceDao
+import cc.kafuu.bilidownload.common.room.entity.BiliVideoMainEntity
+import cc.kafuu.bilidownload.common.room.entity.BiliVideoPartEntity
+import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
+import cc.kafuu.bilidownload.common.room.entity.ResourceEntity
 
 @Database(
     entities =

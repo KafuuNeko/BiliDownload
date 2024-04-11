@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.common.data.dao
+package cc.kafuu.bilidownload.common.room.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -6,7 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import cc.kafuu.bilidownload.common.data.entity.BiliVideoPartEntity
+import cc.kafuu.bilidownload.common.room.entity.BiliVideoPartEntity
 
 @Dao
 interface BiliVideoPartDao {

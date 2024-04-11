@@ -6,9 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import android.util.Log
-import cc.kafuu.bilidownload.R
-import cc.kafuu.bilidownload.common.data.entity.DownloadTaskEntity
-import cc.kafuu.bilidownload.common.data.entity.ResourceEntity
+import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
+import cc.kafuu.bilidownload.common.room.entity.ResourceEntity
 import cc.kafuu.bilidownload.common.jniexport.FFMpegJNI
 import cc.kafuu.bilidownload.common.manager.DownloadManager
 import cc.kafuu.bilidownload.common.manager.IDownloadStatusListener
