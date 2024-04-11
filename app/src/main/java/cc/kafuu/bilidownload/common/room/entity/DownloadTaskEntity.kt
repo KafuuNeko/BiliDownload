@@ -12,6 +12,7 @@ data class DownloadTaskEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
     var downloadTaskId: Long? = null,
     var status: Int = STATUS_PREPARE,
+    var progress: Int = 0,
     val biliBvid: String,
     val biliCid: Long,
     val dashVideoId: Long,

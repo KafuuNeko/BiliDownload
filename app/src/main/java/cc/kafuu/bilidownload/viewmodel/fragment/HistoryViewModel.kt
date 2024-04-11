@@ -21,10 +21,19 @@ class HistoryViewModel : RVViewModel() {
     fun getStatusIcon(task: DownloadTaskWithVideoDetails): Drawable? {
         return CommonLibs.getDrawable(
             when (task.downloadTask.status) {
-                DownloadTaskEntity.STATUS_DOWNLOADING -> R.drawable.ic_download
-                else -> R.drawable.ic_download
+                DownloadTaskEntity.STATUS_PREPARE -> R.drawable.ic_downloading
+                DownloadTaskEntity.STATUS_DOWNLOADING -> R.drawable.ic_downloading
+                DownloadTaskEntity.STATUS_DOWNLOAD_FAILED -> R.drawable.ic_download_failed_cloud
+                DownloadTaskEntity.STATUS_SYNTHESIS -> R.drawable.ic_synthesis
+                DownloadTaskEntity.STATUS_SYNTHESIS_FAILED -> R.drawable.ic_synthesis_failed
+                DownloadTaskEntity.STATUS_COMPLETED -> R.drawable.ic_download_done_cloud
+                else -> throw IllegalStateException("Unknown download task status: ${task.downloadTask.status}")
             }
         )
+    }
+
+    fun getStatusText(task: DownloadTaskWithVideoDetails): String {
+        return "${task.downloadTask.progress}%"
     }
 
 }

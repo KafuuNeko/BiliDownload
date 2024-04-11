@@ -17,7 +17,7 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
     fun getChannelNotificationId(): Int = getFixedNotificationId(getChannelId())
 
     fun getForegroundNotification(): Notification = getNotificationBuild(
-        R.drawable.ic_download,
+        R.drawable.ic_downloading,
         CommonLibs.getString(R.string.notification_title_download_foreground),
     ).build()
 
@@ -28,7 +28,7 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
     ) {
         val id = getNewNotificationId()
         getNotificationBuild(
-            R.drawable.ic_download, title, message
+            R.drawable.ic_downloading, title, message
         ).apply {
             setAutoCancel(true)
             setOngoing(false)
@@ -50,7 +50,7 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
         }
 
         getNotificationBuild(
-            R.drawable.ic_download, title, null
+            R.drawable.ic_downloading, title, null
         ).apply {
             setAutoCancel(false)
             setOngoing(true)
