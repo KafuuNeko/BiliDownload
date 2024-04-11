@@ -28,7 +28,7 @@ class DownloadService : Service(), IDownloadStatusListener {
 
         fun startDownload(context: Context, taskId: Long) {
             val intent = Intent(context, DownloadService::class.java)
-            intent.putExtra("taskId", taskId)
+            intent.putExtra("entityId", taskId)
             context.startService(intent)
         }
     }
@@ -65,13 +65,13 @@ class DownloadService : Service(), IDownloadStatusListener {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val taskId = intent?.getLongExtra("taskId", -1L)
-        if (taskId == null || taskId == -1L) {
+        val entityId = intent?.getLongExtra("entityId", -1L)
+        if (entityId == null || entityId == -1L) {
             return super.onStartCommand(intent, flags, startId)
         }
-        Log.d(TAG, "onStartCommand: $taskId")
+        Log.d(TAG, "onStartCommand: $entityId")
         mRunningTaskCount++
-        mServiceScope.launch { doRequestDownload(taskId) }
+        mServiceScope.launch { doRequestDownload(entityId) }
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -79,13 +79,13 @@ class DownloadService : Service(), IDownloadStatusListener {
 
     /**
      * 开始请求下载资源
-     * @param taskId entity id
+     * @param entityId entity id
      * */
-    private suspend fun doRequestDownload(taskId: Long) {
-        mDownloadTaskDao.getDownloadTaskById(taskId)?.let {
+    private suspend fun doRequestDownload(entityId: Long) {
+        mDownloadTaskDao.getDownloadTaskById(entityId)?.let {
             DownloadManager.requestDownload(it)
         } ?: {
-            Log.e(TAG, "Task [E$taskId] get download task entity failed")
+            Log.e(TAG, "Task [E$entityId] get download task entity failed")
             mRunningTaskCount--
         }
     }
