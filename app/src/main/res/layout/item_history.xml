@@ -23,8 +23,7 @@
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="10dp"
-        android:layout_marginTop="10dp"
+        android:layout_margin="10dp"
         android:elevation="10dp"
         app:cardCornerRadius="15dp">
 
@@ -120,9 +119,7 @@
                         android:maxLines="1"
                         android:ellipsize="end"/>
 
-
                 </LinearLayout>
-
 
             </LinearLayout>
 
@@ -141,7 +138,8 @@
                     android:id="@+id/iv_status_image"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:src="@drawable/ic_download" />
+                    android:src="@drawable/ic_download"
+                    android:contentDescription="@string/iv_download_status_image_content_description"/>
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/tv_status_text"
@@ -154,7 +152,6 @@
                     android:textSize="12sp" />
 
             </LinearLayout>
-
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

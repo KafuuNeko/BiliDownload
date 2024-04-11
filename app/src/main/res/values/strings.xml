@@ -45,4 +45,5 @@
     <string name="video_description_dolby_vision">杜比视界</string>
     <string name="video_description_8k">8K</string>
     <string name="video_description_unknown">未知</string>
+    <string name="iv_download_status_image_content_description">下载状态</string>
 </resources>
