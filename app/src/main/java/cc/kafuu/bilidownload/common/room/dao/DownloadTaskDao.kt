@@ -37,7 +37,7 @@ interface DownloadTaskDao {
         ORDER BY task.id DESC
     """
     )
-    fun getDownloadTasksWithVideoDetails(vararg statuses: Int): List<DownloadTaskWithVideoDetails>
+    fun getDownloadTasksWithVideoDetailsLiveData(vararg statuses: Int): LiveData<List<DownloadTaskWithVideoDetails>>
 
     @Query("SELECT * FROM DownloadTaskEntity WHERE id = :id")
     suspend fun getDownloadTaskById(id: Long): DownloadTaskEntity?

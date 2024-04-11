@@ -2,6 +2,7 @@ package cc.kafuu.bilidownload.common.room.dto
 
 import androidx.room.Embedded
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
+import cc.kafuu.bilidownload.common.utils.BiliCodeUtils
 
 data class DownloadTaskWithVideoDetails(
     // DownloadTaskEntity
@@ -13,4 +14,8 @@ data class DownloadTaskWithVideoDetails(
     val cover: String,
     // BiliVideoPartEntity
     val partTitle: String
-)
+) {
+    fun getQualityDetailsVideo() = BiliCodeUtils.getVideoQualityDescription(downloadTask.dashVideoId)
+    fun getQualityDetailsAudio() = BiliCodeUtils.getAudioQualityDescribe(downloadTask.dashAudioId)
+
+}

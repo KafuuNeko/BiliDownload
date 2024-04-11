@@ -31,4 +31,18 @@
     <string name="home_tab_text_failed">已失败</string>
     <string name="notification_get_video_details_failed_title">获取视频信息失败</string>
     <string name="notification_get_video_details_failed_message">回应代码: %d, 返回代码: $d, %s</string>
+    <string name="iv_video_cover_content_description">视频封面</string>
+    <string name="video_description_240p">240P</string>
+    <string name="video_description_360p">360P</string>
+    <string name="video_description_480p">480P</string>
+    <string name="video_description_720p">720P</string>
+    <string name="video_description_720p60">720P60</string>
+    <string name="video_description_1080p">1080P</string>
+    <string name="video_description_1080p_plus">1080P+</string>
+    <string name="video_description_1080p60">1080P60</string>
+    <string name="video_description_4k">4K</string>
+    <string name="video_description_hdr">HDR</string>
+    <string name="video_description_dolby_vision">杜比视界</string>
+    <string name="video_description_8k">8K</string>
+    <string name="video_description_unknown">未知</string>
 </resources>
