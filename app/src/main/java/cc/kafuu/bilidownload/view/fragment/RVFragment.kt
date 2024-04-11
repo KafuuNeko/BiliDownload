@@ -11,7 +11,7 @@ import cc.kafuu.bilidownload.viewmodel.fragment.RVViewModel
 import com.scwang.smart.refresh.layout.listener.OnRefreshListener
 import com.scwang.smart.refresh.layout.listener.OnRefreshLoadMoreListener
 
-open abstract class RVFragment<VM : RVViewModel>(
+abstract class RVFragment<VM : RVViewModel>(
     vmClass: Class<VM>
 ) : CoreFragment<FragmentRvBinding, VM>(
     vmClass,
