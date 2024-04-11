@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload.common.network.manager
 
+import cc.kafuu.bilidownload.common.core.IServerCallback
 import cn.hutool.core.util.URLUtil
 import cn.hutool.crypto.SecureUtil
 import java.util.StringJoiner
@@ -22,17 +23,45 @@ object WbiManager {
         }
     }.toString()
 
-    private fun checkUpdateWbi(): Boolean {
+    private fun syncCheckUpdateWbi(callback: IServerCallback<Pair<String, String>>? = null): Boolean {
         // 若缓存失效则重置
         if (isCacheInvalid()) resetCache()
 
-        return if (wbiCache != null) {
+        if (wbiCache != null) {
             // 缓存还有效
             return true
-        } else NetworkManager.biliWbiResponse.syncGetWbiKey()?.let {
+        }
+
+        return NetworkManager.biliWbiResponse.syncGetWbiKey()?.let {
             updateCache(it.first, it.second)
             true
         } ?: false
+    }
+
+    private fun asyncCheckUpdateWbi(callback: IServerCallback<Pair<String, String>>) {
+        // 若缓存失效则重置
+        if (isCacheInvalid()) resetCache()
+
+        if (wbiCache != null) {
+            // 缓存还有效
+            return
+        }
+
+        NetworkManager.biliWbiResponse.getWbiKey(object : IServerCallback<Pair<String, String>> {
+            override fun onSuccess(
+                httpCode: Int,
+                code: Int,
+                message: String,
+                data: Pair<String, String>
+            ) {
+                updateCache(data.first, data.second)
+                callback.onSuccess(httpCode, code, message, data)
+            }
+
+            override fun onFailure(httpCode: Int, code: Int, message: String) {
+                callback.onFailure(httpCode, code, message)
+            }
+        })
     }
 
     private fun isCacheInvalid() = System.currentTimeMillis() - wbiCacheTime > 60000 * 5
@@ -54,20 +83,11 @@ object WbiManager {
      * @throws IllegalStateException 如果请求WBI更新失败。
      *
      * @param paramMap 请求的参数映射，可以为null。
-     *         val originalHttpUrl = originalRequest.url()
-     *         val paramMap = HashMap<String, String>().apply {
-     *             for (i in 0 until originalHttpUrl.querySize()) {
-     *                 put(
-     *                     originalHttpUrl.queryParameterName(i),
-     *                     originalHttpUrl.queryParameterValue(i)
-     *                 )
-     *             }
-     *         }
      * @return 带有WBI签名的请求参数字符串，如果不需要签名则返回null。
      */
-    fun generateSignature(paramMap: Map<String, Any>?): String {
+    fun syncGenerateSignature(paramMap: Map<String, Any>?): String {
         // 尝试请求更新Wbi
-        if (!checkUpdateWbi()) {
+        if (!syncCheckUpdateWbi()) {
             throw IllegalStateException("WbiManager: Wbi request failed")
         }
         val params = StringJoiner("&")
