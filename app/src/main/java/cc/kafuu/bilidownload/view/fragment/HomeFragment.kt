@@ -25,7 +25,7 @@ class HomeFragment : CoreFragment<FragmentHomeBinding, HomeViewModel>(
         val fragments = getFragments()
 
         mViewDataBinding.vp2Home.apply {
-            adapter = FragmentAdapter(activity?.supportFragmentManager!!, lifecycle).apply {
+            adapter = FragmentAdapter(childFragmentManager, lifecycle).apply {
                 addFragmentView(fragments.map { it.second })
             }
         }

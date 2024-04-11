@@ -1,21 +1,31 @@
 package cc.kafuu.bilidownload.view.fragment
 
+import android.os.Bundle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import cc.kafuu.bilidownload.common.adapter.HistoryRVAdapter
 import cc.kafuu.bilidownload.common.core.CoreRVAdapter
 import cc.kafuu.bilidownload.viewmodel.fragment.HistoryViewModel
 
-class HistoryFragment(vararg statuses: Int) :
+class HistoryFragment :
     RVFragment<HistoryViewModel>(HistoryViewModel::class.java) {
     companion object {
         private const val TAG = "HistoryFragment"
 
         @JvmStatic
-        fun newInstance(vararg statuses: Int) = HistoryFragment(*statuses)
+        fun newInstance(vararg statuses: Int) = HistoryFragment().apply {
+            arguments = Bundle().apply {
+                putIntArray("statuses", statuses)
+            }
+        }
     }
 
-    private val mStatuses: IntArray = statuses
+    private lateinit var mStatuses: IntArray
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        mStatuses = arguments?.getIntArray("statuses") ?: intArrayOf()
+    }
 
     override fun initViews() {
         super.initViews()
