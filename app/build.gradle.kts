@@ -107,9 +107,6 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
 
-    //eventbus
-    implementation(libs.eventbus)
-
     //gson
     implementation(libs.google.gson)
 
