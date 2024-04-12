@@ -2,14 +2,24 @@ package cc.kafuu.bilidownload.common.core
 
 import android.content.ComponentName
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.view.View
+import android.view.WindowInsets
+import android.view.WindowInsetsController
+import android.view.WindowManager
 import androidx.activity.result.ActivityResult
+import androidx.annotation.ColorRes
 import androidx.annotation.LayoutRes
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.lifecycle.ViewModelProvider
+import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.manager.ActivityStackManager
+import cc.kafuu.bilidownload.common.utils.CommonLibs
 import cc.kafuu.bilidownload.model.ActivityJumpData
 
 /**
@@ -111,4 +121,45 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
 
         jumpData.isDeprecated = true
     }
+
+    /**
+     * 设置状态栏色值
+     *
+     * @param color·
+     */
+    protected fun setNavigationStatusColor(@ColorRes color: Int) {
+        val window = window
+        if (window != null) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+            window.statusBarColor = CommonLibs.getColor(color)
+        }
+    }
+
+    /**
+     * 设置沉浸式状态栏
+     * 为防止状态栏与标题重合
+     * 设置页面标题控件需设置：android:fitsSystemWindows="true"
+     */
+    protected fun setImmersionStatusBar() {
+        val window = window
+        if (window != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                // Android 11+
+                val insetsController = window.insetsController
+                insetsController?.let {
+                    it.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+                    it.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    window.statusBarColor = ContextCompat.getColor(this, R.color.transparent)
+                }
+            } else {
+                // 旧版本
+                val decorView = window.decorView
+                decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION)
+                window.statusBarColor = ContextCompat.getColor(this, R.color.transparent)
+            }
+        }
+    }
+
 }
