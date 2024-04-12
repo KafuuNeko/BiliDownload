@@ -84,6 +84,7 @@ class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
     }
 
     override fun initViews() {
+        setImmersionStatusBar()
         //downloadTest()
         mViewDataBinding.vp2Content.apply {
             adapter = FragmentAdapter(supportFragmentManager, lifecycle).apply {

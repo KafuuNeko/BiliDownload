@@ -13,8 +13,8 @@ open class CoreViewModel : ViewModel() {
      */
     @JvmOverloads
     protected fun startActivity(
-        targetIntent: Intent? = null,
         targetClass: Class<*>,
+        targetIntent: Intent? = null,
         finishCurrent: Boolean = false
     ) {
         activityJumpLiveData.postValue(ActivityJumpData(targetIntent, targetClass, finishCurrent))
