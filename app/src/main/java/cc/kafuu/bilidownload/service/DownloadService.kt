@@ -10,10 +10,9 @@ import cc.kafuu.bilidownload.common.jniexport.FFMpegJNI
 import cc.kafuu.bilidownload.common.manager.DownloadManager
 import cc.kafuu.bilidownload.common.manager.IDownloadStatusListener
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
-import cc.kafuu.bilidownload.common.room.entity.BiliVideoMainEntity
-import cc.kafuu.bilidownload.common.room.entity.BiliVideoPartEntity
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.room.entity.ResourceEntity
+import cc.kafuu.bilidownload.common.room.repository.BiliVideoRepository
 import cc.kafuu.bilidownload.common.utils.CommonLibs
 import cc.kafuu.bilidownload.notification.DownloadNotification
 import com.arialyy.aria.core.Aria
@@ -39,7 +38,6 @@ class DownloadService : Service(), IDownloadStatusListener {
     private val mServiceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     private val mDownloadTaskDao = CommonLibs.requireAppDatabase().downloadTaskDao()
-    private val mBiliVideoDao = CommonLibs.requireAppDatabase().biliVideoDao()
     private val mResourceDao = CommonLibs.requireAppDatabase().resourceDao()
 
     private var mRunningTaskCount by Delegates.observable(0) { _, _, value ->
@@ -90,21 +88,26 @@ class DownloadService : Service(), IDownloadStatusListener {
     override fun onBind(intent: Intent?): IBinder? = null
 
     /**
-     * 开始分配任务
+     * 分配下载任务
      * @param entityId entity id
      * */
     private suspend fun assigningTask(entityId: Long) {
         val entity = mDownloadTaskDao.getDownloadTaskById(entityId)
             ?: throw IllegalStateException("Task [E$entityId] get download task entity failed")
 
-        doSaveVideoDetailsAndToRequestDownload(entity)
+        // 尝试保存视频信息和请求下载
+        doSaveVideoDetails(entity)
+
+        // 开始请求下载
+        DownloadManager.requestDownload(entity)
     }
 
     /**
      * 尝试保存视频信息和请求下载
-     * 1. 请求获取视频详情；2. 根据获取到的数据更新数据库；3.视频信息保存后请求下载视频。
+     * previous: [assigningTask]
+     * 1. 请求获取视频详情；2. 根据获取到的数据更新数据库；
      * */
-    private suspend fun doSaveVideoDetailsAndToRequestDownload(entity: DownloadTaskEntity) {
+    private suspend fun doSaveVideoDetails(entity: DownloadTaskEntity) {
         val biliVideoData =
             NetworkManager.biliVideoRepository.syncGetVideoDetail(entity.biliBvid) { responseCode, returnCode, message ->
                 mDownloadNotification.notificationGetVideoDetailsFailed(
@@ -124,40 +127,14 @@ class DownloadService : Service(), IDownloadStatusListener {
                 )
             } ?: throw IllegalStateException("Task [E${entity.id}] get video details failed")
 
-        // Log.d(TAG, "Task [E${entity.id}] get video details: $biliVideoData")
-        // 插入或更新bv视频信息
-        val biliVideoMainEntity = BiliVideoMainEntity(
-            biliVideoData.bvid,
-            biliVideoData.title,
-            biliVideoData.desc,
-            biliVideoData.pic
-        )
-        mBiliVideoDao.insert(biliVideoMainEntity)
-        Log.d(
-            TAG,
-            "Task [E${entity.id}] insert or update biliVideoMainEntity: $biliVideoMainEntity"
-        )
-
-        // 插入或更新次bv的所有子视频信息
-        val biliVideoPartEntityList = biliVideoData.pages.map {
-            BiliVideoPartEntity(
-                biliVideoData.bvid,
-                it.cid,
-                it.part
-            )
-        }
-        mBiliVideoDao.insert(*biliVideoPartEntityList.toTypedArray())
-        Log.d(
-            TAG,
-            "Task [E${entity.id}] insert or update biliVideoMainEntity: $biliVideoPartEntityList"
-        )
-
-        // 保存完视频信息后开始请求下载
-        DownloadManager.requestDownload(entity)
+        // 更新数据库中的视频信息
+        BiliVideoRepository.doInsertOrUpdateVideoDetails(biliVideoData)
     }
 
+
     /**
-     * 请求下载资源失败 */
+     * 请求下载资源失败
+     * [DownloadManager] Callback */
     override fun onRequestFailed(
         entity: DownloadTaskEntity,
         httpCode: Int,
@@ -169,7 +146,8 @@ class DownloadService : Service(), IDownloadStatusListener {
     }
 
     /**
-     * 下载状态改变 */
+     * 下载状态改变
+     * [DownloadManager] Callback */
     override fun onDownloadStatusChange(
         entity: DownloadTaskEntity,
         task: DownloadGroupTask,
@@ -197,6 +175,10 @@ class DownloadService : Service(), IDownloadStatusListener {
         }
     }
 
+    /**
+     * 下载前准备完成
+     * from [onDownloadStatusChange]
+     * */
     private suspend fun onPreprocessingCompleted(
         entity: DownloadTaskEntity,
         task: DownloadGroupTask
@@ -206,6 +188,10 @@ class DownloadService : Service(), IDownloadStatusListener {
         })
     }
 
+    /**
+     * 下载失败
+     * from [onDownloadStatusChange]
+     * */
     private suspend fun onDownloadFailed(entity: DownloadTaskEntity, task: DownloadGroupTask) {
         mDownloadTaskDao.update(entity.apply {
             status = DownloadTaskEntity.STATUS_DOWNLOAD_FAILED
@@ -213,6 +199,10 @@ class DownloadService : Service(), IDownloadStatusListener {
         mDownloadNotification.notificationDownloadFailed(entity)
     }
 
+    /**
+     * 完成下载操作
+     * from [onDownloadStatusChange]
+     * */
     private suspend fun onDownloadCompleted(entity: DownloadTaskEntity, task: DownloadGroupTask) {
         // 更新状态为正在合成
         mDownloadTaskDao.update(entity.apply {
@@ -270,6 +260,9 @@ class DownloadService : Service(), IDownloadStatusListener {
         return true
     }
 
+    /**
+     * 下载任务执行中...
+     * from [onDownloadStatusChange]*/
     private suspend fun onDownloadExecuting(entity: DownloadTaskEntity, task: DownloadGroupTask) {
         Log.d(
             TAG,
@@ -278,6 +271,9 @@ class DownloadService : Service(), IDownloadStatusListener {
         mDownloadNotification.updateDownloadProgress(entity, task.percent)
     }
 
+    /**
+     * 下载任务被取消
+     * from [onDownloadStatusChange] */
     private suspend fun onDownloadCancelled(entity: DownloadTaskEntity, task: DownloadGroupTask) {
         mDownloadTaskDao.delete(entity)
         mDownloadNotification.notificationDownloadCancel(entity)
