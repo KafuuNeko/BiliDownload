@@ -46,4 +46,6 @@
     <string name="video_description_8k">8K</string>
     <string name="video_description_unknown">未知</string>
     <string name="iv_download_status_image_content_description">下载状态</string>
+    <string name="loading_status_icon">列表状态图标</string>
+    <string name="list_is_empty">无数据</string>
 </resources>

@@ -3,7 +3,10 @@ package cc.kafuu.bilidownload.view.fragment
 import android.os.Bundle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.adapter.HistoryRVAdapter
+import cc.kafuu.bilidownload.common.utils.CommonLibs
+import cc.kafuu.bilidownload.model.LoadingMessage
 import cc.kafuu.bilidownload.viewmodel.fragment.HistoryViewModel
 import com.arialyy.annotations.DownloadGroup
 import com.arialyy.aria.core.Aria
@@ -11,7 +14,12 @@ import com.arialyy.aria.core.task.DownloadGroupTask
 
 class HistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::class.java) {
     companion object {
-        private const val TAG = "HistoryFragment"
+        private val MESSAGE_GONE = LoadingMessage()
+        private val MESSAGE_LIST_EMPTY = LoadingMessage(
+            true,
+            CommonLibs.getDrawable(R.drawable.ic_list_item_empty),
+            CommonLibs.getString(R.string.list_is_empty)
+        )
 
         @JvmStatic
         fun newInstance(vararg statuses: Int) = HistoryFragment().apply {
@@ -49,6 +57,7 @@ class HistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::class.jav
         mViewModel.initData(*mStatuses)
         mViewModel.latestDownloadTaskLiveData.observe(this) {
             mViewModel.listMutableLiveData.value = it.toMutableList()
+            mViewModel.loadingMessageMutableLiveData.value = if (it.isEmpty()) MESSAGE_LIST_EMPTY else MESSAGE_GONE
         }
     }
 
