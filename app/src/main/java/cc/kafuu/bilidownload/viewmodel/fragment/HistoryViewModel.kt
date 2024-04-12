@@ -28,7 +28,7 @@ class HistoryViewModel : RVViewModel() {
                 DownloadTaskEntity.STATUS_SYNTHESIS -> R.drawable.ic_synthesis
                 DownloadTaskEntity.STATUS_SYNTHESIS_FAILED -> R.drawable.ic_synthesis_failed
                 DownloadTaskEntity.STATUS_COMPLETED -> R.drawable.ic_download_done_cloud
-                else -> throw IllegalStateException("Unknown download task status: ${task.downloadTask.status}")
+                else -> R.drawable.ic_unknown_med
             }
         )
     }
