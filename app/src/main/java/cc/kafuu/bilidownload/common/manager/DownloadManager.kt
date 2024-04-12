@@ -164,6 +164,7 @@ object DownloadManager {
                 BiliManager.cookies.value?.let { addHeader("Cookie", it) }
             })
             .setDirPath(CommonLibs.requireDownloadCacheDir(entity.id).path)
+            .ignoreCheckPermissions()
             .unknownSize()
             .create()
         mEntityMap[entity.downloadTaskId!!] = entity
