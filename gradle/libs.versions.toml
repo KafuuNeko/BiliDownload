@@ -3,6 +3,7 @@ agp = "8.3.1"
 ariaCompiler = "3.8.16"
 ariaCoreVersion = "3.8.16"
 design = "28.0.0"
+eventbus = "3.3.1"
 fragmentKtx = "1.6.2"
 glideVersion = "4.16.0"
 gsonVersion = "2.10.1"
@@ -35,6 +36,7 @@ aria-compiler = { module = "me.laoyuyu.aria:compiler", version.ref = "ariaCompil
 aria-core = { module = "me.laoyuyu.aria:core", version.ref = "ariaCoreVersion" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
 design = { module = "com.android.support:design", version.ref = "design" }
+eventbus = { module = "org.greenrobot:eventbus", version.ref = "eventbus" }
 github-glide = { module = "com.github.bumptech.glide:glide", version.ref = "glideVersion" }
 google-gson = { module = "com.google.code.gson:gson", version.ref = "gsonVersion" }
 hutool-crypto = { module = "cn.hutool:hutool-crypto", version.ref = "hutoolCrypto" }

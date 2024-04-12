@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import android.util.Log
+import cc.kafuu.bilidownload.common.event.DownloadStatusChangeEvent
 import cc.kafuu.bilidownload.common.jniexport.FFMpegJNI
 import cc.kafuu.bilidownload.common.manager.DownloadManager
 import cc.kafuu.bilidownload.common.manager.IDownloadStatusListener
@@ -22,6 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import org.greenrobot.eventbus.EventBus
 import kotlin.properties.Delegates
 
 class DownloadService : Service(), IDownloadStatusListener {
@@ -186,6 +188,7 @@ class DownloadService : Service(), IDownloadStatusListener {
         mDownloadTaskDao.update(entity.apply {
             status = DownloadTaskEntity.STATUS_DOWNLOADING
         })
+        EventBus.getDefault().post(DownloadStatusChangeEvent(entity, task, DownloadTaskEntity.STATUS_DOWNLOADING))
     }
 
     /**
@@ -196,6 +199,7 @@ class DownloadService : Service(), IDownloadStatusListener {
         mDownloadTaskDao.update(entity.apply {
             status = DownloadTaskEntity.STATUS_DOWNLOAD_FAILED
         })
+        EventBus.getDefault().post(DownloadStatusChangeEvent(entity, task, DownloadTaskEntity.STATUS_DOWNLOAD_FAILED))
         mDownloadNotification.notificationDownloadFailed(entity)
     }
 
@@ -208,6 +212,7 @@ class DownloadService : Service(), IDownloadStatusListener {
         mDownloadTaskDao.update(entity.apply {
             status = DownloadTaskEntity.STATUS_SYNTHESIS
         })
+        EventBus.getDefault().post(DownloadStatusChangeEvent(entity, task, DownloadTaskEntity.STATUS_SYNTHESIS))
 
         val syntheticStatus = if (doSynthetic(entity, task)) {
             DownloadTaskEntity.STATUS_COMPLETED
@@ -218,6 +223,8 @@ class DownloadService : Service(), IDownloadStatusListener {
         mDownloadTaskDao.update(entity.apply {
             status = syntheticStatus
         })
+        EventBus.getDefault().post(DownloadStatusChangeEvent(entity, task, syntheticStatus))
+
 
         // 未完成的
         if (syntheticStatus == DownloadTaskEntity.STATUS_SYNTHESIS_FAILED) {
@@ -268,6 +275,7 @@ class DownloadService : Service(), IDownloadStatusListener {
             TAG,
             "Task [D${task.entity.id}, E${entity.id}] status change, percent: ${task.percent}%"
         )
+        EventBus.getDefault().post(DownloadStatusChangeEvent(entity, task, DownloadTaskEntity.STATUS_DOWNLOADING))
         mDownloadNotification.updateDownloadProgress(entity, task.percent)
     }
 
