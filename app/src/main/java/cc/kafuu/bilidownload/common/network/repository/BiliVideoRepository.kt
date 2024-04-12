@@ -1,9 +1,8 @@
 package cc.kafuu.bilidownload.common.network.repository
 
-import cc.kafuu.bilidownload.common.core.IServerCallback
+import cc.kafuu.bilidownload.common.network.IServerCallback
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
-import cc.kafuu.bilidownload.common.network.model.BiliRespond
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.network.service.BiliApiService
 

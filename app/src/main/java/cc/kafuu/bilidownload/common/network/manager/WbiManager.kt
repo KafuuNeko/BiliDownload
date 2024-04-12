@@ -1,6 +1,6 @@
 package cc.kafuu.bilidownload.common.network.manager
 
-import cc.kafuu.bilidownload.common.core.IServerCallback
+import cc.kafuu.bilidownload.common.network.IServerCallback
 import cn.hutool.core.util.URLUtil
 import cn.hutool.crypto.SecureUtil
 import java.util.StringJoiner

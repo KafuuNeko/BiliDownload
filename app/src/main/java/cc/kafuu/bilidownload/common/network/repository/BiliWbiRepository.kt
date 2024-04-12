@@ -1,6 +1,6 @@
 package cc.kafuu.bilidownload.common.network.repository
 
-import cc.kafuu.bilidownload.common.core.IServerCallback
+import cc.kafuu.bilidownload.common.network.IServerCallback
 import cc.kafuu.bilidownload.common.network.service.BiliApiService
 
 class BiliWbiRepository(biliApiService: BiliApiService) : BiliRepository(biliApiService) {
