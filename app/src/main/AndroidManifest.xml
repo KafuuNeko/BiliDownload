@@ -32,6 +32,8 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".view.activity.SearchActivity"/>
+
         <service android:name=".service.DownloadService"
             android:foregroundServiceType="dataSync"/>
     </application>
