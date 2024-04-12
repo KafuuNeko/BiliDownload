@@ -77,7 +77,12 @@ class DownloadService : Service(), IDownloadStatusListener {
         Log.d(TAG, "onStartCommand: $entityId")
         mRunningTaskCount++
         mServiceScope.launch {
-            doRequestDownload(entityId)
+            try {
+                assigningTask(entityId)
+            } catch (e: Exception) {
+                mRunningTaskCount--
+                Log.e(TAG, e.message ?: "Unknown error")
+            }
         }
         return super.onStartCommand(intent, flags, startId)
     }
@@ -85,16 +90,14 @@ class DownloadService : Service(), IDownloadStatusListener {
     override fun onBind(intent: Intent?): IBinder? = null
 
     /**
-     * 开始请求下载资源
+     * 开始分配任务
      * @param entityId entity id
      * */
-    private suspend fun doRequestDownload(entityId: Long) {
-        mDownloadTaskDao.getDownloadTaskById(entityId)?.let {
-            doSaveVideoDetailsAndToRequestDownload(it)
-        } ?: {
-            Log.e(TAG, "Task [E$entityId] get download task entity failed")
-            mRunningTaskCount--
-        }
+    private suspend fun assigningTask(entityId: Long) {
+        val entity = mDownloadTaskDao.getDownloadTaskById(entityId)
+            ?: throw IllegalStateException("Task [E$entityId] get download task entity failed")
+
+        doSaveVideoDetailsAndToRequestDownload(entity)
     }
 
     /**
@@ -102,49 +105,55 @@ class DownloadService : Service(), IDownloadStatusListener {
      * 1. 请求获取视频详情；2. 根据获取到的数据更新数据库；3.视频信息保存后请求下载视频。
      * */
     private suspend fun doSaveVideoDetailsAndToRequestDownload(entity: DownloadTaskEntity) {
-        NetworkManager.biliVideoRepository.syncGetVideoDetail(entity.biliBvid) { responseCode, returnCode, message ->
-            mDownloadNotification.notificationGetVideoDetailsFailed(
-                entity,
-                responseCode,
-                returnCode,
-                message
-            )
-            Log.e(
-                TAG,
-                "Task [E${entity.id}] get video details failed, responseCode: $responseCode, returnCode: $returnCode, message: $message"
-            )
-            mRunningTaskCount--
-            // 如果无法获取视频详情，且这个任务还在准备阶段则直接删除任务
-            // 因为没有对应获取视频详情失败的STATUS（也不需要）
-            if (entity.status == DownloadTaskEntity.STATUS_PREPARE) {
-                mServiceScope.launch { mDownloadTaskDao.delete(entity) }
-            }
-        }?.let { biliVideoData ->
-            // Log.d(TAG, "Task [E${entity.id}] get video details: $biliVideoData")
-            // 插入或更新bv视频信息
-            val biliVideoMainEntity = BiliVideoMainEntity(
-                biliVideoData.bvid,
-                biliVideoData.title,
-                biliVideoData.desc,
-                biliVideoData.pic
-            )
-            mBiliVideoDao.insert(biliVideoMainEntity)
-            Log.d(TAG, "Task [E${entity.id}] insert or update biliVideoMainEntity: $biliVideoMainEntity")
-
-            // 插入或更新次bv的所有子视频信息
-            val biliVideoPartEntityList = biliVideoData.pages.map {
-                BiliVideoPartEntity(
-                    biliVideoData.bvid,
-                    it.cid,
-                    it.part
+        val biliVideoData =
+            NetworkManager.biliVideoRepository.syncGetVideoDetail(entity.biliBvid) { responseCode, returnCode, message ->
+                mDownloadNotification.notificationGetVideoDetailsFailed(
+                    entity,
+                    responseCode,
+                    returnCode,
+                    message
                 )
-            }
-            mBiliVideoDao.insert(*biliVideoPartEntityList.toTypedArray())
-            Log.d(TAG, "Task [E${entity.id}] insert or update biliVideoMainEntity: $biliVideoPartEntityList")
+                // 如果无法获取视频详情，且这个任务还在准备阶段则直接删除任务
+                // 因为没有对应获取视频详情失败的STATUS（也不需要）
+                if (entity.status == DownloadTaskEntity.STATUS_PREPARE) {
+                    mServiceScope.launch { mDownloadTaskDao.delete(entity) }
+                }
+                Log.e(
+                    TAG,
+                    "Task [E${entity.id}] get video details failed, responseCode: $responseCode, returnCode: $returnCode, message: $message"
+                )
+            } ?: throw IllegalStateException("Task [E${entity.id}] get video details failed")
 
-            // 保存完视频信息后开始请求下载
-            DownloadManager.requestDownload(entity)
+        // Log.d(TAG, "Task [E${entity.id}] get video details: $biliVideoData")
+        // 插入或更新bv视频信息
+        val biliVideoMainEntity = BiliVideoMainEntity(
+            biliVideoData.bvid,
+            biliVideoData.title,
+            biliVideoData.desc,
+            biliVideoData.pic
+        )
+        mBiliVideoDao.insert(biliVideoMainEntity)
+        Log.d(
+            TAG,
+            "Task [E${entity.id}] insert or update biliVideoMainEntity: $biliVideoMainEntity"
+        )
+
+        // 插入或更新次bv的所有子视频信息
+        val biliVideoPartEntityList = biliVideoData.pages.map {
+            BiliVideoPartEntity(
+                biliVideoData.bvid,
+                it.cid,
+                it.part
+            )
         }
+        mBiliVideoDao.insert(*biliVideoPartEntityList.toTypedArray())
+        Log.d(
+            TAG,
+            "Task [E${entity.id}] insert or update biliVideoMainEntity: $biliVideoPartEntityList"
+        )
+
+        // 保存完视频信息后开始请求下载
+        DownloadManager.requestDownload(entity)
     }
 
     /**

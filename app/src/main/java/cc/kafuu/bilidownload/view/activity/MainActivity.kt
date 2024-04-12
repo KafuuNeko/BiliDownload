@@ -10,6 +10,7 @@ import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
 import cc.kafuu.bilidownload.common.utils.CommonLibs
+import cc.kafuu.bilidownload.common.utils.PermissionUtils
 import cc.kafuu.bilidownload.databinding.ActivityMainBinding
 import cc.kafuu.bilidownload.model.MainTabType
 import cc.kafuu.bilidownload.service.DownloadService
@@ -101,7 +102,11 @@ class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
                 if (first) {
                     first = false
                 } else {
-                    downloadTest()
+                    if (!PermissionUtils.hasStoragePermissions(this)) {
+                        PermissionUtils.requestStoragePermissions(this)
+                    } else {
+                        downloadTest()
+                    }
                 }
             }
         }
