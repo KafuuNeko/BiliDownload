@@ -48,4 +48,6 @@
     <string name="iv_download_status_image_content_description">下载状态</string>
     <string name="loading_status_icon">列表状态图标</string>
     <string name="list_is_empty">无数据</string>
+    <string name="tv_search_text">搜索</string>
+    <string name="iv_back_content_description">返回</string>
 </resources>

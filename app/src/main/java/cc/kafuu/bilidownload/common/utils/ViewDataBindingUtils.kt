@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable
 import android.text.TextUtils
 import android.view.View
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.databinding.BindingAdapter
 import androidx.recyclerview.widget.RecyclerView
 import cc.kafuu.bilidownload.R
@@ -98,3 +99,10 @@ fun bindVisible(view: View, visibility: Boolean) {
     view.visibility = if (visibility) View.VISIBLE else View.GONE
 }
 
+@BindingAdapter(value = ["bindOnEditorAction"])
+fun bindOnEditorAction(textView: TextView, onEditorActionLambda: () -> Unit) {
+    textView.setOnEditorActionListener { _, _, _ ->
+        onEditorActionLambda()
+        true
+    }
+}
