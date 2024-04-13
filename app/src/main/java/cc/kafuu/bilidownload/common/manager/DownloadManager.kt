@@ -56,10 +56,10 @@ object DownloadManager {
     @DownloadGroup.onTaskRunning
     @DownloadGroup.onTaskStop
     @DownloadGroup.onTaskStart
-    fun handleTaskEnd(task: DownloadGroupTask) {
+    fun onTaskStatusChange(task: DownloadGroupTask) {
         Log.d(
             TAG,
-            "Task [D${task.entity.id}] download ended, status: ${TaskStatus.fromCode(task.state)}"
+            "Task [D${task.entity.id}] download status change, status: ${TaskStatus.fromCode(task.state)}"
         )
         val entity = mEntityMap[task.entity.id]!!
         val status = TaskStatus.fromCode(task.state)
