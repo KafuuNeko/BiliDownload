@@ -16,6 +16,8 @@ namespace ffmpeg {
     public:
         AvFormat(const std::string &filename, AVInputFormat *fmt = nullptr);
 
+        bool isAlive() const noexcept;
+
         bool extract(const std::string &outputFilename,
                      std::function<bool(size_t index, AVStream *stream)> streamFilter = nullptr,
                      std::function<bool(size_t index, AVPacket *packet)> packetFilter = nullptr);
