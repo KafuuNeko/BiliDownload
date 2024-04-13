@@ -268,6 +268,11 @@ class DownloadService : Service(), IDownloadStatusListener {
             TAG,
             "Task [D${task.entity.id}, E${entity.id}] status change, percent: ${task.percent}%"
         )
+        if (entity.status != DownloadTaskEntity.STATUS_DOWNLOADING) {
+            mDownloadTaskDao.update(entity.apply {
+                status = DownloadTaskEntity.STATUS_DOWNLOADING
+            })
+        }
         mDownloadNotification.updateDownloadProgress(entity, task.percent)
     }
 
