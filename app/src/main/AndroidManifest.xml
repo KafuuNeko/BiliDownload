@@ -34,6 +34,8 @@
 
         <activity android:name=".view.activity.SearchActivity"/>
 
+        <activity android:name=".view.activity.AboutActivity"/>
+
         <service android:name=".service.DownloadService"
             android:foregroundServiceType="dataSync"/>
     </application>
