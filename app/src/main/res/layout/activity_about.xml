@@ -36,7 +36,6 @@
                     android:gravity="center_vertical"
                     android:minHeight="40dp"
                     android:padding="10dp"
-                    android:paddingHorizontal="5dp"
                     android:text="@string/tv_invitation_text"
                     android:textSize="16sp"
                     app:drawableEndCompat="@drawable/ic_arrow_right" />
@@ -82,7 +81,6 @@
                     android:gravity="center_vertical"
                     android:minHeight="40dp"
                     android:padding="10dp"
-                    android:paddingHorizontal="5dp"
                     android:text="@string/tv_about_license_text"
                     android:textSize="16sp"
                     app:drawableEndCompat="@drawable/ic_arrow_right" />
@@ -98,7 +96,6 @@
                     android:gravity="center_vertical"
                     android:minHeight="40dp"
                     android:padding="10dp"
-                    android:paddingHorizontal="5dp"
                     android:text="@string/tv_about_us_text"
                     android:textSize="16sp"
                     app:drawableEndCompat="@drawable/ic_arrow_right" />
@@ -119,7 +116,6 @@
                 android:gravity="center_vertical"
                 android:minHeight="40dp"
                 android:padding="10dp"
-                android:paddingHorizontal="5dp"
                 android:text="@string/tv_grade_text"
                 android:textSize="16sp"
                 app:drawableEndCompat="@drawable/ic_arrow_right" />
