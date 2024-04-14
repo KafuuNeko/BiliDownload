@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import cc.kafuu.bilidownload.common.jniexport.FFMpegJNI
@@ -25,20 +26,39 @@ import kotlinx.coroutines.launch
 import kotlin.properties.Delegates
 
 class DownloadService : Service(), IDownloadStatusListener {
+    private val mServiceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     companion object {
+        private val mDownloadTaskDao = CommonLibs.requireAppDatabase().downloadTaskDao()
+        private val mResourceDao = CommonLibs.requireAppDatabase().resourceDao()
+
         private const val TAG = "DownloadService"
+        private fun startService(context: Context, intent: Intent) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
+        }
 
         fun startDownload(context: Context, taskId: Long) {
             val intent = Intent(context, DownloadService::class.java)
             intent.putExtra("entityId", taskId)
-            context.startService(intent)
+            startService(context, intent)
+        }
+
+        suspend fun resumeDownload(context: Context) {
+            val intent = Intent(context, DownloadService::class.java)
+            mDownloadTaskDao.getLatestDownloadTask(
+                DownloadTaskEntity.STATUS_DOWNLOADING,
+                DownloadTaskEntity.STATUS_PREPARE
+            ).forEach {
+                if (it.downloadTaskId != null && !DownloadManager.containsTask(it.downloadTaskId!!)) {
+                    intent.putExtra("entityId", it.id)
+                    startService(context, intent)
+                }
+            }
         }
     }
-
-    private val mServiceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-
-    private val mDownloadTaskDao = CommonLibs.requireAppDatabase().downloadTaskDao()
-    private val mResourceDao = CommonLibs.requireAppDatabase().resourceDao()
 
     private var mRunningTaskCount by Delegates.observable(0) { _, _, value ->
         if (value > 0) return@observable
@@ -156,11 +176,6 @@ class DownloadService : Service(), IDownloadStatusListener {
         Log.d(TAG, "Task [D${task.entity.id}, E${entity.id}] status change, status: $status")
         mServiceScope.launch {
             when (status) {
-                DownloadManager.TaskStatus.PREPROCESSING_COMPLETED -> onPreprocessingCompleted(
-                    entity,
-                    task
-                )
-
                 DownloadManager.TaskStatus.FAILURE -> onDownloadFailed(entity, task)
                 DownloadManager.TaskStatus.COMPLETED -> onDownloadCompleted(entity, task)
                 DownloadManager.TaskStatus.EXECUTING -> onDownloadExecuting(entity, task)
@@ -175,18 +190,6 @@ class DownloadService : Service(), IDownloadStatusListener {
         }
     }
 
-    /**
-     * 下载前准备完成
-     * from [onDownloadStatusChange]
-     * */
-    private suspend fun onPreprocessingCompleted(
-        entity: DownloadTaskEntity,
-        task: DownloadGroupTask
-    ) {
-        mDownloadTaskDao.update(entity.apply {
-            status = DownloadTaskEntity.STATUS_DOWNLOADING
-        })
-    }
 
     /**
      * 下载失败
@@ -268,6 +271,11 @@ class DownloadService : Service(), IDownloadStatusListener {
             TAG,
             "Task [D${task.entity.id}, E${entity.id}] status change, percent: ${task.percent}%"
         )
+        if (entity.status != DownloadTaskEntity.STATUS_DOWNLOADING) {
+            mDownloadTaskDao.update(entity.apply {
+                status = DownloadTaskEntity.STATUS_DOWNLOADING
+            })
+        }
         mDownloadNotification.updateDownloadProgress(entity, task.percent)
     }
 

@@ -24,8 +24,8 @@ interface DownloadTaskDao {
     @Query("SELECT * FROM DownloadTaskEntity")
     suspend fun getAllDownloadTask(): List<DownloadTaskEntity>
 
-    @Query("SELECT * FROM DownloadTaskEntity WHERE status IN (:statuses) ORDER BY id DESC")
-    fun getLatestDownloadTaskLiveData(vararg statuses: Int): LiveData<List<DownloadTaskEntity>>
+    @Query("SELECT * FROM DownloadTaskEntity WHERE status IN (:statuses)")
+    suspend fun getLatestDownloadTask(vararg statuses: Int): List<DownloadTaskEntity>
 
     @Query(
         """

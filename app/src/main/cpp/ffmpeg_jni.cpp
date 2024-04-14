@@ -92,7 +92,11 @@ FFMPEG_JNI_FUNC(jboolean, mergeMedia)(JNIEnv *env, jobject thiz,
         if (i < mimeTypeVector.size()) {
             fmt = ffmpeg::utils::findFormatForMimeType(mimeTypeVector[i]);
         }
-        formats.emplace_back(ffmpeg::getFormat(resourceVector[i], fmt));
+        auto format = ffmpeg::AvFormat(resourceVector[i], fmt);
+        if (!format.isAlive()) {
+            return JNI_FALSE;
+        }
+        formats.emplace_back(format);
     }
 
     bool status = ffmpeg::mergeAVFormatContexts(javaStringToCppString(env, output), formats);

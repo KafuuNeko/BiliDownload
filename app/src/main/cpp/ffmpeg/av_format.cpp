@@ -29,6 +29,10 @@ AvFormat::AvFormat(const std::string &filename, AVInputFormat *fmt) {
     // av_dump_format(mInputFormatCtx, 0, inputFile.c_str(), 0);
 }
 
+bool AvFormat::isAlive() const noexcept {
+    return mInputFormatCtx!= nullptr;
+}
+
 bool AvFormat::extract(
         const std::string &outputFilename,
         std::function<bool(size_t index, AVStream *stream)> streamFilter,

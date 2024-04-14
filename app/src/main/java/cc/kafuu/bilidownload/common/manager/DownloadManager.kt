@@ -2,15 +2,19 @@ package cc.kafuu.bilidownload.common.manager
 
 import android.util.Log
 import cc.kafuu.bilidownload.common.network.IServerCallback
-import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.network.NetworkConfig
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
+import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.utils.CommonLibs
 import com.arialyy.annotations.DownloadGroup
+import com.arialyy.annotations.DownloadGroup.onSubTaskFail
 import com.arialyy.aria.core.Aria
 import com.arialyy.aria.core.common.HttpOption
+import com.arialyy.aria.core.download.DownloadEntity
 import com.arialyy.aria.core.task.DownloadGroupTask
+import kotlinx.coroutines.runBlocking
+
 
 object DownloadManager {
 
@@ -39,6 +43,8 @@ object DownloadManager {
     val mStatusListener: MutableList<IDownloadStatusListener> = mutableListOf()
     private val mEntityMap = hashMapOf<Long, DownloadTaskEntity>()
 
+    fun containsTask(downloadTaskId: Long) = mEntityMap.contains(downloadTaskId)
+
     fun register(listener: IDownloadStatusListener) {
         if (!mStatusListener.contains(listener)) {
             mStatusListener.add(listener)
@@ -49,6 +55,19 @@ object DownloadManager {
         mStatusListener.remove(listener)
     }
 
+    private suspend fun getDownloadTaskEntity(task: DownloadGroupTask): DownloadTaskEntity? {
+        val entity =
+            mEntityMap[task.entity.id] ?: CommonLibs.requireAppDatabase().downloadTaskDao()
+                .getDownloadTaskByDownloadTaskId(task.entity.id)
+        if (entity == null) {
+            if (TaskStatus.fromCode(task.state) != TaskStatus.CANCELLED) {
+                Aria.download(this).load(task.entity.id).cancel(true)
+                Log.d(TAG, "Task [D${task.entity.id}]: entity cannot be found, task cancelled")
+            }
+        }
+        return entity
+    }
+
     @Synchronized
     @DownloadGroup.onTaskComplete
     @DownloadGroup.onTaskCancel
@@ -56,16 +75,34 @@ object DownloadManager {
     @DownloadGroup.onTaskRunning
     @DownloadGroup.onTaskStop
     @DownloadGroup.onTaskStart
-    fun onTaskStatusChange(task: DownloadGroupTask) {
+    fun onTaskStatusChange(task: DownloadGroupTask?) {
+        if (task == null) {
+            return
+        }
         Log.d(
             TAG,
             "Task [D${task.entity.id}] download status change, status: ${TaskStatus.fromCode(task.state)}"
         )
-        val entity = mEntityMap[task.entity.id]!!
-        val status = TaskStatus.fromCode(task.state)
-        mStatusListener.forEach { it.onDownloadStatusChange(entity, task, status) }
-        if (status.isEndStatus) {
-            mEntityMap.remove(task.entity.id)
+        runBlocking {
+            val entity = getDownloadTaskEntity(task) ?: return@runBlocking
+            val status = TaskStatus.fromCode(task.state)
+            mStatusListener.forEach { it.onDownloadStatusChange(entity, task, status) }
+            if (status.isEndStatus) {
+                mEntityMap.remove(task.entity.id)
+            }
+        }
+    }
+
+    @onSubTaskFail
+    fun onSubTaskFail(groupTask: DownloadGroupTask?, subEntity: DownloadEntity?) {
+        if (groupTask == null) {
+            return
+        }
+
+        Log.d(TAG, "onSubTaskFail: $groupTask, subEntity: $subEntity")
+        runBlocking {
+            val entity = getDownloadTaskEntity(groupTask) ?: return@runBlocking
+            mStatusListener.forEach { it.onDownloadStatusChange(entity, groupTask, TaskStatus.FAILURE) }
         }
     }
 
@@ -79,6 +116,15 @@ object DownloadManager {
      */
     fun requestDownload(entity: DownloadTaskEntity) {
         Log.d(TAG, "Task [E${entity.id}] request download")
+
+        if (entity.downloadTaskId != null &&
+            !containsTask(entity.downloadTaskId!!) &&
+            entity.status == DownloadTaskEntity.STATUS_DOWNLOADING
+        ) {
+            Aria.download(this).loadGroup(entity.downloadTaskId!!).ignoreCheckPermissions()
+                .resume(true)
+            return
+        }
 
         NetworkManager.biliVideoRepository.getPlayStreamDash(
             entity.biliBvid,
@@ -157,7 +203,7 @@ object DownloadManager {
 
     @Synchronized
     private fun doStartDownload(entity: DownloadTaskEntity, resourceUrls: List<String>) {
-        entity.downloadTaskId = Aria.download(this)
+        Aria.download(this)
             .loadGroup(resourceUrls)
             .option(HttpOption().apply {
                 NetworkConfig.DOWNLOAD_HEADERS.forEach { (key, value) -> addHeader(key, value) }
@@ -166,8 +212,14 @@ object DownloadManager {
             .setDirPath(CommonLibs.requireDownloadCacheDir(entity.id).path)
             .ignoreCheckPermissions()
             .unknownSize()
-            .create()
-        mEntityMap[entity.downloadTaskId!!] = entity
+            .apply {
+                entity.downloadTaskId = entity.id
+                entity.status = DownloadTaskEntity.STATUS_DOWNLOADING
+
+                mEntityMap[entity.id] = entity
+                runBlocking { CommonLibs.requireAppDatabase().downloadTaskDao().update(entity) }
+                create()
+            }
         Log.d(TAG, "Task [D${entity.downloadTaskId}] start download")
     }
 }
