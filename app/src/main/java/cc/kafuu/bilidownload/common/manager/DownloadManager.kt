@@ -40,6 +40,8 @@ object DownloadManager {
     val mStatusListener: MutableList<IDownloadStatusListener> = mutableListOf()
     private val mEntityMap = hashMapOf<Long, DownloadTaskEntity>()
 
+    fun containsTask(downloadTaskId: Long) = mEntityMap.contains(downloadTaskId)
+
     fun register(listener: IDownloadStatusListener) {
         if (!mStatusListener.contains(listener)) {
             mStatusListener.add(listener)
@@ -90,6 +92,14 @@ object DownloadManager {
      */
     fun requestDownload(entity: DownloadTaskEntity) {
         Log.d(TAG, "Task [E${entity.id}] request download")
+
+        if (entity.downloadTaskId != null &&
+            !containsTask(entity.downloadTaskId!!) &&
+            entity.status == DownloadTaskEntity.STATUS_DOWNLOADING
+        ) {
+            Aria.download(this).loadGroup(entity.downloadTaskId!!).ignoreCheckPermissions().resume()
+            return
+        }
 
         NetworkManager.biliVideoRepository.getPlayStreamDash(
             entity.biliBvid,

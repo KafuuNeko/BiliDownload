@@ -6,9 +6,9 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.adapter.FragmentAdapter
 import cc.kafuu.bilidownload.common.core.CoreActivity
 import cc.kafuu.bilidownload.common.network.IServerCallback
-import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
+import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.utils.CommonLibs
 import cc.kafuu.bilidownload.common.utils.PermissionUtils
 import cc.kafuu.bilidownload.databinding.ActivityMainBinding
@@ -17,6 +17,10 @@ import cc.kafuu.bilidownload.service.DownloadService
 import cc.kafuu.bilidownload.view.fragment.HomeFragment
 import cc.kafuu.bilidownload.view.fragment.MeFragment
 import cc.kafuu.bilidownload.viewmodel.activity.MainViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 @Suppress("DEPRECATED_IDENTITY_EQUALS")
@@ -28,6 +32,7 @@ class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
 
     companion object {
         private const val TAG = "MainActivity"
+        private val mScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     }
 
     var first: Boolean = true
@@ -111,6 +116,7 @@ class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
                 }
             }
         }
+        mScope.launch { DownloadService.resumeDownload(this@MainActivity) }
     }
 
     private fun getFragments() = listOf(
