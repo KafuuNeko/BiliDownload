@@ -26,8 +26,8 @@ import kotlinx.coroutines.launch
 import kotlin.properties.Delegates
 
 class DownloadService : Service(), IDownloadStatusListener {
+    private val mServiceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     companion object {
-        private val mServiceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
         private val mDownloadTaskDao = CommonLibs.requireAppDatabase().downloadTaskDao()
         private val mResourceDao = CommonLibs.requireAppDatabase().resourceDao()
 
@@ -48,7 +48,10 @@ class DownloadService : Service(), IDownloadStatusListener {
 
         suspend fun resumeDownload(context: Context) {
             val intent = Intent(context, DownloadService::class.java)
-            mDownloadTaskDao.getLatestDownloadTask(DownloadTaskEntity.STATUS_DOWNLOADING).forEach {
+            mDownloadTaskDao.getLatestDownloadTask(
+                DownloadTaskEntity.STATUS_DOWNLOADING,
+                DownloadTaskEntity.STATUS_PREPARE
+            ).forEach {
                 if (it.downloadTaskId != null && !DownloadManager.containsTask(it.downloadTaskId!!)) {
                     intent.putExtra("entityId", it.id)
                     startService(context, intent)
@@ -173,11 +176,6 @@ class DownloadService : Service(), IDownloadStatusListener {
         Log.d(TAG, "Task [D${task.entity.id}, E${entity.id}] status change, status: $status")
         mServiceScope.launch {
             when (status) {
-                DownloadManager.TaskStatus.PREPROCESSING_COMPLETED -> onPreprocessingCompleted(
-                    entity,
-                    task
-                )
-
                 DownloadManager.TaskStatus.FAILURE -> onDownloadFailed(entity, task)
                 DownloadManager.TaskStatus.COMPLETED -> onDownloadCompleted(entity, task)
                 DownloadManager.TaskStatus.EXECUTING -> onDownloadExecuting(entity, task)
@@ -192,18 +190,6 @@ class DownloadService : Service(), IDownloadStatusListener {
         }
     }
 
-    /**
-     * 下载前准备完成
-     * from [onDownloadStatusChange]
-     * */
-    private suspend fun onPreprocessingCompleted(
-        entity: DownloadTaskEntity,
-        task: DownloadGroupTask
-    ) {
-        mDownloadTaskDao.update(entity.apply {
-            status = DownloadTaskEntity.STATUS_DOWNLOADING
-        })
-    }
 
     /**
      * 下载失败
