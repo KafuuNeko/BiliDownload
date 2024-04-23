@@ -5,7 +5,7 @@ import android.widget.ImageView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
-class RVVisibleListener(private var mIvTop: ImageView? = null) : RecyclerView.OnScrollListener() {
+class RVToTopVisibleListener(private var mIvTop: ImageView? = null) : RecyclerView.OnScrollListener() {
     private var firstViewPosition = 0
     override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
         super.onScrollStateChanged(recyclerView, newState)

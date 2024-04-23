@@ -5,7 +5,7 @@ import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.core.CoreFragment
 import cc.kafuu.bilidownload.common.core.CoreRVAdapter
-import cc.kafuu.bilidownload.common.manager.RVVisibleListener
+import cc.kafuu.bilidownload.common.manager.RVToTopVisibleListener
 import cc.kafuu.bilidownload.databinding.FragmentRvBinding
 import cc.kafuu.bilidownload.viewmodel.fragment.RVViewModel
 import com.scwang.smart.refresh.layout.listener.OnRefreshListener
@@ -27,7 +27,7 @@ abstract class RVFragment<VM : RVViewModel>(
 
     private fun FragmentRvBinding.initViews() {
         rvContent.apply {
-            addOnScrollListener(RVVisibleListener(ivTop))
+            addOnScrollListener(RVToTopVisibleListener(ivTop))
             layoutManager = getRVLayoutManager()
             adapter = getRVAdapter()
         }
