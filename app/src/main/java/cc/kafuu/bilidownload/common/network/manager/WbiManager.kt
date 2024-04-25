@@ -45,7 +45,7 @@ object WbiManager {
         if (isCacheInvalid()) resetCache()
 
         if (wbiCache != null) {
-            // 缓存还有效
+            callback.onSuccess(0, 0, "Cache valid", wbiCache!!)
             return
         }
 
