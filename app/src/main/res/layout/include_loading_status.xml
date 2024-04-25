@@ -5,10 +5,11 @@
     <data>
         <variable
             name="data"
-            type="cc.kafuu.bilidownload.model.LoadingMessage" />
+            type="cc.kafuu.bilidownload.model.LoadingStatus" />
 
         <import type="cc.kafuu.bilidownload.common.utils.ViewDataBindingUtilsKt" />
 
+        <import type="android.text.TextUtils"/>
     </data>
 
     <LinearLayout
@@ -18,10 +19,17 @@
         android:orientation="horizontal"
         bindVisible="@{data.visibility}">
 
+        <ProgressBar
+            style="?android:attr/progressBarStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            bindVisible="@{data.loadAnimationVisible}"/>
+
         <ImageView
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:src="@{data.icon}"
+            bindVisible="@{data.icon != null}"
             tools:src="@drawable/ic_list_item_empty"
             android:contentDescription="@string/loading_status_icon"/>
 
@@ -29,6 +37,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@{data.message}"
+            bindVisible="@{!TextUtils.isEmpty(data.message)}"
             android:textColor="@color/primary_color"
             tools:text="@string/app_name"/>
     </LinearLayout>

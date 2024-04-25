@@ -54,11 +54,11 @@
             tools:visibility="visible"/>
 
         <include
-            layout="@layout/include_loading"
+            layout="@layout/include_loading_status"
             android:id="@+id/fl_loading"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:data="@{viewModel.loadingMessageMutableLiveData}"
+            app:data="@{viewModel.loadingStatusMessageMutableLiveData}"
             tools:visibility="gone" />
 
     </FrameLayout>
