@@ -2,6 +2,7 @@ package cc.kafuu.bilidownload.common.network.service
 import cc.kafuu.bilidownload.common.network.model.BiliAccountData
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
 import cc.kafuu.bilidownload.common.network.model.BiliRespond
+import cc.kafuu.bilidownload.common.network.model.BiliSearchData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.network.model.BiliWbiData
 import retrofit2.Call
@@ -36,4 +37,7 @@ interface BiliApiService {
 
     @GET
     fun getAccountData(@Url fullUrl: String?): Call<BiliRespond<BiliAccountData>>
+
+    @GET
+    fun search(@Url fullUrl: String?): Call<BiliRespond<BiliSearchData>>
 }
