@@ -13,7 +13,7 @@ object NetworkConfig {
     val GENERAL_HEADERS = HashMap<String, String>().apply {
         put(
             "User-Agent",
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 EdgiOS/46.3.30 Mobile/15E148 Safari/605.1.15"
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0"
         )
         put("Accept", "application/json, text/plain, */*")
         put("Accept-Language", "zh-CN,zh-Hans;q=0.9")
