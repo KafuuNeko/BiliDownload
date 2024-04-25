@@ -3,6 +3,7 @@ package cc.kafuu.bilidownload.common.network.manager
 import cc.kafuu.bilidownload.common.network.IServerCallback
 import cn.hutool.core.util.URLUtil
 import cn.hutool.crypto.SecureUtil
+import java.io.IOException
 import java.util.StringJoiner
 
 object WbiManager {
@@ -23,6 +24,7 @@ object WbiManager {
         }
     }.toString()
 
+    @Throws(IOException::class, IllegalStateException::class)
     private fun syncCheckUpdateWbi(callback: IServerCallback<Pair<String, String>>? = null): Boolean {
         // 若缓存失效则重置
         if (isCacheInvalid()) resetCache()
@@ -100,6 +102,7 @@ object WbiManager {
      * @param paramMap 请求的参数映射，可以为null。
      * @return 带有WBI签名的请求参数字符串，如果不需要签名则返回null。
      */
+    @Throws(IOException::class, IllegalStateException::class)
     fun syncGenerateSignature(paramMap: Map<String, Any>?): String {
         // 尝试请求更新Wbi
         if (!syncCheckUpdateWbi()) {

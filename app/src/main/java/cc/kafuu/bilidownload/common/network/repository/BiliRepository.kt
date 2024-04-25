@@ -6,6 +6,7 @@ import cc.kafuu.bilidownload.common.network.service.BiliApiService
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.IOException
 
 /**
  * 与BiliApiService交互的仓库基类，用于发起网络请求并处理响应。
@@ -79,6 +80,7 @@ open class BiliRepository(protected val biliApiService: BiliApiService) {
      * @param checkResponseCode 是否检查响应代码为0
      * @return D? 处理后的数据，请求失败时返回null（若存在失败回调函数情况下）。
      */
+    @Throws(IOException::class, IllegalStateException::class)
     protected fun <T, D> Call<BiliRespond<T>>.execute(
         onFailure: ((Int, Int, String) -> Unit)?,
         checkResponseCode: Boolean,
@@ -91,13 +93,14 @@ open class BiliRepository(protected val biliApiService: BiliApiService) {
                 result = data
             }, onFailure, processingData, checkResponseCode)
             result
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             e.printStackTrace()
             onFailure?.invoke(0, 0, e.message ?: "Unknown error") ?: throw e
             null
         }
     }
 
+    @Throws(IOException::class, IllegalStateException::class)
     protected fun <T, D> Call<BiliRespond<T>>.execute(
         onFailure: ((Int, Int, String) -> Unit)?,
         processingData: (T) -> D

@@ -5,8 +5,10 @@ import cc.kafuu.bilidownload.common.network.NetworkConfig
 import cc.kafuu.bilidownload.common.network.manager.WbiManager
 import cc.kafuu.bilidownload.common.network.model.BiliAccountData
 import cc.kafuu.bilidownload.common.network.service.BiliApiService
+import java.io.IOException
 
 class BiliAccountRepository(biliApiService: BiliApiService) : BiliRepository(biliApiService) {
+    @Throws(IOException::class, IllegalStateException::class)
     fun syncGetAccountData(mid: Long, onFailure: ((Int, Int, String) -> Unit)?): BiliAccountData? {
         val params = linkedMapOf<String, Any>(
             "mid" to mid
