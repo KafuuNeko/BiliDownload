@@ -14,11 +14,9 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
     R.layout.activity_search,
     BR.viewModel
 ) {
-    private var mSearchListFragment: SearchListFragment? = null
 
     override fun initViews() {
         setImmersionStatusBar()
-        initFragment()
         initListener()
     }
 
@@ -35,11 +33,7 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
 
     private fun initListener() {
         mViewModel.searchRequestLiveData.observe(this) {
-            mSearchListFragment?.doSearch(it)
+            mViewDataBinding.fvFragment.getFragment<SearchListFragment>().doSearch(it)
         }
-    }
-
-    private fun initFragment() {
-        mSearchListFragment = SearchListFragment.newInstance()
     }
 }

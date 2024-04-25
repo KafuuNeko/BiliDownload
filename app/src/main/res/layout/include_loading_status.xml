@@ -17,6 +17,7 @@
         android:layout_height="match_parent"
         android:gravity="center"
         android:orientation="horizontal"
+        android:background="@color/white"
         bindVisible="@{data.visibility}">
 
         <ProgressBar

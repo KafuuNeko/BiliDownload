@@ -69,6 +69,7 @@
 
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/fv_fragment"
+            android:name="cc.kafuu.bilidownload.view.fragment.SearchListFragment"
             android:layout_width="0dp"
             android:layout_height="0dp"
             app:layout_constraintBottom_toBottomOf="parent"

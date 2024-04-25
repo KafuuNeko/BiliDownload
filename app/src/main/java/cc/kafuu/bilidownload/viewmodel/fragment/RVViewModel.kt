@@ -15,6 +15,7 @@ open class RVViewModel : CoreViewModel() {
             CommonLibs.getString(R.string.list_is_empty)
         )
         val LOADING_STATUS_LOADING = LoadingStatus(
+            visibility = true,
             loadAnimationVisible = true
         )
     }

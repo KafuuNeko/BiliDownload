@@ -5,6 +5,8 @@ package cc.kafuu.bilidownload.common.utils
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
+import android.text.Html
+import android.text.Spanned
 import android.text.TextUtils
 import android.view.View
 import android.widget.ImageView
@@ -104,5 +106,16 @@ fun bindOnEditorAction(textView: TextView, onEditorActionLambda: () -> Unit) {
     textView.setOnEditorActionListener { _, _, _ ->
         onEditorActionLambda()
         true
+    }
+}
+
+@BindingAdapter("bindSpannable")
+fun bindSpannable(textView: TextView, htmlText: String?) {
+    if (htmlText == null) {
+        textView.text = ""
+    } else {
+        val spannedText: Spanned =
+            Html.fromHtml(htmlText, Html.FROM_HTML_MODE_LEGACY)
+        textView.text = spannedText
     }
 }
