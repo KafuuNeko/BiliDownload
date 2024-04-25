@@ -26,9 +26,11 @@ open class BiliRepository(protected val biliApiService: BiliApiService) {
      * @param D 处理后的数据类型。
      * @param callback 服务器回调接口，用于返回成功或失败的结果。
      * @param processingData 数据处理函数，将T类型的数据转换为D类型。
+     * @param checkResponseCode 是否检查响应代码为0
      */
     protected fun <T, D> Call<BiliRespond<T>>.enqueue(
         callback: IServerCallback<D>,
+        checkResponseCode: Boolean,
         processingData: (T) -> D
     ) {
         enqueue(object : Callback<BiliRespond<T>> {
@@ -45,7 +47,7 @@ open class BiliRepository(protected val biliApiService: BiliApiService) {
                     )
                 }, { code, errorCode, errorMessage ->
                     callback.onFailure(code, errorCode, errorMessage)
-                }, processingData)
+                }, processingData, checkResponseCode)
             }
 
             override fun onFailure(call: Call<BiliRespond<T>>, e: Throwable) {
@@ -53,6 +55,13 @@ open class BiliRepository(protected val biliApiService: BiliApiService) {
                 callback.onFailure(0, 0, e.message ?: "Unknown error")
             }
         })
+    }
+
+    protected fun <T, D> Call<BiliRespond<T>>.enqueue(
+        callback: IServerCallback<D>,
+        processingData: (T) -> D
+    ) {
+        enqueue(callback, true, processingData)
     }
 
 
@@ -67,10 +76,12 @@ open class BiliRepository(protected val biliApiService: BiliApiService) {
      * @param D 处理后的数据类型。
      * @param onFailure 失败时的回调函数。如果为空，遇到错误时会抛出异常。
      * @param processingData 数据处理函数，将T类型的数据转换为D类型。
+     * @param checkResponseCode 是否检查响应代码为0
      * @return D? 处理后的数据，请求失败时返回null（若存在失败回调函数情况下）。
      */
     protected fun <T, D> Call<BiliRespond<T>>.execute(
         onFailure: ((Int, Int, String) -> Unit)?,
+        checkResponseCode: Boolean,
         processingData: (T) -> D
     ): D? {
         return try {
@@ -78,7 +89,7 @@ open class BiliRepository(protected val biliApiService: BiliApiService) {
             var result: D? = null
             processResponse(response, { data ->
                 result = data
-            }, onFailure, processingData)
+            }, onFailure, processingData, checkResponseCode)
             result
         } catch (e: Exception) {
             e.printStackTrace()
@@ -86,6 +97,11 @@ open class BiliRepository(protected val biliApiService: BiliApiService) {
             null
         }
     }
+
+    protected fun <T, D> Call<BiliRespond<T>>.execute(
+        onFailure: ((Int, Int, String) -> Unit)?,
+        processingData: (T) -> D
+    ): D? = execute(onFailure, true, processingData)
 
     /**
      * 处理响应数据，根据响应状态调用成功或失败的处理函数。
@@ -96,12 +112,14 @@ open class BiliRepository(protected val biliApiService: BiliApiService) {
      * @param onSuccess 成功时的处理函数，接收处理后的数据D。
      * @param onFailure 失败时的回调函数，提供错误代码和消息。
      * @param processingData 数据处理函数，将T类型的数据转换为D类型。
+     * @param checkResponseCode 是否检查响应代码为0
      */
     private fun <T, D> processResponse(
         response: Response<BiliRespond<T>>,
         onSuccess: (D) -> Unit,
         onFailure: ((Int, Int, String) -> Unit)?,
-        processingData: (T) -> D
+        processingData: (T) -> D,
+        checkResponseCode: Boolean
     ) {
         if (!response.isSuccessful) {
             val message = "Network call failed: ${response.code()} - ${response.message()}"
@@ -109,7 +127,7 @@ open class BiliRepository(protected val biliApiService: BiliApiService) {
         } else if (response.body() == null) {
             val message = "Response body is null. Error code: ${response.code()}"
             onFailure?.invoke(response.code(), 0, message) ?: throw IllegalStateException(message)
-        } else if (response.body()?.code != 0) {
+        } else if (checkResponseCode && response.body()?.code != 0) {
             val message =
                 "API call failed: ${response.body()?.code}, message: ${response.body()?.message}"
             onFailure?.invoke(

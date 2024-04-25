@@ -75,6 +75,21 @@ object WbiManager {
         wbiCacheTime = System.currentTimeMillis()
     }
 
+    private fun doGenerateSignature(paramMap: Map<String, Any>?): String {
+        val params = StringJoiner("&")
+        // 使用LinkedHashMap保持参数的插入顺序
+        LinkedHashMap(paramMap).run {
+            put("wts", System.currentTimeMillis() / 1000)
+            //排序 + 拼接字符串
+            entries.stream()
+                .sorted(java.util.Map.Entry.comparingByKey())
+                .forEach { (key, value): Map.Entry<String, Any> ->
+                    params.add("$key=${URLUtil.encode(value.toString())}")
+                }
+        }
+        return "$params&w_rid=${SecureUtil.md5(params.toString() + getMixinKey())}"
+    }
+
     /**
      * 根据给定的URL路径和参数映射生成带有WBI签名的请求参数字符串。
      *
@@ -90,17 +105,31 @@ object WbiManager {
         if (!syncCheckUpdateWbi()) {
             throw IllegalStateException("WbiManager: Wbi request failed")
         }
-        val params = StringJoiner("&")
-        // 使用LinkedHashMap保持参数的插入顺序
-        LinkedHashMap(paramMap).run {
-            put("wts", System.currentTimeMillis() / 1000)
-            //排序 + 拼接字符串
-            entries.stream()
-                .sorted(java.util.Map.Entry.comparingByKey())
-                .forEach { (key, value): Map.Entry<String, Any> ->
-                    params.add("$key=${URLUtil.encode(value.toString())}")
-                }
-        }
-        return "$params&w_rid=${SecureUtil.md5(params.toString() + getMixinKey())}"
+        return doGenerateSignature(paramMap)
+    }
+
+    /**
+     * 以异步的形式根据给定的URL路径和参数映射生成带有WBI签名的请求参数字符串。
+     *
+     * @throws IllegalStateException 如果请求WBI更新失败。
+     *
+     * @param paramMap 请求的参数映射，可以为null。
+     * @return 带有WBI签名的请求参数字符串，如果不需要签名则返回null。
+     */
+    fun asyncGenerateSignature(paramMap: Map<String, Any>?, callback: IServerCallback<String>) {
+        asyncCheckUpdateWbi(object : IServerCallback<Pair<String, String>> {
+            override fun onSuccess(
+                httpCode: Int,
+                code: Int,
+                message: String,
+                data: Pair<String, String>
+            ) {
+                callback.onSuccess(httpCode, code, message, doGenerateSignature(paramMap))
+            }
+
+            override fun onFailure(httpCode: Int, code: Int, message: String) {
+                callback.onFailure(httpCode, code, message)
+            }
+        })
     }
 }
