@@ -6,6 +6,7 @@ import java.util.Date
 
 data class BiliVideo(
     val author: String,
+    val authorId: Long,
     val bvid: String,
     val title: String,
     val description: String,

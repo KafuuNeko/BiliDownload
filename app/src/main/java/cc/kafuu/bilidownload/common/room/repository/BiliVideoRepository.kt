@@ -12,6 +12,8 @@ object BiliVideoRepository {
         // 插入或更新bv视频信息
         val biliVideoMainEntity = BiliVideoMainEntity(
             biliVideoData.bvid,
+            biliVideoData.owner.name,
+            biliVideoData.owner.mid,
             biliVideoData.title,
             biliVideoData.desc,
             biliVideoData.pic

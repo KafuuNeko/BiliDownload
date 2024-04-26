@@ -58,6 +58,7 @@ class SearchListViewModel : RVViewModel(), IServerCallback<BiliSearchData> {
         return biliSearchResultDataList.filter { it.type == "video" }.map {
             BiliVideo(
                 author = it.author,
+                authorId = it.mid,
                 bvid = it.bvid,
                 title = it.title,
                 description =  it.description,
