@@ -65,7 +65,8 @@
                     android:ellipsize="end"
                     android:maxLines="1"
                     android:textColor="@color/primary_color"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    tools:text="【Mili】A Turtle's Heart"/>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -80,7 +81,8 @@
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:textColor="@color/text_default_color" />
+                        android:textColor="@color/text_default_color"
+                        tools:text="Mili"/>
                     <androidx.appcompat.widget.AppCompatTextView
                         android:id="@+id/tv_formatter_date"
                         bindSpannable="@{data.pubFormatterDate}"
@@ -89,7 +91,8 @@
                         android:layout_marginStart="10dp"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:textColor="@color/text_default_color" />
+                        android:textColor="@color/text_default_color"
+                        tools:text="2016-06-07"/>
                 </LinearLayout>
 
                 <LinearLayout
@@ -105,7 +108,8 @@
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:textColor="@color/text_default_color" />
+                        android:textColor="@color/text_default_color"
+                        tools:text="03:04"/>
                     <androidx.appcompat.widget.AppCompatTextView
                         android:id="@+id/tv_description"
                         bindSpannable="@{data.description}"
@@ -114,7 +118,8 @@
                         android:layout_marginStart="10dp"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:textColor="@color/text_default_color" />
+                        android:textColor="@color/text_default_color"
+                        tools:text="Monday is a rainy day \nAnd I Stay inside letting time pass away"/>
                 </LinearLayout>
             </LinearLayout>
 
