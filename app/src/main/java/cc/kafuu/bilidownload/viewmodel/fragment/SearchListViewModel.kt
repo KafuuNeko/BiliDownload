@@ -56,7 +56,16 @@ class SearchListViewModel : RVViewModel(), IServerCallback<BiliSearchData> {
 
     private fun getResultVideos(biliSearchResultDataList: List<BiliSearchResultData>): List<BiliVideo> {
         return biliSearchResultDataList.filter { it.type == "video" }.map {
-            BiliVideo(it.bvid, it.title, it.description, "https:${it.pic}")
+            BiliVideo(
+                author = it.author,
+                bvid = it.bvid,
+                title = it.title,
+                description =  it.description,
+                pic = "https:${it.pic}",
+                pubDate =  it.pubdate,
+                sendDate =  it.senddate,
+                duration = it.duration
+            )
         }
     }
 }
