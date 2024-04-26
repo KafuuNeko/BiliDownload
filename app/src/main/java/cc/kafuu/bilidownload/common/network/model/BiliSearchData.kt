@@ -2,7 +2,7 @@ package cc.kafuu.bilidownload.common.network.model
 
 import com.google.gson.annotations.SerializedName
 
-data class BiliSearchData(
+data class BiliSearchData<R>(
     val seid: String,
     val page: Int,
     @SerializedName("page_size") val pageSize: Int,
@@ -17,7 +17,7 @@ data class BiliSearchData(
     @SerializedName("top_tlist") val topTList: BiliSearchTopTList,
     @SerializedName("show_column") val showColumn: Int,
     @SerializedName("show_module_list") val showModuleList: List<String>,
-    @SerializedName("result") val result: List<BiliSearchResultData>
+    @SerializedName("result") val result: List<R>
 )
 
 data class BiliSearchCostTime(
@@ -87,7 +87,7 @@ data class BiliSearchTopTList(
     @SerializedName("live_user") val liveUser: Int
 )
 
-data class BiliSearchResultData(
+data class BiliSearchVideoResultData(
     val type: String,
     val id: Long,
     val author: String,

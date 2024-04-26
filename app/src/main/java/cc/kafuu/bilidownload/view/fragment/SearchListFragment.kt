@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import cc.kafuu.bilidownload.common.adapter.SearchRVAdapter
 import cc.kafuu.bilidownload.common.network.IServerCallback
 import cc.kafuu.bilidownload.common.network.model.BiliSearchData
+import cc.kafuu.bilidownload.common.network.model.BiliSearchVideoResultData
 import cc.kafuu.bilidownload.model.LoadingStatus
 import cc.kafuu.bilidownload.viewmodel.fragment.SearchListViewModel
 import com.scwang.smart.refresh.layout.api.RefreshLayout
@@ -53,12 +54,12 @@ class SearchListFragment : RVFragment<SearchListViewModel>(SearchListViewModel::
 
     override fun onRefresh(refreshLayout: RefreshLayout) {
         val loadingStatus = LoadingStatus.loadingStatus(false)
-        mViewModel.doSearch(loadingStatus, false, object : IServerCallback<BiliSearchData> {
+        mViewModel.doSearch(loadingStatus, false, object : IServerCallback<BiliSearchData<BiliSearchVideoResultData>> {
             override fun onSuccess(
                 httpCode: Int,
                 code: Int,
                 message: String,
-                data: BiliSearchData
+                data: BiliSearchData<BiliSearchVideoResultData>
             ) {
                 refreshLayout.finishRefresh(true)
             }
@@ -71,12 +72,12 @@ class SearchListFragment : RVFragment<SearchListViewModel>(SearchListViewModel::
 
     override fun onLoadMore(refreshLayout: RefreshLayout) {
         val loadingStatus = LoadingStatus.loadingStatus(false)
-        mViewModel.doSearch(loadingStatus, true, object : IServerCallback<BiliSearchData> {
+        mViewModel.doSearch(loadingStatus, true, object : IServerCallback<BiliSearchData<BiliSearchVideoResultData>> {
             override fun onSuccess(
                 httpCode: Int,
                 code: Int,
                 message: String,
-                data: BiliSearchData
+                data: BiliSearchData<BiliSearchVideoResultData>
             ) {
                 refreshLayout.finishLoadMore(true)
             }
