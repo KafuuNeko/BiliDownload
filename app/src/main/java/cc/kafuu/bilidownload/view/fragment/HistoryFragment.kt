@@ -4,8 +4,8 @@ import android.os.Bundle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import cc.kafuu.bilidownload.common.adapter.HistoryRVAdapter
+import cc.kafuu.bilidownload.model.LoadingStatus
 import cc.kafuu.bilidownload.viewmodel.fragment.HistoryViewModel
-import cc.kafuu.bilidownload.viewmodel.fragment.RVViewModel
 import com.arialyy.annotations.DownloadGroup
 import com.arialyy.aria.core.Aria
 import com.arialyy.aria.core.task.DownloadGroupTask
@@ -49,7 +49,7 @@ class HistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::class.jav
         mViewModel.latestDownloadTaskLiveData.observe(this) {
             mViewModel.listMutableLiveData.value = it.toMutableList()
             mViewModel.loadingStatusMessageMutableLiveData.value =
-                if (it.isEmpty()) RVViewModel.LOADING_STATUS_EMPTY else RVViewModel.LOADING_STATUS_DONE
+                if (it.isEmpty()) LoadingStatus.emptyStatus() else LoadingStatus.doneStatus()
         }
     }
 

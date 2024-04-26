@@ -16,7 +16,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:background="@color/white"
         bindVisible="@{data.visibility}">
 
@@ -27,16 +27,18 @@
             bindVisible="@{data.loadAnimationVisible}"/>
 
         <ImageView
-            android:layout_width="36dp"
-            android:layout_height="36dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:src="@{data.icon}"
             bindVisible="@{data.icon != null}"
             tools:src="@drawable/ic_list_item_empty"
             android:contentDescription="@string/loading_status_icon"/>
 
         <androidx.appcompat.widget.AppCompatTextView
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginHorizontal="50dp"
             android:text="@{data.message}"
             bindVisible="@{!TextUtils.isEmpty(data.message)}"
             android:textColor="@color/primary_color"

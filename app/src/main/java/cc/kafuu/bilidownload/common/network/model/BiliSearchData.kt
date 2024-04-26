@@ -17,7 +17,7 @@ data class BiliSearchData(
     @SerializedName("top_tlist") val topTList: BiliSearchTopTList,
     @SerializedName("show_column") val showColumn: Int,
     @SerializedName("show_module_list") val showModuleList: List<String>,
-    @SerializedName("result") val result: List<BiliSearchResult>
+    @SerializedName("result") val result: List<BiliSearchResultData>
 )
 
 data class BiliSearchCostTime(
@@ -85,11 +85,6 @@ data class BiliSearchTopTList(
     val activity: Int,
     @SerializedName("live_master") val liveMaster: Int,
     @SerializedName("live_user") val liveUser: Int
-)
-
-data class BiliSearchResult(
-    @SerializedName("result_type") val resultType: String,
-    val data: List<BiliSearchResultData>
 )
 
 data class BiliSearchResultData(
