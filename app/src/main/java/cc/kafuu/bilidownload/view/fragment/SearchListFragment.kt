@@ -1,6 +1,5 @@
 package cc.kafuu.bilidownload.view.fragment
 
-import android.util.Log
 import androidx.recyclerview.widget.LinearLayoutManager
 import cc.kafuu.bilidownload.common.adapter.SearchRVAdapter
 import cc.kafuu.bilidownload.model.LoadingStatus
@@ -40,12 +39,10 @@ class SearchListFragment : RVFragment<SearchListViewModel>(SearchListViewModel::
     }
 
     private fun onLoadingStatusChange(status: LoadingStatus) {
-        val statusCode = status.statusCode
-        val refreshEnabled = (
-                statusCode != LoadingStatus.CODE_WAIT && statusCode != LoadingStatus.CODE_LOADING)
-        Log.d(TAG, "onLoadingStatusChange: $status")
-        setEnableRefresh(refreshEnabled)
-        setEnableLoadMore(refreshEnabled)
+        val sc = status.statusCode
+        val enableRefresh = (sc != LoadingStatus.CODE_WAIT && sc != LoadingStatus.CODE_LOADING)
+        setEnableRefresh(enableRefresh)
+        setEnableLoadMore(enableRefresh)
     }
 
     override fun onRefresh(refreshLayout: RefreshLayout) {
