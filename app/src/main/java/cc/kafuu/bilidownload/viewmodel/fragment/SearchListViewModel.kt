@@ -4,7 +4,9 @@ import android.util.Log
 import cc.kafuu.bilidownload.common.network.IServerCallback
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliSearchData
+import cc.kafuu.bilidownload.common.network.model.BiliSearchMediaResultData
 import cc.kafuu.bilidownload.common.network.model.BiliSearchVideoResultData
+import cc.kafuu.bilidownload.model.BiliMedia
 import cc.kafuu.bilidownload.model.BiliVideo
 import cc.kafuu.bilidownload.model.LoadingStatus
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
@@ -70,18 +72,15 @@ class SearchListViewModel : RVViewModel() {
         } else {
             mutableListOf()
         }
-        searchData.addAll(data.result.map { result ->
+        searchData.addAll(data.result.orEmpty().map { result ->
             when (result) {
                 is BiliSearchVideoResultData -> disposeResult(result)
+                is BiliSearchMediaResultData -> disposeResult(result)
                 else -> throw IllegalStateException("Unknown result from $result")
             }
         })
         loadingStatusMessageMutableLiveData.postValue(
-            if (searchData.isEmpty()) {
-                LoadingStatus.emptyStatus()
-            } else {
-                LoadingStatus.doneStatus()
-            }
+            if (searchData.isEmpty()) LoadingStatus.emptyStatus() else LoadingStatus.doneStatus()
         )
         mNextPage++
         listMutableLiveData.postValue(searchData)
@@ -97,5 +96,14 @@ class SearchListViewModel : RVViewModel() {
         pubDate = element.pubDate,
         sendDate = element.sendDate,
         duration = element.duration
+    )
+
+    private fun disposeResult(element: BiliSearchMediaResultData) = BiliMedia(
+        mediaId = element.mediaId,
+        seasonId = element.seasonId,
+        title = element.title,
+        cover = element.cover,
+        mediaType = element.mediaType,
+        desc = element.desc
     )
 }

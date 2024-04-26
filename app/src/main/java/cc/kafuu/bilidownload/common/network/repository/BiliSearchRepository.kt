@@ -4,6 +4,7 @@ import cc.kafuu.bilidownload.common.network.IServerCallback
 import cc.kafuu.bilidownload.common.network.NetworkConfig
 import cc.kafuu.bilidownload.common.network.manager.WbiManager
 import cc.kafuu.bilidownload.common.network.model.BiliSearchData
+import cc.kafuu.bilidownload.common.network.model.BiliSearchMediaResultData
 import cc.kafuu.bilidownload.common.network.model.BiliSearchVideoResultData
 import cc.kafuu.bilidownload.common.network.service.BiliApiService
 
@@ -55,6 +56,26 @@ class BiliSearchRepository(biliApiService: BiliApiService) : BiliRepository(bili
     ) {
         searchCheckWbi(SEARCH_TYPE_VIDEO, keyword, page, callback) { _, _, _, data ->
             biliApiService.searchVideo(getFullUrl(data)).enqueue(callback) { it }
+        }
+    }
+
+    fun searchMediaBangumi(
+        keyword: String,
+        page: Int,
+        callback: IServerCallback<BiliSearchData<BiliSearchMediaResultData>>
+    ) {
+        searchCheckWbi(SEARCH_TYPE_MEDIA_BANGUMI, keyword, page, callback) { _, _, _, data ->
+            biliApiService.searchMedia(getFullUrl(data)).enqueue(callback) { it }
+        }
+    }
+
+    fun searchMediaFt(
+        keyword: String,
+        page: Int,
+        callback: IServerCallback<BiliSearchData<BiliSearchMediaResultData>>
+    ) {
+        searchCheckWbi(SEARCH_TYPE_MEDIA_FT, keyword, page, callback) { _, _, _, data ->
+            biliApiService.searchMedia(getFullUrl(data)).enqueue(callback) { it }
         }
     }
 }

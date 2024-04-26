@@ -17,7 +17,7 @@ data class BiliSearchData<R>(
     @SerializedName("top_tlist") val topTList: BiliSearchTopTList,
     @SerializedName("show_column") val showColumn: Int,
     @SerializedName("show_module_list") val showModuleList: List<String>,
-    @SerializedName("result") val result: List<R>
+    @SerializedName("result") val result: List<R>?
 )
 
 data class BiliSearchCostTime(
@@ -117,4 +117,23 @@ data class BiliSearchVideoResultData(
     @SerializedName("rec_tags") val recTags: Any?,
     @SerializedName("new_rec_tags") val newRecTags: List<Any?>,
     @SerializedName("rank_score") val rankScore: Int
+)
+
+data class BiliSearchMediaResultData(
+    val type: String,
+    val mediaId: Long,
+    val seasonId: Long,
+    val title: String,
+    val orgTitle: String?,
+    val cover: String,
+    val mediaType: Int,
+    val areas: String,
+    val styles: String,
+    val cv: String,
+    val staff: String,
+    val playState: Int,
+    @SerializedName("goto_url") val gotoUrl: String,
+    val desc: String,
+    val corner: Int,
+    @SerializedName("pubtime") val pubTime: Long,
 )
