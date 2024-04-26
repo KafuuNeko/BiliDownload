@@ -1,12 +1,8 @@
 package cc.kafuu.bilidownload.view.fragment
 
 import android.util.Log
-import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import cc.kafuu.bilidownload.common.adapter.SearchRVAdapter
-import cc.kafuu.bilidownload.common.network.IServerCallback
-import cc.kafuu.bilidownload.common.network.model.BiliSearchData
-import cc.kafuu.bilidownload.common.network.model.BiliSearchVideoResultData
 import cc.kafuu.bilidownload.model.LoadingStatus
 import cc.kafuu.bilidownload.viewmodel.fragment.SearchListViewModel
 import com.scwang.smart.refresh.layout.api.RefreshLayout
@@ -54,38 +50,17 @@ class SearchListFragment : RVFragment<SearchListViewModel>(SearchListViewModel::
 
     override fun onRefresh(refreshLayout: RefreshLayout) {
         val loadingStatus = LoadingStatus.loadingStatus(false)
-        mViewModel.doSearch(loadingStatus, false, object : IServerCallback<BiliSearchData<BiliSearchVideoResultData>> {
-            override fun onSuccess(
-                httpCode: Int,
-                code: Int,
-                message: String,
-                data: BiliSearchData<BiliSearchVideoResultData>
-            ) {
-                refreshLayout.finishRefresh(true)
-            }
-
-            override fun onFailure(httpCode: Int, code: Int, message: String) {
-                refreshLayout.finishRefresh(false)
-            }
-        })
+        mViewModel.doSearch(loadingStatus, false,
+            onSucceeded = { refreshLayout.finishRefresh(true) },
+            onFailed = { refreshLayout.finishRefresh(false) }
+        )
     }
 
     override fun onLoadMore(refreshLayout: RefreshLayout) {
         val loadingStatus = LoadingStatus.loadingStatus(false)
-        mViewModel.doSearch(loadingStatus, true, object : IServerCallback<BiliSearchData<BiliSearchVideoResultData>> {
-            override fun onSuccess(
-                httpCode: Int,
-                code: Int,
-                message: String,
-                data: BiliSearchData<BiliSearchVideoResultData>
-            ) {
-                refreshLayout.finishLoadMore(true)
-            }
-
-            override fun onFailure(httpCode: Int, code: Int, message: String) {
-                refreshLayout.finishLoadMore(false)
-                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
-            }
-        })
+        mViewModel.doSearch(loadingStatus, true,
+            onSucceeded = { refreshLayout.finishLoadMore(true) },
+            onFailed = { refreshLayout.finishLoadMore(false) }
+        )
     }
 }

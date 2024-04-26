@@ -25,7 +25,8 @@ class SearchListViewModel : RVViewModel() {
     fun doSearch(
         loadingStatus: LoadingStatus,
         loadMore: Boolean,
-        callback: IServerCallback<BiliSearchData<BiliSearchVideoResultData>>? = null
+        onSucceeded: (()->Unit)? = null,
+        onFailed: (()->Unit)? = null
     ) {
         if (keyword == null || loadingStatusMessageMutableLiveData.value?.statusCode == LoadingStatus.CODE_LOADING) {
             if (keyword != null) Log.d(TAG, "doSearch: Search execution")
@@ -42,12 +43,12 @@ class SearchListViewModel : RVViewModel() {
                 message: String,
                 data: BiliSearchData<BiliSearchVideoResultData>
             ) {
-                callback?.onSuccess(httpCode, code, message, data)
+                onSucceeded?.invoke()
                 onLoadingCompleted(data, loadMore)
             }
 
             override fun onFailure(httpCode: Int, code: Int, message: String) {
-                callback?.onFailure(httpCode, code, message)
+                onFailed?.invoke()
                 loadingStatusMessageMutableLiveData.postValue(
                     if (loadMore) {
                         LoadingStatus.errorStatus(visibility = false, message = message)
