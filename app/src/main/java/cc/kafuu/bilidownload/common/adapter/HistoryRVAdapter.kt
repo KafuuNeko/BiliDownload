@@ -10,6 +10,6 @@ import cc.kafuu.bilidownload.viewmodel.fragment.HistoryViewModel
 class HistoryRVAdapter(viewModel: HistoryViewModel, context: Context) :
     CoreRVAdapter<HistoryViewModel>(viewModel, context) {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CoreRVHolder<*> {
-        return ItemHistoryHolder(parent, mViewModel!!)
+        return ItemHistoryHolder(parent)
     }
 }
