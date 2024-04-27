@@ -13,7 +13,6 @@ import cc.kafuu.bilidownload.model.SearchType
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 
 class SearchListViewModel : RVViewModel() {
-    val centerCrop = CenterCrop()
     var keyword: String? = null
     @SearchType
     var searchType: Int = SearchType.VIDEO

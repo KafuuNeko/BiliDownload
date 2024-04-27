@@ -141,26 +141,26 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
      * 设置页面标题控件需设置：android:fitsSystemWindows="true"
      */
     protected fun setImmersionStatusBar() {
-        val window = window
-        if (window != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                // Android 11+
-                val insetsController = window.insetsController
-                insetsController?.let {
-                    it.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
-                    it.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                    window.statusBarColor = ContextCompat.getColor(this, R.color.transparent)
-                    it.setSystemBarsAppearance(WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS, WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS)  // 设置状态栏文字为深色
-                }
-            } else {
-                // 旧版本
-                val decorView = window.decorView
-                decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR)  // 添加这一行来设置状态栏文字为深色
+        if (window == null) {
+            return
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // Android 11+
+            val insetsController = window.insetsController
+            insetsController?.let {
+                it.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+                it.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                 window.statusBarColor = ContextCompat.getColor(this, R.color.transparent)
+                it.setSystemBarsAppearance(WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS, WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS)  // 设置状态栏文字为深色
             }
+        } else {
+            // 旧版本
+            val decorView = window.decorView
+            decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR)  // 添加这一行来设置状态栏文字为深色
+            window.statusBarColor = ContextCompat.getColor(this, R.color.transparent)
         }
     }
 

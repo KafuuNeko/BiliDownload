@@ -5,8 +5,6 @@ import cc.kafuu.bilidownload.view.activity.SearchActivity
 import com.bumptech.glide.load.resource.bitmap.CircleCrop
 
 class HomeViewModel: CoreViewModel() {
-    var circleCrop = CircleCrop()
-
     fun jumpSearchActivity() {
         startActivity(SearchActivity::class.java)
     }

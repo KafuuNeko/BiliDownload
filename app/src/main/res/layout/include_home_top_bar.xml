@@ -9,6 +9,8 @@
             type="cc.kafuu.bilidownload.viewmodel.fragment.HomeViewModel" />
 
         <import type="cc.kafuu.bilidownload.common.manager.BiliManager" />
+
+        <import type="cc.kafuu.bilidownload.common.utils.GlideUtils"/>
     </data>
 
     <LinearLayout
@@ -26,7 +28,7 @@
             android:contentDescription="@string/iv_profile_content_description"
             app:bindPlaceholder="@{@drawable/ic_2233}"
             app:bindProfileAccount="@{BiliManager.INSTANCE.account}"
-            app:bindTransformation="@{viewModel.circleCrop}" />
+            app:bindTransformation="@{GlideUtils.INSTANCE.circleCrop}" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:layout_width="0dp"

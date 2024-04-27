@@ -17,6 +17,8 @@
         <import type="cc.kafuu.bilidownload.R" />
 
         <import type="cc.kafuu.bilidownload.common.utils.ViewDataBindingUtilsKt" />
+
+        <import type="cc.kafuu.bilidownload.common.utils.GlideUtils"/>
     </data>
 
     <androidx.cardview.widget.CardView
@@ -37,7 +39,7 @@
                 android:id="@+id/iv_video_cover"
                 bindImageUrl="@{data.pic}"
                 bindPlaceholder="@{CommonLibs.INSTANCE.getDrawable(R.drawable.ic_2233)}"
-                bindTransformation="@{viewModel.centerCrop}"
+                bindTransformation="@{GlideUtils.INSTANCE.centerCrop}"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
                 app:layout_constraintStart_toStartOf="parent"
