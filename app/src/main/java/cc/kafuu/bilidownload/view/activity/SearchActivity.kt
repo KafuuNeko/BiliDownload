@@ -37,8 +37,15 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
     private fun initListener() {
         mViewModel.searchRequestLiveData.observe(this) {
             mViewDataBinding.fvFragment.getFragment<SearchListFragment>().doSearch(it)
+            hideSoftInput()
         }
         mViewDataBinding.spSearchType.onItemSelectedListener = this
+    }
+
+    private fun hideSoftInput() {
+        (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(
+            mViewDataBinding.etSearchContent.windowToken, 0
+        )
     }
 
     /**
