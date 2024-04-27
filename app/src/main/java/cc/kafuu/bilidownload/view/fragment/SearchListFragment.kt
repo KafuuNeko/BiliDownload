@@ -34,10 +34,21 @@ class SearchListFragment : RVFragment<SearchListViewModel>(SearchListViewModel::
 
     override fun getRVLayoutManager() = LinearLayoutManager(context)
 
-    fun doSearch(keyword: String, @SearchType searchType: Int) {
+    fun doSearch(keyword: String) {
         mViewModel.keyword = keyword
-        mViewModel.searchType = searchType
         mViewModel.doSearch(LoadingStatus.loadingStatus(), false)
+    }
+
+    fun onSearchTypeChange(@SearchType searchType: Int) {
+        val statusCode = mViewModel.loadingStatusMessageMutableLiveData.value?.statusCode
+            ?: LoadingStatus.CODE_WAIT
+        val needRefresh = mViewModel.searchType != searchType
+                && statusCode != LoadingStatus.CODE_WAIT
+                && statusCode != LoadingStatus.CODE_LOADING
+        mViewModel.searchType = searchType
+        if (needRefresh) {
+            mViewModel.doSearch(LoadingStatus.loadingStatus(), false)
+        }
     }
 
     private fun onLoadingStatusChange(status: LoadingStatus) {

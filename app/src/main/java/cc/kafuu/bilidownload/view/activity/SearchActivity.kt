@@ -1,6 +1,8 @@
 package cc.kafuu.bilidownload.view.activity
 
+import android.view.View
 import android.view.inputmethod.InputMethodManager
+import android.widget.AdapterView
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.core.CoreActivity
@@ -14,7 +16,7 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
     SearchViewModel::class.java,
     R.layout.activity_search,
     BR.viewModel
-) {
+), AdapterView.OnItemSelectedListener {
 
     override fun initViews() {
         setImmersionStatusBar()
@@ -34,9 +36,18 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
 
     private fun initListener() {
         mViewModel.searchRequestLiveData.observe(this) {
-            mViewDataBinding.fvFragment.getFragment<SearchListFragment>().doSearch(it, getSearchType())
+            mViewDataBinding.fvFragment.getFragment<SearchListFragment>().doSearch(it)
         }
+        mViewDataBinding.spSearchType.onItemSelectedListener = this
     }
+
+    /**
+     * 搜索类型被选择事件 */
+    override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+        mViewDataBinding.fvFragment.getFragment<SearchListFragment>().onSearchTypeChange(getSearchType())
+    }
+
+    override fun onNothingSelected(parent: AdapterView<*>?) = Unit
 
     private fun getSearchType() = when(mViewDataBinding.spSearchType.selectedItemPosition) {
         0 -> SearchType.VIDEO
