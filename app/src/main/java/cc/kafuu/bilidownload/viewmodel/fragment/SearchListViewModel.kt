@@ -9,11 +9,14 @@ import cc.kafuu.bilidownload.common.network.model.BiliSearchVideoResultData
 import cc.kafuu.bilidownload.model.BiliMedia
 import cc.kafuu.bilidownload.model.BiliVideo
 import cc.kafuu.bilidownload.model.LoadingStatus
+import cc.kafuu.bilidownload.model.SearchType
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 
 class SearchListViewModel : RVViewModel() {
     val centerCrop = CenterCrop()
     var keyword: String? = null
+    @SearchType
+    var searchType: Int = SearchType.VIDEO
 
     private var mNextPage = 1
 
@@ -21,7 +24,6 @@ class SearchListViewModel : RVViewModel() {
         private const val TAG = "SearchListViewModel"
         private val mBiliSearchRepository = NetworkManager.biliSearchRepository
     }
-
 
     fun doSearch(
         loadingStatus: LoadingStatus,
@@ -35,11 +37,23 @@ class SearchListViewModel : RVViewModel() {
         }
         if (!loadMore) mNextPage = 1
         loadingStatusMessageMutableLiveData.value = loadingStatus
-        mBiliSearchRepository.searchVideo(
-            keyword!!,
-            mNextPage,
-            createSearchCallback(onSucceeded, onFailed, loadMore)
-        )
+
+        when (searchType) {
+            SearchType.VIDEO -> mBiliSearchRepository.searchVideo(
+                keyword!!, mNextPage,
+                createSearchCallback(onSucceeded, onFailed, loadMore)
+            )
+
+            SearchType.MEDIA_BANGUMI -> mBiliSearchRepository.searchMediaBangumi(
+                keyword!!, mNextPage,
+                createSearchCallback(onSucceeded, onFailed, loadMore)
+            )
+
+            SearchType.MEDIA_FT -> mBiliSearchRepository.searchMediaFt(
+                keyword!!, mNextPage,
+                createSearchCallback(onSucceeded, onFailed, loadMore)
+            )
+        }
     }
 
     private fun <T> createSearchCallback(

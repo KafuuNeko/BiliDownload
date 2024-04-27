@@ -9,6 +9,10 @@
             type="cc.kafuu.bilidownload.viewmodel.activity.SearchViewModel" />
 
         <import type="cc.kafuu.bilidownload.common.utils.ViewDataBindingUtilsKt" />
+
+        <import type="cc.kafuu.bilidownload.common.utils.CommonLibs"/>
+
+        <import type="cc.kafuu.bilidownload.R"/>
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -38,24 +42,60 @@
                 android:onClick="@{()->viewModel.finishActivity()}"
                 app:srcCompat="@drawable/ic_arrow_back_2" />
 
-            <EditText
-                android:id="@+id/et_search_content"
-                bindOnEditorAction="@{()->viewModel.onSearch()}"
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:autofillHints="none"
-                android:background="@drawable/ic_shape_search_bg"
-                android:drawableStart="@drawable/ic_search"
-                android:focusable="true"
-                android:focusableInTouchMode="true"
-                android:gravity="center_vertical"
-                android:hint="@string/et_search_hint"
-                android:imeOptions="actionSearch"
-                android:inputType="text|textNoSuggestions"
-                android:paddingHorizontal="5dp"
-                android:text="@={viewModel.searchContextLiveData}"
-                android:textSize="14sp" />
+                android:background="@drawable/ic_shape_search_bg">
+
+                <EditText
+                    android:id="@+id/et_search_content"
+                    bindOnEditorAction="@{()->viewModel.onSearch()}"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:autofillHints="none"
+                    android:background="@color/transparent"
+                    android:drawableStart="@drawable/ic_search"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:gravity="center_vertical"
+                    android:hint="@string/et_search_hint"
+                    android:imeOptions="actionSearch"
+                    android:inputType="text|textNoSuggestions"
+                    android:paddingHorizontal="5dp"
+                    android:text="@={viewModel.searchContextLiveData}"
+                    android:textSize="14sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/view"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <View
+                    android:id="@+id/view"
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginBottom="5dp"
+                    android:background="@color/text_default_color"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/sp_search_type"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <Spinner
+                    android:id="@+id/sp_search_type"
+                    bindSpinnerEntries="@{CommonLibs.INSTANCE.getStringArray(R.array.array_search_type)}"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="5dp"
+                    android:background="@color/transparent"
+                    android:gravity="center"
+                    android:padding="5dp"
+                    android:spinnerMode="dialog"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/tv_search"

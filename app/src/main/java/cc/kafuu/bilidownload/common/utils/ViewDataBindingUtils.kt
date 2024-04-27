@@ -9,7 +9,9 @@ import android.text.Html
 import android.text.Spanned
 import android.text.TextUtils
 import android.view.View
+import android.widget.ArrayAdapter
 import android.widget.ImageView
+import android.widget.Spinner
 import android.widget.TextView
 import androidx.databinding.BindingAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -117,5 +119,12 @@ fun bindSpannable(textView: TextView, htmlText: String?) {
         val spannedText: Spanned =
             Html.fromHtml(htmlText, Html.FROM_HTML_MODE_LEGACY)
         textView.text = spannedText
+    }
+}
+
+@BindingAdapter("bindSpinnerEntries")
+fun bindSpinnerEntries(spinner: Spinner, entries: Array<String>) {
+    spinner.apply {
+        adapter = ArrayAdapter(spinner.context, R.layout.spinner_item, entries)
     }
 }

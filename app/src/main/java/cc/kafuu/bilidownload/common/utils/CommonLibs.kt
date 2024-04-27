@@ -2,6 +2,7 @@ package cc.kafuu.bilidownload.common.utils
 
 import android.annotation.SuppressLint
 import android.content.Context
+import androidx.annotation.ArrayRes
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -25,6 +26,8 @@ object CommonLibs {
     fun getColor(@ColorRes color: Int) = ContextCompat.getColor(requireContext(), color)
 
     fun getDrawable(@DrawableRes id: Int) = ContextCompat.getDrawable(requireContext(), id)
+
+    fun getStringArray(@ArrayRes id: Int): Array<String> = requireContext().resources.getStringArray(id)
 
     fun requireContext() = mContext ?: throw IllegalStateException("Program not running")
 

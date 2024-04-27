@@ -3,6 +3,7 @@ package cc.kafuu.bilidownload.view.fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import cc.kafuu.bilidownload.common.adapter.SearchRVAdapter
 import cc.kafuu.bilidownload.model.LoadingStatus
+import cc.kafuu.bilidownload.model.SearchType
 import cc.kafuu.bilidownload.viewmodel.fragment.SearchListViewModel
 import com.scwang.smart.refresh.layout.api.RefreshLayout
 import com.scwang.smart.refresh.layout.listener.OnRefreshListener
@@ -33,8 +34,9 @@ class SearchListFragment : RVFragment<SearchListViewModel>(SearchListViewModel::
 
     override fun getRVLayoutManager() = LinearLayoutManager(context)
 
-    fun doSearch(keyword: String) {
+    fun doSearch(keyword: String, @SearchType searchType: Int) {
         mViewModel.keyword = keyword
+        mViewModel.searchType = searchType
         mViewModel.doSearch(LoadingStatus.loadingStatus(), false)
     }
 

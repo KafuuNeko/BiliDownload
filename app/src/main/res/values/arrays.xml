@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="array_search_type">
+        <item>视频</item>
+        <item>番剧</item>
+        <item>影视</item>
+    </string-array>
+</resources>
