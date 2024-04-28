@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload.view.activity
 
+import android.text.TextUtils
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
@@ -36,6 +37,7 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
 
     private fun initListener() {
         mViewModel.searchRequestLiveData.observe(this) {
+            if (TextUtils.isEmpty(it)) return@observe
             mViewDataBinding.fvFragment.getFragment<SearchListFragment>().doSearch(it)
             hideSoftInput()
         }
@@ -51,12 +53,13 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
     /**
      * 搜索类型被选择事件 */
     override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-        mViewDataBinding.fvFragment.getFragment<SearchListFragment>().onSearchTypeChange(getSearchType())
+        mViewDataBinding.fvFragment.getFragment<SearchListFragment>()
+            .onSearchTypeChange(getSearchType())
     }
 
     override fun onNothingSelected(parent: AdapterView<*>?) = Unit
 
-    private fun getSearchType() = when(mViewDataBinding.spSearchType.selectedItemPosition) {
+    private fun getSearchType() = when (mViewDataBinding.spSearchType.selectedItemPosition) {
         0 -> SearchType.VIDEO
         1 -> SearchType.MEDIA_BANGUMI
         2 -> SearchType.MEDIA_FT
