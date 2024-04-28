@@ -21,6 +21,7 @@ refreshLayoutKernel = "2.1.0"
 retrofit = "2.11.0"
 roomRuntime = "2.6.1"
 workRuntimeKtx = "2.9.0"
+activity = "1.8.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -50,6 +51,7 @@ refresh-footer-classics = { module = "io.github.scwang90:refresh-footer-classics
 refresh-header-classics = { module = "io.github.scwang90:refresh-header-classics", version.ref = "refreshLayoutKernel" }
 refresh-layout-kernel = { module = "io.github.scwang90:refresh-layout-kernel", version.ref = "refreshLayoutKernel" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

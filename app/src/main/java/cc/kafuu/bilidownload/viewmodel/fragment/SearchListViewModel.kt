@@ -10,10 +10,11 @@ import cc.kafuu.bilidownload.model.BiliMedia
 import cc.kafuu.bilidownload.model.BiliVideo
 import cc.kafuu.bilidownload.model.LoadingStatus
 import cc.kafuu.bilidownload.model.SearchType
-import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import cc.kafuu.bilidownload.view.activity.VideoDetailsActivity
 
 class SearchListViewModel : RVViewModel() {
     var keyword: String? = null
+
     @SearchType
     var searchType: Int = SearchType.VIDEO
 
@@ -119,4 +120,12 @@ class SearchListViewModel : RVViewModel() {
         mediaType = element.mediaType,
         desc = element.desc
     )
+
+    fun enterDetails(element: BiliVideo) {
+        startActivity(VideoDetailsActivity::class.java, VideoDetailsActivity.buildIntent(element))
+    }
+
+    fun enterDetails(element: BiliMedia) {
+        startActivity(VideoDetailsActivity::class.java, VideoDetailsActivity.buildIntent(element))
+    }
 }

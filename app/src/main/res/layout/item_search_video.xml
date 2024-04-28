@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
+
         <variable
             name="viewModel"
             type="cc.kafuu.bilidownload.viewmodel.fragment.SearchListViewModel" />
@@ -18,7 +19,7 @@
 
         <import type="cc.kafuu.bilidownload.common.utils.ViewDataBindingUtilsKt" />
 
-        <import type="cc.kafuu.bilidownload.common.utils.GlideUtils"/>
+        <import type="cc.kafuu.bilidownload.common.utils.GlideUtils" />
     </data>
 
     <androidx.cardview.widget.CardView
@@ -33,7 +34,8 @@
             android:layout_height="wrap_content"
             android:clickable="true"
             android:focusable="true"
-            android:foreground="?attr/selectableItemBackground">
+            android:foreground="?attr/selectableItemBackground"
+            android:onClick="@{() -> viewModel.enterDetails(data)}">
 
             <ImageView
                 android:id="@+id/iv_video_cover"
@@ -42,10 +44,10 @@
                 bindTransformation="@{GlideUtils.INSTANCE.centerCrop}"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
+                android:contentDescription="@string/iv_video_cover_content_description"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                tools:src="@drawable/ic_2233"
-                android:contentDescription="@string/iv_video_cover_content_description" />
+                tools:src="@drawable/ic_2233" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -68,14 +70,15 @@
                     android:maxLines="1"
                     android:textColor="@color/primary_color"
                     android:textStyle="bold"
-                    tools:text="【Mili】A Turtle's Heart"/>
+                    tools:text="【Mili】A Turtle's Heart" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
                     android:layout_marginStart="8dp"
-                    android:layout_marginTop="8dp">
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
                     <androidx.appcompat.widget.AppCompatTextView
                         android:id="@+id/tv_author"
                         bindSpannable="@{data.author}"
@@ -84,7 +87,8 @@
                         android:ellipsize="end"
                         android:maxLines="1"
                         android:textColor="@color/text_default_color"
-                        tools:text="Mili"/>
+                        tools:text="Mili" />
+
                     <androidx.appcompat.widget.AppCompatTextView
                         android:id="@+id/tv_formatter_date"
                         bindSpannable="@{data.pubFormatterDate}"
@@ -94,15 +98,16 @@
                         android:ellipsize="end"
                         android:maxLines="1"
                         android:textColor="@color/text_default_color"
-                        tools:text="2016-06-07"/>
+                        tools:text="2016-06-07" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
                     android:layout_marginStart="8dp"
-                    android:layout_marginTop="8dp">
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
                     <androidx.appcompat.widget.AppCompatTextView
                         android:id="@+id/tv_duration"
                         bindSpannable="@{data.duration}"
@@ -111,7 +116,8 @@
                         android:ellipsize="end"
                         android:maxLines="1"
                         android:textColor="@color/text_default_color"
-                        tools:text="03:04"/>
+                        tools:text="03:04" />
+
                     <androidx.appcompat.widget.AppCompatTextView
                         android:id="@+id/tv_description"
                         bindSpannable="@{data.description}"
@@ -121,7 +127,7 @@
                         android:ellipsize="end"
                         android:maxLines="1"
                         android:textColor="@color/text_default_color"
-                        tools:text="Monday is a rainy day \nAnd I Stay inside letting time pass away"/>
+                        tools:text="Monday is a rainy day \nAnd I Stay inside letting time pass away" />
                 </LinearLayout>
             </LinearLayout>
 

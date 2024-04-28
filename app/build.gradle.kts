@@ -105,6 +105,7 @@ dependencies {
     implementation(libs.design)
 
     implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.activity)
     ksp(libs.androidx.room.compiler)
 
     //gson

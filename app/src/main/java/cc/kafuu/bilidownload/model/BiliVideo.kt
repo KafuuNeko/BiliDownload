@@ -1,6 +1,7 @@
 package cc.kafuu.bilidownload.model
 
 import android.annotation.SuppressLint
+import java.io.Serializable
 import java.text.SimpleDateFormat
 import java.util.Date
 
@@ -14,7 +15,7 @@ data class BiliVideo(
     val pubDate: Long,
     val sendDate: Long,
     val duration: String,
-) {
+): Serializable {
     @SuppressLint("SimpleDateFormat")
     companion object {
         val mDateFormatter by lazy { SimpleDateFormat("yyyy-MM-dd") }
