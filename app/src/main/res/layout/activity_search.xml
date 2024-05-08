@@ -22,7 +22,7 @@
         android:background="@color/white">
 
         <LinearLayout
-            android:id="@+id/linearLayout"
+            android:id="@+id/ll_search_bar"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="center"
@@ -116,6 +116,6 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
+            app:layout_constraintTop_toBottomOf="@+id/ll_search_bar" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

@@ -26,8 +26,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
-        android:elevation="10dp"
-        app:cardCornerRadius="15dp">
+        app:cardElevation="@dimen/card_item_elevation"
+        app:cardCornerRadius="@dimen/card_item_corner_radius">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"

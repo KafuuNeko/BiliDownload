@@ -4,9 +4,16 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
+
         <variable
             name="viewModel"
             type="cc.kafuu.bilidownload.common.core.CoreViewModel" />
+
+        <variable
+            name="title"
+            type="String" />
+
+        <import type="cc.kafuu.bilidownload.common.utils.ViewDataBindingUtilsKt" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -30,9 +37,12 @@
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/tv_title"
+            bindSpannable="@{title}"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:ellipsize="end"
             android:gravity="center_vertical"
+            android:maxLines="1"
             android:textColor="@color/text_default_color"
             android:textSize="16sp"
             android:textStyle="bold"
