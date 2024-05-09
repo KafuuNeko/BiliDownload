@@ -23,6 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import java.io.File
 import kotlin.properties.Delegates
 
 class DownloadService : Service(), IDownloadStatusListener {
@@ -248,6 +249,15 @@ class DownloadService : Service(), IDownloadStatusListener {
     private fun doSynthetic(entity: DownloadTaskEntity, task: DownloadGroupTask): Boolean {
         val output = entity.getDefaultOutputFile()?.path ?: return false
         val caches = task.entity.subEntities.map { it.filePath }.toTypedArray()
+
+        if (caches.isEmpty()) {
+            return false
+        }
+
+        if (caches.size == 1) {
+            File(caches[0]).copyTo(File(output), true)
+            return true
+        }
 
         // 合成视频
         if (!FFMpegJNI.mergeMedia(output, caches)) {

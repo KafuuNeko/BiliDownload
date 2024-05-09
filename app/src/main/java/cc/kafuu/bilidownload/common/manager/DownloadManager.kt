@@ -102,7 +102,13 @@ object DownloadManager {
         Log.d(TAG, "onSubTaskFail: $groupTask, subEntity: $subEntity")
         runBlocking {
             val entity = getDownloadTaskEntity(groupTask) ?: return@runBlocking
-            mStatusListener.forEach { it.onDownloadStatusChange(entity, groupTask, TaskStatus.FAILURE) }
+            mStatusListener.forEach {
+                it.onDownloadStatusChange(
+                    entity,
+                    groupTask,
+                    TaskStatus.FAILURE
+                )
+            }
         }
     }
 
@@ -169,7 +175,12 @@ object DownloadManager {
         data: BiliPlayStreamDash
     ) {
         try {
-            doStartDownload(entity, getDownloadResourceUrls(entity, data))
+            val urls = getDownloadResourceUrls(entity, data)
+            if (urls.isNotEmpty()) {
+                doStartDownload(entity, urls)
+            } else {
+                Log.e(TAG, "Task [D${entity.downloadTaskId}] no resources available for download")
+            }
         } catch (e: Exception) {
             mStatusListener.forEach {
                 it.onRequestFailed(entity, httpCode, code, e.message ?: "unknown error")
@@ -185,20 +196,18 @@ object DownloadManager {
      *
      * @param entity DownloadTaskEntity对象，包含需要下载的视频和音频的ID信息。
      * @param dash BiliPlayStreamDash对象，包含视频和音频流的详细信息。
-     * @return 包含视频和音频流URL的列表。如果找到对应的视频和音频资源，此列表将包含两个元素；否则，将抛出IllegalArgumentException。
-     * @throws IllegalArgumentException 如果无法在dash参数提供的视频或音频资源中找到与task参数指定的ID匹配的项，则抛出此异常。
+     * @return 包含视频和音频流URL的列表。如果找到对应的视频和音频资源，此列表将包含最多两个元素（视频流和音频流）
      */
     private fun getDownloadResourceUrls(
         entity: DownloadTaskEntity,
         dash: BiliPlayStreamDash
     ): List<String> {
-        val videoDash =
-            dash.video.find { it.id == entity.dashVideoId && it.codecId == entity.dashVideoCodecId }
-                ?: throw IllegalArgumentException("Video(${entity.dashVideoId}) not found")
-        val audioDash =
-            dash.audio.find { it.id == entity.dashAudioId && it.codecId == entity.dashAudioCodecId }
-                ?: throw IllegalArgumentException("Audio(${entity.dashAudioId}) not found")
-        return listOf(videoDash.getStreamUrl(), audioDash.getStreamUrl())
+        val urls = mutableListOf<String>()
+        dash.video.find { it.id == entity.dashVideoId && it.codecId == entity.dashVideoCodecId }
+            ?.let { urls.add(it.getStreamUrl()) }
+        dash.audio.find { it.id == entity.dashAudioId && it.codecId == entity.dashAudioCodecId }
+            ?.let { urls.add(it.getStreamUrl()) }
+        return urls
     }
 
     @Synchronized
