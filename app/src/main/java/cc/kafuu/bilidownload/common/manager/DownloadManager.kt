@@ -68,6 +68,10 @@ object DownloadManager {
         val taskId = CommonLibs.requireAppDatabase().downloadTaskDao().insert(
             DownloadTaskEntity.createEntity(bvid, cid, video, audio)
         )
+        if (taskId == -1L) {
+            Log.d(TAG, "startDownload: create download task failed")
+            return
+        }
         DownloadService.startDownload(context, taskId)
     }
 
@@ -228,7 +232,7 @@ object DownloadManager {
 
     @Synchronized
     private fun doStartDownload(entity: DownloadTaskEntity, resourceUrls: List<String>) {
-        Aria.download(this)
+        val downloadTaskId = Aria.download(this)
             .loadGroup(resourceUrls)
             .option(HttpOption().apply {
                 NetworkConfig.DOWNLOAD_HEADERS.forEach { (key, value) -> addHeader(key, value) }
@@ -237,14 +241,14 @@ object DownloadManager {
             .setDirPath(CommonLibs.requireDownloadCacheDir(entity.id).path)
             .ignoreCheckPermissions()
             .unknownSize()
-            .apply {
-                entity.downloadTaskId = entity.id
-                entity.status = DownloadTaskEntity.STATUS_DOWNLOADING
+            .create()
 
-                mEntityMap[entity.id] = entity
-                runBlocking { CommonLibs.requireAppDatabase().downloadTaskDao().update(entity) }
-                create()
-            }
+        entity.downloadTaskId = downloadTaskId
+        entity.status = DownloadTaskEntity.STATUS_DOWNLOADING
+
+        mEntityMap[downloadTaskId] = entity
+        runBlocking { CommonLibs.requireAppDatabase().downloadTaskDao().update(entity) }
+
         Log.d(TAG, "Task [D${entity.downloadTaskId}] start download")
     }
 }

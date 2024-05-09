@@ -124,7 +124,7 @@ class DownloadService : Service(), IDownloadStatusListener {
     }
 
     /**
-     * 尝试保存视频信息和请求下载
+     * 尝试保存视频信息
      * previous: [assigningTask]
      * 1. 请求获取视频详情；2. 根据获取到的数据更新数据库；
      * */

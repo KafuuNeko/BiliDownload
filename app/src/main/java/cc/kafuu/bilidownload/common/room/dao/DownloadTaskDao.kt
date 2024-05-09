@@ -12,7 +12,7 @@ import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 
 @Dao
 interface DownloadTaskDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert
     suspend fun insert(downloadTask: DownloadTaskEntity): Long
 
     @Update
