@@ -11,8 +11,8 @@ import androidx.fragment.app.DialogFragment
 import cc.kafuu.bilidownload.R
 
 
-abstract class CoreDialog<V : ViewDataBinding>(
-    @LayoutRes private val mLayoutId: Int
+abstract class CoreBasicsDialog<V : ViewDataBinding>(
+    @LayoutRes private val layoutId: Int
 ) : DialogFragment() {
     protected lateinit var mViewDataBinding: V
     protected abstract fun initViews()
@@ -27,7 +27,7 @@ abstract class CoreDialog<V : ViewDataBinding>(
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        mViewDataBinding = DataBindingUtil.inflate(inflater, mLayoutId, container, false)
+        mViewDataBinding = DataBindingUtil.inflate(inflater, layoutId, container, false)
         return mViewDataBinding.root
     }
 
