@@ -14,13 +14,11 @@ import cc.kafuu.bilidownload.model.ConfirmDialogStatus
 import cc.kafuu.bilidownload.model.ResourceType
 import cc.kafuu.bilidownload.model.bili.BiliResourceItem
 import cc.kafuu.bilidownload.model.popmessage.ToastMessage
+import cc.kafuu.bilidownload.viewmodel.dialog.BiliPartDialogCallback
 import cc.kafuu.bilidownload.viewmodel.dialog.BiliPartViewModel
 
-typealias BiliPartDialogCallback = (video: BiliPlayStreamResource?, audio: BiliPlayStreamResource?) -> Unit
 
-class BiliPartDialog(
-    private val callback: BiliPartDialogCallback
-) : CoreAdvancedDialog<DialogBiliPartBinding, BiliPartViewModel>(
+class BiliPartDialog : CoreAdvancedDialog<DialogBiliPartBinding, BiliPartViewModel>(
     BiliPartViewModel::class.java,
     R.layout.dialog_bili_part,
     BR.viewModel
@@ -31,19 +29,19 @@ class BiliPartDialog(
             videoResources: List<BiliPlayStreamResource>?,
             audioResources: List<BiliPlayStreamResource>?,
             callback: BiliPartDialogCallback
-        ) = BiliPartDialog(
-            callback
-        ).apply {
+        ) = BiliPartDialog().apply {
             titleText = title
             videoList = videoResources.orEmpty().map { BiliResourceItem(it, ResourceType.VIDEO) }
             audioList = audioResources.orEmpty().map { BiliResourceItem(it, ResourceType.AUDIO) }
+            confirmCallback = callback
         }
     }
 
 
-    lateinit var titleText: String
-    lateinit var videoList: List<BiliResourceItem>
-    lateinit var audioList: List<BiliResourceItem>
+    var titleText: String? = null
+    var videoList: List<BiliResourceItem>? = null
+    var audioList: List<BiliResourceItem>? = null
+    var confirmCallback: BiliPartDialogCallback? = null
 
     private lateinit var mAudioListAdapter: PartResourceRVAdapter
     private lateinit var mVideoListAdapter: PartResourceRVAdapter
@@ -58,6 +56,8 @@ class BiliPartDialog(
         mViewModel.titleLiveData.value = titleText
         mViewModel.videoResourcesLiveData.value = videoList
         mViewModel.audioResourcesLiveData.value = audioList
+        mViewModel.confirmCallback = confirmCallback
+
         mViewModel.dialogStatusLiveData.observe(this) {
             onDialogStatusChanged(it)
         }
@@ -93,7 +93,7 @@ class BiliPartDialog(
     }
 
     private fun onConfirm() {
-        callback.invoke(
+        mViewModel.confirmCallback?.invoke(
             mViewModel.currentVideoResourceLiveData.value?.resource,
             mViewModel.currentAudioResourceLiveData.value?.resource
         )

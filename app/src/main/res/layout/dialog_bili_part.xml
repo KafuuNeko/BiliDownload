@@ -31,12 +31,12 @@
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/tv_part_title"
+                bindSpannable="@{viewModel.titleLiveData}"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:ellipsize="end"
                 android:gravity="center"
                 android:maxLines="1"
-                android:ellipsize="end"
-                bindSpannable="@{viewModel.titleLiveData}"
                 android:textColor="@color/primary_color"
                 android:textStyle="bold"
                 tools:text="@string/app_name" />
@@ -78,44 +78,44 @@
                         bindVisible="@{!viewModel.audioResourcesLiveData.empty}"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="end|center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="10dp">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/shape_button_cancel"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:onClick="@{() -> viewModel.onClose()}"
+                            android:paddingHorizontal="30dp"
+                            android:paddingVertical="10dp"
+                            android:text="@string/text_cancel"
+                            android:textColor="@color/white" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="20dp"
+                            android:background="@drawable/shape_button_general"
+                            android:clickable="true"
+                            android:enabled="@{viewModel.currentVideoResourceLiveData != null || viewModel.currentAudioResourceLiveData != null}"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:onClick="@{() -> viewModel.onConfirm()}"
+                            android:paddingHorizontal="30dp"
+                            android:paddingVertical="10dp"
+                            android:text="@string/text_confirm"
+                            android:textColor="@color/white" />
+                    </LinearLayout>
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="end|center_vertical"
-                android:orientation="horizontal"
-                android:padding="10dp">
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/shape_button_cancel"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:onClick="@{() -> viewModel.onClose()}"
-                    android:paddingHorizontal="30dp"
-                    android:paddingVertical="10dp"
-                    android:text="@string/text_cancel"
-                    android:textColor="@color/white" />
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="20dp"
-                    android:background="@drawable/shape_button_general"
-                    android:enabled="@{viewModel.currentVideoResourceLiveData != null || viewModel.currentAudioResourceLiveData != null}"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:onClick="@{() -> viewModel.onConfirm()}"
-                    android:paddingHorizontal="30dp"
-                    android:paddingVertical="10dp"
-                    android:text="@string/text_confirm"
-                    android:textColor="@color/white" />
-            </LinearLayout>
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
