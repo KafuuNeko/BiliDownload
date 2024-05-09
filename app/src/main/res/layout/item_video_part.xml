@@ -21,6 +21,7 @@
         android:clickable="true"
         android:focusable="true"
         android:foreground="?attr/selectableItemBackground"
+        android:onClick="@{()->viewModel.onPartSelected(data)}"
         app:cardCornerRadius="@dimen/card_item_corner_radius"
         app:cardElevation="@dimen/card_item_elevation">
 

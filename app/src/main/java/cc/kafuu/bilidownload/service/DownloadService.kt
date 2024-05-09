@@ -235,7 +235,7 @@ class DownloadService : Service(), IDownloadStatusListener {
             ResourceEntity(
                 taskEntityId = entity.id,
                 name = "Default Resource",
-                mimeType = entity.dashVideoMimeType,
+                mimeType = entity.dashVideoMimeType?:entity.dashAudioMimeType?:"unknown",
                 storageSizeBytes = resource.length(),
                 creationTime = System.currentTimeMillis(),
                 file = resource.path

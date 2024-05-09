@@ -16,6 +16,7 @@
 
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="gray">#7F7F7F</color>
 
     <color name="color_main_tab_text_active">#333333</color>
     <color name="color_main_tab_text_passive">#B7B7C9</color>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <variable
+            name="viewModel"
+            type="cc.kafuu.bilidownload.viewmodel.dialog.BiliPartViewModel" />
+
+        <variable
+            name="data"
+            type="cc.kafuu.bilidownload.model.bili.BiliResourceItem" />
+
+        <import type="cc.kafuu.bilidownload.common.utils.BiliCodeUtils" />
+
+        <import type="cc.kafuu.bilidownload.model.ResourceType" />
+    </data>
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        app:cardCornerRadius="@dimen/card_item_corner_radius"
+        app:cardElevation="@dimen/card_item_elevation">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@{viewModel.isSelected(data) ? @color/secondary_color : @color/white}"
+            android:onClick="@{()->viewModel.onSelected(data)}"
+            android:orientation="horizontal"
+            android:padding="10dp">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@{data.type == ResourceType.VIDEO ? BiliCodeUtils.INSTANCE.getVideoQualityDescription(data.resource.id) : BiliCodeUtils.INSTANCE.getAudioQualityDescribe(data.resource.id)}"
+                android:textColor="@{viewModel.isSelected(data) ? @color/white : @color/text_default_color}"
+                tools:text="@string/video_description_1080p" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:text="@{data.resource.codecs}"
+                android:textColor="@{viewModel.isSelected(data) ? @color/white : @color/text_default_color}"
+                tools:text="codecs" />
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+</layout>

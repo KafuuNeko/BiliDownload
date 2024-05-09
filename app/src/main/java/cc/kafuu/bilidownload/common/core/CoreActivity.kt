@@ -11,7 +11,6 @@ import android.view.WindowManager
 import androidx.activity.result.ActivityResult
 import androidx.annotation.ColorRes
 import androidx.annotation.LayoutRes
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
@@ -19,8 +18,10 @@ import androidx.databinding.ViewDataBinding
 import androidx.lifecycle.ViewModelProvider
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.manager.ActivityStackManager
+import cc.kafuu.bilidownload.common.manager.PopMessageManager
 import cc.kafuu.bilidownload.common.utils.CommonLibs
 import cc.kafuu.bilidownload.model.ActivityJumpData
+import cc.kafuu.bilidownload.model.popmessage.PopMessage
 
 /**
  * 本应用中所有Activity的基类，提供常用的数据绑定和视图模型设置功能。
@@ -60,6 +61,7 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
         }
         mViewDataBinding.lifecycleOwner = this
         initActJumpData()
+        initPopMessage()
         initViews()
     }
 
@@ -80,6 +82,25 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
      */
     fun finishActivity(activityResult: ActivityResult? = null) {
         mViewModel.finishActivity(activityResult)
+    }
+
+    /**
+     * 初始化用于监听pop消息的LiveData
+     */
+    private fun initPopMessage() {
+        if (mViewModel.popMessageLiveData.hasObservers()) {
+            return
+        }
+        mViewModel.popMessageLiveData.observe(this) {
+            onPopMessage(it)
+        }
+    }
+
+    /**
+     * 弹出消息事件
+     */
+    protected fun onPopMessage(message: PopMessage) {
+       PopMessageManager.popMessage(this, message)
     }
 
     /**
@@ -151,7 +172,10 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
                 it.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
                 it.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                 window.statusBarColor = ContextCompat.getColor(this, R.color.transparent)
-                it.setSystemBarsAppearance(WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS, WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS)  // 设置状态栏文字为深色
+                it.setSystemBarsAppearance(
+                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
+                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                )  // 设置状态栏文字为深色
             }
         } else {
             // 旧版本

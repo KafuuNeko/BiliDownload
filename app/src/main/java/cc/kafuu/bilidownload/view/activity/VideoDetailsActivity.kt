@@ -1,16 +1,25 @@
 package cc.kafuu.bilidownload.view.activity
 
 import android.content.Intent
+import android.util.Log
 import androidx.recyclerview.widget.LinearLayoutManager
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.adapter.VideoPartRVAdapter
 import cc.kafuu.bilidownload.common.core.CoreActivity
+import cc.kafuu.bilidownload.common.manager.DownloadManager
+import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
+import cc.kafuu.bilidownload.common.network.model.BiliVideoPage
 import cc.kafuu.bilidownload.common.utils.SerializationUtils.getSerializable
 import cc.kafuu.bilidownload.databinding.ActivityVideoDetailsBinding
-import cc.kafuu.bilidownload.model.BiliMedia
-import cc.kafuu.bilidownload.model.BiliVideo
+import cc.kafuu.bilidownload.model.bili.BiliMedia
+import cc.kafuu.bilidownload.model.bili.BiliVideo
+import cc.kafuu.bilidownload.view.dialog.BiliPartDialog
 import cc.kafuu.bilidownload.viewmodel.activity.VideoDetailsViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDetailsViewModel>(
     VideoDetailsViewModel::class.java,
@@ -18,6 +27,8 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
     BR.viewModel
 ) {
     companion object {
+        private const val TAG = "VideoDetailsActivity"
+
         fun buildIntent(video: BiliVideo) = Intent().apply {
             putExtra("objectType", BiliVideo::class.simpleName)
             putExtra("objectInstance", video)
@@ -29,15 +40,42 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
         }
     }
 
+    private val mCoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
     override fun initViews() {
         setImmersionStatusBar()
         if (!doInitData()) {
             mViewModel.finishActivity()
             return
         }
-        mViewDataBinding.rvParts.apply {
-            adapter = VideoPartRVAdapter(mViewModel, this@VideoDetailsActivity)
-            layoutManager = LinearLayoutManager(this@VideoDetailsActivity)
+        initList()
+        mViewModel.selectedBiliPlayStreamDashLiveData.observe(this) {
+            createBiliPartDialog(
+                mViewModel.biliVideoLiveData.value!!,
+                it.first,
+                it.second
+            ).show(supportFragmentManager, null)
+        }
+    }
+
+    private fun createBiliPartDialog(
+        video: BiliVideo,
+        page: BiliVideoPage,
+        dash: BiliPlayStreamDash
+    ) = BiliPartDialog.buildDialog(
+        page.part,
+        dash.video,
+        dash.audio
+    ) { selectedVideo, selectedAudio ->
+        Log.d(TAG, "selected: $selectedVideo, $selectedAudio")
+        mCoroutineScope.launch {
+            DownloadManager.startDownload(
+                this@VideoDetailsActivity,
+                video.bvid,
+                page.cid,
+                selectedVideo,
+                selectedAudio
+            )
         }
     }
 
@@ -57,5 +95,12 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
         }
 
         else -> false
+    }
+
+    private fun initList() {
+        mViewDataBinding.rvParts.apply {
+            adapter = VideoPartRVAdapter(mViewModel, this@VideoDetailsActivity)
+            layoutManager = LinearLayoutManager(this@VideoDetailsActivity)
+        }
     }
 }

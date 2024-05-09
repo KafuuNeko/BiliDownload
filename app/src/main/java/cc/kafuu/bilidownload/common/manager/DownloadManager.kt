@@ -1,12 +1,15 @@
 package cc.kafuu.bilidownload.common.manager
 
+import android.content.Context
 import android.util.Log
 import cc.kafuu.bilidownload.common.network.IServerCallback
 import cc.kafuu.bilidownload.common.network.NetworkConfig
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
+import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.utils.CommonLibs
+import cc.kafuu.bilidownload.service.DownloadService
 import com.arialyy.annotations.DownloadGroup
 import com.arialyy.annotations.DownloadGroup.onSubTaskFail
 import com.arialyy.aria.core.Aria
@@ -53,6 +56,19 @@ object DownloadManager {
 
     fun unregister(listener: IDownloadStatusListener) {
         mStatusListener.remove(listener)
+    }
+
+    suspend fun startDownload(
+        context: Context,
+        bvid: String,
+        cid: Long,
+        video: BiliPlayStreamResource?,
+        audio: BiliPlayStreamResource?
+    ) {
+        val taskId = CommonLibs.requireAppDatabase().downloadTaskDao().insert(
+            DownloadTaskEntity.createEntity(bvid, cid, video, audio)
+        )
+        DownloadService.startDownload(context, taskId)
     }
 
     private suspend fun getDownloadTaskEntity(task: DownloadGroupTask): DownloadTaskEntity? {
@@ -179,7 +195,7 @@ object DownloadManager {
             if (urls.isNotEmpty()) {
                 doStartDownload(entity, urls)
             } else {
-                Log.e(TAG, "Task [D${entity.downloadTaskId}] no resources available for download")
+                throw IllegalStateException("Task [D${entity.downloadTaskId}] no resources available for download")
             }
         } catch (e: Exception) {
             mStatusListener.forEach {
@@ -203,9 +219,9 @@ object DownloadManager {
         dash: BiliPlayStreamDash
     ): List<String> {
         val urls = mutableListOf<String>()
-        dash.video.find { it.id == entity.dashVideoId && it.codecId == entity.dashVideoCodecId }
+        dash.video.find { entity.dashVideoId != null && it.id == entity.dashVideoId && it.codecId == entity.dashVideoCodecId }
             ?.let { urls.add(it.getStreamUrl()) }
-        dash.audio.find { it.id == entity.dashAudioId && it.codecId == entity.dashAudioCodecId }
+        dash.audio.find { entity.dashAudioId != null && it.id == entity.dashAudioId && it.codecId == entity.dashAudioCodecId }
             ?.let { urls.add(it.getStreamUrl()) }
         return urls
     }

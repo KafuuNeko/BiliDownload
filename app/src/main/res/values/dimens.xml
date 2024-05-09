@@ -4,4 +4,5 @@
     <dimen name="size_text_page_title">18sp</dimen>
     <dimen name="card_item_corner_radius">10dp</dimen>
     <dimen name="card_item_elevation">3dp</dimen>
+    <dimen name="button_corner_radius">40dp</dimen>
 </resources>

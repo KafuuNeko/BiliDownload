@@ -10,7 +10,9 @@ import androidx.annotation.LayoutRes
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.lifecycle.ViewModelProvider
+import cc.kafuu.bilidownload.common.manager.PopMessageManager
 import cc.kafuu.bilidownload.model.ActivityJumpData
+import cc.kafuu.bilidownload.model.popmessage.PopMessage
 
 
 abstract class CoreAdvancedDialog<V : ViewDataBinding, VM : CoreViewModel>(
@@ -31,8 +33,28 @@ abstract class CoreAdvancedDialog<V : ViewDataBinding, VM : CoreViewModel>(
             mViewDataBinding.setVariable(viewModelId, mViewModel)
         }
         mViewDataBinding.lifecycleOwner = this
+        initPopMessage()
         initActJumpData()
         return mViewDataBinding.root
+    }
+
+    /**
+     * 初始化用于监听pop消息的LiveData
+     */
+    private fun initPopMessage() {
+        if (mViewModel.popMessageLiveData.hasObservers()) {
+            return
+        }
+        mViewModel.popMessageLiveData.observe(this) {
+            onPopMessage(it)
+        }
+    }
+
+    /**
+     * 弹出消息事件
+     */
+    protected fun onPopMessage(message: PopMessage) {
+        PopMessageManager.popMessage(requireContext(), message)
     }
 
     /**

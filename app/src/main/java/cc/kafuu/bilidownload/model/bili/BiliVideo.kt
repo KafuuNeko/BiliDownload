@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.model
+package cc.kafuu.bilidownload.model.bili
 
 import android.annotation.SuppressLint
 import java.io.Serializable

@@ -6,8 +6,8 @@ import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliSearchData
 import cc.kafuu.bilidownload.common.network.model.BiliSearchMediaResultData
 import cc.kafuu.bilidownload.common.network.model.BiliSearchVideoResultData
-import cc.kafuu.bilidownload.model.BiliMedia
-import cc.kafuu.bilidownload.model.BiliVideo
+import cc.kafuu.bilidownload.model.bili.BiliMedia
+import cc.kafuu.bilidownload.model.bili.BiliVideo
 import cc.kafuu.bilidownload.model.LoadingStatus
 import cc.kafuu.bilidownload.model.SearchType
 import cc.kafuu.bilidownload.view.activity.VideoDetailsActivity

@@ -11,7 +11,9 @@ import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import cc.kafuu.bilidownload.common.manager.PopMessageManager
 import cc.kafuu.bilidownload.model.ActivityJumpData
+import cc.kafuu.bilidownload.model.popmessage.PopMessage
 
 /**
  * 本应用中所有Fragment的基类，提供了常用的数据绑定和视图模型设置功能。
@@ -55,9 +57,29 @@ abstract class CoreFragment<V : ViewDataBinding, VM : CoreViewModel>(
             mViewDataBinding.setVariable(viewModelId, mViewModel)
         }
         mViewDataBinding.lifecycleOwner = this
+        initPopMessage()
         initActJumpData()
         initViews()
         return mViewDataBinding.root
+    }
+
+    /**
+     * 初始化用于监听pop消息的LiveData
+     */
+    private fun initPopMessage() {
+        if (mViewModel.popMessageLiveData.hasObservers()) {
+            return
+        }
+        mViewModel.popMessageLiveData.observe(this) {
+            onPopMessage(it)
+        }
+    }
+
+    /**
+     * 弹出消息事件
+     */
+    protected fun onPopMessage(message: PopMessage) {
+        PopMessageManager.popMessage(requireContext(), message)
     }
 
     /**

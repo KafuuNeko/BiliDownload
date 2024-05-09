@@ -8,7 +8,7 @@
 
         <variable
             name="data"
-            type="cc.kafuu.bilidownload.model.BiliVideo" />
+            type="cc.kafuu.bilidownload.model.bili.BiliVideo" />
 
         <import type="cc.kafuu.bilidownload.common.utils.CommonLibs" />
 

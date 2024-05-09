@@ -57,4 +57,9 @@
     <string name="tv_about_us_text">关于我们</string>
     <string name="list_load_failed">加载失败</string>
     <string name="text_brief">简介</string>
+    <string name="text_video">视频</string>
+    <string name="text_audio">音频</string>
+    <string name="text_confirm">确认</string>
+    <string name="text_cancel">取消</string>
+    <string name="text_added_download_queue">下载任务已添加</string>
 </resources>
