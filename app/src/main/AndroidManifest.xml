@@ -43,7 +43,8 @@
 
         <activity
             android:name=".view.activity.VideoDetailsActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:configChanges="orientation|screenSize"/>
 
         <service
             android:name=".service.DownloadService"

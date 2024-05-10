@@ -1,6 +1,7 @@
 package cc.kafuu.bilidownload.view.dialog
 
 import android.annotation.SuppressLint
+import android.content.res.Configuration
 import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import cc.kafuu.bilidownload.BR
@@ -49,6 +50,11 @@ class BiliPartDialog : CoreAdvancedDialog<DialogBiliPartBinding, BiliPartViewMod
     override fun initViews() {
         initViewMode()
         initList()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        dismiss()
     }
 
     @SuppressLint("NotifyDataSetChanged")

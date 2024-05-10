@@ -67,6 +67,7 @@ abstract class NotificationHelper(protected val mContext: Context) {
             .setContentTitle(title)
             .setContentText(content)
             .setSmallIcon(smallIcon)
+            .setOnlyAlertOnce(true)
             .setContentIntent(notificationIntent)
     }
 
