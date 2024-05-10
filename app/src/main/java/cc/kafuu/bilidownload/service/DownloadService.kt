@@ -9,12 +9,13 @@ import android.os.IBinder
 import android.util.Log
 import cc.kafuu.bilidownload.common.jniexport.FFMpegJNI
 import cc.kafuu.bilidownload.common.manager.DownloadManager
-import cc.kafuu.bilidownload.common.manager.IDownloadStatusListener
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.room.entity.ResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.BiliVideoRepository
 import cc.kafuu.bilidownload.common.utils.CommonLibs
+import cc.kafuu.bilidownload.model.event.DownloadRequestFailedEvent
+import cc.kafuu.bilidownload.model.event.DownloadStatusChangeEvent
 import cc.kafuu.bilidownload.notification.DownloadNotification
 import com.arialyy.aria.core.Aria
 import com.arialyy.aria.core.task.DownloadGroupTask
@@ -23,11 +24,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import java.io.File
 import kotlin.properties.Delegates
 
-class DownloadService : Service(), IDownloadStatusListener {
+class DownloadService : Service() {
     private val mServiceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
     companion object {
         private val mDownloadTaskDao = CommonLibs.requireAppDatabase().downloadTaskDao()
         private val mResourceDao = CommonLibs.requireAppDatabase().resourceDao()
@@ -74,7 +79,7 @@ class DownloadService : Service(), IDownloadStatusListener {
 
         mDownloadNotification = DownloadNotification(this)
 
-        DownloadManager.register(this)
+        EventBus.getDefault().register(this)
         startForeground(
             mDownloadNotification.getChannelNotificationId(),
             mDownloadNotification.getForegroundNotification()
@@ -84,7 +89,7 @@ class DownloadService : Service(), IDownloadStatusListener {
     override fun onDestroy() {
         super.onDestroy()
         Aria.download(this).unRegister()
-        DownloadManager.unregister(this)
+        EventBus.getDefault().unregister(this)
         mServiceScope.cancel()
     }
 
@@ -154,38 +159,49 @@ class DownloadService : Service(), IDownloadStatusListener {
 
 
     /**
-     * 请求下载资源失败
-     * [DownloadManager] Callback */
-    override fun onRequestFailed(
-        entity: DownloadTaskEntity,
-        httpCode: Int,
-        code: Int,
-        message: String
-    ) {
+     * 请求下载资源失败事件 */
+    @Subscribe(threadMode = ThreadMode.POSTING)
+    fun onRequestFailedEvent(event: DownloadRequestFailedEvent) {
         mRunningTaskCount--
-        mDownloadNotification.notificationRequestFailed(entity, httpCode, code, message)
+        mDownloadNotification.notificationRequestFailed(
+            event.entity,
+            event.httpCode,
+            event.code,
+            event.message
+        )
     }
 
     /**
-     * 下载状态改变
-     * [DownloadManager] Callback */
-    override fun onDownloadStatusChange(
-        entity: DownloadTaskEntity,
-        task: DownloadGroupTask,
-        status: DownloadManager.TaskStatus
-    ) {
-        Log.d(TAG, "Task [D${task.entity.id}, E${entity.id}] status change, status: $status")
+     * 下载状态改变事件 */
+    @Subscribe(threadMode = ThreadMode.POSTING)
+    fun onDownloadStatusChangeEvent(event: DownloadStatusChangeEvent) {
+        Log.d(
+            TAG,
+            "Task [D${event.task.entity.id}, E${event.entity.id}] status change, status: ${event.status}"
+        )
         mServiceScope.launch {
-            when (status) {
-                DownloadManager.TaskStatus.FAILURE -> onDownloadFailed(entity, task)
-                DownloadManager.TaskStatus.COMPLETED -> onDownloadCompleted(entity, task)
-                DownloadManager.TaskStatus.EXECUTING -> onDownloadExecuting(entity, task)
-                DownloadManager.TaskStatus.CANCELLED -> onDownloadCancelled(entity, task)
+            when (event.status) {
+                DownloadManager.TaskStatus.FAILURE -> onDownloadFailed(event.entity, event.task)
+                DownloadManager.TaskStatus.COMPLETED -> onDownloadCompleted(
+                    event.entity,
+                    event.task
+                )
+
+                DownloadManager.TaskStatus.EXECUTING -> onDownloadExecuting(
+                    event.entity,
+                    event.task
+                )
+
+                DownloadManager.TaskStatus.CANCELLED -> onDownloadCancelled(
+                    event.entity,
+                    event.task
+                )
+
                 else -> Unit
             }
             // 是终止态
-            if (status.isEndStatus) {
-                mDownloadNotification.updateDownloadProgress(entity, null)
+            if (event.status.isEndStatus) {
+                mDownloadNotification.updateDownloadProgress(event.entity, null)
                 mRunningTaskCount--
             }
         }
@@ -194,7 +210,7 @@ class DownloadService : Service(), IDownloadStatusListener {
 
     /**
      * 下载失败
-     * from [onDownloadStatusChange]
+     * from [onDownloadStatusChangeEvent]
      * */
     private suspend fun onDownloadFailed(entity: DownloadTaskEntity, task: DownloadGroupTask) {
         mDownloadTaskDao.update(entity.apply {
@@ -205,7 +221,7 @@ class DownloadService : Service(), IDownloadStatusListener {
 
     /**
      * 完成下载操作
-     * from [onDownloadStatusChange]
+     * from [onDownloadStatusChangeEvent]
      * */
     private suspend fun onDownloadCompleted(entity: DownloadTaskEntity, task: DownloadGroupTask) {
         // 更新状态为正在合成
@@ -230,12 +246,12 @@ class DownloadService : Service(), IDownloadStatusListener {
         }
 
         // 登记资源
-        val resource = entity.getDefaultOutputFile()!!
+        val resource = entity.getDefaultOutputFile()
         mResourceDao.insert(
             ResourceEntity(
                 taskEntityId = entity.id,
                 name = "Default Resource",
-                mimeType = entity.dashVideoMimeType?:entity.dashAudioMimeType?:"unknown",
+                mimeType = entity.dashVideoMimeType ?: entity.dashAudioMimeType ?: "unknown",
                 storageSizeBytes = resource.length(),
                 creationTime = System.currentTimeMillis(),
                 file = resource.path
@@ -247,7 +263,7 @@ class DownloadService : Service(), IDownloadStatusListener {
      * 尝试合成视频
      * */
     private fun doSynthetic(entity: DownloadTaskEntity, task: DownloadGroupTask): Boolean {
-        val output = entity.getDefaultOutputFile()?.path ?: return false
+        val output = entity.getDefaultOutputFile().path ?: return false
         val caches = task.entity.subEntities.map { it.filePath }.toTypedArray()
 
         if (caches.isEmpty()) {
@@ -275,7 +291,7 @@ class DownloadService : Service(), IDownloadStatusListener {
 
     /**
      * 下载任务执行中...
-     * from [onDownloadStatusChange]*/
+     * from [onDownloadStatusChangeEvent]*/
     private suspend fun onDownloadExecuting(entity: DownloadTaskEntity, task: DownloadGroupTask) {
         Log.d(
             TAG,
@@ -291,7 +307,7 @@ class DownloadService : Service(), IDownloadStatusListener {
 
     /**
      * 下载任务被取消
-     * from [onDownloadStatusChange] */
+     * from [onDownloadStatusChangeEvent] */
     private suspend fun onDownloadCancelled(entity: DownloadTaskEntity, task: DownloadGroupTask) {
         mDownloadTaskDao.delete(entity)
         mDownloadNotification.notificationDownloadCancel(entity)

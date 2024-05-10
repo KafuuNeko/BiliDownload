@@ -9,6 +9,8 @@ import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.utils.CommonLibs
+import cc.kafuu.bilidownload.model.event.DownloadRequestFailedEvent
+import cc.kafuu.bilidownload.model.event.DownloadStatusChangeEvent
 import cc.kafuu.bilidownload.service.DownloadService
 import com.arialyy.annotations.DownloadGroup
 import com.arialyy.annotations.DownloadGroup.onSubTaskFail
@@ -17,6 +19,7 @@ import com.arialyy.aria.core.common.HttpOption
 import com.arialyy.aria.core.download.DownloadEntity
 import com.arialyy.aria.core.task.DownloadGroupTask
 import kotlinx.coroutines.runBlocking
+import org.greenrobot.eventbus.EventBus
 
 
 object DownloadManager {
@@ -43,21 +46,10 @@ object DownloadManager {
         Aria.download(this).register()
     }
 
-    val mStatusListener: MutableList<IDownloadStatusListener> = mutableListOf()
     private val mEntityMap = hashMapOf<Long, DownloadTaskEntity>()
     private val mDownloadTaskDao by lazy { CommonLibs.requireAppDatabase().downloadTaskDao() }
 
     fun containsTask(downloadTaskId: Long) = mEntityMap.contains(downloadTaskId)
-
-    fun register(listener: IDownloadStatusListener) {
-        if (!mStatusListener.contains(listener)) {
-            mStatusListener.add(listener)
-        }
-    }
-
-    fun unregister(listener: IDownloadStatusListener) {
-        mStatusListener.remove(listener)
-    }
 
     suspend fun startDownload(
         context: Context,
@@ -107,7 +99,7 @@ object DownloadManager {
         runBlocking {
             val entity = getDownloadTaskEntity(task) ?: return@runBlocking
             val status = TaskStatus.fromCode(task.state)
-            mStatusListener.forEach { it.onDownloadStatusChange(entity, task, status) }
+            EventBus.getDefault().post(DownloadStatusChangeEvent(entity, task, status))
             if (status.isEndStatus) {
                 mEntityMap.remove(task.entity.id)
             }
@@ -123,13 +115,9 @@ object DownloadManager {
         Log.d(TAG, "onSubTaskFail: $groupTask, subEntity: $subEntity")
         runBlocking {
             val entity = getDownloadTaskEntity(groupTask) ?: return@runBlocking
-            mStatusListener.forEach {
-                it.onDownloadStatusChange(
-                    entity,
-                    groupTask,
-                    TaskStatus.FAILURE
-                )
-            }
+            EventBus.getDefault().post(
+                DownloadStatusChangeEvent(entity, groupTask, TaskStatus.FAILURE)
+            )
         }
     }
 
@@ -171,7 +159,9 @@ object DownloadManager {
 
                 override fun onFailure(httpCode: Int, code: Int, message: String) {
                     Log.e(TAG, "onFailure: httpCode = $httpCode, code = $code, message = $message")
-                    mStatusListener.forEach { it.onRequestFailed(entity, httpCode, code, message) }
+                    EventBus.getDefault().post(
+                        DownloadRequestFailedEvent(entity, httpCode, code, message)
+                    )
                 }
             }
         )
@@ -206,9 +196,9 @@ object DownloadManager {
                 throw IllegalStateException("Task [D${entity.downloadTaskId}] no resources available for download")
             }
         } catch (e: Exception) {
-            mStatusListener.forEach {
-                it.onRequestFailed(entity, httpCode, code, e.message ?: "unknown error")
-            }
+            EventBus.getDefault().post(
+                DownloadRequestFailedEvent(entity, httpCode, code, e.message ?: "unknown error")
+            )
         }
     }
 
