@@ -1,5 +1,3 @@
-import com.android.build.api.dsl.Packaging
-
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
@@ -136,6 +134,8 @@ dependencies {
     implementation(libs.refresh.header.classics)
     implementation(libs.refresh.footer.classics)
 
+    //Event bus
+    implementation(libs.eventbus)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

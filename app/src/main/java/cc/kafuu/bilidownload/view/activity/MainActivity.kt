@@ -1,18 +1,13 @@
 package cc.kafuu.bilidownload.view.activity
 
-import android.util.Log
+import android.os.Bundle
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.adapter.FragmentAdapter
 import cc.kafuu.bilidownload.common.core.CoreActivity
-import cc.kafuu.bilidownload.common.network.IServerCallback
-import cc.kafuu.bilidownload.common.network.manager.NetworkManager
-import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
-import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
-import cc.kafuu.bilidownload.common.utils.CommonLibs
-import cc.kafuu.bilidownload.common.utils.PermissionUtils
 import cc.kafuu.bilidownload.databinding.ActivityMainBinding
 import cc.kafuu.bilidownload.model.MainTabType
+import cc.kafuu.bilidownload.model.event.MainTabSwitchEvent
 import cc.kafuu.bilidownload.service.DownloadService
 import cc.kafuu.bilidownload.view.fragment.HomeFragment
 import cc.kafuu.bilidownload.view.fragment.MeFragment
@@ -21,7 +16,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 
 @Suppress("DEPRECATED_IDENTITY_EQUALS")
 class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
@@ -31,6 +28,16 @@ class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
 ) {
     companion object {
         private val mScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        EventBus.getDefault().register(this)
+    }
+
+    override fun onDestroy() {
+        EventBus.getDefault().unregister(this)
+        super.onDestroy()
     }
 
     override fun initViews() {
@@ -57,4 +64,9 @@ class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
         HomeFragment.newInstance(),
         MeFragment.newInstance()
     )
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: MainTabSwitchEvent) {
+        mViewModel.doChangeTabPosition(event.mainTabType)
+    }
 }
