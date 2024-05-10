@@ -45,6 +45,7 @@ object DownloadManager {
 
     val mStatusListener: MutableList<IDownloadStatusListener> = mutableListOf()
     private val mEntityMap = hashMapOf<Long, DownloadTaskEntity>()
+    private val mDownloadTaskDao by lazy { CommonLibs.requireAppDatabase().downloadTaskDao() }
 
     fun containsTask(downloadTaskId: Long) = mEntityMap.contains(downloadTaskId)
 
@@ -65,7 +66,7 @@ object DownloadManager {
         video: BiliPlayStreamResource?,
         audio: BiliPlayStreamResource?
     ) {
-        val taskId = CommonLibs.requireAppDatabase().downloadTaskDao().insert(
+        val taskId = mDownloadTaskDao.insert(
             DownloadTaskEntity.createEntity(bvid, cid, video, audio)
         )
         if (taskId == -1L) {
@@ -76,10 +77,10 @@ object DownloadManager {
     }
 
     private suspend fun getDownloadTaskEntity(task: DownloadGroupTask): DownloadTaskEntity? {
-        val entity =
-            mEntityMap[task.entity.id] ?: CommonLibs.requireAppDatabase().downloadTaskDao()
-                .getDownloadTaskByDownloadTaskId(task.entity.id)
+        val entity = mEntityMap[task.entity.id]
+            ?: mDownloadTaskDao.getDownloadTaskByDownloadTaskId(task.entity.id)
         if (entity == null) {
+            // 查找不到对应的下载记录，则取消此下载任务
             if (TaskStatus.fromCode(task.state) != TaskStatus.CANCELLED) {
                 Aria.download(this).load(task.entity.id).cancel(true)
                 Log.d(TAG, "Task [D${task.entity.id}]: entity cannot be found, task cancelled")
@@ -140,16 +141,19 @@ object DownloadManager {
      * @note 此函数在内部通过异步回调处理网络响应，因此不会立即返回下载结果。
      *
      */
-    fun requestDownload(entity: DownloadTaskEntity) {
+    suspend fun requestDownload(entity: DownloadTaskEntity) {
         Log.d(TAG, "Task [E${entity.id}] request download")
 
         if (entity.downloadTaskId != null &&
             !containsTask(entity.downloadTaskId!!) &&
             entity.status == DownloadTaskEntity.STATUS_DOWNLOADING
         ) {
-            Aria.download(this).loadGroup(entity.downloadTaskId!!).ignoreCheckPermissions()
-                .resume(true)
-            return
+            // 此记录存在一个未被下载管理器缓存的下载记录，且状态为正在下载
+            // 判定为任务未下载过程中服务被中止，重新启动下载
+            Aria.download(this).loadGroup(entity.downloadTaskId!!).let {
+                mDownloadTaskDao.update(entity.apply { downloadTaskId = null })
+                it.ignoreCheckPermissions().cancel(true)
+            }
         }
 
         NetworkManager.biliVideoRepository.getPlayStreamDash(
@@ -247,7 +251,7 @@ object DownloadManager {
         entity.status = DownloadTaskEntity.STATUS_DOWNLOADING
 
         mEntityMap[downloadTaskId] = entity
-        runBlocking { CommonLibs.requireAppDatabase().downloadTaskDao().update(entity) }
+        runBlocking { mDownloadTaskDao.update(entity) }
 
         Log.d(TAG, "Task [D${entity.downloadTaskId}] start download")
     }
