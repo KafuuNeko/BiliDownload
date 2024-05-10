@@ -38,8 +38,9 @@
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/tv_title"
             bindSpannable="@{title}"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
             android:ellipsize="end"
             android:gravity="center_vertical"
             android:maxLines="1"
@@ -47,6 +48,7 @@
             android:textSize="16sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/imageView"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="Title" />

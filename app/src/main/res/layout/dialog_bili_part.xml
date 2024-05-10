@@ -38,6 +38,7 @@
                 android:gravity="center"
                 android:maxLines="1"
                 android:textColor="@color/primary_color"
+                android:textSize="16sp"
                 android:textStyle="bold"
                 tools:text="@string/app_name" />
 
@@ -56,7 +57,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/text_video"
-                        android:textColor="@color/text_default_color" />
+                        android:textColor="@color/text_default_color"
+                        android:textSize="12sp" />
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rv_video_select_list"
@@ -70,7 +72,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/text_audio"
-                        android:textColor="@color/text_default_color" />
+                        android:textColor="@color/text_default_color"
+                        android:textSize="12sp" />
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rv_audio_select_list"
