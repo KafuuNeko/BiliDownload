@@ -138,9 +138,16 @@ open class BiliRepository(protected val biliApiService: BiliApiService) {
                 response.body()?.code ?: 0,
                 message
             ) ?: throw IllegalStateException(message)
-        } else {
-            onSuccess(processingData(response.body()!!.data!!))
-        }
+        } else try {
+            processingData(response.body()!!.data!!)
+        } catch (e: Exception) {
+            onFailure?.invoke(
+                response.code(),
+                response.body()?.code ?: 0,
+                e.message ?: "Unknown error"
+            ) ?: throw e
+            null
+        }?.let { onSuccess(it) }
     }
 
 }
