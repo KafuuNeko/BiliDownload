@@ -11,9 +11,6 @@ import com.scwang.smart.refresh.layout.listener.OnRefreshLoadMoreListener
 
 class SearchListFragment : RVFragment<SearchListViewModel>(SearchListViewModel::class.java),
     OnRefreshListener, OnRefreshLoadMoreListener {
-    companion object {
-        private const val TAG = "SearchListFragment"
-    }
 
     override fun initViews() {
         super.initViews()

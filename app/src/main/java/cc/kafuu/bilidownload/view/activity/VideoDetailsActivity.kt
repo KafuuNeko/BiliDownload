@@ -29,14 +29,17 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
     companion object {
         private const val TAG = "VideoDetailsActivity"
 
+        private const val KEY_OBJECT_TYPE = "objectType"
+        private const val KEY_OBJECT_INSTANCE = "objectInstance"
+
         fun buildIntent(video: BiliVideo) = Intent().apply {
-            putExtra("objectType", BiliVideo::class.simpleName)
-            putExtra("objectInstance", video)
+            putExtra(KEY_OBJECT_TYPE, BiliVideo::class.simpleName)
+            putExtra(KEY_OBJECT_INSTANCE, video)
         }
 
         fun buildIntent(media: BiliMedia) = Intent().apply {
-            putExtra("objectType", BiliMedia::class.simpleName)
-            putExtra("objectInstance", media)
+            putExtra(KEY_OBJECT_TYPE, BiliMedia::class.simpleName)
+            putExtra(KEY_OBJECT_INSTANCE, media)
         }
     }
 
@@ -79,17 +82,17 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
         }
     }
 
-    private fun doInitData() = when (intent.getStringExtra("objectType")) {
+    private fun doInitData() = when (intent.getStringExtra(KEY_OBJECT_TYPE)) {
         BiliVideo::class.simpleName -> {
             mViewModel.initData(
-                intent.getSerializable("objectInstance", BiliVideo::class.java)
+                intent.getSerializable(KEY_OBJECT_INSTANCE, BiliVideo::class.java)
             )
             true
         }
 
         BiliMedia::class.simpleName -> {
             mViewModel.initData(
-                intent.getSerializable("objectInstance", BiliMedia::class.java)
+                intent.getSerializable(KEY_OBJECT_INSTANCE, BiliMedia::class.java)
             )
             true
         }

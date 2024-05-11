@@ -32,6 +32,8 @@ import kotlin.properties.Delegates
 
 class DownloadService : Service() {
     companion object {
+        private const val KEY_ENTITY_ID = "entityId"
+
         private val mDownloadTaskDao = CommonLibs.requireAppDatabase().downloadTaskDao()
         private val mResourceDao = CommonLibs.requireAppDatabase().resourceDao()
 
@@ -46,7 +48,7 @@ class DownloadService : Service() {
 
         fun startDownload(context: Context, taskId: Long) {
             val intent = Intent(context, DownloadService::class.java)
-            intent.putExtra("entityId", taskId)
+            intent.putExtra(KEY_ENTITY_ID, taskId)
             startService(context, intent)
         }
 
@@ -57,7 +59,7 @@ class DownloadService : Service() {
                 DownloadTaskEntity.STATUS_PREPARE
             ).forEach {
                 if (it.downloadTaskId != null && !DownloadManager.containsTask(it.downloadTaskId!!)) {
-                    intent.putExtra("entityId", it.id)
+                    intent.putExtra(KEY_ENTITY_ID, it.id)
                     startService(context, intent)
                 }
             }
@@ -94,7 +96,7 @@ class DownloadService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val entityId = intent?.getLongExtra("entityId", -1L)
+        val entityId = intent?.getLongExtra(KEY_ENTITY_ID, -1L)
         if (entityId == null || entityId == -1L) {
             return super.onStartCommand(intent, flags, startId)
         }
