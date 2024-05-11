@@ -18,10 +18,10 @@ import retrofit2.http.Url
 interface BiliApiService {
 
     @GET("x/web-interface/nav")
-    fun getWbiInterfaceNav(): Call<BiliRespond<BiliWbiData>>
+    fun requestWbiInterfaceNav(): Call<BiliRespond<BiliWbiData>>
 
     @GET("x/player/playurl")
-    fun getPlayStream(
+    fun requestPlayStream(
         @Query("avid") avid: Long?,
         @Query("bvid") bvid: String?,
         @Query("cid") cid: Long,
@@ -34,23 +34,23 @@ interface BiliApiService {
     ): Call<BiliRespond<BiliPlayStreamData>>
 
     @GET("x/web-interface/view")
-    fun getVideoDetail(
+    fun requestVideoDetail(
         @Query("aid") aid: Int? = null,
         @Query("bvid") bvid: String? = null
     ): Call<BiliRespond<BiliVideoData>>
 
     @GET("pgc/view/web/season")
-    fun getSeasonDetail(
+    fun requestSeasonDetail(
         @Query("season_id") seasonId: Long? = null,
         @Query("ep_id") epId: Long? = null
     ): Call<BiliRespond<BiliSeasonData>>
 
     @GET
-    fun getAccountData(@Url fullUrl: String?): Call<BiliRespond<BiliAccountData>>
+    fun requestAccountData(@Url fullUrl: String?): Call<BiliRespond<BiliAccountData>>
 
     @GET
-    fun searchVideo(@Url fullUrl: String?): Call<BiliRespond<BiliSearchData<BiliSearchVideoResultData>>>
+    fun requestSearchVideo(@Url fullUrl: String?): Call<BiliRespond<BiliSearchData<BiliSearchVideoResultData>>>
 
     @GET
-    fun searchMedia(@Url fullUrl: String?): Call<BiliRespond<BiliSearchData<BiliSearchMediaResultData>>>
+    fun requestSearchMedia(@Url fullUrl: String?): Call<BiliRespond<BiliSearchData<BiliSearchMediaResultData>>>
 }

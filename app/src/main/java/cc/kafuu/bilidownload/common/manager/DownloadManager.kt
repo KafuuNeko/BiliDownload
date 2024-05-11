@@ -169,7 +169,7 @@ object DownloadManager {
                 )
             }
         }.apply {
-            NetworkManager.biliVideoRepository.getPlayStreamDash(
+            NetworkManager.biliVideoRepository.requestPlayStreamDash(
                 entity.biliBvid,
                 entity.biliCid,
                 this

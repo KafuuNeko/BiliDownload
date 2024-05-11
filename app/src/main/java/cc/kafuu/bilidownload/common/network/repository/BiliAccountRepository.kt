@@ -9,24 +9,24 @@ import java.io.IOException
 
 class BiliAccountRepository(biliApiService: BiliApiService) : BiliRepository(biliApiService) {
     @Throws(IOException::class, IllegalStateException::class)
-    fun syncGetAccountData(mid: Long, onFailure: ((Int, Int, String) -> Unit)?): BiliAccountData? {
+    fun syncRequestAccountData(mid: Long, onFailure: ((Int, Int, String) -> Unit)?): BiliAccountData? {
         val params = linkedMapOf<String, Any>(
             "mid" to mid
         )
-        return biliApiService.getAccountData(
+        return biliApiService.requestAccountData(
             NetworkConfig.buildFullUrl(
                 "/x/space/wbi/acc/info", WbiManager.syncGenerateSignature(params)
             )
         ).execute(onFailure) { it }
     }
 
-    fun getAccountData(mid: Long, callback: IServerCallback<BiliAccountData>) {
+    fun requestAccountData(mid: Long, callback: IServerCallback<BiliAccountData>) {
         val params = linkedMapOf<String, Any>(
             "mid" to mid
         )
         WbiManager.asyncGenerateSignature(params, object : IServerCallback<String> {
             override fun onSuccess(httpCode: Int, code: Int, message: String, data: String) {
-                biliApiService.getAccountData(
+                biliApiService.requestAccountData(
                     NetworkConfig.buildFullUrl(
                         "/x/space/wbi/acc/info", data
                     )

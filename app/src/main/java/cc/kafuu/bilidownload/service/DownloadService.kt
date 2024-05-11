@@ -137,7 +137,7 @@ class DownloadService : Service() {
      * */
     private suspend fun doSaveVideoDetails(entity: DownloadTaskEntity) {
         val biliVideoData =
-            NetworkManager.biliVideoRepository.syncGetVideoDetail(entity.biliBvid) { responseCode, returnCode, message ->
+            NetworkManager.biliVideoRepository.syncRequestVideoDetail(entity.biliBvid) { responseCode, returnCode, message ->
                 mDownloadNotification.notificationGetVideoDetailsFailed(
                     entity,
                     responseCode,

@@ -18,7 +18,7 @@ object CommonLibs {
 
     fun init(context: Context) {
         mContext = context
-        mAppDatabase = AppDatabase.getDatabase(context)
+        mAppDatabase = AppDatabase.requireInstance(context)
     }
 
     fun getString(@StringRes id: Int) = requireContext().resources?.getString(id).toString()

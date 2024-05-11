@@ -39,17 +39,17 @@ class SearchListViewModel : RVViewModel() {
         loadingStatusMessageMutableLiveData.value = loadingStatus
 
         when (searchType) {
-            SearchType.VIDEO -> mBiliSearchRepository.searchVideo(
+            SearchType.VIDEO -> mBiliSearchRepository.requestSearchVideo(
                 keyword!!, mNextPage,
                 createSearchCallback(onSucceeded, onFailed, loadMore)
             )
 
-            SearchType.MEDIA_BANGUMI -> mBiliSearchRepository.searchMediaBangumi(
+            SearchType.MEDIA_BANGUMI -> mBiliSearchRepository.requestSearchMediaBangumi(
                 keyword!!, mNextPage,
                 createSearchCallback(onSucceeded, onFailed, loadMore)
             )
 
-            SearchType.MEDIA_FT -> mBiliSearchRepository.searchMediaFt(
+            SearchType.MEDIA_FT -> mBiliSearchRepository.requestSearchMediaFt(
                 keyword!!, mNextPage,
                 createSearchCallback(onSucceeded, onFailed, loadMore)
             )

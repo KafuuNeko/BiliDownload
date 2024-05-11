@@ -53,9 +53,9 @@ class VideoDetailsViewModel : CoreViewModel() {
             }
         }
         if (media.seasonId != 0L) {
-            NetworkManager.biliVideoRepository.getSeasonDetailBySeasonId(media.seasonId, callback)
+            NetworkManager.biliVideoRepository.requestSeasonDetailBySeasonId(media.seasonId, callback)
         } else {
-            NetworkManager.biliVideoRepository.getSeasonDetailByEpId(media.mediaId, callback)
+            NetworkManager.biliVideoRepository.requestSeasonDetailByEpId(media.mediaId, callback)
         }
     }
 
@@ -81,7 +81,7 @@ class VideoDetailsViewModel : CoreViewModel() {
                 )
             }
         }
-        NetworkManager.biliVideoRepository.getVideoDetail(video.bvid, callback)
+        NetworkManager.biliVideoRepository.requestVideoDetail(video.bvid, callback)
     }
 
     fun onPartSelected(item: BiliVideoPart) {
@@ -99,6 +99,6 @@ class VideoDetailsViewModel : CoreViewModel() {
                 popMessage(ToastMessage(message, Toast.LENGTH_SHORT))
             }
         }
-        NetworkManager.biliVideoRepository.getPlayStreamDash(item.bvid, item.cid, callback)
+        NetworkManager.biliVideoRepository.requestPlayStreamDash(item.bvid, item.cid, callback)
     }
 }

@@ -25,19 +25,17 @@ import cc.kafuu.bilidownload.common.room.entity.ResourceEntity
 abstract class AppDatabase : RoomDatabase() {
     companion object {
         @Volatile
-        private var INSTANCE: AppDatabase? = null
+        private var mInstance: AppDatabase? = null
 
-        fun getDatabase(context: Context): AppDatabase {
-            return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    AppDatabase::class.java,
-                    "app.db" // 数据库名称
-                ).build()
-                INSTANCE = instance
-                // 返回实例
-                instance
-            }
+        fun requireInstance(context: Context) = mInstance ?: synchronized(this) {
+            val instance = Room.databaseBuilder(
+                context.applicationContext,
+                AppDatabase::class.java,
+                "app.db" // 数据库名称
+            ).build()
+            mInstance = instance
+            // 返回实例
+            instance
         }
     }
 

@@ -34,7 +34,7 @@ object WbiManager {
             return true
         }
 
-        return NetworkManager.biliWbiResponse.syncGetWbiKey()?.let {
+        return NetworkManager.biliWbiResponse.syncRequestWbiKey()?.let {
             updateCache(it.first, it.second)
             true
         } ?: false
@@ -49,7 +49,7 @@ object WbiManager {
             return
         }
 
-        NetworkManager.biliWbiResponse.getWbiKey(object : IServerCallback<Pair<String, String>> {
+        NetworkManager.biliWbiResponse.requestWbiKey(object : IServerCallback<Pair<String, String>> {
             override fun onSuccess(
                 httpCode: Int,
                 code: Int,

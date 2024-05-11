@@ -14,10 +14,6 @@ import java.io.IOException
  * @property biliApiService BiliApi的服务接口，用于网络请求。
  */
 open class BiliRepository(protected val biliApiService: BiliApiService) {
-    companion object {
-        private const val TAG = "BiliRepository"
-    }
-
     /**
      * 异步执行网络请求，通过回调接口返回结果。
      *
@@ -33,37 +29,33 @@ open class BiliRepository(protected val biliApiService: BiliApiService) {
         callback: IServerCallback<D>,
         checkResponseCode: Boolean,
         processingData: (T) -> D
-    ) {
-        enqueue(object : Callback<BiliRespond<T>> {
-            override fun onResponse(
-                call: Call<BiliRespond<T>>,
-                response: Response<BiliRespond<T>>
-            ) {
-                processResponse(response, { data ->
-                    callback.onSuccess(
-                        response.code(),
-                        response.body()?.code ?: 0,
-                        response.message(),
-                        data
-                    )
-                }, { code, errorCode, errorMessage ->
-                    callback.onFailure(code, errorCode, errorMessage)
-                }, processingData, checkResponseCode)
-            }
+    ) = enqueue(object : Callback<BiliRespond<T>> {
+        override fun onResponse(
+            call: Call<BiliRespond<T>>,
+            response: Response<BiliRespond<T>>
+        ) {
+            processResponse(response, { data ->
+                callback.onSuccess(
+                    response.code(),
+                    response.body()?.code ?: 0,
+                    response.message(),
+                    data
+                )
+            }, { code, errorCode, errorMessage ->
+                callback.onFailure(code, errorCode, errorMessage)
+            }, processingData, checkResponseCode)
+        }
 
-            override fun onFailure(call: Call<BiliRespond<T>>, e: Throwable) {
-                e.printStackTrace()
-                callback.onFailure(0, 0, e.message ?: "Unknown error")
-            }
-        })
-    }
+        override fun onFailure(call: Call<BiliRespond<T>>, e: Throwable) {
+            e.printStackTrace()
+            callback.onFailure(0, 0, e.message ?: "Unknown error")
+        }
+    })
 
     protected fun <T, D> Call<BiliRespond<T>>.enqueue(
         callback: IServerCallback<D>,
         processingData: (T) -> D
-    ) {
-        enqueue(callback, true, processingData)
-    }
+    ) = enqueue(callback, true, processingData)
 
 
     /**
@@ -85,19 +77,17 @@ open class BiliRepository(protected val biliApiService: BiliApiService) {
         onFailure: ((Int, Int, String) -> Unit)?,
         checkResponseCode: Boolean,
         processingData: (T) -> D
-    ): D? {
-        return try {
-            val response = execute()
-            var result: D? = null
-            processResponse(response, { data ->
-                result = data
-            }, onFailure, processingData, checkResponseCode)
-            result
-        } catch (e: IOException) {
-            e.printStackTrace()
-            onFailure?.invoke(0, 0, e.message ?: "Unknown error") ?: throw e
-            null
-        }
+    ): D? = try {
+        val response = execute()
+        var result: D? = null
+        processResponse(response, { data ->
+            result = data
+        }, onFailure, processingData, checkResponseCode)
+        result
+    } catch (e: IOException) {
+        e.printStackTrace()
+        onFailure?.invoke(0, 0, e.message ?: "Unknown error") ?: throw e
+        null
     }
 
     @Throws(IOException::class, IllegalStateException::class)
@@ -140,7 +130,7 @@ open class BiliRepository(protected val biliApiService: BiliApiService) {
             ) ?: throw IllegalStateException(message)
         } else try {
             val body = response.body()!!
-            processingData(body.data?:body.result!!)
+            processingData(body.data ?: body.result!!)
         } catch (e: Exception) {
             e.printStackTrace()
             onFailure?.invoke(
