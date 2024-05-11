@@ -37,7 +37,7 @@ data class BiliSeasonEpisode(
     val aid: Int,
     val badge: String?,
     val bvid: String,
-    val cid: Int,
+    val cid: Long,
     val cover: String,
     val from: String,
     val id: Int,
@@ -52,5 +52,5 @@ data class BiliSeasonEpisode(
     val status: Int,
     val subtitle: String,
     val title: String,
-    val vid: String
+    val vid: String,
 )

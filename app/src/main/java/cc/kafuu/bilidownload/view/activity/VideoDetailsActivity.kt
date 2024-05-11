@@ -9,11 +9,11 @@ import cc.kafuu.bilidownload.common.adapter.VideoPartRVAdapter
 import cc.kafuu.bilidownload.common.core.CoreActivity
 import cc.kafuu.bilidownload.common.manager.DownloadManager
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
-import cc.kafuu.bilidownload.common.network.model.BiliVideoPage
 import cc.kafuu.bilidownload.common.utils.SerializationUtils.getSerializable
 import cc.kafuu.bilidownload.databinding.ActivityVideoDetailsBinding
-import cc.kafuu.bilidownload.model.bili.BiliMedia
-import cc.kafuu.bilidownload.model.bili.BiliVideo
+import cc.kafuu.bilidownload.model.bili.BiliMediaDetails
+import cc.kafuu.bilidownload.model.bili.BiliVideoDetails
+import cc.kafuu.bilidownload.model.bili.BiliVideoPart
 import cc.kafuu.bilidownload.view.dialog.BiliPartDialog
 import cc.kafuu.bilidownload.viewmodel.activity.VideoDetailsViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -32,13 +32,13 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
         private const val KEY_OBJECT_TYPE = "objectType"
         private const val KEY_OBJECT_INSTANCE = "objectInstance"
 
-        fun buildIntent(video: BiliVideo) = Intent().apply {
-            putExtra(KEY_OBJECT_TYPE, BiliVideo::class.simpleName)
+        fun buildIntent(video: BiliVideoDetails) = Intent().apply {
+            putExtra(KEY_OBJECT_TYPE, BiliVideoDetails::class.simpleName)
             putExtra(KEY_OBJECT_INSTANCE, video)
         }
 
-        fun buildIntent(media: BiliMedia) = Intent().apply {
-            putExtra(KEY_OBJECT_TYPE, BiliMedia::class.simpleName)
+        fun buildIntent(media: BiliMediaDetails) = Intent().apply {
+            putExtra(KEY_OBJECT_TYPE, BiliMediaDetails::class.simpleName)
             putExtra(KEY_OBJECT_INSTANCE, media)
         }
     }
@@ -53,20 +53,15 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
         }
         initList()
         mViewModel.selectedBiliPlayStreamDashLiveData.observe(this) {
-            createBiliPartDialog(
-                mViewModel.biliVideoLiveData.value!!,
-                it.first,
-                it.second
-            ).show(supportFragmentManager, null)
+            createBiliPartDialog(it.first, it.second).show(supportFragmentManager, null)
         }
     }
 
     private fun createBiliPartDialog(
-        video: BiliVideo,
-        page: BiliVideoPage,
+        part: BiliVideoPart,
         dash: BiliPlayStreamDash
     ) = BiliPartDialog.buildDialog(
-        page.part,
+        part.name,
         dash.video,
         dash.audio
     ) { selectedVideo, selectedAudio ->
@@ -74,8 +69,8 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
         mCoroutineScope.launch {
             DownloadManager.startDownload(
                 this@VideoDetailsActivity,
-                video.bvid,
-                page.cid,
+                part.bvid,
+                part.cid,
                 selectedVideo,
                 selectedAudio
             )
@@ -83,16 +78,16 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
     }
 
     private fun doInitData() = when (intent.getStringExtra(KEY_OBJECT_TYPE)) {
-        BiliVideo::class.simpleName -> {
+        BiliVideoDetails::class.simpleName -> {
             mViewModel.initData(
-                intent.getSerializable(KEY_OBJECT_INSTANCE, BiliVideo::class.java)
+                intent.getSerializable(KEY_OBJECT_INSTANCE, BiliVideoDetails::class.java)
             )
             true
         }
 
-        BiliMedia::class.simpleName -> {
+        BiliMediaDetails::class.simpleName -> {
             mViewModel.initData(
-                intent.getSerializable(KEY_OBJECT_INSTANCE, BiliMedia::class.java)
+                intent.getSerializable(KEY_OBJECT_INSTANCE, BiliMediaDetails::class.java)
             )
             true
         }

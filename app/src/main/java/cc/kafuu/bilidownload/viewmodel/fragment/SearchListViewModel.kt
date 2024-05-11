@@ -6,8 +6,8 @@ import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliSearchData
 import cc.kafuu.bilidownload.common.network.model.BiliSearchMediaResultData
 import cc.kafuu.bilidownload.common.network.model.BiliSearchVideoResultData
-import cc.kafuu.bilidownload.model.bili.BiliMedia
-import cc.kafuu.bilidownload.model.bili.BiliVideo
+import cc.kafuu.bilidownload.model.bili.BiliMediaDetails
+import cc.kafuu.bilidownload.model.bili.BiliVideoDetails
 import cc.kafuu.bilidownload.model.LoadingStatus
 import cc.kafuu.bilidownload.model.SearchType
 import cc.kafuu.bilidownload.view.activity.VideoDetailsActivity
@@ -100,32 +100,34 @@ class SearchListViewModel : RVViewModel() {
         listMutableLiveData.postValue(searchData)
     }
 
-    private fun disposeResult(element: BiliSearchVideoResultData) = BiliVideo(
+    private fun disposeResult(element: BiliSearchVideoResultData) = BiliVideoDetails(
         author = element.author,
         authorId = element.mid,
         bvid = element.bvid,
         title = element.title,
         description = element.description,
-        pic = "https:${element.pic}",
+        cover = "https:${element.pic}",
         pubDate = element.pubDate,
         sendDate = element.sendDate,
         duration = element.duration
     )
 
-    private fun disposeResult(element: BiliSearchMediaResultData) = BiliMedia(
+    private fun disposeResult(element: BiliSearchMediaResultData) = BiliMediaDetails(
         mediaId = element.mediaId,
         seasonId = element.seasonId,
         title = element.title,
         cover = element.cover,
         mediaType = element.mediaType,
-        desc = element.desc
+        description = element.desc,
+        author = element.staff,
+        pubDate = element.pubTime
     )
 
-    fun enterDetails(element: BiliVideo) {
+    fun enterDetails(element: BiliVideoDetails) {
         startActivity(VideoDetailsActivity::class.java, VideoDetailsActivity.buildIntent(element))
     }
 
-    fun enterDetails(element: BiliMedia) {
+    fun enterDetails(element: BiliMediaDetails) {
         startActivity(VideoDetailsActivity::class.java, VideoDetailsActivity.buildIntent(element))
     }
 }

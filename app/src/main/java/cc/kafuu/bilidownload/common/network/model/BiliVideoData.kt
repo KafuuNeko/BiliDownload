@@ -80,7 +80,7 @@ data class BiliVideoPage(
     @SerializedName("page") val page: Int,
     @SerializedName("from") val from: String,
     @SerializedName("part") val part: String,
-    @SerializedName("duration") val duration: Int,
+    @SerializedName("duration") val duration: Long,
     @SerializedName("vid") val vid: String?,
     @SerializedName("weblink") val weblink: String?,
     @SerializedName("dimension") val dimension: BiliVideoDimension

@@ -5,8 +5,8 @@ import android.view.ViewGroup
 import cc.kafuu.bilidownload.common.adapter.holder.ItemSearchMediaHolder
 import cc.kafuu.bilidownload.common.adapter.holder.ItemSearchVideoHolder
 import cc.kafuu.bilidownload.common.core.CoreRVAdapter
-import cc.kafuu.bilidownload.model.bili.BiliMedia
-import cc.kafuu.bilidownload.model.bili.BiliVideo
+import cc.kafuu.bilidownload.model.bili.BiliMediaDetails
+import cc.kafuu.bilidownload.model.bili.BiliVideoDetails
 import cc.kafuu.bilidownload.model.SearchResultViewType
 import cc.kafuu.bilidownload.viewmodel.fragment.SearchListViewModel
 
@@ -14,8 +14,8 @@ class SearchRVAdapter(viewModel: SearchListViewModel, context: Context) :
     CoreRVAdapter<SearchListViewModel>(viewModel, context) {
 
     override fun getItemViewType(position: Int) = when(getItemData(position)) {
-        is BiliVideo -> SearchResultViewType.VIDEO_VIEW
-        is BiliMedia -> SearchResultViewType.MEDIA_VIEW
+        is BiliVideoDetails -> SearchResultViewType.VIDEO_VIEW
+        is BiliMediaDetails -> SearchResultViewType.MEDIA_VIEW
         else -> throw IllegalArgumentException("Unknown view type")
     }
 

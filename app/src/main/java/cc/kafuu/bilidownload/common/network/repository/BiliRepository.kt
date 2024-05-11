@@ -139,8 +139,10 @@ open class BiliRepository(protected val biliApiService: BiliApiService) {
                 message
             ) ?: throw IllegalStateException(message)
         } else try {
-            processingData(response.body()!!.data!!)
+            val body = response.body()!!
+            processingData(body.data?:body.result!!)
         } catch (e: Exception) {
+            e.printStackTrace()
             onFailure?.invoke(
                 response.code(),
                 response.body()?.code ?: 0,

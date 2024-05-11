@@ -8,7 +8,7 @@
 
         <variable
             name="data"
-            type="cc.kafuu.bilidownload.model.bili.BiliVideo" />
+            type="cc.kafuu.bilidownload.model.bili.BiliResourceDetails" />
 
         <import type="cc.kafuu.bilidownload.common.utils.CommonLibs" />
 
@@ -33,7 +33,7 @@
 
             <ImageView
                 android:id="@+id/iv_video_cover"
-                bindImageUrl="@{data.pic}"
+                bindImageUrl="@{data.cover}"
                 bindPlaceholder="@{CommonLibs.INSTANCE.getDrawable(R.drawable.ic_2233)}"
                 bindTransformation="@{GlideUtils.INSTANCE.centerCrop}"
                 android:layout_width="80dp"

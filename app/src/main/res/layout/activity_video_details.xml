@@ -25,7 +25,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:title="@{viewModel.biliVideoLiveData.title}"
+            app:title="@{viewModel.biliResourceDetailsLiveData.title}"
             app:viewModel="@{viewModel}" />
 
         <LinearLayout
@@ -44,7 +44,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="10dp"
                 android:layout_marginTop="10dp"
-                app:data="@{viewModel.biliVideoLiveData}" />
+                app:data="@{viewModel.biliResourceDetailsLiveData}" />
 
             <androidx.core.widget.NestedScrollView
                 android:layout_width="match_parent"
@@ -77,7 +77,7 @@
                                 android:textStyle="bold" />
 
                             <androidx.appcompat.widget.AppCompatTextView
-                                bindSpannable="@{viewModel.biliVideoLiveData.description}"
+                                bindSpannable="@{viewModel.biliResourceDetailsLiveData.description}"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="10dp"
