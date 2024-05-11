@@ -70,14 +70,23 @@ object AccountManager {
         NetworkManager.biliAccountRepository.requestAccountData(mid, callback)
     }
 
-    fun clearAccount() {
+    fun clearAccount(removeLocalCache: Boolean = false) {
         cookiesLiveData.postValue(null)
         accountLiveData.postValue(null)
+        if (removeLocalCache) {
+            removeCookieLocalCache()
+        }
     }
 
     private fun updateCookieLocalCache() {
         CommonLibs.requireContext().getSharedPreferences(FILE_CACHE, Context.MODE_PRIVATE).apply {
             edit().putString(KEY_COOKIES, cookiesLiveData.value).apply()
+        }
+    }
+
+    private fun removeCookieLocalCache() {
+        CommonLibs.requireContext().getSharedPreferences(FILE_CACHE, Context.MODE_PRIVATE).apply {
+            edit().putString(KEY_COOKIES, null).apply()
         }
     }
 

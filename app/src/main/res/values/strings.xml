@@ -64,4 +64,5 @@
     <string name="text_added_download_queue">下载任务已添加</string>
     <string name="login_activity_title">登录</string>
     <string name="nickname_not_login">未登录</string>
+    <string name="text_logout">登出</string>
 </resources>

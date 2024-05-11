@@ -28,11 +28,26 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
-                app:profile="@{AccountManager.INSTANCE.accountLiveData.profile}"
-                app:nickname="@{AccountManager.INSTANCE.accountLiveData.nickname}"
-                app:sign="@{AccountManager.INSTANCE.accountLiveData.sign}"
                 app:defaultNickname="@{@string/nickname_not_login}"
-                app:onClick="@{()-> viewModel.jumpLogin()}" />
+                app:nickname="@{AccountManager.INSTANCE.accountLiveData.nickname}"
+                app:onClick="@{()-> viewModel.jumpLogin()}"
+                app:profile="@{AccountManager.INSTANCE.accountLiveData.profile}"
+                app:sign="@{AccountManager.INSTANCE.accountLiveData.sign}" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                bindVisible="@{AccountManager.INSTANCE.accountLiveData != null}"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="10dp"
+                android:background="@drawable/shape_button_general"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:gravity="center"
+                android:minHeight="36dp"
+                android:onClick="@{()-> viewModel.logout()}"
+                android:text="@string/text_logout"
+                android:textColor="@color/white" />
 
         </LinearLayout>
 
