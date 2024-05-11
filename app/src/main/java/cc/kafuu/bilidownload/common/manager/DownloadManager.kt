@@ -18,13 +18,18 @@ import com.arialyy.aria.core.Aria
 import com.arialyy.aria.core.common.HttpOption
 import com.arialyy.aria.core.download.DownloadEntity
 import com.arialyy.aria.core.task.DownloadGroupTask
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import org.greenrobot.eventbus.EventBus
 
 
 object DownloadManager {
 
     private const val TAG = "DownloadManager"
+
+    private val mCoroutineScope by lazy { CoroutineScope(Dispatchers.Default + SupervisorJob()) }
 
     enum class TaskStatus(val code: Int, val isEndStatus: Boolean) {
         FAILURE(0, true),
@@ -68,15 +73,21 @@ object DownloadManager {
         DownloadService.startDownload(context, taskId)
     }
 
+    /**
+     * 通过下载任务ID查找下载记录
+     * 优先在缓存Map中查找，若是未查找到则查找数据库
+     * */
     private suspend fun getDownloadTaskEntity(task: DownloadGroupTask): DownloadTaskEntity? {
         val entity = mEntityMap[task.entity.id]
             ?: mDownloadTaskDao.getDownloadTaskByDownloadTaskId(task.entity.id)
-        if (entity == null) {
+        if (entity == null && TaskStatus.fromCode(task.state) != TaskStatus.CANCELLED) {
             // 查找不到对应的下载记录，则取消此下载任务
-            if (TaskStatus.fromCode(task.state) != TaskStatus.CANCELLED) {
-                Aria.download(this).load(task.entity.id).cancel(true)
-                Log.d(TAG, "Task [D${task.entity.id}]: entity cannot be found, task cancelled")
-            }
+            Aria.download(this).load(task.entity.id).cancel(true)
+            Log.d(TAG, "Task [D${task.entity.id}]: entity cannot be found, task cancelled")
+        }
+        if (entity != null && !mEntityMap.contains(task.entity.id)) {
+            // 查找到记录，且此记录不存在缓存中，则重新缓存此记录
+            mEntityMap[task.entity.id] = entity
         }
         return entity
     }
@@ -89,18 +100,18 @@ object DownloadManager {
     @DownloadGroup.onTaskStop
     @DownloadGroup.onTaskStart
     fun onTaskStatusChange(task: DownloadGroupTask?) {
-        if (task == null) {
-            return
-        }
+        if (task == null) return
+
         Log.d(
             TAG,
             "Task [D${task.entity.id}] download status change, status: ${TaskStatus.fromCode(task.state)}"
         )
-        runBlocking {
-            val entity = getDownloadTaskEntity(task) ?: return@runBlocking
+        mCoroutineScope.launch {
+            val entity = getDownloadTaskEntity(task) ?: return@launch
             val status = TaskStatus.fromCode(task.state)
             EventBus.getDefault().post(DownloadStatusChangeEvent(entity, task, status))
             if (status.isEndStatus) {
+                // 状态为终止态，则删除此缓存记录
                 mEntityMap.remove(task.entity.id)
             }
         }
@@ -108,13 +119,11 @@ object DownloadManager {
 
     @onSubTaskFail
     fun onSubTaskFail(groupTask: DownloadGroupTask?, subEntity: DownloadEntity?) {
-        if (groupTask == null) {
-            return
-        }
+        if (groupTask == null) return
 
         Log.d(TAG, "onSubTaskFail: $groupTask, subEntity: $subEntity")
-        runBlocking {
-            val entity = getDownloadTaskEntity(groupTask) ?: return@runBlocking
+        mCoroutineScope.launch {
+            val entity = getDownloadTaskEntity(groupTask) ?: return@launch
             EventBus.getDefault().post(
                 DownloadStatusChangeEvent(entity, groupTask, TaskStatus.FAILURE)
             )
@@ -143,28 +152,29 @@ object DownloadManager {
                 it.ignoreCheckPermissions().cancel(true)
             }
         }
-
-        NetworkManager.biliVideoRepository.getPlayStreamDash(
-            entity.biliBvid,
-            entity.biliCid,
-            object : IServerCallback<BiliPlayStreamDash> {
-                override fun onSuccess(
-                    httpCode: Int,
-                    code: Int,
-                    message: String,
-                    data: BiliPlayStreamDash
-                ) {
-                    onGetPlayStreamDashDone(entity, httpCode, code, message, data)
-                }
-
-                override fun onFailure(httpCode: Int, code: Int, message: String) {
-                    Log.e(TAG, "onFailure: httpCode = $httpCode, code = $code, message = $message")
-                    EventBus.getDefault().post(
-                        DownloadRequestFailedEvent(entity, httpCode, code, message)
-                    )
-                }
+        object : IServerCallback<BiliPlayStreamDash> {
+            override fun onSuccess(
+                httpCode: Int,
+                code: Int,
+                message: String,
+                data: BiliPlayStreamDash
+            ) {
+                onGetPlayStreamDashDone(entity, httpCode, code, message, data)
             }
-        )
+
+            override fun onFailure(httpCode: Int, code: Int, message: String) {
+                Log.e(TAG, "onFailure: httpCode = $httpCode, code = $code, message = $message")
+                EventBus.getDefault().post(
+                    DownloadRequestFailedEvent(entity, httpCode, code, message)
+                )
+            }
+        }.apply {
+            NetworkManager.biliVideoRepository.getPlayStreamDash(
+                entity.biliBvid,
+                entity.biliCid,
+                this
+            )
+        }
     }
 
     /**
@@ -215,13 +225,17 @@ object DownloadManager {
     private fun getDownloadResourceUrls(
         entity: DownloadTaskEntity,
         dash: BiliPlayStreamDash
-    ): List<String> {
-        val urls = mutableListOf<String>()
-        dash.video.find { entity.dashVideoId != null && it.id == entity.dashVideoId && it.codecId == entity.dashVideoCodecId }
-            ?.let { urls.add(it.getStreamUrl()) }
-        dash.audio.find { entity.dashAudioId != null && it.id == entity.dashAudioId && it.codecId == entity.dashAudioCodecId }
-            ?.let { urls.add(it.getStreamUrl()) }
-        return urls
+    ): List<String> = mutableListOf<String>().apply {
+        dash.video.find {
+            entity.dashVideoId != null && it.id == entity.dashVideoId && it.codecId == entity.dashVideoCodecId
+        }?.let {
+            add(it.getStreamUrl())
+        }
+        dash.audio.find {
+            entity.dashAudioId != null && it.id == entity.dashAudioId && it.codecId == entity.dashAudioCodecId
+        }?.let {
+            add(it.getStreamUrl())
+        }
     }
 
     @Synchronized
@@ -241,7 +255,7 @@ object DownloadManager {
         entity.status = DownloadTaskEntity.STATUS_DOWNLOADING
 
         mEntityMap[downloadTaskId] = entity
-        runBlocking { mDownloadTaskDao.update(entity) }
+        mCoroutineScope.launch { mDownloadTaskDao.update(entity) }
 
         Log.d(TAG, "Task [D${entity.downloadTaskId}] start download")
     }

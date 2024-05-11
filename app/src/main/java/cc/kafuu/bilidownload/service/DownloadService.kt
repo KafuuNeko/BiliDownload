@@ -31,8 +31,6 @@ import java.io.File
 import kotlin.properties.Delegates
 
 class DownloadService : Service() {
-    private val mServiceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-
     companion object {
         private val mDownloadTaskDao = CommonLibs.requireAppDatabase().downloadTaskDao()
         private val mResourceDao = CommonLibs.requireAppDatabase().resourceDao()
@@ -65,6 +63,8 @@ class DownloadService : Service() {
             }
         }
     }
+
+    private val mServiceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     private var mRunningTaskCount by Delegates.observable(0) { _, _, value ->
         if (value > 0) return@observable
@@ -229,12 +229,14 @@ class DownloadService : Service() {
             status = DownloadTaskEntity.STATUS_SYNTHESIS
         })
 
+        // 尝试合成音视频
         val syntheticStatus = if (doSynthetic(entity, task)) {
             DownloadTaskEntity.STATUS_COMPLETED
         } else {
             DownloadTaskEntity.STATUS_SYNTHESIS_FAILED
         }
 
+        // 更新下载状态为合成音视频状态
         mDownloadTaskDao.update(entity.apply {
             status = syntheticStatus
         })
@@ -260,36 +262,6 @@ class DownloadService : Service() {
     }
 
     /**
-     * 尝试合成视频
-     * */
-    private fun doSynthetic(entity: DownloadTaskEntity, task: DownloadGroupTask): Boolean {
-        val output = entity.getDefaultOutputFile().path ?: return false
-        val caches = task.entity.subEntities.map { it.filePath }.toTypedArray()
-
-        if (caches.isEmpty()) {
-            return false
-        }
-
-        if (caches.size == 1) {
-            File(caches[0]).copyTo(File(output), true)
-            return true
-        }
-
-        // 合成视频
-        if (!FFMpegJNI.mergeMedia(output, caches)) {
-            return false
-        }
-
-        // 清理缓存
-        CommonLibs.requireDownloadCacheDir(entity.id).let {
-            it.deleteRecursively()
-            it.deleteOnExit()
-        }
-
-        return true
-    }
-
-    /**
      * 下载任务执行中...
      * from [onDownloadStatusChangeEvent]*/
     private suspend fun onDownloadExecuting(entity: DownloadTaskEntity, task: DownloadGroupTask) {
@@ -311,5 +283,41 @@ class DownloadService : Service() {
     private suspend fun onDownloadCancelled(entity: DownloadTaskEntity, task: DownloadGroupTask) {
         mDownloadTaskDao.delete(entity)
         mDownloadNotification.notificationDownloadCancel(entity)
+    }
+
+    /**
+     * 尝试合成视频
+     * */
+    private fun doSynthetic(entity: DownloadTaskEntity, task: DownloadGroupTask): Boolean {
+        // 取得最终合成输出路径
+        val outputFile = entity.getDefaultOutputFile()
+
+        // 取得缓存文件路径数组
+        val cachesPathArray = task.entity.subEntities.map { it.filePath }.toTypedArray()
+
+        val outputStatus = try {
+            when {
+                // 缓存为空
+                cachesPathArray.isEmpty() -> false
+                // 只有一个文件，则不进行合成，此缓存即最终输出
+                cachesPathArray.size == 1 -> {
+                    File(cachesPathArray[0]).copyTo(outputFile, true)
+                    true
+                }
+                // 多个文件则对其进行合成
+                else -> FFMpegJNI.mergeMedia(outputFile.path, cachesPathArray)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+
+        // 清理缓存
+        CommonLibs.requireDownloadCacheDir(entity.id).let {
+            it.deleteRecursively()
+            it.deleteOnExit()
+        }
+
+        return outputStatus
     }
 }
