@@ -45,7 +45,7 @@ abstract class CoreAdvancedDialog<V : ViewDataBinding, VM : CoreViewModel>(
         if (mViewModel.popMessageLiveData.hasObservers()) {
             return
         }
-        mViewModel.popMessageLiveData.observe(this) {
+        mViewModel.popMessageLiveData.observe(viewLifecycleOwner) {
             onPopMessage(it)
         }
     }
