@@ -6,10 +6,10 @@ import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliSearchData
 import cc.kafuu.bilidownload.common.network.model.BiliSearchMediaResultData
 import cc.kafuu.bilidownload.common.network.model.BiliSearchVideoResultData
-import cc.kafuu.bilidownload.model.bili.BiliMediaModel
-import cc.kafuu.bilidownload.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.model.LoadingStatus
 import cc.kafuu.bilidownload.model.SearchType
+import cc.kafuu.bilidownload.model.bili.BiliMediaModel
+import cc.kafuu.bilidownload.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.view.activity.VideoDetailsActivity
 
 class SearchListViewModel : RVViewModel() {
@@ -86,9 +86,9 @@ class SearchListViewModel : RVViewModel() {
         } else {
             mutableListOf()
         }
-        searchData.addAll(data.result.orEmpty().map { result ->
+        searchData.addAll(data.result.orEmpty().mapNotNull { result ->
             when (result) {
-                is BiliSearchVideoResultData -> disposeResult(result)
+                is BiliSearchVideoResultData -> if (result.type == "video") disposeResult(result) else null
                 is BiliSearchMediaResultData -> disposeResult(result)
                 else -> throw IllegalStateException("Unknown result from $result")
             }
