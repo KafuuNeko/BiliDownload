@@ -28,7 +28,7 @@
             android:layout_margin="8dp"
             android:contentDescription="@string/iv_profile_content_description"
             app:bindPlaceholder="@{@drawable/ic_2233}"
-            app:bindProfileAccount="@{AccountManager.INSTANCE.account}"
+            app:bindProfileAccount="@{AccountManager.INSTANCE.accountLiveData}"
             app:bindTransformation="@{GlideUtils.INSTANCE.circleCrop}" />
 
         <androidx.appcompat.widget.AppCompatTextView

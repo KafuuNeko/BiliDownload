@@ -1,20 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
 
+        <variable
+            name="viewModel"
+            type="cc.kafuu.bilidownload.viewmodel.fragment.MeViewModel" />
+
+        <import type="cc.kafuu.bilidownload.common.manager.AccountManager" />
+
+        <import type="cc.kafuu.bilidownload.common.utils.ViewDataBindingUtilsKt" />
     </data>
 
-    <FrameLayout
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:context=".view.fragment.MeFragment">
+        android:layout_height="match_parent">
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="Me" />
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="10dp">
 
-    </FrameLayout>
+            <include
+                layout="@layout/include_account_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                app:profile="@{AccountManager.INSTANCE.accountLiveData.profile}"
+                app:nickname="@{AccountManager.INSTANCE.accountLiveData.nickname}"
+                app:sign="@{AccountManager.INSTANCE.accountLiveData.sign}"
+                app:defaultNickname="@{@string/nickname_not_login}"
+                app:onClick="@{()-> viewModel.jumpLogin()}" />
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
 </layout>

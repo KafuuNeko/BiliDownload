@@ -9,6 +9,7 @@ import cc.kafuu.bilidownload.common.network.model.BiliSearchVideoResultData
 import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.network.model.BiliWbiData
+import cc.kafuu.bilidownload.common.network.model.MyBiliAccountData
 import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -44,6 +45,9 @@ interface BiliApiService {
         @Query("season_id") seasonId: Long? = null,
         @Query("ep_id") epId: Long? = null
     ): Call<BiliRespond<BiliSeasonData>>
+
+    @GET("x/member/web/account")
+    fun requestMyAccount(): Call<BiliRespond<MyBiliAccountData>>
 
     @GET
     fun requestAccountData(@Url fullUrl: String?): Call<BiliRespond<BiliAccountData>>

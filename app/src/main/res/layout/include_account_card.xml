@@ -5,10 +5,29 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
+        <variable
+            name="onClick"
+            type="android.view.View.OnClickListener" />
 
         <variable
-            name="data"
-            type="cc.kafuu.bilidownload.model.bili.BiliResourceDetails" />
+            name="profile"
+            type="String" />
+
+        <variable
+            name="nickname"
+            type="String" />
+
+        <variable
+            name="defaultNickname"
+            type="String" />
+
+        <variable
+            name="sign"
+            type="String" />
+
+        <variable
+            name="defaultSign"
+            type="String" />
 
         <import type="cc.kafuu.bilidownload.common.utils.CommonLibs" />
 
@@ -30,11 +49,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clickable="true"
-            android:focusable="true">
+            android:focusable="true"
+            android:onClick="@{onClick}">
 
             <ImageView
                 android:id="@+id/iv_video_cover"
-                bindImageUrl="@{data.cover}"
+                bindImageUrl="@{profile}"
                 bindPlaceholder="@{CommonLibs.INSTANCE.getDrawable(R.drawable.ic_2233)}"
                 bindTransformation="@{GlideUtils.INSTANCE.centerCrop}"
                 android:layout_width="80dp"
@@ -55,8 +75,8 @@
                 app:layout_constraintTop_toTopOf="parent">
 
                 <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/tv_history_title"
-                    bindSpannable="@{data.title}"
+                    android:id="@+id/tv_nickname"
+                    bindSpannable="@{nickname != null ? nickname : defaultNickname}"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="8dp"
@@ -65,36 +85,20 @@
                     android:maxLines="2"
                     android:textColor="@color/primary_color"
                     android:textStyle="bold"
-                    tools:text="【Mili】A Turtle's Heart" />
+                    tools:text="KafuuNeko" />
 
-                <LinearLayout
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_sign"
+                    bindSpannable="@{sign != null ? sign : defaultSign}"
+                    bindVisible="@{sign != null || defaultSign != null}"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="8dp"
                     android:layout_marginTop="8dp"
-                    android:orientation="horizontal">
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/tv_author"
-                        bindSpannable="@{data.author}"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:ellipsize="end"
-                        android:maxLines="1"
-                        android:textColor="@color/text_default_color"
-                        tools:text="Mili" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/tv_formatter_date"
-                        bindSpannable="@{data.pubFormatterDate}"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
-                        android:ellipsize="end"
-                        android:maxLines="1"
-                        android:textColor="@color/text_default_color"
-                        tools:text="2016-06-07" />
-                </LinearLayout>
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/text_default_color"
+                    tools:text="kafuuneko@gmail.com" />
             </LinearLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>

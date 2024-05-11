@@ -1,9 +1,86 @@
 package cc.kafuu.bilidownload.common.manager
 
+import android.content.Context
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
+import cc.kafuu.bilidownload.common.network.IServerCallback
+import cc.kafuu.bilidownload.common.network.manager.NetworkManager
+import cc.kafuu.bilidownload.common.network.model.BiliAccountData
+import cc.kafuu.bilidownload.common.network.model.MyBiliAccountData
+import cc.kafuu.bilidownload.common.utils.CommonLibs
 import cc.kafuu.bilidownload.model.bili.BiliAccount
 
 object AccountManager {
-    val cookies = MutableLiveData<String>(null)
-    val account = MutableLiveData<BiliAccount>(null)
+    private const val TAG = "AccountManager"
+
+    private const val FILE_CACHE = "account"
+    private const val KEY_COOKIES = "cookies"
+
+    val cookiesLiveData = MutableLiveData<String?>(null)
+    val accountLiveData = MutableLiveData<BiliAccount?>(null)
+
+    fun updateCookie(cookies: String? = null) {
+        cookiesLiveData.value = cookies ?: getCookieLocalCache() ?: return
+        Log.d(TAG, "updateCookie: ${cookiesLiveData.value}")
+        val callback = object : IServerCallback<MyBiliAccountData> {
+            override fun onSuccess(
+                httpCode: Int,
+                code: Int,
+                message: String,
+                data: MyBiliAccountData
+            ) {
+                Log.d(TAG, "updateCookie onSuccess: $data")
+                requestAccountFace(data.mid)
+            }
+
+            override fun onFailure(httpCode: Int, code: Int, message: String) {
+                clearAccount()
+                Log.e(TAG, "onFailure: httpCode=$httpCode, code=$code, message=$message")
+            }
+        }
+        NetworkManager.biliAccountRepository.requestMyAccountData(callback)
+    }
+
+    private fun requestAccountFace(mid: Long) {
+        val callback = object : IServerCallback<BiliAccountData> {
+            override fun onSuccess(
+                httpCode: Int,
+                code: Int,
+                message: String,
+                data: BiliAccountData
+            ) {
+                Log.d(TAG, "requestAccountFace onSuccess: $data")
+                updateCookieLocalCache()
+                accountLiveData.postValue(
+                    BiliAccount(
+                        mid = data.mid,
+                        nickname = data.name,
+                        profile = data.avatarUrl,
+                        sign = data.sign
+                    )
+                )
+            }
+
+            override fun onFailure(httpCode: Int, code: Int, message: String) {
+                clearAccount()
+                Log.e(TAG, "onFailure: httpCode=$httpCode, code=$code, message=$message")
+            }
+
+        }
+        NetworkManager.biliAccountRepository.requestAccountData(mid, callback)
+    }
+
+    fun clearAccount() {
+        cookiesLiveData.postValue(null)
+        accountLiveData.postValue(null)
+    }
+
+    private fun updateCookieLocalCache() {
+        CommonLibs.requireContext().getSharedPreferences(FILE_CACHE, Context.MODE_PRIVATE).apply {
+            edit().putString(KEY_COOKIES, cookiesLiveData.value).apply()
+        }
+    }
+
+    private fun getCookieLocalCache() = CommonLibs.requireContext()
+        .getSharedPreferences(FILE_CACHE, Context.MODE_PRIVATE).getString(KEY_COOKIES, null)
 }

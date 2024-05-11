@@ -244,7 +244,7 @@ object DownloadManager {
             .loadGroup(resourceUrls)
             .option(HttpOption().apply {
                 NetworkConfig.DOWNLOAD_HEADERS.forEach { (key, value) -> addHeader(key, value) }
-                AccountManager.cookies.value?.let { addHeader("Cookie", it) }
+                AccountManager.cookiesLiveData.value?.let { addHeader("Cookie", it) }
             })
             .setDirPath(CommonLibs.requireDownloadCacheDir(entity.id).path)
             .ignoreCheckPermissions()

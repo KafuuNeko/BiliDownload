@@ -19,6 +19,16 @@ data class BiliAccountData(
     @SerializedName("top_photo") val topPhotoUrl: String
 )
 
+data class MyBiliAccountData(
+    val mid: Long,
+    val uname: String,
+    val userid: String,
+    val sign: String,
+    val birthday: String,
+    val sex: String,
+    val rank: String
+)
+
 data class BiliAccountVip(
     val type: Int, // 会员类型	0：无；1：月大会员；2：年度及以上大会员
     val status: Int // 会员状态	 0：无；1：有

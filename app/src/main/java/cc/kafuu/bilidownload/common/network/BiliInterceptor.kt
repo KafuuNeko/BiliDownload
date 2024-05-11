@@ -38,7 +38,7 @@ class BiliInterceptor(
             NetworkConfig.GENERAL_HEADERS.forEach { (key, value) -> addHeader(key, value) }
         }.build()
 
-        Log.d(TAG, "Ready request: $request")
+        Log.d(TAG, "Ready request: $request, cookie: ${request.headers()["Cookie"]}")
 
         return chain.proceed(request).also {
             Log.d(TAG, "End of request: $it")

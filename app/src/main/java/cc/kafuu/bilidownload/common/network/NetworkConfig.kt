@@ -28,7 +28,7 @@ object NetworkConfig {
     }
 
     private val biliInterceptor = BiliInterceptor {
-        return@BiliInterceptor AccountManager.cookies.value
+        return@BiliInterceptor AccountManager.cookiesLiveData.value
     }
 
     val biliService: BiliApiService by lazy {
