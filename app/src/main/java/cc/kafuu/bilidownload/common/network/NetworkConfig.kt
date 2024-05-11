@@ -1,6 +1,6 @@
 package cc.kafuu.bilidownload.common.network
 
-import cc.kafuu.bilidownload.common.manager.BiliManager
+import cc.kafuu.bilidownload.common.manager.AccountManager
 import cc.kafuu.bilidownload.common.network.service.BiliApiService
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -28,7 +28,7 @@ object NetworkConfig {
     }
 
     private val biliInterceptor = BiliInterceptor {
-        return@BiliInterceptor BiliManager.cookies.value
+        return@BiliInterceptor AccountManager.cookies.value
     }
 
     val biliService: BiliApiService by lazy {

@@ -8,7 +8,7 @@
             name="viewModel"
             type="cc.kafuu.bilidownload.viewmodel.fragment.HomeViewModel" />
 
-        <import type="cc.kafuu.bilidownload.common.manager.BiliManager" />
+        <import type="cc.kafuu.bilidownload.common.manager.AccountManager" />
 
         <import type="cc.kafuu.bilidownload.common.utils.GlideUtils" />
     </data>
@@ -28,7 +28,7 @@
             android:layout_margin="8dp"
             android:contentDescription="@string/iv_profile_content_description"
             app:bindPlaceholder="@{@drawable/ic_2233}"
-            app:bindProfileAccount="@{BiliManager.INSTANCE.account}"
+            app:bindProfileAccount="@{AccountManager.INSTANCE.account}"
             app:bindTransformation="@{GlideUtils.INSTANCE.circleCrop}" />
 
         <androidx.appcompat.widget.AppCompatTextView
