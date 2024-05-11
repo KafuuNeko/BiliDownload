@@ -6,6 +6,7 @@ import cc.kafuu.bilidownload.common.network.model.BiliRespond
 import cc.kafuu.bilidownload.common.network.model.BiliSearchData
 import cc.kafuu.bilidownload.common.network.model.BiliSearchMediaResultData
 import cc.kafuu.bilidownload.common.network.model.BiliSearchVideoResultData
+import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.network.model.BiliWbiData
 import retrofit2.Call
@@ -37,6 +38,12 @@ interface BiliApiService {
         @Query("aid") aid: Int? = null,
         @Query("bvid") bvid: String? = null
     ): Call<BiliRespond<BiliVideoData>>
+
+    @GET("pgc/view/web/season")
+    fun getSeasonDetail(
+        @Query("season_id") seasonId: Long? = null,
+        @Query("ep_id") epId: Long? = null
+    ): Call<BiliRespond<BiliSeasonData>>
 
     @GET
     fun getAccountData(@Url fullUrl: String?): Call<BiliRespond<BiliAccountData>>

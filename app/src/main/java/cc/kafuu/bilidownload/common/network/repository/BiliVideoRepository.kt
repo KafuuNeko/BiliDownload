@@ -3,6 +3,7 @@ package cc.kafuu.bilidownload.common.network.repository
 import cc.kafuu.bilidownload.common.network.IServerCallback
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
+import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.network.service.BiliApiService
 
@@ -42,7 +43,26 @@ class BiliVideoRepository(biliApiService: BiliApiService) : BiliRepository(biliA
         biliApiService.getVideoDetail(null, bvid).enqueue(callback) { it }
     }
 
-    fun syncGetVideoDetail(bvid: String, onFailure: ((Int, Int, String) -> Unit)? = null): BiliVideoData? {
-        return biliApiService.getVideoDetail(null, bvid).execute(onFailure) { it }
+    fun syncGetVideoDetail(
+        bvid: String,
+        onFailure: ((Int, Int, String) -> Unit)? = null
+    ) = biliApiService.getVideoDetail(null, bvid).execute(onFailure) { it }
+
+    fun getSeasonDetailBySeasonId(seasonId: Long, callback: IServerCallback<BiliSeasonData>) {
+        biliApiService.getSeasonDetail(seasonId, null).enqueue(callback) { it }
     }
+
+    fun syncGetSeasonDetailBySeasonId(
+        seasonId: Long,
+        onFailure: ((Int, Int, String) -> Unit)? = null
+    ) = biliApiService.getSeasonDetail(seasonId, null).execute(onFailure) { it }
+
+    fun getSeasonDetailByEpId(epId: Long, callback: IServerCallback<BiliSeasonData>) {
+        biliApiService.getSeasonDetail(null, epId).enqueue(callback) { it }
+    }
+
+    fun syncGetSeasonDetailByEpId(
+        epId: Long,
+        onFailure: ((Int, Int, String) -> Unit)? = null
+    ) = biliApiService.getSeasonDetail(null, epId).execute(onFailure) { it }
 }
