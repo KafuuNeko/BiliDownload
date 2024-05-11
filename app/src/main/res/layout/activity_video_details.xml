@@ -28,70 +28,66 @@
             app:title="@{viewModel.biliVideoLiveData.title}"
             app:viewModel="@{viewModel}" />
 
-        <androidx.core.widget.NestedScrollView
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="0dp"
+            android:orientation="vertical"
+            bindVisible="@{!viewModel.loadingStatusLiveData.visibility}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/include">
 
-            <LinearLayout
+            <include
+                layout="@layout/include_bilivideo_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:layout_marginHorizontal="10dp"
+                android:layout_marginTop="10dp"
+                app:data="@{viewModel.biliVideoLiveData}" />
 
-                <include
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="10dp"
+                android:layout_marginTop="10dp"
+                app:cardCornerRadius="@dimen/card_item_corner_radius"
+                app:cardElevation="@dimen/card_item_elevation">
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginHorizontal="10dp"
-                    layout="@layout/include_bilivideo_card"
-                    app:data="@{viewModel.biliVideoLiveData}" />
+                    android:orientation="vertical"
+                    android:padding="10dp">
 
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="10dp"
-                    android:layout_marginTop="10dp"
-                    app:cardCornerRadius="@dimen/card_item_corner_radius"
-                    app:cardElevation="@dimen/card_item_elevation">
-
-                    <LinearLayout
+                    <androidx.appcompat.widget.AppCompatTextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="10dp">
+                        android:text="@string/text_brief"
+                        android:textColor="@color/primary_color"
+                        android:textStyle="bold" />
 
-                        <androidx.appcompat.widget.AppCompatTextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/text_brief"
-                            android:textColor="@color/primary_color"
-                            android:textStyle="bold" />
+                    <androidx.appcompat.widget.AppCompatTextView
+                        bindSpannable="@{viewModel.biliVideoLiveData.description}"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:autoLink="all"
+                        android:textColor="@color/text_default_color" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
 
-                        <androidx.appcompat.widget.AppCompatTextView
-                            bindSpannable="@{viewModel.biliVideoLiveData.description}"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
-                            android:autoLink="all"
-                            android:textColor="@color/text_default_color" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rv_parts"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    bindDataList="@{viewModel.biliVideoPageListLiveData}"/>
-            </LinearLayout>
-
-        </androidx.core.widget.NestedScrollView>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_parts"
+                bindDataList="@{viewModel.biliVideoPageListLiveData}"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </LinearLayout>
 
         <include
             layout="@layout/include_loading_status"
             app:data="@{viewModel.loadingStatusLiveData}"
+            app:isCover="@{Boolean.FALSE}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

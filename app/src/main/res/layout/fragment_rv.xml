@@ -4,11 +4,13 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
+
         <variable
             name="viewModel"
             type="cc.kafuu.bilidownload.viewmodel.fragment.RVViewModel" />
 
-        <import type="cc.kafuu.bilidownload.common.manager.BiliManager"/>
+        <import type="cc.kafuu.bilidownload.common.manager.BiliManager" />
+
         <import type="cc.kafuu.bilidownload.common.utils.ViewDataBindingUtilsKt" />
     </data>
 
@@ -24,15 +26,15 @@
 
             <com.scwang.smart.refresh.header.ClassicsHeader
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_content"
-                android:overScrollMode="never"
+                bindDataList="@{viewModel.listMutableLiveData}"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                bindDataList="@{viewModel.listMutableLiveData}"
-                android:background="@color/white"/>
+                android:background="@color/white"
+                android:overScrollMode="never" />
 
             <com.scwang.smart.refresh.footer.ClassicsFooter
                 android:layout_width="match_parent"
@@ -42,23 +44,24 @@
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/iv_top"
-            android:padding="8dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
             android:layout_marginEnd="20dp"
             android:layout_marginBottom="20dp"
             android:background="@drawable/shape_circle"
+            android:padding="8dp"
             android:src="@drawable/ic_top"
             android:visibility="gone"
-            tools:visibility="visible"/>
+            tools:visibility="visible" />
 
         <include
-            layout="@layout/include_loading_status"
             android:id="@+id/fl_loading"
+            layout="@layout/include_loading_status"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:data="@{viewModel.loadingStatusMessageMutableLiveData}"
+            app:isCover="@{Boolean.TRUE}"
             tools:visibility="gone" />
 
     </FrameLayout>

@@ -14,7 +14,7 @@ import cc.kafuu.bilidownload.model.bili.BiliVideo
 import cc.kafuu.bilidownload.model.popmessage.ToastMessage
 
 class VideoDetailsViewModel : CoreViewModel() {
-    val loadingStatusLiveData = MutableLiveData<LoadingStatus>()
+    val loadingStatusLiveData = MutableLiveData(LoadingStatus.waitStatus())
     val biliVideoLiveData = MutableLiveData<BiliVideo>()
     val biliVideoPageListLiveData = MutableLiveData<List<BiliVideoPage>>()
 
