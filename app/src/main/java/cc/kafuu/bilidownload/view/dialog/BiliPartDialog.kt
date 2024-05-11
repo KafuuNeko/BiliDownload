@@ -13,7 +13,7 @@ import cc.kafuu.bilidownload.common.utils.CommonLibs
 import cc.kafuu.bilidownload.databinding.DialogBiliPartBinding
 import cc.kafuu.bilidownload.model.ConfirmDialogStatus
 import cc.kafuu.bilidownload.model.ResourceType
-import cc.kafuu.bilidownload.model.bili.BiliResourceItem
+import cc.kafuu.bilidownload.model.bili.BiliStreamResourceModel
 import cc.kafuu.bilidownload.model.popmessage.ToastMessage
 import cc.kafuu.bilidownload.viewmodel.dialog.BiliPartDialogCallback
 import cc.kafuu.bilidownload.viewmodel.dialog.BiliPartViewModel
@@ -32,16 +32,16 @@ class BiliPartDialog : CoreAdvancedDialog<DialogBiliPartBinding, BiliPartViewMod
             callback: BiliPartDialogCallback
         ) = BiliPartDialog().apply {
             titleText = title
-            videoList = videoResources.orEmpty().map { BiliResourceItem(it, ResourceType.VIDEO) }
-            audioList = audioResources.orEmpty().map { BiliResourceItem(it, ResourceType.AUDIO) }
+            videoList = videoResources.orEmpty().map { BiliStreamResourceModel(it, ResourceType.VIDEO) }
+            audioList = audioResources.orEmpty().map { BiliStreamResourceModel(it, ResourceType.AUDIO) }
             confirmCallback = callback
         }
     }
 
 
     var titleText: String? = null
-    var videoList: List<BiliResourceItem>? = null
-    var audioList: List<BiliResourceItem>? = null
+    var videoList: List<BiliStreamResourceModel>? = null
+    var audioList: List<BiliStreamResourceModel>? = null
     var confirmCallback: BiliPartDialogCallback? = null
 
     private lateinit var mAudioListAdapter: PartResourceRVAdapter

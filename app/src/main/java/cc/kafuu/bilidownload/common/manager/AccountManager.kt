@@ -8,7 +8,7 @@ import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliAccountData
 import cc.kafuu.bilidownload.common.network.model.MyBiliAccountData
 import cc.kafuu.bilidownload.common.utils.CommonLibs
-import cc.kafuu.bilidownload.model.bili.BiliAccount
+import cc.kafuu.bilidownload.model.bili.BiliAccountModel
 
 object AccountManager {
     private const val TAG = "AccountManager"
@@ -17,7 +17,7 @@ object AccountManager {
     private const val KEY_COOKIES = "cookies"
 
     val cookiesLiveData = MutableLiveData<String?>(null)
-    val accountLiveData = MutableLiveData<BiliAccount?>(null)
+    val accountLiveData = MutableLiveData<BiliAccountModel?>(null)
 
     fun updateCookie(cookies: String? = null) {
         cookiesLiveData.value = cookies ?: getCookieLocalCache() ?: return
@@ -52,7 +52,7 @@ object AccountManager {
                 Log.d(TAG, "requestAccountFace onSuccess: $data")
                 updateCookieLocalCache()
                 accountLiveData.postValue(
-                    BiliAccount(
+                    BiliAccountModel(
                         mid = data.mid,
                         nickname = data.name,
                         profile = data.avatarUrl,

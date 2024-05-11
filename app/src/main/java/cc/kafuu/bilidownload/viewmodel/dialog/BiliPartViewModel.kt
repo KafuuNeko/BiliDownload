@@ -5,7 +5,7 @@ import cc.kafuu.bilidownload.common.core.CoreViewModel
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
 import cc.kafuu.bilidownload.model.ConfirmDialogStatus
 import cc.kafuu.bilidownload.model.ResourceType
-import cc.kafuu.bilidownload.model.bili.BiliResourceItem
+import cc.kafuu.bilidownload.model.bili.BiliStreamResourceModel
 
 typealias BiliPartDialogCallback = (video: BiliPlayStreamResource?, audio: BiliPlayStreamResource?) -> Unit
 
@@ -14,11 +14,11 @@ class BiliPartViewModel : CoreViewModel() {
 
     val titleLiveData = MutableLiveData<String>()
 
-    val videoResourcesLiveData = MutableLiveData<List<BiliResourceItem>>(listOf())
-    val audioResourcesLiveData = MutableLiveData<List<BiliResourceItem>>(listOf())
+    val videoResourcesLiveData = MutableLiveData<List<BiliStreamResourceModel>>(listOf())
+    val audioResourcesLiveData = MutableLiveData<List<BiliStreamResourceModel>>(listOf())
 
-    val currentVideoResourceLiveData = MutableLiveData<BiliResourceItem>(null)
-    val currentAudioResourceLiveData = MutableLiveData<BiliResourceItem>(null)
+    val currentVideoResourceLiveData = MutableLiveData<BiliStreamResourceModel>(null)
+    val currentAudioResourceLiveData = MutableLiveData<BiliStreamResourceModel>(null)
 
     var confirmCallback: BiliPartDialogCallback? = null
 
@@ -30,14 +30,14 @@ class BiliPartViewModel : CoreViewModel() {
         dialogStatusLiveData.value = ConfirmDialogStatus.CLOSED
     }
 
-    fun onSelected(item: BiliResourceItem) {
+    fun onSelected(item: BiliStreamResourceModel) {
         when (item.type) {
             ResourceType.VIDEO -> currentVideoResourceLiveData.value = item
             ResourceType.AUDIO -> currentAudioResourceLiveData.value = item
         }
     }
 
-    fun isSelected(item: BiliResourceItem) = when (item.type) {
+    fun isSelected(item: BiliStreamResourceModel) = when (item.type) {
         ResourceType.VIDEO -> currentVideoResourceLiveData.value == item
         ResourceType.AUDIO -> currentAudioResourceLiveData.value == item
         else -> false

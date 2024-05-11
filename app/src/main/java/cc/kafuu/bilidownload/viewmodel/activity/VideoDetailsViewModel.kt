@@ -13,16 +13,16 @@ import cc.kafuu.bilidownload.model.LoadingStatus
 import cc.kafuu.bilidownload.model.bili.BiliMediaModel
 import cc.kafuu.bilidownload.model.bili.BiliResourceModel
 import cc.kafuu.bilidownload.model.bili.BiliVideoModel
-import cc.kafuu.bilidownload.model.bili.BiliVideoPart
+import cc.kafuu.bilidownload.model.bili.BiliVideoPartModel
 import cc.kafuu.bilidownload.model.popmessage.ToastMessage
 
 class VideoDetailsViewModel : CoreViewModel() {
     val loadingStatusLiveData = MutableLiveData(LoadingStatus.waitStatus())
     val biliResourceModelLiveData = MutableLiveData<BiliResourceModel>()
-    val biliVideoPageListLiveData = MutableLiveData<List<BiliVideoPart>>()
+    val biliVideoPageListLiveData = MutableLiveData<List<BiliVideoPartModel>>()
 
     val selectedBiliPlayStreamDashLiveData =
-        MutableLiveData<Pair<BiliVideoPart, BiliPlayStreamDash>>()
+        MutableLiveData<Pair<BiliVideoPartModel, BiliPlayStreamDash>>()
 
     fun initData(media: BiliMediaModel) {
         loadingStatusLiveData.value = LoadingStatus.loadingStatus()
@@ -36,7 +36,7 @@ class VideoDetailsViewModel : CoreViewModel() {
                 data: BiliSeasonData
             ) {
                 biliVideoPageListLiveData.postValue(data.episodes.map {
-                    BiliVideoPart(
+                    BiliVideoPartModel(
                         it.bvid,
                         it.cid,
                         "${it.title}: ${it.longTitle}",
@@ -65,7 +65,7 @@ class VideoDetailsViewModel : CoreViewModel() {
         val callback = object : IServerCallback<BiliVideoData> {
             override fun onSuccess(httpCode: Int, code: Int, message: String, data: BiliVideoData) {
                 biliVideoPageListLiveData.postValue(data.pages.map {
-                    BiliVideoPart(
+                    BiliVideoPartModel(
                         video.bvid,
                         it.cid,
                         it.part,
@@ -84,7 +84,7 @@ class VideoDetailsViewModel : CoreViewModel() {
         NetworkManager.biliVideoRepository.requestVideoDetail(video.bvid, callback)
     }
 
-    fun onPartSelected(item: BiliVideoPart) {
+    fun onPartSelected(item: BiliVideoPartModel) {
         val callback = object : IServerCallback<BiliPlayStreamDash> {
             override fun onSuccess(
                 httpCode: Int,

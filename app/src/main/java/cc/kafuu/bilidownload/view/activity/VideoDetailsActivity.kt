@@ -13,7 +13,7 @@ import cc.kafuu.bilidownload.common.utils.SerializationUtils.getSerializable
 import cc.kafuu.bilidownload.databinding.ActivityVideoDetailsBinding
 import cc.kafuu.bilidownload.model.bili.BiliMediaModel
 import cc.kafuu.bilidownload.model.bili.BiliVideoModel
-import cc.kafuu.bilidownload.model.bili.BiliVideoPart
+import cc.kafuu.bilidownload.model.bili.BiliVideoPartModel
 import cc.kafuu.bilidownload.view.dialog.BiliPartDialog
 import cc.kafuu.bilidownload.viewmodel.activity.VideoDetailsViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -58,7 +58,7 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
     }
 
     private fun createBiliPartDialog(
-        part: BiliVideoPart,
+        part: BiliVideoPartModel,
         dash: BiliPlayStreamDash
     ) = BiliPartDialog.buildDialog(
         part.name,

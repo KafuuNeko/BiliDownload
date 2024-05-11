@@ -1,6 +1,6 @@
 package cc.kafuu.bilidownload.model.bili
 
-data class BiliAccount(
+data class BiliAccountModel(
     val mid: Long,
     val nickname: String,
     val profile: String,

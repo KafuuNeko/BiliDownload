@@ -11,7 +11,7 @@
 
         <variable
             name="data"
-            type="cc.kafuu.bilidownload.model.bili.BiliResourceItem" />
+            type="cc.kafuu.bilidownload.model.bili.BiliStreamResourceModel" />
 
         <import type="cc.kafuu.bilidownload.common.utils.BiliCodeUtils" />
 
