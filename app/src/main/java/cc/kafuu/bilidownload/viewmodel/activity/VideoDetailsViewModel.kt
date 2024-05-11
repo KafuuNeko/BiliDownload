@@ -10,23 +10,23 @@ import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.utils.TimeUtils
 import cc.kafuu.bilidownload.model.LoadingStatus
-import cc.kafuu.bilidownload.model.bili.BiliMediaDetails
-import cc.kafuu.bilidownload.model.bili.BiliResourceDetails
-import cc.kafuu.bilidownload.model.bili.BiliVideoDetails
+import cc.kafuu.bilidownload.model.bili.BiliMediaModel
+import cc.kafuu.bilidownload.model.bili.BiliResourceModel
+import cc.kafuu.bilidownload.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.model.bili.BiliVideoPart
 import cc.kafuu.bilidownload.model.popmessage.ToastMessage
 
 class VideoDetailsViewModel : CoreViewModel() {
     val loadingStatusLiveData = MutableLiveData(LoadingStatus.waitStatus())
-    val biliResourceDetailsLiveData = MutableLiveData<BiliResourceDetails>()
+    val biliResourceModelLiveData = MutableLiveData<BiliResourceModel>()
     val biliVideoPageListLiveData = MutableLiveData<List<BiliVideoPart>>()
 
     val selectedBiliPlayStreamDashLiveData =
         MutableLiveData<Pair<BiliVideoPart, BiliPlayStreamDash>>()
 
-    fun initData(media: BiliMediaDetails) {
+    fun initData(media: BiliMediaModel) {
         loadingStatusLiveData.value = LoadingStatus.loadingStatus()
-        biliResourceDetailsLiveData.value = media
+        biliResourceModelLiveData.value = media
 
         val callback = object : IServerCallback<BiliSeasonData> {
             override fun onSuccess(
@@ -59,9 +59,9 @@ class VideoDetailsViewModel : CoreViewModel() {
         }
     }
 
-    fun initData(video: BiliVideoDetails) {
+    fun initData(video: BiliVideoModel) {
         loadingStatusLiveData.value = LoadingStatus.loadingStatus()
-        biliResourceDetailsLiveData.value = video
+        biliResourceModelLiveData.value = video
         val callback = object : IServerCallback<BiliVideoData> {
             override fun onSuccess(httpCode: Int, code: Int, message: String, data: BiliVideoData) {
                 biliVideoPageListLiveData.postValue(data.pages.map {

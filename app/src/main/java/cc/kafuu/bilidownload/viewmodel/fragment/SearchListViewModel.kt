@@ -6,8 +6,8 @@ import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliSearchData
 import cc.kafuu.bilidownload.common.network.model.BiliSearchMediaResultData
 import cc.kafuu.bilidownload.common.network.model.BiliSearchVideoResultData
-import cc.kafuu.bilidownload.model.bili.BiliMediaDetails
-import cc.kafuu.bilidownload.model.bili.BiliVideoDetails
+import cc.kafuu.bilidownload.model.bili.BiliMediaModel
+import cc.kafuu.bilidownload.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.model.LoadingStatus
 import cc.kafuu.bilidownload.model.SearchType
 import cc.kafuu.bilidownload.view.activity.VideoDetailsActivity
@@ -100,9 +100,8 @@ class SearchListViewModel : RVViewModel() {
         listMutableLiveData.postValue(searchData)
     }
 
-    private fun disposeResult(element: BiliSearchVideoResultData) = BiliVideoDetails(
+    private fun disposeResult(element: BiliSearchVideoResultData) = BiliVideoModel(
         author = element.author,
-        authorId = element.mid,
         bvid = element.bvid,
         title = element.title,
         description = element.description,
@@ -112,22 +111,21 @@ class SearchListViewModel : RVViewModel() {
         duration = element.duration
     )
 
-    private fun disposeResult(element: BiliSearchMediaResultData) = BiliMediaDetails(
+    private fun disposeResult(element: BiliSearchMediaResultData) = BiliMediaModel(
         mediaId = element.mediaId,
         seasonId = element.seasonId,
         title = element.title,
         cover = element.cover,
         mediaType = element.mediaType,
         description = element.desc,
-        author = element.staff,
         pubDate = element.pubTime
     )
 
-    fun enterDetails(element: BiliVideoDetails) {
+    fun enterDetails(element: BiliVideoModel) {
         startActivity(VideoDetailsActivity::class.java, VideoDetailsActivity.buildIntent(element))
     }
 
-    fun enterDetails(element: BiliMediaDetails) {
+    fun enterDetails(element: BiliMediaModel) {
         startActivity(VideoDetailsActivity::class.java, VideoDetailsActivity.buildIntent(element))
     }
 }

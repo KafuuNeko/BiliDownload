@@ -11,8 +11,8 @@ import cc.kafuu.bilidownload.common.manager.DownloadManager
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
 import cc.kafuu.bilidownload.common.utils.SerializationUtils.getSerializable
 import cc.kafuu.bilidownload.databinding.ActivityVideoDetailsBinding
-import cc.kafuu.bilidownload.model.bili.BiliMediaDetails
-import cc.kafuu.bilidownload.model.bili.BiliVideoDetails
+import cc.kafuu.bilidownload.model.bili.BiliMediaModel
+import cc.kafuu.bilidownload.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.model.bili.BiliVideoPart
 import cc.kafuu.bilidownload.view.dialog.BiliPartDialog
 import cc.kafuu.bilidownload.viewmodel.activity.VideoDetailsViewModel
@@ -32,13 +32,13 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
         private const val KEY_OBJECT_TYPE = "objectType"
         private const val KEY_OBJECT_INSTANCE = "objectInstance"
 
-        fun buildIntent(video: BiliVideoDetails) = Intent().apply {
-            putExtra(KEY_OBJECT_TYPE, BiliVideoDetails::class.simpleName)
+        fun buildIntent(video: BiliVideoModel) = Intent().apply {
+            putExtra(KEY_OBJECT_TYPE, BiliVideoModel::class.simpleName)
             putExtra(KEY_OBJECT_INSTANCE, video)
         }
 
-        fun buildIntent(media: BiliMediaDetails) = Intent().apply {
-            putExtra(KEY_OBJECT_TYPE, BiliMediaDetails::class.simpleName)
+        fun buildIntent(media: BiliMediaModel) = Intent().apply {
+            putExtra(KEY_OBJECT_TYPE, BiliMediaModel::class.simpleName)
             putExtra(KEY_OBJECT_INSTANCE, media)
         }
     }
@@ -78,16 +78,16 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
     }
 
     private fun doInitData() = when (intent.getStringExtra(KEY_OBJECT_TYPE)) {
-        BiliVideoDetails::class.simpleName -> {
+        BiliVideoModel::class.simpleName -> {
             mViewModel.initData(
-                intent.getSerializable(KEY_OBJECT_INSTANCE, BiliVideoDetails::class.java)
+                intent.getSerializable(KEY_OBJECT_INSTANCE, BiliVideoModel::class.java)
             )
             true
         }
 
-        BiliMediaDetails::class.simpleName -> {
+        BiliMediaModel::class.simpleName -> {
             mViewModel.initData(
-                intent.getSerializable(KEY_OBJECT_INSTANCE, BiliMediaDetails::class.java)
+                intent.getSerializable(KEY_OBJECT_INSTANCE, BiliMediaModel::class.java)
             )
             true
         }

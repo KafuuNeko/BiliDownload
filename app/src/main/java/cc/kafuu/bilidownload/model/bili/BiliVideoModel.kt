@@ -4,17 +4,16 @@ import android.annotation.SuppressLint
 import java.text.SimpleDateFormat
 import java.util.Date
 
-class BiliVideoDetails(
+class BiliVideoModel(
     title: String,
     cover: String,
     description: String,
-    author: String,
     pubDate: Long,
-    val authorId: Long,
+    val author: String,
     val bvid: String,
     val sendDate: Long,
     val duration: String,
-) : BiliResourceDetails(title, cover, description, author, pubDate) {
+) : BiliResourceModel(title, cover, description, pubDate) {
     @SuppressLint("SimpleDateFormat")
     companion object {
         val mDateFormatter by lazy { SimpleDateFormat("yyyy-MM-dd") }

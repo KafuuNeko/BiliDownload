@@ -8,7 +8,7 @@
 
         <variable
             name="data"
-            type="cc.kafuu.bilidownload.model.bili.BiliResourceDetails" />
+            type="cc.kafuu.bilidownload.model.bili.BiliResourceModel" />
 
         <import type="cc.kafuu.bilidownload.common.utils.CommonLibs" />
 
@@ -75,21 +75,10 @@
                     android:orientation="horizontal">
 
                     <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/tv_author"
-                        bindSpannable="@{data.author}"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:ellipsize="end"
-                        android:maxLines="1"
-                        android:textColor="@color/text_default_color"
-                        tools:text="Mili" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
                         android:id="@+id/tv_formatter_date"
                         bindSpannable="@{data.pubFormatterDate}"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
                         android:ellipsize="end"
                         android:maxLines="1"
                         android:textColor="@color/text_default_color"
