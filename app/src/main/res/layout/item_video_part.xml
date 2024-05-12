@@ -53,7 +53,7 @@
                 tools:text="00:03:43" />
 
             <ImageView
-                bindVisible="@{viewModel.loadingPartLiveData != data}"
+                bindVisible="@{viewModel.loadingVideoPartLiveData != data}"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_marginHorizontal="10dp"
@@ -62,7 +62,7 @@
 
             <ProgressBar
                 style="?android:attr/progressBarStyleSmall"
-                bindVisible="@{viewModel.loadingPartLiveData == data}"
+                bindVisible="@{viewModel.loadingVideoPartLiveData == data}"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_marginHorizontal="10dp"

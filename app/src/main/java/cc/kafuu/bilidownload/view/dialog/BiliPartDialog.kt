@@ -1,6 +1,5 @@
 package cc.kafuu.bilidownload.view.dialog
 
-import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -59,7 +58,6 @@ class BiliPartDialog : CoreAdvancedDialog<DialogBiliPartBinding, BiliPartViewMod
         dismiss()
     }
 
-    @SuppressLint("NotifyDataSetChanged")
     private fun initViewMode() {
         mViewModel.titleLiveData.value = titleText
         mViewModel.videoResourcesLiveData.value = videoList
@@ -69,14 +67,19 @@ class BiliPartDialog : CoreAdvancedDialog<DialogBiliPartBinding, BiliPartViewMod
         mViewModel.dialogStatusLiveData.observe(this) {
             onDialogStatusChanged(it)
         }
-
         mViewModel.currentVideoResourceLiveData.observe(this) {
-            mVideoListAdapter.notifyDataSetChanged()
+            it?.let { onVideoSelectStatusChanged(it) }
             updateConfirmText()
         }
         mViewModel.currentAudioResourceLiveData.observe(this) {
-            mAudioListAdapter.notifyDataSetChanged()
+            it?.let { onAudioSelectStatusChanged(it) }
             updateConfirmText()
+        }
+        mViewModel.previousResourceLiveData.observe(this) {
+            when (it?.type ?: return@observe) {
+                ResourceType.VIDEO -> onVideoSelectStatusChanged(it)
+                ResourceType.AUDIO -> onAudioSelectStatusChanged(it)
+            }
         }
     }
 
@@ -114,6 +117,17 @@ class BiliPartDialog : CoreAdvancedDialog<DialogBiliPartBinding, BiliPartViewMod
             )
         )
         mViewModel.dialogStatusLiveData.value = ConfirmDialogStatus.CLOSED
+    }
+
+    private fun onVideoSelectStatusChanged(item: BiliStreamResourceModel) {
+        val index = mViewModel.videoResourcesLiveData.value?.indexOf(item) ?: return
+        mVideoListAdapter.notifyItemChanged(index)
+        updateConfirmText()
+    }
+
+    private fun onAudioSelectStatusChanged(item: BiliStreamResourceModel) {
+        val index = mViewModel.audioResourcesLiveData.value?.indexOf(item) ?: return
+        mAudioListAdapter.notifyItemChanged(index)
     }
 
     private fun updateConfirmText() {

@@ -19,8 +19,10 @@ class BiliPartViewModel : CoreViewModel() {
     val videoResourcesLiveData = MutableLiveData<List<BiliStreamResourceModel>>(listOf())
     val audioResourcesLiveData = MutableLiveData<List<BiliStreamResourceModel>>(listOf())
 
-    val currentVideoResourceLiveData = MutableLiveData<BiliStreamResourceModel>(null)
-    val currentAudioResourceLiveData = MutableLiveData<BiliStreamResourceModel>(null)
+    val currentVideoResourceLiveData = MutableLiveData<BiliStreamResourceModel?>(null)
+    val currentAudioResourceLiveData = MutableLiveData<BiliStreamResourceModel?>(null)
+
+    val previousResourceLiveData = MutableLiveData<BiliStreamResourceModel?>(null)
 
     val confirmTextLiveData =
         MutableLiveData(CommonLibs.getString(R.string.text_resource_not_selected))
@@ -36,12 +38,21 @@ class BiliPartViewModel : CoreViewModel() {
     }
 
     fun onSelected(item: BiliStreamResourceModel) {
+        var previousResource: BiliStreamResourceModel? = null
         when (item.type) {
-            ResourceType.VIDEO -> currentVideoResourceLiveData.value =
-                if (currentVideoResourceLiveData.value == item) null else item
-            ResourceType.AUDIO -> currentAudioResourceLiveData.value =
-                if (currentAudioResourceLiveData.value == item) null else item
+            ResourceType.VIDEO -> {
+                previousResource = currentVideoResourceLiveData.value
+                currentVideoResourceLiveData.value =
+                    if (currentVideoResourceLiveData.value == item) null else item
+            }
+
+            ResourceType.AUDIO -> {
+                previousResource = currentAudioResourceLiveData.value
+                currentAudioResourceLiveData.value =
+                    if (currentAudioResourceLiveData.value == item) null else item
+            }
         }
+        previousResourceLiveData.value = previousResource
     }
 
     fun isSelected(item: BiliStreamResourceModel) = when (item.type) {

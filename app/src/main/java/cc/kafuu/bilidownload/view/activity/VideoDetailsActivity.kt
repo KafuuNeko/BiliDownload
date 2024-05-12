@@ -1,6 +1,5 @@
 package cc.kafuu.bilidownload.view.activity
 
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.util.Log
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -46,7 +45,6 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
 
     private val mCoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
-    @SuppressLint("NotifyDataSetChanged")
     override fun initViews() {
         setImmersionStatusBar()
         if (!doInitData()) {
@@ -55,10 +53,13 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
         }
         initList()
         mViewModel.selectedBiliPlayStreamDashLiveData.observe(this) {
-            createBiliPartDialog(it.first, it.second).show(supportFragmentManager, null)
+            val part = mViewModel.selectedVideoPartLiveData.value ?: return@observe
+            createBiliPartDialog(part, it).show(supportFragmentManager, null)
         }
-        mViewModel.loadingPartLiveData.observe(this) {
-            mViewDataBinding.rvParts.adapter?.notifyDataSetChanged()
+        mViewModel.loadingVideoPartLiveData.observe(this) {
+            onItemLoadingStatusChanged(
+                it ?: mViewModel.selectedVideoPartLiveData.value ?: return@observe
+            )
         }
     }
 
@@ -105,5 +106,11 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
             adapter = VideoPartRVAdapter(mViewModel, this@VideoDetailsActivity)
             layoutManager = LinearLayoutManager(this@VideoDetailsActivity)
         }
+    }
+
+    private fun onItemLoadingStatusChanged(part: BiliVideoPartModel) {
+        mViewDataBinding.rvParts.adapter?.notifyItemChanged(
+            mViewModel.biliVideoPageListLiveData.value?.indexOf(part) ?: return
+        )
     }
 }

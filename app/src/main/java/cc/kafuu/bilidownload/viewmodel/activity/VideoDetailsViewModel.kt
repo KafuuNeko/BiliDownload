@@ -20,9 +20,12 @@ class VideoDetailsViewModel : CoreViewModel() {
     val loadingStatusLiveData = MutableLiveData(LoadingStatus.waitStatus())
     val biliResourceModelLiveData = MutableLiveData<BiliResourceModel>()
     val biliVideoPageListLiveData = MutableLiveData<List<BiliVideoPartModel>>()
-    val loadingPartLiveData = MutableLiveData<BiliVideoPartModel?>()
-    val selectedBiliPlayStreamDashLiveData =
-        MutableLiveData<Pair<BiliVideoPartModel, BiliPlayStreamDash>>()
+    // 选中的片段
+    val selectedVideoPartLiveData = MutableLiveData<BiliVideoPartModel?>()
+    // 选中的片段视频流数据
+    val selectedBiliPlayStreamDashLiveData = MutableLiveData<BiliPlayStreamDash>()
+    // 正在加载视频流数据的片段
+    val loadingVideoPartLiveData = MutableLiveData<BiliVideoPartModel?>()
 
     fun initData(media: BiliMediaModel) {
         loadingStatusLiveData.value = LoadingStatus.loadingStatus()
@@ -89,8 +92,11 @@ class VideoDetailsViewModel : CoreViewModel() {
 
     @Synchronized
     fun onPartSelected(item: BiliVideoPartModel) {
-        if (loadingPartLiveData.value != null) return
-        loadingPartLiveData.value = item
+        if (loadingVideoPartLiveData.value != null) return
+
+        selectedVideoPartLiveData.value = item
+        loadingVideoPartLiveData.value = item
+
         val callback = object : IServerCallback<BiliPlayStreamDash> {
             override fun onSuccess(
                 httpCode: Int,
@@ -98,13 +104,13 @@ class VideoDetailsViewModel : CoreViewModel() {
                 message: String,
                 data: BiliPlayStreamDash
             ) {
-                loadingPartLiveData.postValue(null)
-                selectedBiliPlayStreamDashLiveData.postValue(Pair(item, data))
+                selectedBiliPlayStreamDashLiveData.postValue(data)
+                loadingVideoPartLiveData.postValue(null)
             }
 
             override fun onFailure(httpCode: Int, code: Int, message: String) {
-                loadingPartLiveData.postValue(null)
                 popMessage(ToastMessage(message, Toast.LENGTH_SHORT))
+                loadingVideoPartLiveData.postValue(null)
             }
         }
         NetworkManager.biliVideoRepository.requestPlayStreamDash(item.bvid, item.cid, callback)
