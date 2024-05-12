@@ -8,7 +8,7 @@ import cc.kafuu.bilidownload.common.utils.CommonLibs
 object BiliVideoRepository {
     private val mBiliVideoDao = CommonLibs.requireAppDatabase().biliVideoDao()
 
-    suspend fun doInsertOrUpdateVideoDetails(biliVideoData: BiliVideoData) {
+    suspend fun doInsertOrUpdateVideoDetails(biliVideoData: BiliVideoData, cid: Long) {
         // 插入或更新bv视频信息
         val biliVideoMainEntity = BiliVideoMainEntity(
             biliVideoData.bvid,
@@ -18,15 +18,14 @@ object BiliVideoRepository {
             biliVideoData.desc,
             biliVideoData.pic
         )
-        mBiliVideoDao.insert(biliVideoMainEntity)
-        // 插入或更新次bv的所有子视频信息
-        val biliVideoPartEntityList = biliVideoData.pages.map {
+        mBiliVideoDao.insertOrUpdate(biliVideoMainEntity)
+        // 插入或更新片段信息
+        biliVideoData.pages.find { it.cid == cid }?.let { page ->
             BiliVideoPartEntity(
                 biliVideoData.bvid,
-                it.cid,
-                it.part
-            )
+                page.cid,
+                page.part
+            ).let { mBiliVideoDao.insertOrUpdate(it) }
         }
-        mBiliVideoDao.insert(*biliVideoPartEntityList.toTypedArray())
     }
 }

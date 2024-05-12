@@ -136,27 +136,26 @@ class DownloadService : Service() {
      * 1. 请求获取视频详情；2. 根据获取到的数据更新数据库；
      * */
     private suspend fun doSaveVideoDetails(entity: DownloadTaskEntity) {
-        val biliVideoData =
-            NetworkManager.biliVideoRepository.syncRequestVideoDetail(entity.biliBvid) { responseCode, returnCode, message ->
-                mDownloadNotification.notificationGetVideoDetailsFailed(
-                    entity,
-                    responseCode,
-                    returnCode,
-                    message
-                )
-                // 如果无法获取视频详情，且这个任务还在准备阶段则直接删除任务
-                // 因为没有对应获取视频详情失败的STATUS（也不需要）
-                if (entity.status == DownloadTaskEntity.STATUS_PREPARE) {
-                    mServiceScope.launch { mDownloadTaskDao.delete(entity) }
-                }
-                Log.e(
-                    TAG,
-                    "Task [E${entity.id}] get video details failed, responseCode: $responseCode, returnCode: $returnCode, message: $message"
-                )
-            } ?: throw IllegalStateException("Task [E${entity.id}] get video details failed")
-
-        // 更新数据库中的视频信息
-        BiliVideoRepository.doInsertOrUpdateVideoDetails(biliVideoData)
+        NetworkManager.biliVideoRepository.syncRequestVideoDetail(entity.biliBvid) { responseCode, returnCode, message ->
+            mDownloadNotification.notificationGetVideoDetailsFailed(
+                entity,
+                responseCode,
+                returnCode,
+                message
+            )
+            // 如果无法获取视频详情，且这个任务还在准备阶段则直接删除任务
+            // 因为没有对应获取视频详情失败的STATUS（也不需要）
+            if (entity.status == DownloadTaskEntity.STATUS_PREPARE) {
+                mServiceScope.launch { mDownloadTaskDao.delete(entity) }
+            }
+            Log.e(
+                TAG,
+                "Task [E${entity.id}] get video details failed, responseCode: $responseCode, returnCode: $returnCode, message: $message"
+            )
+        }?.let {
+            // 更新数据库中的视频信息
+            BiliVideoRepository.doInsertOrUpdateVideoDetails(it, entity.biliCid)
+        } ?: throw IllegalStateException("Task [E${entity.id}] get video details failed")
     }
 
 

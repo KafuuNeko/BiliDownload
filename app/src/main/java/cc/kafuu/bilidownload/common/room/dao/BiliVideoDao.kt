@@ -13,7 +13,7 @@ import cc.kafuu.bilidownload.common.room.entity.BiliVideoPartEntity
 interface BiliVideoDao {
     // 插入一个或多个BiliVideoMainEntity，如果存在冲突，则替换
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(vararg video: BiliVideoMainEntity)
+    suspend fun insertOrUpdate(vararg video: BiliVideoMainEntity)
 
     // 更新已存在的BiliVideoMainEntity
     @Update
@@ -37,7 +37,7 @@ interface BiliVideoDao {
 
     // 插入一个或多个BiliVideoPartEntity，如果存在冲突，则替换
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(vararg videoParts: BiliVideoPartEntity)
+    suspend fun insertOrUpdate(vararg videoParts: BiliVideoPartEntity)
 
     // 更新已存在的BiliVideoPartEntity
     @Update
