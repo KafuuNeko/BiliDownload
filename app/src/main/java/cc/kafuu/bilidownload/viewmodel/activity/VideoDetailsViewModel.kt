@@ -20,7 +20,7 @@ class VideoDetailsViewModel : CoreViewModel() {
     val loadingStatusLiveData = MutableLiveData(LoadingStatus.waitStatus())
     val biliResourceModelLiveData = MutableLiveData<BiliResourceModel>()
     val biliVideoPageListLiveData = MutableLiveData<List<BiliVideoPartModel>>()
-
+    val loadingPartLiveData = MutableLiveData<BiliVideoPartModel?>()
     val selectedBiliPlayStreamDashLiveData =
         MutableLiveData<Pair<BiliVideoPartModel, BiliPlayStreamDash>>()
 
@@ -53,7 +53,10 @@ class VideoDetailsViewModel : CoreViewModel() {
             }
         }
         if (media.seasonId != 0L) {
-            NetworkManager.biliVideoRepository.requestSeasonDetailBySeasonId(media.seasonId, callback)
+            NetworkManager.biliVideoRepository.requestSeasonDetailBySeasonId(
+                media.seasonId,
+                callback
+            )
         } else {
             NetworkManager.biliVideoRepository.requestSeasonDetailByEpId(media.mediaId, callback)
         }
@@ -84,7 +87,10 @@ class VideoDetailsViewModel : CoreViewModel() {
         NetworkManager.biliVideoRepository.requestVideoDetail(video.bvid, callback)
     }
 
+    @Synchronized
     fun onPartSelected(item: BiliVideoPartModel) {
+        if (loadingPartLiveData.value != null) return
+        loadingPartLiveData.value = item
         val callback = object : IServerCallback<BiliPlayStreamDash> {
             override fun onSuccess(
                 httpCode: Int,
@@ -92,10 +98,12 @@ class VideoDetailsViewModel : CoreViewModel() {
                 message: String,
                 data: BiliPlayStreamDash
             ) {
+                loadingPartLiveData.postValue(null)
                 selectedBiliPlayStreamDashLiveData.postValue(Pair(item, data))
             }
 
             override fun onFailure(httpCode: Int, code: Int, message: String) {
+                loadingPartLiveData.postValue(null)
                 popMessage(ToastMessage(message, Toast.LENGTH_SHORT))
             }
         }

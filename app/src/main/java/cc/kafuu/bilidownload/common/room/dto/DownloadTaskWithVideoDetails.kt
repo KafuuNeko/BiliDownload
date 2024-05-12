@@ -15,11 +15,11 @@ data class DownloadTaskWithVideoDetails(
     // BiliVideoPartEntity
     val partTitle: String
 ) {
-    fun getQualityDetailsVideo() = downloadTask.dashVideoId?.let {
+    fun getQualityDetailsVideo(defaultText: String) = downloadTask.dashVideoId?.let {
         BiliCodeUtils.getVideoQualityDescription(it)
-    } ?: "No video"
+    } ?: defaultText
 
-    fun getQualityDetailsAudio() = downloadTask.dashAudioId?.let {
+    fun getQualityDetailsAudio(defaultText: String) = downloadTask.dashAudioId?.let {
         BiliCodeUtils.getAudioQualityDescribe(it)
-    } ?: "No audio"
+    } ?: defaultText
 }

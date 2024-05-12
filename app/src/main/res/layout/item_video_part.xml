@@ -53,11 +53,20 @@
                 tools:text="00:03:43" />
 
             <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                bindVisible="@{viewModel.loadingPartLiveData != data}"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:layout_marginHorizontal="10dp"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_arrow_right" />
+
+            <ProgressBar
+                style="?android:attr/progressBarStyleSmall"
+                bindVisible="@{viewModel.loadingPartLiveData == data}"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginHorizontal="10dp"
+                tools:visibility="gone" />
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>

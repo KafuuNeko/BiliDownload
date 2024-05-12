@@ -70,4 +70,6 @@
     <string name="text_resource_only_video">仅下载视频</string>
     <string name="text_resource_only_audio">仅下载音频</string>
     <string name="text_resource_download">下载</string>
+    <string name="no_video">无视频</string>
+    <string name="no_audio">无音频</string>
 </resources>
