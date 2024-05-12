@@ -10,8 +10,12 @@ import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.network.model.BiliWbiData
 import cc.kafuu.bilidownload.common.network.model.MyBiliAccountData
+import com.google.gson.JsonObject
 import retrofit2.Call
+import retrofit2.http.Field
+import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Query
 import retrofit2.http.Url
 
@@ -57,4 +61,8 @@ interface BiliApiService {
 
     @GET
     fun requestSearchMedia(@Url fullUrl: String?): Call<BiliRespond<BiliSearchData<BiliSearchMediaResultData>>>
+
+    @FormUrlEncoded
+    @POST("https://passport.bilibili.com/login/exit/v2")
+    fun requestLogout(@Field("biliCSRF") biliCSRF: String): Call<BiliRespond<JsonObject>>
 }

@@ -8,7 +8,9 @@ import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliAccountData
 import cc.kafuu.bilidownload.common.network.model.MyBiliAccountData
 import cc.kafuu.bilidownload.common.utils.CommonLibs
+import cc.kafuu.bilidownload.common.utils.NetworkUtils
 import cc.kafuu.bilidownload.model.bili.BiliAccountModel
+import com.google.gson.JsonObject
 
 object AccountManager {
     private const val TAG = "AccountManager"
@@ -41,6 +43,26 @@ object AccountManager {
         NetworkManager.biliAccountRepository.requestMyAccountData(callback)
     }
 
+    fun logout() {
+        val callback = object : IServerCallback<JsonObject> {
+            override fun onSuccess(
+                httpCode: Int,
+                code: Int,
+                message: String,
+                data: JsonObject
+            ) {
+                clearAccount(true)
+            }
+
+            override fun onFailure(httpCode: Int, code: Int, message: String) {
+                Log.e(TAG, "onFailure: httpCode=$httpCode, code=$code, message=$message")
+            }
+        }
+        NetworkUtils.parseCookies(cookiesLiveData.value)["bili_jct"]?.let {
+            NetworkManager.biliAccountRepository.requestLogout(it, callback)
+        }
+    }
+
     private fun requestAccountFace(mid: Long) {
         val callback = object : IServerCallback<BiliAccountData> {
             override fun onSuccess(
@@ -70,7 +92,7 @@ object AccountManager {
         NetworkManager.biliAccountRepository.requestAccountData(mid, callback)
     }
 
-    fun clearAccount(removeLocalCache: Boolean = false) {
+    private fun clearAccount(removeLocalCache: Boolean = false) {
         cookiesLiveData.postValue(null)
         accountLiveData.postValue(null)
         if (removeLocalCache) {

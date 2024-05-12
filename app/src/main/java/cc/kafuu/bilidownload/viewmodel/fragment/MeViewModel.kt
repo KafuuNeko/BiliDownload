@@ -12,8 +12,4 @@ class MeViewModel : CoreViewModel() {
         }
         startActivity(LoginActivity::class.java)
     }
-
-    fun logout() {
-        AccountManager.clearAccount(true)
-    }
 }
