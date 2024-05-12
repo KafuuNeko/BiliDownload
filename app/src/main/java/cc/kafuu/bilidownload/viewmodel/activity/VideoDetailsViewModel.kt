@@ -37,10 +37,10 @@ class VideoDetailsViewModel : CoreViewModel() {
             ) {
                 biliVideoPageListLiveData.postValue(data.episodes.map {
                     BiliVideoPartModel(
-                        it.bvid,
-                        it.cid,
-                        "${it.title}: ${it.longTitle}",
-                        null
+                        bvid = it.bvid,
+                        cid = it.cid,
+                        name = "${it.title} ${it.longTitle}",
+                        remark = it.badge
                     )
                 })
                 loadingStatusLiveData.value = LoadingStatus.doneStatus()
@@ -66,10 +66,10 @@ class VideoDetailsViewModel : CoreViewModel() {
             override fun onSuccess(httpCode: Int, code: Int, message: String, data: BiliVideoData) {
                 biliVideoPageListLiveData.postValue(data.pages.map {
                     BiliVideoPartModel(
-                        video.bvid,
-                        it.cid,
-                        it.part,
-                        TimeUtils.formatSecondTime(it.duration)
+                        bvid = video.bvid,
+                        cid = it.cid,
+                        name = it.part,
+                        remark = TimeUtils.formatSecondTime(it.duration)
                     )
                 })
                 loadingStatusLiveData.value = LoadingStatus.doneStatus()

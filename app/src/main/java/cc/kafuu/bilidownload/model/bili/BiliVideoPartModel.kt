@@ -4,5 +4,5 @@ data class BiliVideoPartModel(
     val bvid: String,
     val cid: Long,
     val name: String,
-    val duration: String?
+    val remark: String?
 )

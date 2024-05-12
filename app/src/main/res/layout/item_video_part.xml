@@ -48,7 +48,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:text="@{data.duration}"
+                android:text="@{data.remark}"
                 android:textColor="@color/text_default_color"
                 tools:text="00:03:43" />
 
