@@ -61,8 +61,4 @@ interface BiliApiService {
 
     @GET
     fun requestSearchMedia(@Url fullUrl: String?): Call<BiliRespond<BiliSearchData<BiliSearchMediaResultData>>>
-
-    @FormUrlEncoded
-    @POST("https://passport.bilibili.com/login/exit/v2")
-    fun requestLogout(@Field("biliCSRF") biliCSRF: String): Call<BiliRespond<JsonObject>>
 }

@@ -2,7 +2,6 @@ package cc.kafuu.bilidownload.common.network.repository
 
 import cc.kafuu.bilidownload.common.network.IServerCallback
 import cc.kafuu.bilidownload.common.network.model.BiliRespond
-import cc.kafuu.bilidownload.common.network.service.BiliApiService
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -11,9 +10,8 @@ import java.io.IOException
 /**
  * 与BiliApiService交互的仓库基类，用于发起网络请求并处理响应。
  *
- * @property biliApiService BiliApi的服务接口，用于网络请求。
  */
-open class BiliRepository(protected val biliApiService: BiliApiService) {
+open class BiliRepository {
     /**
      * 异步执行网络请求，通过回调接口返回结果。
      *

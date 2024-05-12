@@ -7,7 +7,7 @@ import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.network.service.BiliApiService
 
-class BiliVideoRepository(biliApiService: BiliApiService) : BiliRepository(biliApiService) {
+class BiliVideoRepository(private val biliApiService: BiliApiService) : BiliRepository() {
     companion object {
         val FNVAL_FLAGS = listOf(
 //            1,    // MP4 格式，仅 H.264 编码（与 FLV、DASH 格式互斥）
@@ -36,7 +36,8 @@ class BiliVideoRepository(biliApiService: BiliApiService) : BiliRepository(biliA
         cid: Long,
         callback: IServerCallback<BiliPlayStreamData>
     ) {
-        biliApiService.requestPlayStream(null, bvid, cid, null, FNVAL_FLAGS).enqueue(callback) { it }
+        biliApiService.requestPlayStream(null, bvid, cid, null, FNVAL_FLAGS)
+            .enqueue(callback) { it }
     }
 
     fun requestVideoDetail(bvid: String, callback: IServerCallback<BiliVideoData>) {

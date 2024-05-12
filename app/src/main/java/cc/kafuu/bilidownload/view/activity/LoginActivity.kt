@@ -13,6 +13,7 @@ import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.core.CoreActivity
 import cc.kafuu.bilidownload.common.manager.AccountManager
+import cc.kafuu.bilidownload.common.network.NetworkConfig
 import cc.kafuu.bilidownload.databinding.ActivityLoginBinding
 import cc.kafuu.bilidownload.viewmodel.activity.LoginViewModel
 
@@ -25,8 +26,6 @@ class LoginActivity : CoreActivity<ActivityLoginBinding, LoginViewModel>(
 
     companion object {
         private const val TAG = "LoginActivity"
-
-        private const val LOGIN_URL = "https://passport.bilibili.com/h5-app/passport/login"
     }
 
     override fun initViews() {
@@ -50,7 +49,7 @@ class LoginActivity : CoreActivity<ActivityLoginBinding, LoginViewModel>(
         // 让JavaScript可以自动打开windows
         settings.javaScriptCanOpenWindowsAutomatically = true
 
-        loadUrl(LOGIN_URL)
+        loadUrl(NetworkConfig.LOGIN_URL)
     }
 
     private fun webViewClient() = object : WebViewClient() {

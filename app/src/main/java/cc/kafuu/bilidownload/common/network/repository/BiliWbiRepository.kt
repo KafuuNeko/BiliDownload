@@ -4,7 +4,7 @@ import cc.kafuu.bilidownload.common.network.IServerCallback
 import cc.kafuu.bilidownload.common.network.service.BiliApiService
 import java.io.IOException
 
-class BiliWbiRepository(biliApiService: BiliApiService) : BiliRepository(biliApiService) {
+class BiliWbiRepository(private val biliApiService: BiliApiService) : BiliRepository() {
     companion object {
         private const val TAG = "BiliWbiRepository"
 

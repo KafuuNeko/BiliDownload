@@ -8,7 +8,7 @@ import cc.kafuu.bilidownload.common.network.model.BiliSearchMediaResultData
 import cc.kafuu.bilidownload.common.network.model.BiliSearchVideoResultData
 import cc.kafuu.bilidownload.common.network.service.BiliApiService
 
-class BiliSearchRepository(biliApiService: BiliApiService) : BiliRepository(biliApiService) {
+class BiliSearchRepository(private val biliApiService: BiliApiService) : BiliRepository() {
     companion object {
         //视频
         private const val SEARCH_TYPE_VIDEO = "video"

@@ -6,10 +6,14 @@ import cc.kafuu.bilidownload.common.network.manager.WbiManager
 import cc.kafuu.bilidownload.common.network.model.BiliAccountData
 import cc.kafuu.bilidownload.common.network.model.MyBiliAccountData
 import cc.kafuu.bilidownload.common.network.service.BiliApiService
+import cc.kafuu.bilidownload.common.network.service.BiliPassportService
 import com.google.gson.JsonObject
 import java.io.IOException
 
-class BiliAccountRepository(biliApiService: BiliApiService) : BiliRepository(biliApiService) {
+class BiliAccountRepository(
+    private val biliApiService: BiliApiService,
+    private val biliPassportService: BiliPassportService
+) : BiliRepository() {
     @Throws(IOException::class, IllegalStateException::class)
     fun syncRequestAccountData(
         mid: Long,
@@ -53,7 +57,7 @@ class BiliAccountRepository(biliApiService: BiliApiService) : BiliRepository(bil
     fun requestLogout(
         biliCSRF: String,
         callback: IServerCallback<JsonObject>
-    ) = biliApiService.requestLogout(
+    ) = biliPassportService.requestLogout(
         biliCSRF
     ).enqueue(callback) { it }
 }

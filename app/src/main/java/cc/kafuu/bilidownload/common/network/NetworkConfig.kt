@@ -1,14 +1,10 @@
 package cc.kafuu.bilidownload.common.network
 
-import cc.kafuu.bilidownload.common.manager.AccountManager
-import cc.kafuu.bilidownload.common.network.service.BiliApiService
-import okhttp3.OkHttpClient
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-
 object NetworkConfig {
     const val BILI_URL = "https://m.bilibili.com"
-    private const val BILI_API_URL = "https://api.bilibili.com"
+    const val BILI_API_URL = "https://api.bilibili.com"
+    const val BILI_PASSPORT_URL = "https://passport.bilibili.com"
+    const val LOGIN_URL = "${BILI_PASSPORT_URL}/h5-app/passport/login"
 
     val GENERAL_HEADERS = HashMap<String, String>().apply {
         put(
@@ -25,19 +21,6 @@ object NetworkConfig {
         put("Accept", "*/*")
         put("Accept-Language", "gzip, deflate, br")
         put("Connection", "keep-alive")
-    }
-
-    private val biliInterceptor = BiliInterceptor {
-        return@BiliInterceptor AccountManager.cookiesLiveData.value
-    }
-
-    val biliService: BiliApiService by lazy {
-        Retrofit.Builder()
-            .client(OkHttpClient.Builder().addInterceptor(biliInterceptor).build())
-            .baseUrl(BILI_API_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(BiliApiService::class.java)
     }
 
     /**
