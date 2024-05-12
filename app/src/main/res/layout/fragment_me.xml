@@ -29,6 +29,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
                 app:defaultNickname="@{@string/nickname_not_login}"
+                app:defaultSign="@{@string/sign_not_login}"
                 app:nickname="@{AccountManager.INSTANCE.accountLiveData.nickname}"
                 app:onClick="@{()-> viewModel.jumpLogin()}"
                 app:profile="@{AccountManager.INSTANCE.accountLiveData.profile}"
