@@ -114,7 +114,7 @@
                             android:onClick="@{() -> viewModel.onConfirm()}"
                             android:paddingHorizontal="30dp"
                             android:paddingVertical="10dp"
-                            android:text="@string/text_confirm"
+                            android:text="@{viewModel.confirmTextLiveData}"
                             android:textColor="@color/white" />
                     </LinearLayout>
                 </LinearLayout>

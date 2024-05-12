@@ -1,8 +1,10 @@
 package cc.kafuu.bilidownload.viewmodel.dialog
 
 import androidx.lifecycle.MutableLiveData
+import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.core.CoreViewModel
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
+import cc.kafuu.bilidownload.common.utils.CommonLibs
 import cc.kafuu.bilidownload.model.ConfirmDialogStatus
 import cc.kafuu.bilidownload.model.ResourceType
 import cc.kafuu.bilidownload.model.bili.BiliStreamResourceModel
@@ -20,6 +22,9 @@ class BiliPartViewModel : CoreViewModel() {
     val currentVideoResourceLiveData = MutableLiveData<BiliStreamResourceModel>(null)
     val currentAudioResourceLiveData = MutableLiveData<BiliStreamResourceModel>(null)
 
+    val confirmTextLiveData =
+        MutableLiveData(CommonLibs.getString(R.string.text_resource_not_selected))
+
     var confirmCallback: BiliPartDialogCallback? = null
 
     fun onConfirm() {
@@ -32,8 +37,10 @@ class BiliPartViewModel : CoreViewModel() {
 
     fun onSelected(item: BiliStreamResourceModel) {
         when (item.type) {
-            ResourceType.VIDEO -> currentVideoResourceLiveData.value = item
-            ResourceType.AUDIO -> currentAudioResourceLiveData.value = item
+            ResourceType.VIDEO -> currentVideoResourceLiveData.value =
+                if (currentVideoResourceLiveData.value == item) null else item
+            ResourceType.AUDIO -> currentAudioResourceLiveData.value =
+                if (currentAudioResourceLiveData.value == item) null else item
         }
     }
 

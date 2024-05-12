@@ -32,8 +32,10 @@ class BiliPartDialog : CoreAdvancedDialog<DialogBiliPartBinding, BiliPartViewMod
             callback: BiliPartDialogCallback
         ) = BiliPartDialog().apply {
             titleText = title
-            videoList = videoResources.orEmpty().map { BiliStreamResourceModel(it, ResourceType.VIDEO) }
-            audioList = audioResources.orEmpty().map { BiliStreamResourceModel(it, ResourceType.AUDIO) }
+            videoList =
+                videoResources.orEmpty().map { BiliStreamResourceModel(it, ResourceType.VIDEO) }
+            audioList =
+                audioResources.orEmpty().map { BiliStreamResourceModel(it, ResourceType.AUDIO) }
             confirmCallback = callback
         }
     }
@@ -70,9 +72,11 @@ class BiliPartDialog : CoreAdvancedDialog<DialogBiliPartBinding, BiliPartViewMod
 
         mViewModel.currentVideoResourceLiveData.observe(this) {
             mVideoListAdapter.notifyDataSetChanged()
+            updateConfirmText()
         }
         mViewModel.currentAudioResourceLiveData.observe(this) {
             mAudioListAdapter.notifyDataSetChanged()
+            updateConfirmText()
         }
     }
 
@@ -110,6 +114,22 @@ class BiliPartDialog : CoreAdvancedDialog<DialogBiliPartBinding, BiliPartViewMod
             )
         )
         mViewModel.dialogStatusLiveData.value = ConfirmDialogStatus.CLOSED
+    }
+
+    private fun updateConfirmText() {
+        val audio = mViewModel.currentAudioResourceLiveData.value
+        val video = mViewModel.currentVideoResourceLiveData.value
+        mViewModel.confirmTextLiveData.value = CommonLibs.getString(
+            if (audio == null && video == null) {
+                R.string.text_resource_not_selected
+            } else if (audio == null) {
+                R.string.text_resource_only_video
+            } else if (video == null) {
+                R.string.text_resource_only_audio
+            } else {
+                R.string.text_resource_download
+            }
+        )
     }
 
 }
