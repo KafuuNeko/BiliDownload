@@ -231,7 +231,7 @@ object DownloadManager {
         }?.let {
             add(it.getStreamUrl())
         }
-        dash.audio.find {
+        dash.getAllAudio().find {
             entity.dashAudioId != null && it.id == entity.dashAudioId && it.codecId == entity.dashAudioCodecId
         }?.let {
             add(it.getStreamUrl())

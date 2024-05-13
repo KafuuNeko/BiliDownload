@@ -69,7 +69,7 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
     ) = BiliPartDialog.buildDialog(
         part.name,
         dash.video,
-        dash.audio
+        dash.getAllAudio()
     ) { selectedVideo, selectedAudio ->
         Log.d(TAG, "selected: $selectedVideo, $selectedAudio")
         mCoroutineScope.launch {

@@ -25,8 +25,16 @@ data class BiliPlayStreamDash(
     val video: List<BiliPlayStreamResource>,
     val audio: List<BiliPlayStreamResource>,
     @SerializedName("support_formats")
-    val supportFormats: List<BiliPlayStreamSupportFormat>
-)
+    val supportFormats: List<BiliPlayStreamSupportFormat>,
+    val dolby: BiliPlayDolby?,
+    val flac: BiliPlayFlac?
+) {
+    fun getAllAudio() = mutableListOf<BiliPlayStreamResource>().apply {
+        addAll(audio)
+        dolby?.audio?.let { addAll(it) }
+        flac?.let { add(it.audio) }
+    }
+}
 
 // 视频信息
 data class BiliPlayStreamResource(
@@ -78,4 +86,14 @@ data class BiliPlayStreamSupportFormat(
     val displayDesc: String,
     val superscript: String,
     val codecs: List<String>
+)
+
+data class BiliPlayFlac(
+    val display: Boolean,
+    val audio: BiliPlayStreamResource
+)
+
+data class BiliPlayDolby(
+    val type: Int,
+    val audio: List<BiliPlayStreamResource>?,
 )
