@@ -7,13 +7,13 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import cc.kafuu.bilidownload.common.jniexport.FFMpegJNI
 import cc.kafuu.bilidownload.common.manager.DownloadManager
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.room.entity.ResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.BiliVideoRepository
 import cc.kafuu.bilidownload.common.utils.CommonLibs
+import cc.kafuu.bilidownload.common.utils.FFMpegUtils
 import cc.kafuu.bilidownload.model.event.DownloadRequestFailedEvent
 import cc.kafuu.bilidownload.model.event.DownloadStatusChangeEvent
 import cc.kafuu.bilidownload.notification.DownloadNotification
@@ -305,8 +305,12 @@ class DownloadService : Service() {
                     File(cachesPathArray[0]).copyTo(outputFile, true)
                     true
                 }
-                // 多个文件则对其进行合成
-                else -> FFMpegJNI.mergeMedia(outputFile.path, cachesPathArray)
+                // 两个文件则进行合并操作
+                cachesPathArray.size == 2 -> {
+                    FFMpegUtils.mergeMedia(cachesPathArray[0], cachesPathArray[1], outputFile.path)
+                }
+                // 超过两个文件为未知情况
+                else -> false
             }
         } catch (e: Exception) {
             e.printStackTrace()

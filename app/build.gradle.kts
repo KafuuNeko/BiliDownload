@@ -17,39 +17,6 @@ android {
         versionName = "2.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        externalNativeBuild {
-            cmake {
-                cppFlags += "-std=c++17"
-            }
-            ndk {
-                abiFilters.addAll(arrayOf("armeabi-v7a", "arm64-v8a", "x86_64", "x86"))
-            }
-        }
-
-        sourceSets {
-            getByName("main") {
-                jniLibs.srcDirs("src/main/cpp/ffmpeg/libs/")
-            }
-        }
-
-        packaging {
-            jniLibs {
-                val jniLibs = arrayOf(
-                    "libavcodec.so",
-                    "libavdevice.so",
-                    "libavfilter.so",
-                    "libavformat.so",
-                    "libavutil.so",
-                    "libswresample.so",
-                    "libswscale.so"
-                )
-                ndk.abiFilters.forEach { abi ->
-                    jniLibs.forEach { lib ->
-                        pickFirsts.add("lib/$abi/$lib")
-                    }
-                }
-            }
-        }
     }
 
     buildTypes {
@@ -68,22 +35,15 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-    externalNativeBuild {
-        cmake {
-            path = file("src/main/cpp/CMakeLists.txt")
-            version = "3.22.1"
-        }
-    }
     buildFeatures {
         dataBinding = true
     }
-    ndkVersion = "23.1.7779620"
     splits {
         abi {
             isEnable = true
             reset()
-            include("armeabi-v7a", "x86", "arm64-v8a", "x86_64")
-            isUniversalApk = true
+            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            isUniversalApk = false
         }
     }
     packaging {
@@ -91,7 +51,18 @@ android {
     }
 }
 
+extra.set("abiCodes", mapOf(
+    "x86" to 1,
+    "x86_64" to 2,
+    "armeabi-v7a" to 3,
+    "arm64-v8a" to 4
+))
+
 dependencies {
+    file("libs").listFiles { file -> file.extension == "aar" }?.forEach { aarFile ->
+        implementation(files(aarFile))
+    }
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
@@ -136,6 +107,8 @@ dependencies {
 
     //Event bus
     implementation(libs.eventbus)
+
+    implementation(libs.arthenica.smart.exception.java)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
