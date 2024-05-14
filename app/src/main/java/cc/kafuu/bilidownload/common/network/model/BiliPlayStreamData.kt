@@ -32,7 +32,7 @@ data class BiliPlayStreamDash(
     fun getAllAudio() = mutableListOf<BiliPlayStreamResource>().apply {
         addAll(audio)
         dolby?.audio?.let { addAll(it) }
-        flac?.let { add(it.audio) }
+        flac?.audio?.let { add(it) }
     }
 }
 
@@ -90,7 +90,7 @@ data class BiliPlayStreamSupportFormat(
 
 data class BiliPlayFlac(
     val display: Boolean,
-    val audio: BiliPlayStreamResource
+    val audio: BiliPlayStreamResource?
 )
 
 data class BiliPlayDolby(
