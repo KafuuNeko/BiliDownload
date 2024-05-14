@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.model
+package cc.kafuu.bilidownload.common.model
 
 import android.graphics.drawable.Drawable
 import cc.kafuu.bilidownload.R

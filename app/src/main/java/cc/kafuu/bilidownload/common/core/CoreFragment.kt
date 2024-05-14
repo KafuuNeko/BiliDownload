@@ -12,8 +12,8 @@ import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import cc.kafuu.bilidownload.common.manager.PopMessageManager
-import cc.kafuu.bilidownload.model.ActivityJumpData
-import cc.kafuu.bilidownload.model.popmessage.PopMessage
+import cc.kafuu.bilidownload.common.model.ActivityJumpData
+import cc.kafuu.bilidownload.common.model.popmessage.PopMessage
 
 /**
  * 本应用中所有Fragment的基类，提供了常用的数据绑定和视图模型设置功能。
@@ -99,7 +99,7 @@ abstract class CoreFragment<V : ViewDataBinding, VM : CoreViewModel>(
      *
      * @param jumpData Fragment跳转的数据，包含了目标活动和其他跳转信息。
      */
-    private fun onActivityJumpLiveDataChange(jumpData: ActivityJumpData) {
+    private fun onActivityJumpLiveDataChange(jumpData: cc.kafuu.bilidownload.common.model.ActivityJumpData) {
         if (jumpData.isDeprecated) {
             return
         }

@@ -11,7 +11,7 @@
 
         <import type="cc.kafuu.bilidownload.common.utils.ViewDataBindingUtilsKt" />
 
-        <import type="cc.kafuu.bilidownload.model.MainTabType" />
+        <import type="cc.kafuu.bilidownload.common.model.MainTabType" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout

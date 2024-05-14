@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.model
+package cc.kafuu.bilidownload.common.model
 
 import androidx.annotation.IntDef
 @IntDef(SearchResultViewType.VIDEO_VIEW, SearchResultViewType.MEDIA_VIEW)

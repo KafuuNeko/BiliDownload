@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.model.bili
+package cc.kafuu.bilidownload.common.model.bili
 
 import java.io.Serializable
 import java.util.Date

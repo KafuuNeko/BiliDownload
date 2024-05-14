@@ -1,11 +1,11 @@
-package cc.kafuu.bilidownload.model
+package cc.kafuu.bilidownload.common.model
 
 import androidx.annotation.IntDef
-@IntDef(ResourceType.VIDEO, ResourceType.AUDIO)
+@IntDef(DashType.VIDEO, DashType.AUDIO)
 @Retention(
     AnnotationRetention.SOURCE
 )
-annotation class ResourceType {
+annotation class DashType {
     companion object {
         const val VIDEO = 0
         const val AUDIO = 1

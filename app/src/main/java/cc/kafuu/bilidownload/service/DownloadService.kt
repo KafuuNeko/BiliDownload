@@ -8,14 +8,18 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import cc.kafuu.bilidownload.common.manager.DownloadManager
+import cc.kafuu.bilidownload.common.model.DashType
+import cc.kafuu.bilidownload.common.model.DownloadResourceType
+import cc.kafuu.bilidownload.common.model.event.DownloadRequestFailedEvent
+import cc.kafuu.bilidownload.common.model.event.DownloadStatusChangeEvent
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
+import cc.kafuu.bilidownload.common.room.entity.DownloadDashEntity
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
-import cc.kafuu.bilidownload.common.room.entity.ResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.BiliVideoRepository
+import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
 import cc.kafuu.bilidownload.common.utils.CommonLibs
 import cc.kafuu.bilidownload.common.utils.FFMpegUtils
-import cc.kafuu.bilidownload.model.event.DownloadRequestFailedEvent
-import cc.kafuu.bilidownload.model.event.DownloadStatusChangeEvent
+import cc.kafuu.bilidownload.common.utils.MimeTypeUtils
 import cc.kafuu.bilidownload.notification.DownloadNotification
 import com.arialyy.aria.core.Aria
 import com.arialyy.aria.core.task.DownloadGroupTask
@@ -35,7 +39,6 @@ class DownloadService : Service() {
         private const val KEY_ENTITY_ID = "entityId"
 
         private val mDownloadTaskDao = CommonLibs.requireAppDatabase().downloadTaskDao()
-        private val mResourceDao = CommonLibs.requireAppDatabase().resourceDao()
 
         private const val TAG = "DownloadService"
         private fun startService(context: Context, intent: Intent) {
@@ -146,7 +149,7 @@ class DownloadService : Service() {
             // 如果无法获取视频详情，且这个任务还在准备阶段则直接删除任务
             // 因为没有对应获取视频详情失败的STATUS（也不需要）
             if (entity.status == DownloadTaskEntity.STATUS_PREPARE) {
-                mServiceScope.launch { mDownloadTaskDao.delete(entity) }
+                mServiceScope.launch { DownloadRepository.deleteDownloadTask(entity.id) }
             }
             Log.e(
                 TAG,
@@ -225,41 +228,29 @@ class DownloadService : Service() {
      * from [onDownloadStatusChangeEvent]
      * */
     private suspend fun onDownloadCompleted(entity: DownloadTaskEntity, task: DownloadGroupTask) {
-        // 更新状态为正在合成
+        val dashEntityList = DownloadRepository.queryDashList(entity)
+
+        doResourceRegister(entity, dashEntityList)
+
+        val videoDash = dashEntityList.find { it.type == DashType.VIDEO }
+        val audioDash = dashEntityList.find { it.type == DashType.AUDIO }
+
+        val finalStatus = if (dashEntityList.size == 2 && videoDash != null && audioDash != null) {
+            // 更新状态为正在合成
+            mDownloadTaskDao.update(entity.apply {
+                status = DownloadTaskEntity.STATUS_SYNTHESIS
+            })
+            if (!tryMergeVideo(entity, videoDash, audioDash)) {
+                DownloadTaskEntity.STATUS_SYNTHESIS_FAILED
+            } else {
+                DownloadTaskEntity.STATUS_COMPLETED
+            }
+        } else DownloadTaskEntity.STATUS_COMPLETED
+
+        // 更新记录为最终状态
         mDownloadTaskDao.update(entity.apply {
-            status = DownloadTaskEntity.STATUS_SYNTHESIS
+            status = finalStatus
         })
-
-        // 尝试合成音视频
-        val syntheticStatus = if (doSynthetic(entity, task)) {
-            DownloadTaskEntity.STATUS_COMPLETED
-        } else {
-            DownloadTaskEntity.STATUS_SYNTHESIS_FAILED
-        }
-
-        // 更新下载状态为合成音视频状态
-        mDownloadTaskDao.update(entity.apply {
-            status = syntheticStatus
-        })
-
-        // 未完成的
-        if (syntheticStatus == DownloadTaskEntity.STATUS_SYNTHESIS_FAILED) {
-            mDownloadNotification.notificationSynthesisFailed(entity)
-            return
-        }
-
-        // 登记资源
-        val resource = entity.getDefaultOutputFile()
-        mResourceDao.insert(
-            ResourceEntity(
-                taskEntityId = entity.id,
-                name = "Default Resource",
-                mimeType = entity.dashVideoMimeType ?: entity.dashAudioMimeType ?: "unknown",
-                storageSizeBytes = resource.length(),
-                creationTime = System.currentTimeMillis(),
-                file = resource.path
-            )
-        )
     }
 
     /**
@@ -282,47 +273,48 @@ class DownloadService : Service() {
      * 下载任务被取消
      * from [onDownloadStatusChangeEvent] */
     private suspend fun onDownloadCancelled(entity: DownloadTaskEntity, task: DownloadGroupTask) {
-        mDownloadTaskDao.delete(entity)
+        DownloadRepository.deleteDownloadTask(entity.id)
         mDownloadNotification.notificationDownloadCancel(entity)
+    }
+
+    private suspend fun doResourceRegister(
+        entity: DownloadTaskEntity,
+        dashEntityList: List<DownloadDashEntity>
+    ) = dashEntityList.forEach {
+        DownloadRepository.registerResource(entity, it)
     }
 
     /**
      * 尝试合成视频
+     * 如果视频合成成功后自动登记资源
      * */
-    private fun doSynthetic(entity: DownloadTaskEntity, task: DownloadGroupTask): Boolean {
-        // 取得最终合成输出路径
-        val outputFile = entity.getDefaultOutputFile()
+    private suspend fun tryMergeVideo(
+        entity: DownloadTaskEntity,
+        videoDash: DownloadDashEntity,
+        audioDash: DownloadDashEntity
+    ): Boolean {
+        val suffix = MimeTypeUtils.getExtensionFromMimeType(videoDash.mimeType) ?: "mkv"
+        val outputFile = File(
+            CommonLibs.requireResourcesDir(),
+            "merge-${entity.id}-${System.currentTimeMillis()}.$suffix"
+        )
 
-        // 取得缓存文件路径数组
-        val cachesPathArray = task.entity.subEntities.map { it.filePath }.toTypedArray()
+        val isSuccess = FFMpegUtils.mergeMedia(
+            videoDash.getOutputFile().path,
+            audioDash.getOutputFile().path,
+            outputFile.path
+        )
 
-        val outputStatus = try {
-            when {
-                // 缓存为空
-                cachesPathArray.isEmpty() -> false
-                // 只有一个文件，则不进行合成，此缓存即最终输出
-                cachesPathArray.size == 1 -> {
-                    File(cachesPathArray[0]).copyTo(outputFile, true)
-                    true
-                }
-                // 两个文件则进行合并操作
-                cachesPathArray.size == 2 -> {
-                    FFMpegUtils.mergeMedia(cachesPathArray[0], cachesPathArray[1], outputFile.path)
-                }
-                // 超过两个文件为未知情况
-                else -> false
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
-        }
+        // 如果合成成功就登记资源
+        if (isSuccess) DownloadRepository.registerResource(
+            entity,
+            "Merge Resource",
+            DownloadResourceType.MIXED,
+            outputFile,
+            videoDash.mimeType
+        )
+        else mDownloadNotification.notificationSynthesisFailed(entity)
 
-        // 清理缓存
-        CommonLibs.requireDownloadCacheDir(entity.id).let {
-            it.deleteRecursively()
-            it.deleteOnExit()
-        }
-
-        return outputStatus
+        return isSuccess
     }
 }

@@ -6,8 +6,8 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.adapter.FragmentAdapter
 import cc.kafuu.bilidownload.common.core.CoreActivity
 import cc.kafuu.bilidownload.databinding.ActivityMainBinding
-import cc.kafuu.bilidownload.model.MainTabType
-import cc.kafuu.bilidownload.model.event.MainTabSwitchEvent
+import cc.kafuu.bilidownload.common.model.MainTabType
+import cc.kafuu.bilidownload.common.model.event.MainTabSwitchEvent
 import cc.kafuu.bilidownload.service.DownloadService
 import cc.kafuu.bilidownload.view.fragment.HomeFragment
 import cc.kafuu.bilidownload.view.fragment.MeFragment

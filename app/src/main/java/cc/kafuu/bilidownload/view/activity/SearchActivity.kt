@@ -8,7 +8,7 @@ import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.core.CoreActivity
 import cc.kafuu.bilidownload.databinding.ActivitySearchBinding
-import cc.kafuu.bilidownload.model.SearchType
+import cc.kafuu.bilidownload.common.model.SearchType
 import cc.kafuu.bilidownload.view.fragment.SearchListFragment
 import cc.kafuu.bilidownload.viewmodel.activity.SearchViewModel
 

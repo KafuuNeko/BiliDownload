@@ -5,9 +5,9 @@ import android.view.ViewGroup
 import cc.kafuu.bilidownload.common.adapter.holder.ItemSearchMediaHolder
 import cc.kafuu.bilidownload.common.adapter.holder.ItemSearchVideoHolder
 import cc.kafuu.bilidownload.common.core.CoreRVAdapter
-import cc.kafuu.bilidownload.model.bili.BiliMediaModel
-import cc.kafuu.bilidownload.model.bili.BiliVideoModel
-import cc.kafuu.bilidownload.model.SearchResultViewType
+import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
+import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
+import cc.kafuu.bilidownload.common.model.SearchResultViewType
 import cc.kafuu.bilidownload.viewmodel.fragment.SearchListViewModel
 
 class SearchRVAdapter(viewModel: SearchListViewModel, context: Context) :

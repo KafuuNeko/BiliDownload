@@ -6,7 +6,7 @@
 
         <variable
             name="data"
-            type="cc.kafuu.bilidownload.model.LoadingStatus" />
+            type="cc.kafuu.bilidownload.common.model.LoadingStatus" />
 
         <variable
             name="isCover"

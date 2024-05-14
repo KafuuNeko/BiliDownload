@@ -3,7 +3,7 @@ package cc.kafuu.bilidownload.common.room.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity
+@Entity(tableName = "BiliVideoMain")
 data class BiliVideoMainEntity(
     @PrimaryKey val biliBvid: String,
     val author: String,

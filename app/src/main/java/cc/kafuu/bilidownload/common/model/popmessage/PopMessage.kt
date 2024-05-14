@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.model.popmessage
+package cc.kafuu.bilidownload.common.model.popmessage
 
 abstract class PopMessage(
     val content: String

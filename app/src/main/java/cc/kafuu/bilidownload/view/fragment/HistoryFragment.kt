@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import cc.kafuu.bilidownload.common.adapter.HistoryRVAdapter
-import cc.kafuu.bilidownload.model.LoadingStatus
+import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.viewmodel.fragment.HistoryViewModel
 import com.arialyy.annotations.DownloadGroup
 import com.arialyy.aria.core.Aria

@@ -5,14 +5,14 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.core.CoreViewModel
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
 import cc.kafuu.bilidownload.common.utils.CommonLibs
-import cc.kafuu.bilidownload.model.ConfirmDialogStatus
-import cc.kafuu.bilidownload.model.ResourceType
-import cc.kafuu.bilidownload.model.bili.BiliStreamResourceModel
+import cc.kafuu.bilidownload.common.model.ConfirmDialogStatus
+import cc.kafuu.bilidownload.common.model.DashType
+import cc.kafuu.bilidownload.common.model.bili.BiliStreamResourceModel
 
 typealias BiliPartDialogCallback = (video: BiliPlayStreamResource?, audio: BiliPlayStreamResource?) -> Unit
 
 class BiliPartViewModel : CoreViewModel() {
-    val dialogStatusLiveData = MutableLiveData(ConfirmDialogStatus.WAITING)
+    val dialogStatusLiveData = MutableLiveData(cc.kafuu.bilidownload.common.model.ConfirmDialogStatus.WAITING)
 
     val titleLiveData = MutableLiveData<String>()
 
@@ -30,23 +30,23 @@ class BiliPartViewModel : CoreViewModel() {
     var confirmCallback: BiliPartDialogCallback? = null
 
     fun onConfirm() {
-        dialogStatusLiveData.value = ConfirmDialogStatus.CONFIRMING
+        dialogStatusLiveData.value = cc.kafuu.bilidownload.common.model.ConfirmDialogStatus.CONFIRMING
     }
 
     fun onClose() {
-        dialogStatusLiveData.value = ConfirmDialogStatus.CLOSED
+        dialogStatusLiveData.value = cc.kafuu.bilidownload.common.model.ConfirmDialogStatus.CLOSED
     }
 
     fun onSelected(item: BiliStreamResourceModel) {
         var previousResource: BiliStreamResourceModel? = null
         when (item.type) {
-            ResourceType.VIDEO -> {
+            DashType.VIDEO -> {
                 previousResource = currentVideoResourceLiveData.value
                 currentVideoResourceLiveData.value =
                     if (currentVideoResourceLiveData.value == item) null else item
             }
 
-            ResourceType.AUDIO -> {
+            DashType.AUDIO -> {
                 previousResource = currentAudioResourceLiveData.value
                 currentAudioResourceLiveData.value =
                     if (currentAudioResourceLiveData.value == item) null else item
@@ -56,8 +56,8 @@ class BiliPartViewModel : CoreViewModel() {
     }
 
     fun isSelected(item: BiliStreamResourceModel) = when (item.type) {
-        ResourceType.VIDEO -> currentVideoResourceLiveData.value == item
-        ResourceType.AUDIO -> currentAudioResourceLiveData.value == item
+        DashType.VIDEO -> currentVideoResourceLiveData.value == item
+        DashType.AUDIO -> currentAudioResourceLiveData.value == item
         else -> false
     }
 }

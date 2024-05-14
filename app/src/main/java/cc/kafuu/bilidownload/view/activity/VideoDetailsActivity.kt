@@ -8,12 +8,14 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.adapter.VideoPartRVAdapter
 import cc.kafuu.bilidownload.common.core.CoreActivity
 import cc.kafuu.bilidownload.common.manager.DownloadManager
+import cc.kafuu.bilidownload.common.model.DashType
+import cc.kafuu.bilidownload.common.model.bili.BiliDashModel
+import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
+import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
+import cc.kafuu.bilidownload.common.model.bili.BiliVideoPartModel
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
 import cc.kafuu.bilidownload.common.utils.SerializationUtils.getSerializable
 import cc.kafuu.bilidownload.databinding.ActivityVideoDetailsBinding
-import cc.kafuu.bilidownload.model.bili.BiliMediaModel
-import cc.kafuu.bilidownload.model.bili.BiliVideoModel
-import cc.kafuu.bilidownload.model.bili.BiliVideoPartModel
 import cc.kafuu.bilidownload.view.dialog.BiliPartDialog
 import cc.kafuu.bilidownload.viewmodel.activity.VideoDetailsViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -72,13 +74,18 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
         dash.getAllAudio()
     ) { selectedVideo, selectedAudio ->
         Log.d(TAG, "selected: $selectedVideo, $selectedAudio")
+
+        val resources: List<BiliDashModel> = mutableListOf<BiliDashModel>().apply {
+            selectedVideo?.let { add(BiliDashModel.create(DashType.VIDEO, it)) }
+            selectedAudio?.let { add(BiliDashModel.create(DashType.AUDIO, it)) }
+        }
+
         mCoroutineScope.launch {
             DownloadManager.startDownload(
                 this@VideoDetailsActivity,
                 part.bvid,
                 part.cid,
-                selectedVideo,
-                selectedAudio
+                resources
             )
         }
     }

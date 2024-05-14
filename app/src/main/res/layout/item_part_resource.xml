@@ -11,11 +11,11 @@
 
         <variable
             name="data"
-            type="cc.kafuu.bilidownload.model.bili.BiliStreamResourceModel" />
+            type="cc.kafuu.bilidownload.common.model.bili.BiliStreamResourceModel" />
 
         <import type="cc.kafuu.bilidownload.common.utils.BiliCodeUtils" />
 
-        <import type="cc.kafuu.bilidownload.model.ResourceType" />
+        <import type="cc.kafuu.bilidownload.common.model.DashType" />
     </data>
 
     <androidx.cardview.widget.CardView
@@ -36,7 +36,7 @@
             <androidx.appcompat.widget.AppCompatTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@{data.type == ResourceType.VIDEO ? BiliCodeUtils.INSTANCE.getVideoQualityDescription(data.resource.id) : BiliCodeUtils.INSTANCE.getAudioQualityDescribe(data.resource.id)}"
+                android:text="@{data.type == DashType.VIDEO ? BiliCodeUtils.INSTANCE.getVideoQualityDescription(data.resource.id) : BiliCodeUtils.INSTANCE.getAudioQualityDescribe(data.resource.id)}"
                 android:textColor="@{viewModel.isSelected(data) ? @color/white : @color/text_default_color}"
                 tools:text="@string/video_description_1080p" />
 

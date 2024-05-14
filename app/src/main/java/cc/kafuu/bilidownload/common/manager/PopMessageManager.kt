@@ -2,8 +2,8 @@ package cc.kafuu.bilidownload.common.manager
 
 import android.content.Context
 import android.widget.Toast
-import cc.kafuu.bilidownload.model.popmessage.PopMessage
-import cc.kafuu.bilidownload.model.popmessage.ToastMessage
+import cc.kafuu.bilidownload.common.model.popmessage.PopMessage
+import cc.kafuu.bilidownload.common.model.popmessage.ToastMessage
 
 object PopMessageManager {
     fun popMessage(context: Context, message: PopMessage) {

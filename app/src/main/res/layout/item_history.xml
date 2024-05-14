@@ -19,6 +19,8 @@
 
         <import type="cc.kafuu.bilidownload.common.utils.BiliCodeUtils" />
 
+        <import type="cc.kafuu.bilidownload.common.utils.TimeUtils" />
+
         <import type="cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity" />
     </data>
 
@@ -68,7 +70,9 @@
                     android:maxLines="1"
                     android:text="@{data.title}"
                     android:textColor="@color/primary_color"
-                    android:textStyle="bold" />
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    tools:text="文色徒然" />
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/tv_part_title"
@@ -79,54 +83,22 @@
                     android:ellipsize="end"
                     android:maxLines="1"
                     android:text="@{data.partTitle}"
-                    android:textColor="@color/text_default_color" />
+                    android:textColor="@color/text_default_color"
+                    android:textSize="12sp"
+                    tools:text="01 千夜版" />
 
-
-                <LinearLayout
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_create_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginTop="8dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:contentDescription="@{data.getQualityDetailsVideo(@string/no_video)}"
-                        android:src="@drawable/ic_movie" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/tv_quality_details_video"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="2dp"
-                        android:ellipsize="end"
-                        android:maxLines="1"
-                        android:text="@{data.getQualityDetailsVideo(@string/no_video)}"
-                        android:textColor="@color/text_default_color"
-                        android:textSize="12sp" />
-
-                    <ImageView
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:layout_marginStart="6dp"
-                        android:contentDescription="@{data.getQualityDetailsAudio(@string/no_audio)}"
-                        android:src="@drawable/ic_music" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/tv_quality_details_audio"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="2dp"
-                        android:ellipsize="end"
-                        android:maxLines="1"
-                        android:text="@{data.getQualityDetailsAudio(@string/no_audio)}"
-                        android:textColor="@color/text_default_color"
-                        android:textSize="12sp" />
-
-                </LinearLayout>
-
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="@{TimeUtils.INSTANCE.formatTimestamp(data.downloadTask.createTime)}"
+                    android:textColor="@color/text_default_color"
+                    android:textSize="12sp"
+                    tools:text="2024-05-14 16:00:00" />
             </LinearLayout>
 
             <LinearLayout

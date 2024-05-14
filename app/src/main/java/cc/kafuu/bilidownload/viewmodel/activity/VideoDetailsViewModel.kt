@@ -9,12 +9,12 @@ import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
 import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.utils.TimeUtils
-import cc.kafuu.bilidownload.model.LoadingStatus
-import cc.kafuu.bilidownload.model.bili.BiliMediaModel
-import cc.kafuu.bilidownload.model.bili.BiliResourceModel
-import cc.kafuu.bilidownload.model.bili.BiliVideoModel
-import cc.kafuu.bilidownload.model.bili.BiliVideoPartModel
-import cc.kafuu.bilidownload.model.popmessage.ToastMessage
+import cc.kafuu.bilidownload.common.model.LoadingStatus
+import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
+import cc.kafuu.bilidownload.common.model.bili.BiliResourceModel
+import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
+import cc.kafuu.bilidownload.common.model.bili.BiliVideoPartModel
+import cc.kafuu.bilidownload.common.model.popmessage.ToastMessage
 
 class VideoDetailsViewModel : CoreViewModel() {
     val loadingStatusLiveData = MutableLiveData(LoadingStatus.waitStatus())

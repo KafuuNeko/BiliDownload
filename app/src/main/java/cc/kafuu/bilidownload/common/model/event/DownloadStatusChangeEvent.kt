@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.model.event
+package cc.kafuu.bilidownload.common.model.event
 
 import cc.kafuu.bilidownload.common.manager.DownloadManager
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity

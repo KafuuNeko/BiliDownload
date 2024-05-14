@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.model.bili
+package cc.kafuu.bilidownload.common.model.bili
 
 import android.annotation.SuppressLint
 import java.text.SimpleDateFormat

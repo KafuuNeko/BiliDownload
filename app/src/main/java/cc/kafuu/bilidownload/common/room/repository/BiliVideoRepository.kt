@@ -6,7 +6,7 @@ import cc.kafuu.bilidownload.common.room.entity.BiliVideoPartEntity
 import cc.kafuu.bilidownload.common.utils.CommonLibs
 
 object BiliVideoRepository {
-    private val mBiliVideoDao = CommonLibs.requireAppDatabase().biliVideoDao()
+    private val mBiliVideoDao by lazy { CommonLibs.requireAppDatabase().biliVideoDao() }
 
     suspend fun doInsertOrUpdateVideoDetails(biliVideoData: BiliVideoData, cid: Long) {
         // 插入或更新bv视频信息
