@@ -36,6 +36,7 @@
             android:layout_height="wrap_content"
             android:clickable="true"
             android:focusable="true"
+            android:onClick="@{()->viewModel.entryHistoryDetails(data)}"
             android:foreground="?attr/selectableItemBackground">
 
             <ImageView

@@ -49,6 +49,18 @@ android {
     packaging {
         resources.excludes.add("META-INF/INDEX.LIST")
     }
+    sourceSets {
+        getByName("main") {
+            res.srcDirs(
+                "src/main/res",
+                "src/main/res/views/activity",
+                "src/main/res/views/fragment",
+                "src/main/res/views/include",
+                "src/main/res/views/dialog",
+                "src/main/res/views/item",
+            )
+        }
+    }
 }
 
 extra.set("abiCodes", mapOf(

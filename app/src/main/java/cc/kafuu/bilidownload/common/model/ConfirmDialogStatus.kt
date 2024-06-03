@@ -4,9 +4,9 @@ import androidx.annotation.IntDef
 
 
 @IntDef(
-    cc.kafuu.bilidownload.common.model.ConfirmDialogStatus.Companion.WAITING,
-    cc.kafuu.bilidownload.common.model.ConfirmDialogStatus.Companion.CONFIRMING,
-    cc.kafuu.bilidownload.common.model.ConfirmDialogStatus.Companion.CLOSED
+    ConfirmDialogStatus.WAITING,
+    ConfirmDialogStatus.CONFIRMING,
+    ConfirmDialogStatus.CLOSED
 )
 @Retention(
     AnnotationRetention.SOURCE

@@ -44,7 +44,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="10dp"
                 android:layout_marginTop="10dp"
-                app:data="@{viewModel.biliResourceModelLiveData}" />
+                app:cover="@{viewModel.biliResourceModelLiveData.cover}"
+                app:title="@{viewModel.biliResourceModelLiveData.title}"
+                app:createTime="@{viewModel.biliResourceModelLiveData.pubFormatterDate}" />
 
             <androidx.core.widget.NestedScrollView
                 android:layout_width="match_parent"

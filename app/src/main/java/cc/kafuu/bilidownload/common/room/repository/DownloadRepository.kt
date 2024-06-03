@@ -88,4 +88,7 @@ object DownloadRepository {
         mDownloadDashDao.deleteTaskByTaskEntityId(taskEntityId)
         mDownloadResourceDao.deleteTaskByTaskEntityId(taskEntityId)
     }
+
+    fun queryDownloadTask(entityId: Long) =
+        mDownloadTaskDao.getDownloadTasksWithVideoDetailsLiveDataByEntityId(entityId)
 }

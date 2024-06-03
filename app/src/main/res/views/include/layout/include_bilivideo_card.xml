@@ -7,8 +7,16 @@
     <data>
 
         <variable
-            name="data"
-            type="cc.kafuu.bilidownload.common.model.bili.BiliResourceModel" />
+            name="cover"
+            type="String" />
+
+        <variable
+            name="title"
+            type="String" />
+
+        <variable
+            name="createTime"
+            type="String" />
 
         <import type="cc.kafuu.bilidownload.common.utils.CommonLibs" />
 
@@ -34,7 +42,7 @@
 
             <ImageView
                 android:id="@+id/iv_video_cover"
-                bindImageUrl="@{data.cover}"
+                bindImageUrl="@{cover}"
                 bindPlaceholder="@{CommonLibs.INSTANCE.getDrawable(R.drawable.ic_2233)}"
                 bindTransformation="@{GlideUtils.INSTANCE.centerCrop}"
                 android:layout_width="80dp"
@@ -56,7 +64,7 @@
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/tv_history_title"
-                    bindSpannable="@{data.title}"
+                    bindSpannable="@{title}"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="8dp"
@@ -76,7 +84,7 @@
 
                     <androidx.appcompat.widget.AppCompatTextView
                         android:id="@+id/tv_formatter_date"
-                        bindSpannable="@{data.pubFormatterDate}"
+                        bindSpannable="@{createTime}"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
