@@ -10,6 +10,7 @@ import android.util.Log
 import cc.kafuu.bilidownload.common.manager.DownloadManager
 import cc.kafuu.bilidownload.common.model.DashType
 import cc.kafuu.bilidownload.common.model.DownloadResourceType
+import cc.kafuu.bilidownload.common.model.DownloadTaskStatus
 import cc.kafuu.bilidownload.common.model.event.DownloadRequestFailedEvent
 import cc.kafuu.bilidownload.common.model.event.DownloadStatusChangeEvent
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
@@ -185,18 +186,18 @@ class DownloadService : Service() {
         )
         mServiceScope.launch {
             when (event.status) {
-                DownloadManager.TaskStatus.FAILURE -> onDownloadFailed(event.entity, event.task)
-                DownloadManager.TaskStatus.COMPLETED -> onDownloadCompleted(
+                DownloadTaskStatus.FAILURE -> onDownloadFailed(event.entity, event.task)
+                DownloadTaskStatus.COMPLETED -> onDownloadCompleted(
                     event.entity,
                     event.task
                 )
 
-                DownloadManager.TaskStatus.EXECUTING -> onDownloadExecuting(
+                DownloadTaskStatus.EXECUTING -> onDownloadExecuting(
                     event.entity,
                     event.task
                 )
 
-                DownloadManager.TaskStatus.CANCELLED -> onDownloadCancelled(
+                DownloadTaskStatus.CANCELLED -> onDownloadCancelled(
                     event.entity,
                     event.task
                 )

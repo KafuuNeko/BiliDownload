@@ -60,7 +60,7 @@ class HistoryDetailsActivity : CoreActivity<ActivityHistoryDetailsBinding, Histo
     @Subscribe(threadMode = ThreadMode.POSTING)
     fun onDownloadStatusChangeEvent(event: DownloadStatusChangeEvent) {
         if (event.entity.id != mViewModel.downloadDetailsLiveData.value?.downloadTask?.id) return
-        mViewModel.downloadStatusLiveData.value = event.status
+        mViewModel.updateDownloadStatus()
     }
 
 }

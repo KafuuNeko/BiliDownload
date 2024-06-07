@@ -2,6 +2,7 @@ package cc.kafuu.bilidownload.common.manager
 
 import android.content.Context
 import android.util.Log
+import cc.kafuu.bilidownload.common.model.DownloadTaskStatus
 import cc.kafuu.bilidownload.common.network.IServerCallback
 import cc.kafuu.bilidownload.common.network.NetworkConfig
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
@@ -34,22 +35,6 @@ object DownloadManager {
 
     private val mCoroutineScope by lazy { CoroutineScope(Dispatchers.Default + SupervisorJob()) }
 
-    enum class TaskStatus(val code: Int, val isEndStatus: Boolean) {
-        FAILURE(0, true),
-        COMPLETED(1, true),
-        STOPPED(2, false),
-        WAITING(3, false),
-        EXECUTING(4, false),
-        PREPROCESSING(5, false),
-        PREPROCESSING_COMPLETED(6, false),
-        CANCELLED(7, true);
-
-        companion object {
-            fun fromCode(code: Int): TaskStatus = entries.find { it.code == code }
-                ?: throw IllegalArgumentException("Invalid code")
-        }
-    }
-
     init {
         Aria.download(this).register()
     }
@@ -76,7 +61,7 @@ object DownloadManager {
     private suspend fun getDownloadTaskEntity(task: DownloadGroupTask): DownloadTaskEntity? {
         val entity = mTaskEntityMap[task.entity.id]
             ?: mDownloadTaskDao.getDownloadTaskByDownloadTaskId(task.entity.id)
-        if (entity == null && TaskStatus.fromCode(task.state) != TaskStatus.CANCELLED) {
+        if (entity == null && DownloadTaskStatus.fromCode(task.state) != DownloadTaskStatus.CANCELLED) {
             // 查找不到对应的下载记录，则取消此下载任务
             Aria.download(this).load(task.entity.id).cancel(true)
             Log.d(TAG, "Task [D${task.entity.id}]: entity cannot be found, task cancelled")
@@ -100,11 +85,11 @@ object DownloadManager {
 
         Log.d(
             TAG,
-            "Task [D${task.entity.id}] download status change, status: ${TaskStatus.fromCode(task.state)}"
+            "Task [D${task.entity.id}] download status change, status: ${DownloadTaskStatus.fromCode(task.state)}"
         )
         mCoroutineScope.launch {
             val entity = getDownloadTaskEntity(task) ?: return@launch
-            val status = TaskStatus.fromCode(task.state)
+            val status = DownloadTaskStatus.fromCode(task.state)
             if (status.isEndStatus) {
                 // 状态为终止态
                 onTaskEnd(entity, task)
@@ -121,7 +106,7 @@ object DownloadManager {
         mCoroutineScope.launch {
             val entity = getDownloadTaskEntity(groupTask) ?: return@launch
             EventBus.getDefault().post(
-                DownloadStatusChangeEvent(entity, groupTask, TaskStatus.FAILURE)
+                DownloadStatusChangeEvent(entity, groupTask, DownloadTaskStatus.FAILURE)
             )
         }
     }
@@ -156,13 +141,10 @@ object DownloadManager {
      */
     suspend fun requestDownload(entity: DownloadTaskEntity) {
         Log.d(TAG, "Task [E${entity.id}] request download")
-
-        if (entity.downloadTaskId != null &&
-            !containsTask(entity.downloadTaskId!!) &&
-            entity.status == DownloadTaskEntity.STATUS_DOWNLOADING
-        ) {
-            // 此记录存在一个未被下载管理器缓存的下载记录，且状态为正在下载
-            // 判定为任务未下载过程中服务被中止，重新启动下载
+        if (entity.downloadTaskId != null && !containsTask(entity.downloadTaskId!!)) {
+            // 此记录已经被分配任务ID且未被任务下载管理器识别
+            // 此任务可能是下载过程中应用程序退出中断或者下载失败的任务被用户点击重新下载
+            // 这两种情况都需要重新为任务分配一个新的id并重启下载
             Aria.download(this).loadGroup(entity.downloadTaskId!!).let {
                 mDownloadTaskDao.update(entity.apply { downloadTaskId = null })
                 it.ignoreCheckPermissions().cancel(true)

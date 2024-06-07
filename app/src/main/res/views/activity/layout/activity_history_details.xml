@@ -11,6 +11,11 @@
 
         <import type="cc.kafuu.bilidownload.common.utils.TimeUtils" />
 
+        <import type="cc.kafuu.bilidownload.common.utils.ViewDataBindingUtilsKt" />
+
+        <import type="cc.kafuu.bilidownload.common.model.DownloadTaskStatus" />
+
+        <import type="cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -55,7 +60,9 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/include_video_card">
 
+            <!-- 任务正在下载中时显示 -->
             <androidx.cardview.widget.CardView
+                bindVisible="@{viewModel.downloadDetailsLiveData != null &amp;&amp; viewModel.downloadDetailsLiveData.downloadTask.status == DownloadTaskEntity.STATUS_DOWNLOADING &amp;&amp; viewModel.downloadDetailsLiveData.downloadTask.downloadTaskId != -1}"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
@@ -76,25 +83,26 @@
                         android:layout_marginEnd="10dp"
                         android:indeterminateBehavior="repeat"
                         android:indeterminateOnly="false"
-                        app:layout_constraintEnd_toStartOf="@+id/tv_downloading_speed"
+                        android:progress="@{viewModel.downloadPercentLiveData}"
+                        app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 
                     <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/tv_downloading_speed"
+                        android:id="@+id/tv_downloading_progress"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         android:layout_marginEnd="10dp"
+                        android:text="@{viewModel.downloadProgressLiveData}"
                         android:textColor="@color/text_default_color"
                         android:textSize="12sp"
-                        app:layout_constraintBottom_toBottomOf="@+id/pb_download_progress"
                         app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/pb_download_progress"
                         tools:text="128kb/s" />
 
                     <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/appCompatTextView"
+                        android:id="@+id/tv_pause_or_continue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginHorizontal="10dp"
@@ -108,14 +116,15 @@
                         android:gravity="center"
                         android:minWidth="100dp"
                         android:minHeight="36dp"
-                        android:text="@string/text_pause"
+                        android:onClick="@{()->viewModel.pauseOrContinue()}"
+                        android:text="@{viewModel.downloadIsStoppedLiveData ? @string/text_continue : @string/text_pause}"
                         android:textColor="@color/white"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toBottomOf="@+id/pb_download_progress" />
+                        app:layout_constraintTop_toBottomOf="@+id/tv_downloading_progress" />
 
                     <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/appCompatTextView2"
+                        android:id="@+id/tv_cancel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginHorizontal="10dp"
@@ -129,12 +138,108 @@
                         android:gravity="center"
                         android:minWidth="100dp"
                         android:minHeight="36dp"
+                        android:onClick="@{()->viewModel.cancelDownloadTask()}"
                         android:text="@string/text_cancel"
                         android:textColor="@color/white"
                         app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toStartOf="@+id/appCompatTextView"
-                        app:layout_constraintTop_toBottomOf="@+id/pb_download_progress" />
+                        app:layout_constraintEnd_toStartOf="@+id/tv_pause_or_continue"
+                        app:layout_constraintTop_toBottomOf="@+id/tv_downloading_progress" />
                 </androidx.constraintlayout.widget.ConstraintLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- 下载失败时显示 -->
+            <androidx.cardview.widget.CardView
+                bindVisible="@{viewModel.downloadDetailsLiveData != null &amp;&amp; (viewModel.downloadDetailsLiveData.downloadTask.status == DownloadTaskEntity.STATUS_DOWNLOAD_FAILED || viewModel.downloadDetailsLiveData.downloadTask.downloadTaskId == -1)}"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                app:cardCornerRadius="@dimen/card_item_corner_radius"
+                app:cardElevation="@dimen/card_item_elevation"
+                tools:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/text_download_failed"
+                        android:textColor="@color/red" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginHorizontal="10dp"
+                            android:layout_marginTop="10dp"
+                            android:background="@drawable/shape_button_delete"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:minWidth="100dp"
+                            android:minHeight="36dp"
+                            android:onClick="@{()->viewModel.deleteDownloadTask()}"
+                            android:text="@string/text_delete"
+                            android:textColor="@color/white" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginHorizontal="10dp"
+                            android:layout_marginTop="10dp"
+                            android:background="@drawable/shape_button_general"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:minWidth="100dp"
+                            android:minHeight="36dp"
+                            android:onClick="@{()->viewModel.retryDownloadTask()}"
+                            android:text="@string/text_retry"
+                            android:textColor="@color/white" />
+                    </LinearLayout>
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- 正在合成时显示 -->
+            <androidx.cardview.widget.CardView
+                bindVisible="@{viewModel.downloadDetailsLiveData != null &amp;&amp; viewModel.downloadDetailsLiveData.downloadTask.status == DownloadTaskEntity.STATUS_SYNTHESIS}"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                app:cardCornerRadius="@dimen/card_item_corner_radius"
+                app:cardElevation="@dimen/card_item_elevation"
+                tools:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+
+                    <ProgressBar
+                        style="?android:attr/progressBarStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/text_synthesising"
+                        android:textColor="@color/text_default_color" />
+                </LinearLayout>
+
             </androidx.cardview.widget.CardView>
 
         </FrameLayout>

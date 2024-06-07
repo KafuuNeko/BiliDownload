@@ -81,9 +81,16 @@ object DownloadRepository {
     }
 
     /*
-    * 删除下载任务及其相关联的记录
+    * 删除下载任务及其相关联的记录，同时删除关联的文件和目录
     * */
     suspend fun deleteDownloadTask(taskEntityId: Long) {
+        CommonLibs.requireDownloadCacheDir(taskEntityId).let {
+            it.deleteRecursively()
+            it.deleteOnExit()
+        }
+        getResourcesByTaskEntityId(taskEntityId).forEach {
+            File(it.file).deleteOnExit()
+        }
         mDownloadTaskDao.deleteTaskByTaskEntityId(taskEntityId)
         mDownloadDashDao.deleteTaskByTaskEntityId(taskEntityId)
         mDownloadResourceDao.deleteTaskByTaskEntityId(taskEntityId)
@@ -91,4 +98,7 @@ object DownloadRepository {
 
     fun queryDownloadTask(entityId: Long) =
         mDownloadTaskDao.getDownloadTasksWithVideoDetailsLiveDataByEntityId(entityId)
+
+    suspend fun getResourcesByTaskEntityId(taskEntityId: Long) =
+        mDownloadResourceDao.getResourcesByTaskEntityId(taskEntityId)
 }
