@@ -4,10 +4,10 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.common.core.CoreRVHolder
-import cc.kafuu.bilidownload.databinding.ItemVideoPartBinding
+import cc.kafuu.bilidownload.databinding.ItemLocalResourceBinding
 
-class ItemVideoPartHolder(parent: ViewGroup) : CoreRVHolder<ItemVideoPartBinding>(
-    ItemVideoPartBinding.inflate(
+class ItemLocalResourceHolder(parent: ViewGroup) : CoreRVHolder<ItemLocalResourceBinding>(
+    ItemLocalResourceBinding.inflate(
         LayoutInflater.from(parent.context), parent, false
     )
 ) {

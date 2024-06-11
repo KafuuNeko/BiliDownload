@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <variable
+            name="viewModel"
+            type="cc.kafuu.bilidownload.viewmodel.activity.HistoryDetailsViewModel" />
+
+        <variable
+            name="data"
+            type="cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity" />
+
+        <import type="cc.kafuu.bilidownload.common.utils.TimeUtils" />
+
+        <import type="cc.kafuu.bilidownload.common.model.DownloadResourceType" />
+
+        <import type="cc.kafuu.bilidownload.common.utils.FileUtils" />
+    </data>
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="10dp"
+        android:layout_marginVertical="5dp"
+        app:cardCornerRadius="@dimen/card_item_corner_radius"
+        app:cardElevation="@dimen/card_item_elevation">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_resource_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="10dp"
+                android:layout_marginStart="10dp"
+                android:drawableStart="@{data.type == DownloadResourceType.VIDEO ? @drawable/ic_video : (data.type == DownloadResourceType.AUDIO ? @drawable/ic_music : @drawable/ic_movie)}"
+                android:drawablePadding="3dp"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text="@{data.name}"
+                android:textColor="@color/primary_color"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:drawableStart="@drawable/ic_movie"
+                tools:text="Resource" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="10dp"
+                android:orientation="horizontal"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_resource_name">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_resource_create_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="@{TimeUtils.INSTANCE.formatTimestamp(data.creationTime)}"
+                    android:textColor="@color/text_default_color"
+                    tools:text="2024-06-07 16:35:00" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_resource_mimetype"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:gravity="center_vertical|end"
+                    android:maxLines="1"
+                    android:text="@{data.mimeType.toUpperCase()}"
+                    android:textColor="@color/text_default_color"
+                    tools:text="VIDEO/MP4" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_resource_file_size"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:gravity="center_vertical|end"
+                    android:maxLines="1"
+                    android:text="@{FileUtils.INSTANCE.formatFileSize(data.storageSizeBytes)}"
+                    android:textColor="@color/text_default_color"
+                    tools:text="26MB" />
+
+            </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
+
+</layout>

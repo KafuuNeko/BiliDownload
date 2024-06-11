@@ -67,7 +67,8 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
                 app:cardCornerRadius="@dimen/card_item_corner_radius"
-                app:cardElevation="@dimen/card_item_elevation">
+                app:cardElevation="@dimen/card_item_elevation"
+                tools:visibility="gone">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
@@ -241,6 +242,73 @@
                 </LinearLayout>
 
             </androidx.cardview.widget.CardView>
+
+            <!-- 下载完成展示的内容 -->
+            <androidx.core.widget.NestedScrollView
+                bindVisible="@{viewModel.downloadDetailsLiveData != null &amp;&amp; viewModel.downloadDetailsLiveData.downloadTask.status == DownloadTaskEntity.STATUS_COMPLETED}"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="10dp"
+                        android:layout_marginTop="10dp"
+                        app:cardCornerRadius="@dimen/card_item_corner_radius"
+                        app:cardElevation="@dimen/card_item_elevation">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="10dp">
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/text_brief"
+                                android:textColor="@color/primary_color"
+                                android:textStyle="bold" />
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                bindSpannable="@{viewModel.downloadDetailsLiveData.description}"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp"
+                                android:autoLink="all"
+                                android:textColor="@color/text_default_color" />
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rv_resources"
+                        bindDataList="@{viewModel.downloadResourceEntityListLiveData}"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="10dp"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/shape_button_delete"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center"
+                        android:minWidth="100dp"
+                        android:minHeight="36dp"
+                        android:onClick="@{()->viewModel.deleteDownloadTask()}"
+                        android:text="@string/text_delete"
+                        android:textColor="@color/white" />
+                </LinearLayout>
+            </androidx.core.widget.NestedScrollView>
 
         </FrameLayout>
 

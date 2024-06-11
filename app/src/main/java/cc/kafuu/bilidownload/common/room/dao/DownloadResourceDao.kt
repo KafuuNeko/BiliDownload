@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload.common.room.dao
 
+import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
@@ -26,13 +27,16 @@ interface DownloadResourceDao {
 
     // 查询所有ResourceEntity
     @Query("SELECT * FROM DownloadResource")
-    suspend fun getAllResources(): List<DownloadResourceEntity>
+    suspend fun queryAllResources(): List<DownloadResourceEntity>
 
     // 根据taskId查询ResourceEntity
     @Query("SELECT * FROM DownloadResource WHERE taskEntityId = :taskEntityId")
-    suspend fun getResourcesByTaskEntityId(taskEntityId: Long): List<DownloadResourceEntity>
+    suspend fun queryResourcesByTaskEntityId(taskEntityId: Long): List<DownloadResourceEntity>
+
+    @Query("SELECT * FROM DownloadResource WHERE taskEntityId = :taskEntityId")
+    fun queryResourcesLiveDataByTaskEntityId(taskEntityId: Long): LiveData<List<DownloadResourceEntity>>
 
     // 根据ID查询单个ResourceEntity
     @Query("SELECT * FROM DownloadResource WHERE id = :id")
-    suspend fun getResourceById(id: Long): DownloadResourceEntity?
+    suspend fun queryResourceById(id: Long): DownloadResourceEntity?
 }

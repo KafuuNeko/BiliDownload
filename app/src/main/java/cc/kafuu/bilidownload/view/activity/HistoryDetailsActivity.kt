@@ -3,8 +3,10 @@ package cc.kafuu.bilidownload.view.activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import androidx.recyclerview.widget.LinearLayoutManager
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
+import cc.kafuu.bilidownload.common.adapter.LocalResourceRVAdapter
 import cc.kafuu.bilidownload.common.core.CoreActivity
 import cc.kafuu.bilidownload.common.model.event.DownloadStatusChangeEvent
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
@@ -41,7 +43,15 @@ class HistoryDetailsActivity : CoreActivity<ActivityHistoryDetailsBinding, Histo
 
     override fun initViews() {
         setImmersionStatusBar()
+        initRV()
         initData()
+    }
+
+    private fun initRV() {
+        mViewDataBinding.rvResources.apply {
+            layoutManager = LinearLayoutManager(this@HistoryDetailsActivity)
+            adapter = LocalResourceRVAdapter(mViewModel, this@HistoryDetailsActivity)
+        }
     }
 
     private fun initData() {
@@ -54,6 +64,9 @@ class HistoryDetailsActivity : CoreActivity<ActivityHistoryDetailsBinding, Histo
         }
         DownloadRepository.queryDownloadTask(entityId).observe(this) {
             mViewModel.updateVideoDetails(it)
+        }
+        DownloadRepository.queryResourcesLiveDataByTaskEntityId(entityId).observe(this) {
+            mViewModel.updateDownloadResources(it)
         }
     }
 

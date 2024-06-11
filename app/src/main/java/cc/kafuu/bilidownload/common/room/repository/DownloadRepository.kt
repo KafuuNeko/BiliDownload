@@ -86,10 +86,10 @@ object DownloadRepository {
     suspend fun deleteDownloadTask(taskEntityId: Long) {
         CommonLibs.requireDownloadCacheDir(taskEntityId).let {
             it.deleteRecursively()
-            it.deleteOnExit()
+            it.delete()
         }
-        getResourcesByTaskEntityId(taskEntityId).forEach {
-            File(it.file).deleteOnExit()
+        queryResourcesByTaskEntityId(taskEntityId).forEach {
+            File(it.file).delete()
         }
         mDownloadTaskDao.deleteTaskByTaskEntityId(taskEntityId)
         mDownloadDashDao.deleteTaskByTaskEntityId(taskEntityId)
@@ -99,6 +99,9 @@ object DownloadRepository {
     fun queryDownloadTask(entityId: Long) =
         mDownloadTaskDao.getDownloadTasksWithVideoDetailsLiveDataByEntityId(entityId)
 
-    suspend fun getResourcesByTaskEntityId(taskEntityId: Long) =
-        mDownloadResourceDao.getResourcesByTaskEntityId(taskEntityId)
+    fun queryResourcesLiveDataByTaskEntityId(entityId: Long) =
+        mDownloadResourceDao.queryResourcesLiveDataByTaskEntityId(entityId)
+
+    private suspend fun queryResourcesByTaskEntityId(taskEntityId: Long) =
+        mDownloadResourceDao.queryResourcesByTaskEntityId(taskEntityId)
 }

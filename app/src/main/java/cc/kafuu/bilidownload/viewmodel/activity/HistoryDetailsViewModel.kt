@@ -5,6 +5,7 @@ import cc.kafuu.bilidownload.common.core.CoreViewModel
 import cc.kafuu.bilidownload.common.model.DownloadTaskStatus
 import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
+import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
 import cc.kafuu.bilidownload.common.utils.CommonLibs
 import cc.kafuu.bilidownload.common.utils.FileUtils
@@ -15,6 +16,9 @@ import kotlinx.coroutines.runBlocking
 class HistoryDetailsViewModel : CoreViewModel() {
     // 下载任务信息，包含下载任务实体以及此任务对应的视频和片段的标题、描述、bvid、cid
     val downloadDetailsLiveData = MutableLiveData<DownloadTaskWithVideoDetails?>()
+
+    // 资源列表数据源
+    val downloadResourceEntityListLiveData = MutableLiveData<List<DownloadResourceEntity>>()
 
     // 任务下载进度（百分比）
     val downloadPercentLiveData = MutableLiveData(0)
@@ -59,6 +63,13 @@ class HistoryDetailsViewModel : CoreViewModel() {
     }
 
     /**
+     * 更新资源列表信息
+     */
+    fun updateDownloadResources(list: List<DownloadResourceEntity>) {
+        downloadResourceEntityListLiveData.postValue(list)
+    }
+
+    /**
      * 取消当前的下载任务
      */
     fun cancelDownloadTask() {
@@ -80,13 +91,16 @@ class HistoryDetailsViewModel : CoreViewModel() {
      */
     fun deleteDownloadTask() {
         val entity = downloadDetailsLiveData.value?.downloadTask ?: return
+        runBlocking { DownloadRepository.deleteDownloadTask(entity.id) }
         entity.downloadTaskId?.let {
             Aria.download(this).loadGroup(it).ignoreCheckPermissions().cancel(true)
         }
-        runBlocking { DownloadRepository.deleteDownloadTask(entity.id) }
         finishActivity()
     }
 
+    /**
+     * 暂停或者继续下载任务
+     */
     fun pauseOrContinue() {
         val taskId = downloadDetailsLiveData.value?.downloadTask?.downloadTaskId ?: return
         val taskGroup = Aria.download(this).loadGroup(taskId).ignoreCheckPermissions()

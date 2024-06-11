@@ -127,7 +127,7 @@ object DownloadManager {
 
         CommonLibs.requireDownloadCacheDir(entity.id).let {
             it.deleteRecursively()
-            it.deleteOnExit()
+            it.delete()
         }
     }
 
