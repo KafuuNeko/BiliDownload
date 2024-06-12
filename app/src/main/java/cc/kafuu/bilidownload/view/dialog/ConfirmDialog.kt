@@ -9,35 +9,62 @@ typealias ConfirmDialogCallback = (() -> Boolean)
 
 class ConfirmDialog : CoreBasicsDialog<DialogConfirmBinding>(R.layout.dialog_confirm) {
 
+    companion object {
+        fun buildDialog(
+            title: String,
+            message: String,
+            leftButtonText: String,
+            rightButtonText: String,
+            leftClickCallback: ConfirmDialogCallback? = null,
+            rightClickCallback: ConfirmDialogCallback? = null
+        ) = ConfirmDialog().apply {
+            this.title = title
+            this.message = message
+            this.leftButtonText = leftButtonText
+            this.rightButtonText = rightButtonText
+            this.leftClickCallback = leftClickCallback
+            this.rightClickCallback = rightClickCallback
+        }
+    }
+
+    var title: String? = null
+    var message: String? = null
+    var leftButtonText: String? = null
+    var rightButtonText: String? = null
+
     var leftClickCallback: ConfirmDialogCallback? = null
     var rightClickCallback: ConfirmDialogCallback? = null
 
-    var leftButtonTextColor: Int
-        get() = mViewDataBinding.tvBtnLeft.currentTextColor
-        set(value) = mViewDataBinding.tvBtnLeft.setTextColor(value)
-
-    var rightButtonTextColor: Int
-        get() = mViewDataBinding.tvBtnRight.currentTextColor
-        set(value) = mViewDataBinding.tvBtnRight.setTextColor(value)
-
-    var leftButtonBackgroundDrawable: Drawable
-        get() = mViewDataBinding.tvBtnLeft.background
-        set(value) = mViewDataBinding.tvBtnLeft.setBackgroundDrawable(value)
-
-    var rightButtonBackgroundDrawable: Drawable
-        get() = mViewDataBinding.tvBtnRight.background
-        set(value) = mViewDataBinding.tvBtnRight.setBackgroundDrawable(value)
+    var rightButtonTextColor: Int? = null
+    var rightButtonBackground: Drawable? = null
 
     override fun initViews() {
-        mViewDataBinding.tvBtnLeft.setOnClickListener {
-            if (leftClickCallback?.invoke() == true) {
-                dismiss()
+        mViewDataBinding.init()
+    }
+
+    private fun DialogConfirmBinding.init() {
+        tvTitle.text = title
+        tvMessage.text = message
+
+        tvBtnLeft.apply {
+            setOnClickListener {
+                if (leftClickCallback == null || leftClickCallback?.invoke() == true) {
+                    dismiss()
+                }
             }
+            leftButtonText?.let { this.text = it }
         }
-        mViewDataBinding.tvBtnRight.setOnClickListener {
-            if (rightClickCallback?.invoke() == true) {
-                dismiss()
+
+        tvBtnRight.apply {
+            setOnClickListener {
+                if (rightClickCallback?.invoke() == true) {
+                    dismiss()
+                }
             }
+            rightButtonText?.let { this.text = it }
+            rightButtonTextColor?.let { this.setTextColor(it) }
+            rightButtonBackground?.let { this.setBackgroundDrawable(rightButtonBackground) }
         }
+
     }
 }

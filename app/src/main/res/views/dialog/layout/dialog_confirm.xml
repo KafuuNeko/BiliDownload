@@ -22,9 +22,9 @@
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/tv_title"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="27dp"
+                android:layout_marginTop="20dp"
                 android:gravity="center"
                 android:textColor="@color/primary_color"
                 android:textSize="19sp"
@@ -33,10 +33,10 @@
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/tv_message"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="16dp"
-                android:layout_marginTop="20dp"
+                android:layout_marginHorizontal="10dp"
+                android:layout_marginTop="10dp"
                 android:gravity="center"
                 android:textColor="@color/text_default_color"
                 android:textSize="16sp"
@@ -45,20 +45,22 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="34dp"
+                android:layout_marginTop="20dp"
                 android:orientation="horizontal"
-                android:paddingHorizontal="16dp"
-                android:paddingBottom="16dp">
+                android:paddingHorizontal="10dp"
+                android:paddingBottom="20dp">
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/tv_btn_left"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="6dp"
                     android:layout_weight="1"
                     android:background="@drawable/shape_button_general"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
                     android:gravity="center"
-                    android:paddingVertical="12dp"
+                    android:paddingVertical="8dp"
                     android:text="@string/text_cancel"
                     android:textColor="@color/white"
                     android:textSize="17sp" />
@@ -67,11 +69,14 @@
                     android:id="@+id/tv_btn_right"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
+                    android:layout_marginStart="8dp"
                     android:layout_weight="1"
                     android:background="@drawable/shape_button_general"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
                     android:gravity="center"
-                    android:paddingVertical="12dp"
+                    android:paddingVertical="8dp"
                     android:text="@string/text_confirm"
                     android:textColor="@color/white"
                     android:textSize="17sp"
