@@ -8,8 +8,9 @@ import cc.kafuu.bilidownload.common.model.ActivityJumpData
 import cc.kafuu.bilidownload.common.model.popmessage.PopMessage
 
 open class CoreViewModel : ViewModel() {
-    val activityJumpLiveData = MutableLiveData<cc.kafuu.bilidownload.common.model.ActivityJumpData>()
+    val activityJumpLiveData = MutableLiveData<ActivityJumpData>()
     val popMessageLiveData = MutableLiveData<PopMessage>()
+
     /**
      * 启动 activity
      */
@@ -20,7 +21,7 @@ open class CoreViewModel : ViewModel() {
         finishCurrent: Boolean = false
     ) {
         activityJumpLiveData.postValue(
-            cc.kafuu.bilidownload.common.model.ActivityJumpData(
+            ActivityJumpData(
                 targetIntent,
                 targetClass,
                 finishCurrent
@@ -34,7 +35,7 @@ open class CoreViewModel : ViewModel() {
     @JvmOverloads
     fun finishActivity(activityResult: ActivityResult? = null) {
         activityJumpLiveData.postValue(
-            cc.kafuu.bilidownload.common.model.ActivityJumpData(
+            ActivityJumpData(
                 null,
                 null,
                 true,
