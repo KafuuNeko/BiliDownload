@@ -53,11 +53,6 @@ class BiliPartDialog : CoreAdvancedDialog<DialogBiliPartBinding, BiliPartViewMod
         initList()
     }
 
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        dismiss()
-    }
-
     private fun initViewMode() {
         mViewModel.titleLiveData.value = titleText
         mViewModel.videoResourcesLiveData.value = videoList
