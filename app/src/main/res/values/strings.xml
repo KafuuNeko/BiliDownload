@@ -76,4 +76,6 @@
     <string name="text_download_failed">下载失败</string>
     <string name="text_retry">重试</string>
     <string name="text_delete">删除</string>
+    <string name="text_delete_confirm">删除确认</string>
+    <string name="text_delete_message">请确认是否删除此下载记录，点击删除后将立即删除记录和对应的数据，操作不可撤销。</string>
 </resources>

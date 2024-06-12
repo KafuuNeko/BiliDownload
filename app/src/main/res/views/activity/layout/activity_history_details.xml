@@ -177,6 +177,7 @@
                         android:orientation="horizontal">
 
                         <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tv_failed_delete"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginHorizontal="10dp"
@@ -188,7 +189,6 @@
                             android:gravity="center"
                             android:minWidth="100dp"
                             android:minHeight="36dp"
-                            android:onClick="@{()->viewModel.deleteDownloadTask()}"
                             android:text="@string/text_delete"
                             android:textColor="@color/white" />
 
@@ -293,6 +293,7 @@
                         android:layout_marginTop="10dp" />
 
                     <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_history_delete"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginHorizontal="10dp"
@@ -304,7 +305,6 @@
                         android:gravity="center"
                         android:minWidth="100dp"
                         android:minHeight="36dp"
-                        android:onClick="@{()->viewModel.deleteDownloadTask()}"
                         android:text="@string/text_delete"
                         android:textColor="@color/white" />
                 </LinearLayout>

@@ -3,6 +3,7 @@ package cc.kafuu.bilidownload.view.activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import androidx.fragment.app.DialogFragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
@@ -10,7 +11,9 @@ import cc.kafuu.bilidownload.common.adapter.LocalResourceRVAdapter
 import cc.kafuu.bilidownload.common.core.CoreActivity
 import cc.kafuu.bilidownload.common.model.event.DownloadStatusChangeEvent
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
+import cc.kafuu.bilidownload.common.utils.CommonLibs
 import cc.kafuu.bilidownload.databinding.ActivityHistoryDetailsBinding
+import cc.kafuu.bilidownload.view.dialog.ConfirmDialog
 import cc.kafuu.bilidownload.viewmodel.activity.HistoryDetailsViewModel
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
@@ -31,6 +34,8 @@ class HistoryDetailsActivity : CoreActivity<ActivityHistoryDetailsBinding, Histo
         }
     }
 
+    private var mCurrentDialog: DialogFragment? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         EventBus.getDefault().register(this)
@@ -43,14 +48,20 @@ class HistoryDetailsActivity : CoreActivity<ActivityHistoryDetailsBinding, Histo
 
     override fun initViews() {
         setImmersionStatusBar()
-        initRV()
+        mViewDataBinding.initView()
         initData()
     }
 
-    private fun initRV() {
-        mViewDataBinding.rvResources.apply {
+    private fun ActivityHistoryDetailsBinding.initView() {
+        rvResources.apply {
             layoutManager = LinearLayoutManager(this@HistoryDetailsActivity)
             adapter = LocalResourceRVAdapter(mViewModel, this@HistoryDetailsActivity)
+        }
+        tvFailedDelete.setOnClickListener {
+            onDelete()
+        }
+        tvHistoryDelete.setOnClickListener {
+            onDelete()
         }
     }
 
@@ -68,6 +79,26 @@ class HistoryDetailsActivity : CoreActivity<ActivityHistoryDetailsBinding, Histo
         DownloadRepository.queryResourcesLiveDataByTaskEntityId(entityId).observe(this) {
             mViewModel.updateDownloadResources(it)
         }
+    }
+
+    private fun onDelete() {
+        if (mCurrentDialog?.isAdded == true) {
+            mCurrentDialog?.dismiss()
+        }
+
+        mCurrentDialog = ConfirmDialog.buildDialog(
+            CommonLibs.getString(R.string.text_delete_confirm),
+            CommonLibs.getString(R.string.text_delete_message),
+            CommonLibs.getString(R.string.text_cancel),
+            CommonLibs.getString(R.string.text_delete),
+        ) {
+            mViewModel.deleteDownloadTask()
+            true
+        }.apply {
+            rightButtonTextColor = CommonLibs.getColor(R.color.white)
+            rightButtonBackground = CommonLibs.getDrawable(R.drawable.shape_button_delete)
+        }
+        mCurrentDialog?.show(supportFragmentManager, null)
     }
 
     @Subscribe(threadMode = ThreadMode.POSTING)
