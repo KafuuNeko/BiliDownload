@@ -169,7 +169,6 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
             // Android 11+
             val insetsController = window.insetsController
             insetsController?.let {
-                it.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
                 it.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                 window.statusBarColor = ContextCompat.getColor(this, R.color.transparent)
                 it.setSystemBarsAppearance(
