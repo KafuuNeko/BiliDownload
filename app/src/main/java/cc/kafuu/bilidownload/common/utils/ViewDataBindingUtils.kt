@@ -125,6 +125,6 @@ fun bindSpannable(textView: TextView, htmlText: String?) {
 @BindingAdapter("bindSpinnerEntries")
 fun bindSpinnerEntries(spinner: Spinner, entries: Array<String>) {
     spinner.apply {
-        adapter = ArrayAdapter(spinner.context, R.layout.spinner_item, entries)
+        adapter = ArrayAdapter(spinner.context, R.layout.item_spinner, entries)
     }
 }
