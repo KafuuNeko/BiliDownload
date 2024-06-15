@@ -370,21 +370,44 @@
                     android:text="@string/text_open"
                     android:textColor="@color/white" />
 
-                <androidx.appcompat.widget.AppCompatTextView
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/tv_resource_export"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="10dp"
                     android:layout_marginTop="10dp"
-                    android:background="@drawable/shape_button_general"
+                    android:background="@{viewModel.isExportingLiveData ? @drawable/shape_button_disable : @drawable/shape_button_general}"
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground"
                     android:gravity="center"
                     android:minWidth="100dp"
                     android:minHeight="36dp"
-                    android:text="@string/text_export"
-                    android:textColor="@color/white" />
+                    android:orientation="horizontal"
+                    tools:background="@drawable/shape_button_general">
+
+                    <ProgressBar
+                        style="?android:attr/progressBarStyle"
+                        bindVisible="@{viewModel.isExportingLiveData}"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_margin="10dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/tv_export_text"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_export_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/text_export"
+                        android:textColor="@color/white"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/tv_resource_delete"

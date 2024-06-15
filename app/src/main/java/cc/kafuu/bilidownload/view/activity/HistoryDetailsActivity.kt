@@ -88,7 +88,7 @@ class HistoryDetailsActivity : CoreActivity<ActivityHistoryDetailsBinding, Histo
 
         mCurrentDialog = ConfirmDialog.buildDialog(
             CommonLibs.getString(R.string.text_delete_confirm),
-            CommonLibs.getString(R.string.text_delete_message),
+            CommonLibs.getString(R.string.delete_task_message),
             CommonLibs.getString(R.string.text_cancel),
             CommonLibs.getString(R.string.text_delete),
         ) {

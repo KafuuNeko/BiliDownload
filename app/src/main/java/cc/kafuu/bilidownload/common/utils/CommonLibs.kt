@@ -21,13 +21,18 @@ object CommonLibs {
         mAppDatabase = AppDatabase.requireInstance(context)
     }
 
-    fun getString(@StringRes id: Int) = requireContext().resources?.getString(id).toString()
+    fun getString(@StringRes id: Int) =
+        requireContext().resources?.getString(id).toString()
+
+    fun getString(@StringRes id: Int, vararg args: Any) =
+        requireContext().resources?.getString(id, *args).toString()
 
     fun getColor(@ColorRes color: Int) = ContextCompat.getColor(requireContext(), color)
 
     fun getDrawable(@DrawableRes id: Int) = ContextCompat.getDrawable(requireContext(), id)
 
-    fun getStringArray(@ArrayRes id: Int): Array<String> = requireContext().resources.getStringArray(id)
+    fun getStringArray(@ArrayRes id: Int): Array<String> =
+        requireContext().resources.getStringArray(id)
 
     fun requireContext() = mContext ?: throw IllegalStateException("Program not running")
 
@@ -44,7 +49,9 @@ object CommonLibs {
         }
     }
 
-    fun requireDownloadCacheDir(entityId: Long) = requireExternalFilesDir("cache", "download/task-e$entityId")
+    fun requireDownloadCacheDir(entityId: Long) =
+        requireExternalFilesDir("cache", "download/task-e$entityId")
+
     fun requireResourcesDir() = requireExternalFilesDir("resources")
 
     fun getVersionName(): String = requireContext().packageManager.let {

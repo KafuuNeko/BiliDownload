@@ -1,12 +1,18 @@
 package cc.kafuu.bilidownload.view.activity
 
 import android.content.Intent
+import android.os.Bundle
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.fragment.app.DialogFragment
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.core.CoreActivity
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
+import cc.kafuu.bilidownload.common.utils.CommonLibs
 import cc.kafuu.bilidownload.databinding.ActivityLocalResourceBinding
+import cc.kafuu.bilidownload.view.dialog.ConfirmDialog
 import cc.kafuu.bilidownload.viewmodel.activity.LocalResourceVideModel
 
 class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalResourceVideModel>(
@@ -23,8 +29,23 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
         }
     }
 
+    private var mCurrentDialog: DialogFragment? = null
+
+    private lateinit var mCreateDocumentLauncher: ActivityResultLauncher<Intent>
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val contracts = ActivityResultContracts.StartActivityForResult()
+        mCreateDocumentLauncher = registerForActivityResult(contracts) {
+            if (it.resultCode == RESULT_OK && it.data != null) {
+                mViewModel.exportResource(it.data?.data ?: return@registerForActivityResult)
+            }
+        }
+    }
+
     override fun initViews() {
-        if (initObserver()) return
+        if (!initObserver()) return
+        mViewDataBinding.initView()
     }
 
     private fun initObserver(): Boolean {
@@ -49,6 +70,40 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
         mViewModel.localMediaDetailLiveData.observe(this) { mViewModel.checkLoaded() }
 
         return true
+    }
+
+    private fun ActivityLocalResourceBinding.initView() {
+        tvResourceOpen.setOnClickListener { onResourceOpen() }
+        tvResourceExport.setOnClickListener { onResourceExport() }
+        tvResourceDelete.setOnClickListener { onResourceDelete() }
+    }
+
+    private fun onResourceOpen() {
+        mViewModel.tryShareResource(this)
+    }
+
+    private fun onResourceExport() {
+        mViewModel.tryExportResource(mCreateDocumentLauncher)
+    }
+
+    private fun onResourceDelete() {
+        if (mCurrentDialog?.isAdded == true) {
+            mCurrentDialog?.dismiss()
+        }
+
+        mCurrentDialog = ConfirmDialog.buildDialog(
+            CommonLibs.getString(R.string.text_delete_confirm),
+            CommonLibs.getString(R.string.delete_resource_message),
+            CommonLibs.getString(R.string.text_cancel),
+            CommonLibs.getString(R.string.text_delete),
+        ) {
+            mViewModel.deleteResource()
+            true
+        }.apply {
+            rightButtonTextColor = CommonLibs.getColor(R.color.white)
+            rightButtonBackground = CommonLibs.getDrawable(R.drawable.shape_button_delete)
+        }
+        mCurrentDialog?.show(supportFragmentManager, null)
     }
 
 }

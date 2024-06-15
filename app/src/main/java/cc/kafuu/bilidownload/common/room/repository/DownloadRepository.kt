@@ -107,4 +107,8 @@ object DownloadRepository {
 
     fun queryResourceLiveDataById(resourceId: Long) =
         mDownloadResourceDao.queryResourceLiveDataById(resourceId)
+
+    suspend fun deleteResourceById(resourceId: Long) =
+        mDownloadResourceDao.deleteById(resourceId)
+
 }
