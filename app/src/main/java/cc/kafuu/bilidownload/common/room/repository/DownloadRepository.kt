@@ -104,4 +104,7 @@ object DownloadRepository {
 
     private suspend fun queryResourcesByTaskEntityId(taskEntityId: Long) =
         mDownloadResourceDao.queryResourcesByTaskEntityId(taskEntityId)
+
+    fun queryResourceLiveDataById(resourceId: Long) =
+        mDownloadResourceDao.queryResourceLiveDataById(resourceId)
 }

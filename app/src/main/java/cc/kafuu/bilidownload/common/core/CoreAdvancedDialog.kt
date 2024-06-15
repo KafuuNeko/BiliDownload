@@ -74,7 +74,7 @@ abstract class CoreAdvancedDialog<V : ViewDataBinding, VM : CoreViewModel>(
      *
      * @param jumpData Fragment跳转的数据，包含了目标活动和其他跳转信息。
      */
-    private fun onActivityJumpLiveDataChange(jumpData: cc.kafuu.bilidownload.common.model.ActivityJumpData) {
+    private fun onActivityJumpLiveDataChange(jumpData: ActivityJumpData) {
         if (jumpData.isDeprecated) {
             return
         }

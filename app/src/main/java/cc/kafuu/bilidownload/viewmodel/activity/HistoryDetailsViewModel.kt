@@ -10,6 +10,7 @@ import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
 import cc.kafuu.bilidownload.common.utils.CommonLibs
 import cc.kafuu.bilidownload.common.utils.FileUtils
 import cc.kafuu.bilidownload.service.DownloadService
+import cc.kafuu.bilidownload.view.activity.LocalResourceActivity
 import com.arialyy.aria.core.Aria
 import kotlinx.coroutines.runBlocking
 
@@ -105,5 +106,12 @@ class HistoryDetailsViewModel : CoreViewModel() {
         val taskId = downloadDetailsLiveData.value?.downloadTask?.downloadTaskId ?: return
         val taskGroup = Aria.download(this).loadGroup(taskId).ignoreCheckPermissions()
         if (downloadIsStoppedLiveData.value == true) taskGroup.resume() else taskGroup.stop()
+    }
+
+    fun entryResource(data: DownloadResourceEntity) {
+        startActivity(
+            LocalResourceActivity::class.java,
+            LocalResourceActivity.buildIntent(data)
+        )
     }
 }

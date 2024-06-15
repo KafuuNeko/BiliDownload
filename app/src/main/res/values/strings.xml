@@ -78,4 +78,16 @@
     <string name="text_delete">删除</string>
     <string name="text_delete_confirm">删除确认</string>
     <string name="text_delete_message">请确认是否删除此下载记录，点击删除后将立即删除记录和对应的数据，操作不可撤销。</string>
+    <string name="text_media_format">封装格式</string>
+    <string name="text_media_duration">播放时长</string>
+    <string name="text_media_video_codec">视频编码</string>
+    <string name="text_media_audio_codec">音频编码</string>
+    <string name="text_media_resolution">视频分辨率</string>
+    <string name="text_media_frame_rate">视频帧率</string>
+    <string name="text_media_audio_sample_rate">音频采样率</string>
+    <string name="text_resource_name">资源名称</string>
+    <string name="text_download_time">下载时间</string>
+    <string name="text_export">导出</string>
+    <string name="text_open">打开</string>
+    <string name="text_resource_size">资源大小</string>
 </resources>

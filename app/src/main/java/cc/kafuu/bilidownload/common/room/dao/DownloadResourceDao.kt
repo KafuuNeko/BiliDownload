@@ -39,4 +39,8 @@ interface DownloadResourceDao {
     // 根据ID查询单个ResourceEntity
     @Query("SELECT * FROM DownloadResource WHERE id = :id")
     suspend fun queryResourceById(id: Long): DownloadResourceEntity?
+
+    // 根据ID查询单个ResourceEntity
+    @Query("SELECT * FROM DownloadResource WHERE id = :id")
+    fun queryResourceLiveDataById(id: Long): LiveData<DownloadResourceEntity>
 }

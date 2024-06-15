@@ -4,7 +4,9 @@ import android.util.Log
 import cc.kafuu.bilidownload.common.model.IAsyncCallback
 import cc.kafuu.bilidownload.common.model.LocalMediaDetail
 import com.arthenica.ffmpegkit.FFmpegKit
+import com.arthenica.ffmpegkit.FFprobeKit
 import com.arthenica.ffmpegkit.ReturnCode
+import com.google.gson.JsonParser
 
 object FFMpegUtils {
     private const val TAG = "FFMpegUtils"
@@ -28,8 +30,8 @@ object FFMpegUtils {
      * @param callback 回调
      */
     fun getMediaInfo(filePath: String, callback: IAsyncCallback<LocalMediaDetail, Exception>) {
-        val command = "-i $filePath -hide_banner"
-        FFmpegKit.executeAsync(command) { session ->
+        val command = "-v quiet -print_format json -show_format -show_streams $filePath"
+        FFprobeKit.executeAsync(command) { session ->
             val output = session.output
             Log.d(TAG, "getMediaInfo: $output")
             if (ReturnCode.isSuccess(session.returnCode)) {
@@ -40,20 +42,47 @@ object FFMpegUtils {
         }
     }
 
-    private fun parseMediaInfo(output: String) = LocalMediaDetail(
-        raw = output,
-        format = findMatch("Input #0, (\\w+),", output),
-        duration = findMatch("Duration: (\\d{2}:\\d{2}:\\d{2}\\.\\d{2}),", output),
-        videoCodec = findMatch("Video: (\\w+)", output),
-        audioCodec = findMatch("Audio: (\\w+)", output),
-        resolution = findMatch(", (\\d{3,}x\\d{3,})", output),
-        frameRate = findMatch(", (\\d{1,3} fps)", output),
-        audioSampleRate = findMatch("Audio: .+, (\\d{4,} Hz)", output)
-    )
+    private fun parseMediaInfo(output: String): LocalMediaDetail {
+        val jsonObject = JsonParser.parseString(output).asJsonObject
+        val format = jsonObject.getAsJsonObject("format")
+        val streams = jsonObject.getAsJsonArray("streams")
 
+        val durationInSeconds = format.get("duration")?.asDouble ?: 0.0
+        val formattedDuration = TimeUtils.formatDuration(durationInSeconds)
 
-    private fun findMatch(regex: String, input: String): String? {
-        val pattern = Regex(regex)
-        return pattern.find(input)?.groupValues?.get(1) // 返回第一个匹配组的值
+        var videoCodec: String? = null
+        var resolution: String? = null
+        var frameRate: String? = null
+        var audioCodec: String? = null
+        var audioSampleRate: String? = null
+
+        streams.forEach { streamElement ->
+            val stream = streamElement.asJsonObject
+            val codecType = stream.get("codec_type").asString
+            if (codecType == "video" && videoCodec == null) {
+                videoCodec = stream.get("codec_name")?.asString
+                resolution = "${stream.get("width")?.asInt}x${stream.get("height")?.asInt}"
+                frameRate = stream.get("r_frame_rate")?.asString?.let {
+                    val fps = TimeUtils.evalFrameRate(it)
+                    "${String.format("%.4f", fps)} fps"
+                }
+            } else if (codecType == "audio" && audioCodec == null) {
+                audioCodec = stream.get("codec_name")?.asString
+                audioSampleRate = stream.get("sample_rate")?.asString?.let {
+                    "$it Hz"
+                }
+            }
+        }
+
+        return LocalMediaDetail(
+            raw = output,
+            format = format.get("format_name")?.asString,
+            duration = formattedDuration,
+            videoCodec = videoCodec,
+            audioCodec = audioCodec,
+            resolution = resolution,
+            frameRate = frameRate,
+            audioSampleRate = audioSampleRate
+        )
     }
 }
