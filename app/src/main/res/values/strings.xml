@@ -50,11 +50,11 @@
     <string name="list_is_empty">无数据</string>
     <string name="tv_search_text">搜索</string>
     <string name="iv_back_content_description">返回</string>
-    <string name="tv_invitation_text">参与内测</string>
+    <string name="text_source_repository">代码仓库</string>
     <string name="tv_about_version_text">当前版本</string>
     <string name="tv_about_license_text">开源组件许可</string>
     <string name="tv_grade_text">给我们评分</string>
-    <string name="tv_about_us_text">关于我们</string>
+    <string name="text_feedback">问题反馈</string>
     <string name="list_load_failed">加载失败</string>
     <string name="text_brief">简介</string>
     <string name="text_video">视频</string>

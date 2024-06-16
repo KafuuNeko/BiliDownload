@@ -2,6 +2,8 @@ package cc.kafuu.bilidownload.common.utils
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.annotation.ArrayRes
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
@@ -9,6 +11,7 @@ import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import cc.kafuu.bilidownload.common.room.database.AppDatabase
 import java.io.File
+
 
 @SuppressLint("StaticFieldLeak")
 object CommonLibs {
@@ -54,7 +57,14 @@ object CommonLibs {
 
     fun requireResourcesDir() = requireExternalFilesDir("resources")
 
-    fun getVersionName(): String = requireContext().packageManager.let {
-        it.getPackageInfo(requireContext().packageName, 0).versionName
+    fun getVersionName(): String =
+        requireContext().packageManager.getPackageInfo(requireContext().packageName, 0).versionName
+
+    fun jumpToUrl(url: String) {
+        Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+            setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }.also {
+            requireContext().startActivity(it)
+        }
     }
 }

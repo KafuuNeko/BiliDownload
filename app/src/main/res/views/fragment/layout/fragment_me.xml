@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <data>
 
@@ -11,6 +12,8 @@
         <import type="cc.kafuu.bilidownload.common.manager.AccountManager" />
 
         <import type="cc.kafuu.bilidownload.common.utils.ViewDataBindingUtilsKt" />
+
+        <import type="cc.kafuu.bilidownload.common.utils.CommonLibs" />
     </data>
 
     <androidx.core.widget.NestedScrollView
@@ -27,7 +30,8 @@
                 layout="@layout/include_account_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="10dp"
+                android:layout_marginHorizontal="10dp"
+                android:layout_marginTop="10dp"
                 app:defaultNickname="@{@string/nickname_not_login}"
                 app:defaultSign="@{@string/sign_not_login}"
                 app:nickname="@{AccountManager.INSTANCE.accountLiveData.nickname}"
@@ -35,11 +39,134 @@
                 app:profile="@{AccountManager.INSTANCE.accountLiveData.profile}"
                 app:sign="@{AccountManager.INSTANCE.accountLiveData.sign}" />
 
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="10dp"
+                android:layout_marginTop="10dp"
+                app:cardCornerRadius="@dimen/card_item_corner_radius"
+                app:cardElevation="@dimen/card_item_elevation">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:minHeight="40dp"
+                        android:onClick="@{()->viewModel.jumpSourceRepository()}"
+                        android:paddingHorizontal="10dp"
+                        android:text="@string/text_source_repository"
+                        android:textSize="16sp"
+                        app:drawableEndCompat="@drawable/ic_arrow_right" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/view_split_color" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@color/white"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:paddingHorizontal="10dp">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center_vertical"
+                            android:minHeight="40dp"
+                            android:text="@string/tv_about_version_text"
+                            android:textSize="16sp" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:text="@{CommonLibs.INSTANCE.getVersionName()}"
+                            android:textColor="@color/text_default_color"
+                            android:textSize="16sp"
+                            tools:text="1.0.0" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/view_split_color" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:minHeight="40dp"
+                        android:onClick="@{()->viewModel.jumpOpenSourceLicenses()}"
+                        android:paddingHorizontal="10dp"
+                        android:text="@string/tv_about_license_text"
+                        android:textSize="16sp"
+                        app:drawableEndCompat="@drawable/ic_arrow_right" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/view_split_color" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:minHeight="40dp"
+                        android:onClick="@{()->viewModel.jumpFeedback()}"
+                        android:paddingHorizontal="10dp"
+                        android:text="@string/text_feedback"
+                        android:textSize="16sp"
+                        app:drawableEndCompat="@drawable/ic_arrow_right" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="10dp"
+                android:layout_marginTop="10dp"
+                app:cardCornerRadius="@dimen/card_item_corner_radius"
+                app:cardElevation="@dimen/card_item_elevation">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:minHeight="40dp"
+                    android:padding="10dp"
+                    android:text="@string/tv_grade_text"
+                    android:textSize="16sp"
+                    app:drawableEndCompat="@drawable/ic_arrow_right" />
+            </androidx.cardview.widget.CardView>
+
             <androidx.appcompat.widget.AppCompatTextView
                 bindVisible="@{AccountManager.INSTANCE.accountLiveData != null}"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="10dp"
+                android:layout_marginTop="10dp"
                 android:background="@drawable/shape_button_general"
                 android:clickable="true"
                 android:focusable="true"
@@ -50,6 +177,11 @@
                 android:text="@string/text_logout"
                 android:textColor="@color/white" />
 
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_margin="10dp"
+                android:background="@color/transparent" />
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>

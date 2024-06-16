@@ -49,10 +49,6 @@
             android:exported="false" />
 
         <activity
-            android:name=".view.activity.AboutActivity"
-            android:exported="false" />
-
-        <activity
             android:name=".view.activity.VideoDetailsActivity"
             android:configChanges="orientation|screenSize"
             android:exported="false" />
