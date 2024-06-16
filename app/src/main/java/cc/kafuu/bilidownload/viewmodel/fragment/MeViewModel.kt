@@ -2,6 +2,7 @@ package cc.kafuu.bilidownload.viewmodel.fragment
 
 import cc.kafuu.bilidownload.common.core.CoreViewModel
 import cc.kafuu.bilidownload.common.manager.AccountManager
+import cc.kafuu.bilidownload.common.network.NetworkConfig
 import cc.kafuu.bilidownload.common.utils.CommonLibs
 import cc.kafuu.bilidownload.view.activity.LoginActivity
 
@@ -15,14 +16,18 @@ class MeViewModel : CoreViewModel() {
     }
 
     fun jumpSourceRepository() {
-        CommonLibs.jumpToUrl("https://github.com/KafuuNeko/BiliDownload")
+        CommonLibs.jumpToUrl(NetworkConfig.SOURCE_REPOSITORY_URL)
     }
 
     fun jumpOpenSourceLicenses() {
-        CommonLibs.jumpToUrl("https://github.com/KafuuNeko/BiliDownload/blob/master/LICENSE")
+        CommonLibs.jumpToUrl(NetworkConfig.OPEN_SOURCE_LICENSES_URL)
     }
 
     fun jumpFeedback() {
-        CommonLibs.jumpToUrl("https://github.com/KafuuNeko/BiliDownload/issues")
+        CommonLibs.jumpToUrl(NetworkConfig.FEEDBACK_URL)
+    }
+
+    fun jumpGooglePlay() {
+        CommonLibs.jumpToUrl(NetworkConfig.GOOGLE_PLAY_URL)
     }
 }

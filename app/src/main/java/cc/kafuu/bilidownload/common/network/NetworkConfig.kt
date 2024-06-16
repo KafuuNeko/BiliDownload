@@ -6,6 +6,12 @@ object NetworkConfig {
     const val BILI_PASSPORT_URL = "https://passport.bilibili.com"
     const val LOGIN_URL = "${BILI_PASSPORT_URL}/h5-app/passport/login"
 
+    const val SOURCE_REPOSITORY_URL = "https://github.com/KafuuNeko/BiliDownload"
+    const val OPEN_SOURCE_LICENSES_URL = "https://github.com/KafuuNeko/BiliDownload/blob/master/LICENSE"
+    const val FEEDBACK_URL = "https://github.com/KafuuNeko/BiliDownload/issues"
+    const val GOOGLE_PLAY_URL = "https://play.google.com/store/apps/details?id=cc.kafuu.bilidownload"
+
+
     val GENERAL_HEADERS = HashMap<String, String>().apply {
         put(
             "User-Agent",

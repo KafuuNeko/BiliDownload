@@ -155,6 +155,7 @@
                     android:foreground="?attr/selectableItemBackground"
                     android:gravity="center_vertical"
                     android:minHeight="40dp"
+                    android:onClick="@{()->viewModel.jumpGooglePlay()}"
                     android:padding="10dp"
                     android:text="@string/tv_grade_text"
                     android:textSize="16sp"
