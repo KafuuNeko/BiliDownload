@@ -77,6 +77,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
+                            android:gravity="center"
                             android:orientation="horizontal">
 
                             <androidx.appcompat.widget.AppCompatTextView
@@ -86,6 +87,7 @@
                                 android:ellipsize="end"
                                 android:gravity="center"
                                 android:maxLines="2"
+                                android:paddingHorizontal="10dp"
                                 android:text="@string/text_resource_name"
                                 android:textColor="@color/text_default_color" />
 
@@ -96,6 +98,7 @@
                                 android:ellipsize="end"
                                 android:gravity="center_vertical|start"
                                 android:maxLines="2"
+                                android:paddingHorizontal="10dp"
                                 android:text="@{viewModel.resourceLiveData.name}"
                                 android:textColor="@color/text_default_color" />
                         </LinearLayout>
@@ -104,6 +107,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
+                            android:gravity="center"
                             android:orientation="horizontal">
 
                             <androidx.appcompat.widget.AppCompatTextView
@@ -113,6 +117,7 @@
                                 android:ellipsize="end"
                                 android:gravity="center"
                                 android:maxLines="2"
+                                android:paddingHorizontal="10dp"
                                 android:text="@string/text_download_time"
                                 android:textColor="@color/text_default_color" />
 
@@ -123,6 +128,7 @@
                                 android:ellipsize="end"
                                 android:gravity="center_vertical|start"
                                 android:maxLines="2"
+                                android:paddingHorizontal="10dp"
                                 android:text="@{TimeUtils.INSTANCE.formatTimestamp(viewModel.resourceLiveData.creationTime)}"
                                 android:textColor="@color/text_default_color" />
                         </LinearLayout>
@@ -131,6 +137,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
+                            android:gravity="center"
                             android:orientation="horizontal">
 
                             <androidx.appcompat.widget.AppCompatTextView
@@ -140,6 +147,7 @@
                                 android:ellipsize="end"
                                 android:gravity="center"
                                 android:maxLines="2"
+                                android:paddingHorizontal="10dp"
                                 android:text="@string/text_resource_size"
                                 android:textColor="@color/text_default_color" />
 
@@ -150,6 +158,7 @@
                                 android:ellipsize="end"
                                 android:gravity="center_vertical|start"
                                 android:maxLines="2"
+                                android:paddingHorizontal="10dp"
                                 android:text="@{FileUtils.INSTANCE.formatFileSize(viewModel.resourceLiveData.storageSizeBytes)}"
                                 android:textColor="@color/text_default_color" />
                         </LinearLayout>
@@ -159,6 +168,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
+                            android:gravity="center"
                             android:orientation="horizontal">
 
                             <androidx.appcompat.widget.AppCompatTextView
@@ -168,6 +178,7 @@
                                 android:ellipsize="end"
                                 android:gravity="center"
                                 android:maxLines="2"
+                                android:paddingHorizontal="10dp"
                                 android:text="@string/text_media_format"
                                 android:textColor="@color/text_default_color" />
 
@@ -178,6 +189,7 @@
                                 android:ellipsize="end"
                                 android:gravity="center_vertical|start"
                                 android:maxLines="2"
+                                android:paddingHorizontal="10dp"
                                 android:text="@{viewModel.localMediaDetailLiveData.format}"
                                 android:textColor="@color/text_default_color" />
                         </LinearLayout>
@@ -187,6 +199,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
+                            android:gravity="center"
                             android:orientation="horizontal">
 
                             <androidx.appcompat.widget.AppCompatTextView
@@ -196,6 +209,7 @@
                                 android:ellipsize="end"
                                 android:gravity="center"
                                 android:maxLines="2"
+                                android:paddingHorizontal="10dp"
                                 android:text="@string/text_media_duration"
                                 android:textColor="@color/text_default_color" />
 
@@ -206,6 +220,7 @@
                                 android:ellipsize="end"
                                 android:gravity="center_vertical|start"
                                 android:maxLines="2"
+                                android:paddingHorizontal="10dp"
                                 android:text="@{viewModel.localMediaDetailLiveData.duration}"
                                 android:textColor="@color/text_default_color" />
                         </LinearLayout>
@@ -215,6 +230,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
+                            android:gravity="center"
                             android:orientation="horizontal">
 
                             <androidx.appcompat.widget.AppCompatTextView
@@ -224,6 +240,7 @@
                                 android:ellipsize="end"
                                 android:gravity="center"
                                 android:maxLines="2"
+                                android:paddingHorizontal="10dp"
                                 android:text="@string/text_media_video_codec"
                                 android:textColor="@color/text_default_color" />
 
@@ -234,6 +251,7 @@
                                 android:ellipsize="end"
                                 android:gravity="center_vertical|start"
                                 android:maxLines="2"
+                                android:paddingHorizontal="10dp"
                                 android:text="@{viewModel.localMediaDetailLiveData.videoCodec}"
                                 android:textColor="@color/text_default_color" />
                         </LinearLayout>
@@ -243,6 +261,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
+                            android:gravity="center"
                             android:orientation="horizontal">
 
                             <androidx.appcompat.widget.AppCompatTextView
@@ -252,6 +271,7 @@
                                 android:ellipsize="end"
                                 android:gravity="center"
                                 android:maxLines="2"
+                                android:paddingHorizontal="10dp"
                                 android:text="@string/text_media_audio_codec"
                                 android:textColor="@color/text_default_color" />
 
@@ -262,6 +282,7 @@
                                 android:ellipsize="end"
                                 android:gravity="center_vertical|start"
                                 android:maxLines="2"
+                                android:paddingHorizontal="10dp"
                                 android:text="@{viewModel.localMediaDetailLiveData.audioCodec}"
                                 android:textColor="@color/text_default_color" />
                         </LinearLayout>
@@ -271,6 +292,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
+                            android:gravity="center"
                             android:orientation="horizontal">
 
                             <androidx.appcompat.widget.AppCompatTextView
@@ -280,6 +302,7 @@
                                 android:ellipsize="end"
                                 android:gravity="center"
                                 android:maxLines="2"
+                                android:paddingHorizontal="10dp"
                                 android:text="@string/text_media_frame_rate"
                                 android:textColor="@color/text_default_color" />
 
@@ -290,6 +313,7 @@
                                 android:ellipsize="end"
                                 android:gravity="center_vertical|start"
                                 android:maxLines="2"
+                                android:paddingHorizontal="10dp"
                                 android:text="@{viewModel.localMediaDetailLiveData.frameRate}"
                                 android:textColor="@color/text_default_color" />
                         </LinearLayout>
@@ -299,6 +323,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
+                            android:gravity="center"
                             android:orientation="horizontal">
 
                             <androidx.appcompat.widget.AppCompatTextView
@@ -308,6 +333,7 @@
                                 android:ellipsize="end"
                                 android:gravity="center"
                                 android:maxLines="2"
+                                android:paddingHorizontal="10dp"
                                 android:text="@string/text_media_resolution"
                                 android:textColor="@color/text_default_color" />
 
@@ -318,6 +344,7 @@
                                 android:ellipsize="end"
                                 android:gravity="center_vertical|start"
                                 android:maxLines="2"
+                                android:paddingHorizontal="10dp"
                                 android:text="@{viewModel.localMediaDetailLiveData.resolution}"
                                 android:textColor="@color/text_default_color" />
                         </LinearLayout>
@@ -327,6 +354,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
+                            android:gravity="center"
                             android:orientation="horizontal">
 
                             <androidx.appcompat.widget.AppCompatTextView
@@ -336,6 +364,7 @@
                                 android:ellipsize="end"
                                 android:gravity="center"
                                 android:maxLines="2"
+                                android:paddingHorizontal="10dp"
                                 android:text="@string/text_media_audio_sample_rate"
                                 android:textColor="@color/text_default_color" />
 
@@ -346,6 +375,7 @@
                                 android:ellipsize="end"
                                 android:gravity="center_vertical|start"
                                 android:maxLines="2"
+                                android:paddingHorizontal="10dp"
                                 android:text="@{viewModel.localMediaDetailLiveData.audioSampleRate}"
                                 android:textColor="@color/text_default_color" />
                         </LinearLayout>
