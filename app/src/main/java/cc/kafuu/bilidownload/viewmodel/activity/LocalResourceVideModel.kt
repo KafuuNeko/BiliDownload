@@ -30,9 +30,6 @@ class LocalResourceVideModel : CoreViewModel() {
         private const val TAG = "LocalResourceVideModel"
     }
 
-    private val mScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-
-
     // 此页面加载状态，loading状态将显示加载动画（默认开启）
     val loadingStatusLiveData = MutableLiveData(LoadingStatus.loadingStatus())
 
@@ -102,31 +99,29 @@ class LocalResourceVideModel : CoreViewModel() {
         val taskDetail = taskDetailLiveData.value ?: return
         val resource = resourceLiveData.value ?: return
         val sourceFile = File(resource.file)
-        isExportingLiveData.value = true
-        mScope.launch {
-            if (!FileUtils.writeFileToUri(CommonLibs.requireContext(), uri, sourceFile)) {
-                popMessage(
-                    ToastMessage(
-                        CommonLibs.getString(R.string.export_resource_failed_message),
-                        Toast.LENGTH_SHORT
-                    )
+        isExportingLiveData.postValue(true)
+        if (!FileUtils.writeFileToUri(CommonLibs.requireContext(), uri, sourceFile)) {
+            popMessage(
+                ToastMessage(
+                    CommonLibs.getString(R.string.export_resource_failed_message),
+                    Toast.LENGTH_SHORT
                 )
-            } else {
-                popMessage(
-                    ToastMessage(
-                        CommonLibs.getString(
-                            R.string.export_resource_success_message,
-                            taskDetail.title
-                        ),
-                        Toast.LENGTH_SHORT
-                    )
+            )
+        } else {
+            popMessage(
+                ToastMessage(
+                    CommonLibs.getString(
+                        R.string.export_resource_success_message,
+                        taskDetail.title
+                    ),
+                    Toast.LENGTH_SHORT
                 )
-            }
-            isExportingLiveData.postValue(false)
+            )
         }
+        isExportingLiveData.postValue(false)
     }
 
-    fun deleteResource() {
+    suspend fun deleteResource() {
         val resource = resourceLiveData.value ?: return
         val file = File(resource.file)
         if (file.exists() && !file.delete()) {
@@ -138,10 +133,8 @@ class LocalResourceVideModel : CoreViewModel() {
             )
             return
         }
-        mScope.launch {
-            DownloadRepository.deleteResourceById(resource.id)
-            finishActivity()
-        }
+        DownloadRepository.deleteResourceById(resource.id)
+        finishActivity()
     }
 
 }

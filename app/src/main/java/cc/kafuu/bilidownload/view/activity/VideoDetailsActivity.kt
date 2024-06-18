@@ -21,6 +21,7 @@ import cc.kafuu.bilidownload.viewmodel.activity.VideoDetailsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDetailsViewModel>(
@@ -46,6 +47,11 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
     }
 
     private val mCoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mCoroutineScope.cancel()
+    }
 
     override fun initViews() {
         setImmersionStatusBar()

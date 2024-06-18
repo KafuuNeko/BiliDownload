@@ -14,6 +14,11 @@ import cc.kafuu.bilidownload.common.utils.CommonLibs
 import cc.kafuu.bilidownload.databinding.ActivityLocalResourceBinding
 import cc.kafuu.bilidownload.view.dialog.ConfirmDialog
 import cc.kafuu.bilidownload.viewmodel.activity.LocalResourceVideModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalResourceVideModel>(
     LocalResourceVideModel::class.java,
@@ -33,14 +38,21 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
 
     private lateinit var mCreateDocumentLauncher: ActivityResultLauncher<Intent>
 
+    private val mCoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val contracts = ActivityResultContracts.StartActivityForResult()
         mCreateDocumentLauncher = registerForActivityResult(contracts) {
             if (it.resultCode == RESULT_OK && it.data != null) {
-                mViewModel.exportResource(it.data?.data ?: return@registerForActivityResult)
+                mCoroutineScope.launch { mViewModel.exportResource(it.data?.data ?: return@launch) }
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mCoroutineScope.cancel()
     }
 
     override fun initViews() {
@@ -97,7 +109,7 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
             CommonLibs.getString(R.string.text_cancel),
             CommonLibs.getString(R.string.text_delete),
         ) {
-            mViewModel.deleteResource()
+            mCoroutineScope.launch { mViewModel.deleteResource() }
             true
         }.apply {
             rightButtonTextColor = CommonLibs.getColor(R.color.white)

@@ -15,6 +15,7 @@ import cc.kafuu.bilidownload.viewmodel.activity.MainViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
@@ -27,7 +28,7 @@ class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
     BR.viewModel
 ) {
     companion object {
-        private val mScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+        private val mCoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,6 +38,7 @@ class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
 
     override fun onDestroy() {
         EventBus.getDefault().unregister(this)
+        mCoroutineScope.cancel()
         super.onDestroy()
     }
 
@@ -57,7 +59,7 @@ class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
                 mViewDataBinding.vp2Content.setCurrentItem(position, false)
             }
         }
-        mScope.launch { DownloadService.resumeDownload(this@MainActivity) }
+        mCoroutineScope.launch { DownloadService.resumeDownload(this@MainActivity) }
     }
 
     private fun getFragments() = listOf(
