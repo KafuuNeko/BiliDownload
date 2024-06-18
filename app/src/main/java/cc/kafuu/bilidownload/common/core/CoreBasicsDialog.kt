@@ -29,8 +29,6 @@ abstract class CoreBasicsDialog<V : ViewDataBinding>(
         super.onStart()
 
         dialog?.apply {
-            setCanceledOnTouchOutside(false)
-            setCancelable(false)
             window?.let {
                 val width = CommonLibs.requireContext().resources.displayMetrics.widthPixels * 0.9f
                 it.setLayout(
@@ -44,7 +42,7 @@ abstract class CoreBasicsDialog<V : ViewDataBinding>(
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        dismiss()
+        dismissAllowingStateLoss()
     }
 
     override fun onCreateView(

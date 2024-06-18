@@ -95,8 +95,8 @@ class BiliPartDialog : CoreAdvancedDialog<DialogBiliPartBinding, BiliPartViewMod
 
     private fun onDialogStatusChanged(status: Int) {
         when (status) {
-            cc.kafuu.bilidownload.common.model.ConfirmDialogStatus.CLOSED -> dismiss()
-            cc.kafuu.bilidownload.common.model.ConfirmDialogStatus.CONFIRMING -> onConfirm()
+            ConfirmDialogStatus.CLOSED -> dismissAllowingStateLoss()
+            ConfirmDialogStatus.CONFIRMING -> onConfirm()
         }
     }
 
@@ -111,7 +111,7 @@ class BiliPartDialog : CoreAdvancedDialog<DialogBiliPartBinding, BiliPartViewMod
                 Toast.LENGTH_SHORT
             )
         )
-        mViewModel.dialogStatusLiveData.value = cc.kafuu.bilidownload.common.model.ConfirmDialogStatus.CLOSED
+        mViewModel.dialogStatusLiveData.value = ConfirmDialogStatus.CLOSED
     }
 
     private fun onVideoSelectStatusChanged(item: BiliStreamResourceModel) {

@@ -49,7 +49,7 @@ class ConfirmDialog : CoreBasicsDialog<DialogConfirmBinding>(R.layout.dialog_con
         tvBtnLeft.apply {
             setOnClickListener {
                 if (leftClickCallback == null || leftClickCallback?.invoke() == true) {
-                    dismiss()
+                    dismissAllowingStateLoss()
                 }
             }
             leftButtonText?.let { this.text = it }
@@ -58,7 +58,7 @@ class ConfirmDialog : CoreBasicsDialog<DialogConfirmBinding>(R.layout.dialog_con
         tvBtnRight.apply {
             setOnClickListener {
                 if (rightClickCallback?.invoke() == true) {
-                    dismiss()
+                    dismissAllowingStateLoss()
                 }
             }
             rightButtonText?.let { this.text = it }
