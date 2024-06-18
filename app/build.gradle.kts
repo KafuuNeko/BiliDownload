@@ -13,8 +13,8 @@ android {
         applicationId = "cc.kafuu.bilidownload"
         minSdk = 24
         targetSdk = 34
-        versionCode = 2_01_00
-        versionName = "2.1.0.foss"
+        versionCode = 2_01_01
+        versionName = "2.1.1.foss"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
