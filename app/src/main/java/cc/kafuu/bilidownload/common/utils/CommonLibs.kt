@@ -20,7 +20,7 @@ object CommonLibs {
     private var mAppDatabase: AppDatabase? = null
 
     fun init(context: Context) {
-        mContext = context
+        mContext = context.applicationContext
         mAppDatabase = AppDatabase.requireInstance(context)
     }
 
