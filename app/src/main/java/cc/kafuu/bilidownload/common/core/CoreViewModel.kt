@@ -4,12 +4,12 @@ import android.content.Intent
 import androidx.activity.result.ActivityResult
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import cc.kafuu.bilidownload.common.model.ActivityJumpData
-import cc.kafuu.bilidownload.common.model.popmessage.PopMessage
+import cc.kafuu.bilidownload.common.model.action.ActivityJumpAction
+import cc.kafuu.bilidownload.common.model.action.ViewAction
+import cc.kafuu.bilidownload.common.model.action.popmessage.PopMessageAction
 
 open class CoreViewModel : ViewModel() {
-    val activityJumpLiveData = MutableLiveData<ActivityJumpData>()
-    val popMessageLiveData = MutableLiveData<PopMessage>()
+    val viewActionLiveData = MutableLiveData<ViewAction>()
 
     /**
      * 启动 activity
@@ -20,8 +20,8 @@ open class CoreViewModel : ViewModel() {
         targetIntent: Intent? = null,
         finishCurrent: Boolean = false
     ) {
-        activityJumpLiveData.postValue(
-            ActivityJumpData(
+        viewActionLiveData.postValue(
+            ActivityJumpAction(
                 targetIntent,
                 targetClass,
                 finishCurrent
@@ -34,8 +34,8 @@ open class CoreViewModel : ViewModel() {
      */
     @JvmOverloads
     fun finishActivity(activityResult: ActivityResult? = null) {
-        activityJumpLiveData.postValue(
-            ActivityJumpData(
+        viewActionLiveData.postValue(
+            ActivityJumpAction(
                 null,
                 null,
                 true,
@@ -47,7 +47,7 @@ open class CoreViewModel : ViewModel() {
     /**
      * 弹出消息
      */
-    fun popMessage(message: PopMessage) {
-        popMessageLiveData.postValue(message)
+    fun popMessage(message: PopMessageAction) {
+        viewActionLiveData.postValue(message)
     }
 }

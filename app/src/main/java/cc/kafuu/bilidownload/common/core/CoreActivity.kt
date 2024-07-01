@@ -15,10 +15,10 @@ import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.lifecycle.ViewModelProvider
 import cc.kafuu.bilidownload.R
-import cc.kafuu.bilidownload.common.manager.ActivityStackManager
-import cc.kafuu.bilidownload.common.manager.PopMessageManager
-import cc.kafuu.bilidownload.common.model.popmessage.PopMessage
 import cc.kafuu.bilidownload.common.CommonLibs
+import cc.kafuu.bilidownload.common.core.listener.IAvailableActivity
+import cc.kafuu.bilidownload.common.core.listener.ViewActionListener
+import cc.kafuu.bilidownload.common.manager.ActivityStackManager
 
 /**
  * 本应用中所有Activity的基类，提供常用的数据绑定和视图模型设置功能。
@@ -35,7 +35,7 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
     @LayoutRes private val layoutId: Int,
     private val viewModelId: Int
 ) : AppCompatActivity(), IAvailableActivity {
-    private lateinit var mActivityJumpListener: ActivityJumpListener
+    private lateinit var mViewActionListener: ViewActionListener
 
     protected lateinit var mViewDataBinding: V
     protected lateinit var mViewModel: VM
@@ -61,9 +61,8 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
             mViewDataBinding.setVariable(viewModelId, mViewModel)
         }
         mViewDataBinding.lifecycleOwner = this
-        mActivityJumpListener = ActivityJumpListener(this)
-        initActJumpData()
-        initPopMessage()
+        mViewActionListener = ViewActionListener(this)
+        initViewAction()
         initViews()
     }
 
@@ -87,33 +86,16 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
     }
 
     /**
-     * 初始化用于监听pop消息的LiveData
+     * 初始化用于监听视图Action的监听器
+     * 目前负责处理Activity跳转和消息弹窗Action
      */
-    private fun initPopMessage() {
-        if (mViewModel.popMessageLiveData.hasObservers()) {
+    private fun initViewAction() {
+        if (mViewModel.viewActionLiveData.hasObservers()) {
             return
         }
-        mViewModel.popMessageLiveData.observe(this) {
-            onPopMessage(it)
-        }
-    }
 
-    /**
-     * 弹出消息事件
-     */
-    protected fun onPopMessage(message: PopMessage) {
-        PopMessageManager.popMessage(this, message)
-    }
-
-    /**
-     * 初始化用于监听Activity跳转的 LiveData。如果已经有观察者，则不进行重复的初始化。
-     */
-    private fun initActJumpData() {
-        if (mViewModel.activityJumpLiveData.hasObservers()) {
-            return
-        }
-        mViewModel.activityJumpLiveData.observe(this) {
-            mActivityJumpListener.onActivityJumpLiveDataChange(it)
+        mViewModel.viewActionLiveData.observe(this) {
+            mViewActionListener.onViewAction(it)
         }
     }
 

@@ -1,8 +1,8 @@
-package cc.kafuu.bilidownload.common.core
+package cc.kafuu.bilidownload.common.core.listener
 
 import android.content.ComponentName
 import android.content.Intent
-import cc.kafuu.bilidownload.common.model.ActivityJumpData
+import cc.kafuu.bilidownload.common.model.action.ActivityJumpAction
 
 class ActivityJumpListener(
     private val availableActivity: IAvailableActivity
@@ -12,7 +12,7 @@ class ActivityJumpListener(
      *
      * @param jumpData Activity跳转的数据，包含了目标Activity和其他跳转信息。
      */
-    fun onActivityJumpLiveDataChange(jumpData: ActivityJumpData) {
+    fun onActivityJumpLiveDataChange(jumpData: ActivityJumpAction) {
         if (jumpData.isDeprecated) {
             return
         }

@@ -5,14 +5,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.adapter.PartResourceRVAdapter
-import cc.kafuu.bilidownload.common.core.CoreAdvancedDialog
+import cc.kafuu.bilidownload.common.core.dialog.CoreAdvancedDialog
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.databinding.DialogBiliPartBinding
 import cc.kafuu.bilidownload.common.model.ConfirmDialogStatus
 import cc.kafuu.bilidownload.common.model.DashType
 import cc.kafuu.bilidownload.common.model.bili.BiliStreamResourceModel
-import cc.kafuu.bilidownload.common.model.popmessage.ToastMessage
+import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
 import cc.kafuu.bilidownload.viewmodel.dialog.BiliPartDialogCallback
 import cc.kafuu.bilidownload.viewmodel.dialog.BiliPartViewModel
 
@@ -105,7 +105,7 @@ class BiliPartDialog : CoreAdvancedDialog<DialogBiliPartBinding, BiliPartViewMod
             mViewModel.currentAudioResourceLiveData.value?.resource
         )
         mViewModel.popMessage(
-            ToastMessage(
+            ToastMessageAction(
                 CommonLibs.getString(R.string.text_added_download_queue),
                 Toast.LENGTH_SHORT
             )

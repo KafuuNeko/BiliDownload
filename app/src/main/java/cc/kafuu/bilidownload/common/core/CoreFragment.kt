@@ -9,8 +9,8 @@ import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import cc.kafuu.bilidownload.common.manager.PopMessageManager
-import cc.kafuu.bilidownload.common.model.popmessage.PopMessage
+import cc.kafuu.bilidownload.common.core.listener.IAvailableActivity
+import cc.kafuu.bilidownload.common.core.listener.ViewActionListener
 
 /**
  * 本应用中所有Fragment的基类，提供了常用的数据绑定和视图模型设置功能。
@@ -27,7 +27,7 @@ abstract class CoreFragment<V : ViewDataBinding, VM : CoreViewModel>(
     @LayoutRes private val layoutId: Int,
     private val viewModelId: Int
 ) : Fragment(), IAvailableActivity {
-    private lateinit var mActivityJumpListener: ActivityJumpListener
+    private lateinit var mViewActionListener: ViewActionListener
 
     protected lateinit var mViewDataBinding: V
     protected lateinit var mViewModel: VM
@@ -57,41 +57,23 @@ abstract class CoreFragment<V : ViewDataBinding, VM : CoreViewModel>(
             mViewDataBinding.setVariable(viewModelId, mViewModel)
         }
         mViewDataBinding.lifecycleOwner = this
-        mActivityJumpListener = ActivityJumpListener(this)
-        initPopMessage()
-        initActJumpData()
+        mViewActionListener = ViewActionListener(this)
+        initViewAction()
         initViews()
         return mViewDataBinding.root
     }
 
     /**
-     * 初始化用于监听pop消息的LiveData
+     * 初始化用于监听视图Action的监听器
+     * 目前负责处理Activity跳转和消息弹窗Action
      */
-    private fun initPopMessage() {
-        if (mViewModel.popMessageLiveData.hasObservers()) {
+    private fun initViewAction() {
+        if (mViewModel.viewActionLiveData.hasObservers()) {
             return
         }
-        mViewModel.popMessageLiveData.observe(viewLifecycleOwner) {
-            onPopMessage(it)
-        }
-    }
 
-    /**
-     * 弹出消息事件
-     */
-    protected fun onPopMessage(message: PopMessage) {
-        PopMessageManager.popMessage(requireContext(), message)
-    }
-
-    /**
-     * 初始化用于监听Fragment跳转的 LiveData。如果已经有观察者，则不进行重复的初始化。
-     */
-    private fun initActJumpData() {
-        if (mViewModel.activityJumpLiveData.hasObservers()) {
-            return
-        }
-        mViewModel.activityJumpLiveData.observe(viewLifecycleOwner) {
-            mActivityJumpListener.onActivityJumpLiveDataChange(it)
+        mViewModel.viewActionLiveData.observe(viewLifecycleOwner) {
+            mViewActionListener.onViewAction(it)
         }
     }
 }

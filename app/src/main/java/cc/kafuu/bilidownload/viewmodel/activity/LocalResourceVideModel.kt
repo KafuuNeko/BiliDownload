@@ -12,7 +12,7 @@ import cc.kafuu.bilidownload.common.core.CoreViewModel
 import cc.kafuu.bilidownload.common.model.IAsyncCallback
 import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.common.model.LocalMediaDetail
-import cc.kafuu.bilidownload.common.model.popmessage.ToastMessage
+import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
 import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
@@ -98,14 +98,14 @@ class LocalResourceVideModel : CoreViewModel() {
         isExportingLiveData.postValue(true)
         if (!FileUtils.writeFileToUri(CommonLibs.requireContext(), uri, sourceFile)) {
             popMessage(
-                ToastMessage(
+                ToastMessageAction(
                     CommonLibs.getString(R.string.export_resource_failed_message),
                     Toast.LENGTH_SHORT
                 )
             )
         } else {
             popMessage(
-                ToastMessage(
+                ToastMessageAction(
                     CommonLibs.getString(
                         R.string.export_resource_success_message,
                         taskDetail.title
@@ -122,7 +122,7 @@ class LocalResourceVideModel : CoreViewModel() {
         val file = File(resource.file)
         if (file.exists() && !file.delete()) {
             popMessage(
-                ToastMessage(
+                ToastMessageAction(
                     CommonLibs.getString(R.string.delete_resource_failed_message),
                     Toast.LENGTH_SHORT
                 )

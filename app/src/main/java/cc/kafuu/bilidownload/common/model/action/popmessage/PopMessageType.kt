@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.common.model.popmessage
+package cc.kafuu.bilidownload.common.model.action.popmessage
 
 import androidx.annotation.IntDef
 @IntDef(PopMessageType.TOAST)

@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.common.core
+package cc.kafuu.bilidownload.common.core.listener
 
 import android.app.Activity
 

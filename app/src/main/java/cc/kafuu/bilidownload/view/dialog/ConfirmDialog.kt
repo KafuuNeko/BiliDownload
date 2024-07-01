@@ -2,7 +2,7 @@ package cc.kafuu.bilidownload.view.dialog
 
 import android.graphics.drawable.Drawable
 import cc.kafuu.bilidownload.R
-import cc.kafuu.bilidownload.common.core.CoreBasicsDialog
+import cc.kafuu.bilidownload.common.core.dialog.CoreBasicsDialog
 import cc.kafuu.bilidownload.databinding.DialogConfirmBinding
 
 typealias ConfirmDialogCallback = (() -> Boolean)

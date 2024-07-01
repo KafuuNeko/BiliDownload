@@ -14,7 +14,7 @@ import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
 import cc.kafuu.bilidownload.common.model.bili.BiliResourceModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoPartModel
-import cc.kafuu.bilidownload.common.model.popmessage.ToastMessage
+import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
 
 class VideoDetailsViewModel : CoreViewModel() {
     val loadingStatusLiveData = MutableLiveData(LoadingStatus.waitStatus())
@@ -109,7 +109,7 @@ class VideoDetailsViewModel : CoreViewModel() {
             }
 
             override fun onFailure(httpCode: Int, code: Int, message: String) {
-                popMessage(ToastMessage(message, Toast.LENGTH_SHORT))
+                popMessage(ToastMessageAction(message, Toast.LENGTH_SHORT))
                 loadingVideoPartLiveData.postValue(null)
             }
         }

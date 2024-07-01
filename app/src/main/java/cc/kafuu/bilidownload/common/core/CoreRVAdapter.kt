@@ -2,7 +2,6 @@ package cc.kafuu.bilidownload.common.core
 
 import android.annotation.SuppressLint
 import android.content.Context
-import androidx.databinding.ViewDataBinding
 import androidx.recyclerview.widget.RecyclerView
 
 /**

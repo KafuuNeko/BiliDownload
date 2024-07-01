@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.common.core
+package cc.kafuu.bilidownload.common.core.dialog
 
 import android.content.res.Configuration
 import android.os.Bundle
