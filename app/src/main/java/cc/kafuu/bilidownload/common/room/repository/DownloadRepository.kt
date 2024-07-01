@@ -1,8 +1,8 @@
 package cc.kafuu.bilidownload.common.room.repository
 
 import android.database.sqlite.SQLiteConstraintException
-import cc.kafuu.bilidownload.common.model.DashType
-import cc.kafuu.bilidownload.common.model.DownloadResourceType
+import cc.kafuu.bilidownload.common.constant.DashType
+import cc.kafuu.bilidownload.common.constant.DownloadResourceType
 import cc.kafuu.bilidownload.common.model.bili.BiliDashModel
 import cc.kafuu.bilidownload.common.room.entity.DownloadDashEntity
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity

@@ -1,7 +1,7 @@
 package cc.kafuu.bilidownload.viewmodel.fragment
 
 import cc.kafuu.bilidownload.common.core.CoreViewModel
-import cc.kafuu.bilidownload.common.model.MainTabType
+import cc.kafuu.bilidownload.common.constant.MainTabType
 import cc.kafuu.bilidownload.common.model.event.MainTabSwitchEvent
 import cc.kafuu.bilidownload.view.activity.SearchActivity
 import org.greenrobot.eventbus.EventBus

@@ -4,7 +4,7 @@ import androidx.room.Entity
 import cc.kafuu.bilidownload.common.utils.BiliCodeUtils
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.utils.MimeTypeUtils
-import cc.kafuu.bilidownload.common.model.DashType
+import cc.kafuu.bilidownload.common.constant.DashType
 import java.io.File
 
 @Entity(primaryKeys = ["dashId", "taskEntityId", "codecId"], tableName = "DownloadDash")

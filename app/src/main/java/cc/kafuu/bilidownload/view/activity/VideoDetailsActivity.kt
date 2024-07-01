@@ -8,7 +8,7 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.adapter.VideoPartRVAdapter
 import cc.kafuu.bilidownload.common.core.CoreActivity
 import cc.kafuu.bilidownload.common.manager.DownloadManager
-import cc.kafuu.bilidownload.common.model.DashType
+import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.model.bili.BiliDashModel
 import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel

@@ -3,7 +3,7 @@ package cc.kafuu.bilidownload.view.fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import cc.kafuu.bilidownload.common.adapter.SearchRVAdapter
 import cc.kafuu.bilidownload.common.model.LoadingStatus
-import cc.kafuu.bilidownload.common.model.SearchType
+import cc.kafuu.bilidownload.common.constant.SearchType
 import cc.kafuu.bilidownload.viewmodel.fragment.SearchListViewModel
 import com.scwang.smart.refresh.layout.api.RefreshLayout
 import com.scwang.smart.refresh.layout.listener.OnRefreshListener

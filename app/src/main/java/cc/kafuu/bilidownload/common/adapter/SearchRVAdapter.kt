@@ -7,7 +7,7 @@ import cc.kafuu.bilidownload.common.adapter.holder.ItemSearchVideoHolder
 import cc.kafuu.bilidownload.common.core.CoreRVAdapter
 import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
-import cc.kafuu.bilidownload.common.model.SearchResultViewType
+import cc.kafuu.bilidownload.common.constant.SearchResultViewType
 import cc.kafuu.bilidownload.viewmodel.fragment.SearchListViewModel
 
 class SearchRVAdapter(viewModel: SearchListViewModel, context: Context) :

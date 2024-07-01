@@ -5,13 +5,14 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.core.CoreViewModel
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
 import cc.kafuu.bilidownload.common.CommonLibs
-import cc.kafuu.bilidownload.common.model.DashType
+import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.model.bili.BiliStreamResourceModel
+import cc.kafuu.bilidownload.common.constant.ConfirmDialogStatus
 
 typealias BiliPartDialogCallback = (video: BiliPlayStreamResource?, audio: BiliPlayStreamResource?) -> Unit
 
 class BiliPartViewModel : CoreViewModel() {
-    val dialogStatusLiveData = MutableLiveData(cc.kafuu.bilidownload.common.model.ConfirmDialogStatus.WAITING)
+    val dialogStatusLiveData = MutableLiveData(ConfirmDialogStatus.WAITING)
 
     val titleLiveData = MutableLiveData<String>()
 
@@ -29,11 +30,11 @@ class BiliPartViewModel : CoreViewModel() {
     var confirmCallback: BiliPartDialogCallback? = null
 
     fun onConfirm() {
-        dialogStatusLiveData.value = cc.kafuu.bilidownload.common.model.ConfirmDialogStatus.CONFIRMING
+        dialogStatusLiveData.value = ConfirmDialogStatus.CONFIRMING
     }
 
     fun onClose() {
-        dialogStatusLiveData.value = cc.kafuu.bilidownload.common.model.ConfirmDialogStatus.CLOSED
+        dialogStatusLiveData.value = ConfirmDialogStatus.CLOSED
     }
 
     fun onSelected(item: BiliStreamResourceModel) {

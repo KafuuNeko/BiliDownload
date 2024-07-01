@@ -7,7 +7,7 @@ import cc.kafuu.bilidownload.common.network.model.BiliSearchData
 import cc.kafuu.bilidownload.common.network.model.BiliSearchMediaResultData
 import cc.kafuu.bilidownload.common.network.model.BiliSearchVideoResultData
 import cc.kafuu.bilidownload.common.model.LoadingStatus
-import cc.kafuu.bilidownload.common.model.SearchType
+import cc.kafuu.bilidownload.common.constant.SearchType
 import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.view.activity.VideoDetailsActivity

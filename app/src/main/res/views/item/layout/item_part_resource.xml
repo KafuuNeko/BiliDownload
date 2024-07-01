@@ -15,7 +15,7 @@
 
         <import type="cc.kafuu.bilidownload.common.utils.BiliCodeUtils" />
 
-        <import type="cc.kafuu.bilidownload.common.model.DashType" />
+        <import type="cc.kafuu.bilidownload.common.constant.DashType" />
     </data>
 
     <androidx.cardview.widget.CardView

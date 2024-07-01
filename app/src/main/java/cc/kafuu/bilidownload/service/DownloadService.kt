@@ -8,8 +8,8 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import cc.kafuu.bilidownload.common.manager.DownloadManager
-import cc.kafuu.bilidownload.common.model.DashType
-import cc.kafuu.bilidownload.common.model.DownloadResourceType
+import cc.kafuu.bilidownload.common.constant.DashType
+import cc.kafuu.bilidownload.common.constant.DownloadResourceType
 import cc.kafuu.bilidownload.common.model.DownloadTaskStatus
 import cc.kafuu.bilidownload.common.model.event.DownloadRequestFailedEvent
 import cc.kafuu.bilidownload.common.model.event.DownloadStatusChangeEvent

@@ -1,6 +1,6 @@
 package cc.kafuu.bilidownload.common.model.bili
 
-import cc.kafuu.bilidownload.common.model.DashType
+import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
 
 data class BiliDashModel (

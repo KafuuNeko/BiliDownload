@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.common.model
+package cc.kafuu.bilidownload.common.constant
 
 import androidx.annotation.IntDef
 

@@ -2,8 +2,7 @@ package cc.kafuu.bilidownload.common.room.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import cc.kafuu.bilidownload.common.model.DashType
-import cc.kafuu.bilidownload.common.model.DownloadResourceType
+import cc.kafuu.bilidownload.common.constant.DownloadResourceType
 
 @Entity(tableName = "DownloadResource")
 data class DownloadResourceEntity(
