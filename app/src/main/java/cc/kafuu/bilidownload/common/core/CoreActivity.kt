@@ -1,11 +1,9 @@
 package cc.kafuu.bilidownload.common.core
 
-import android.content.ComponentName
-import android.content.Intent
+import android.app.Activity
 import android.os.Build
 import android.os.Bundle
 import android.view.View
-import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
 import androidx.activity.result.ActivityResult
@@ -19,9 +17,8 @@ import androidx.lifecycle.ViewModelProvider
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.manager.ActivityStackManager
 import cc.kafuu.bilidownload.common.manager.PopMessageManager
-import cc.kafuu.bilidownload.common.utils.CommonLibs
-import cc.kafuu.bilidownload.common.model.ActivityJumpData
 import cc.kafuu.bilidownload.common.model.popmessage.PopMessage
+import cc.kafuu.bilidownload.common.utils.CommonLibs
 
 /**
  * 本应用中所有Activity的基类，提供常用的数据绑定和视图模型设置功能。
@@ -37,7 +34,9 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
     private val vmClass: Class<VM>,
     @LayoutRes private val layoutId: Int,
     private val viewModelId: Int
-) : AppCompatActivity() {
+) : AppCompatActivity(), IAvailableActivity {
+    private lateinit var mActivityJumpListener: ActivityJumpListener
+
     protected lateinit var mViewDataBinding: V
     protected lateinit var mViewModel: VM
 
@@ -45,6 +44,8 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
      * 子类需要实现这个函数来初始化视图组件。
      */
     protected abstract fun initViews()
+
+    override fun requireAvailableActivity(): Activity = this
 
     /**
      * 完成数据绑定和视图模型的初始化工作，以及其他初始化操作。
@@ -60,6 +61,7 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
             mViewDataBinding.setVariable(viewModelId, mViewModel)
         }
         mViewDataBinding.lifecycleOwner = this
+        mActivityJumpListener = ActivityJumpListener(this)
         initActJumpData()
         initPopMessage()
         initViews()
@@ -100,7 +102,7 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
      * 弹出消息事件
      */
     protected fun onPopMessage(message: PopMessage) {
-       PopMessageManager.popMessage(this, message)
+        PopMessageManager.popMessage(this, message)
     }
 
     /**
@@ -111,36 +113,8 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
             return
         }
         mViewModel.activityJumpLiveData.observe(this) {
-            onActivityJumpLiveDataChange(it)
+            mActivityJumpListener.onActivityJumpLiveDataChange(it)
         }
-    }
-
-    /**
-     * 当Activity跳转的 LiveData 发生变化时被调用，处理Activity跳转逻辑。
-     *
-     * @param jumpData Activity跳转的数据，包含了目标Activity和其他跳转信息。
-     */
-    private fun onActivityJumpLiveDataChange(jumpData: cc.kafuu.bilidownload.common.model.ActivityJumpData) {
-        if (jumpData.isDeprecated) {
-            return
-        }
-
-        jumpData.targetClass?.let { targetClass ->
-            (jumpData.targetIntent ?: Intent()).apply {
-                component = ComponentName(this@CoreActivity, targetClass)
-            }.also { targetIntent ->
-                startActivity(targetIntent)
-            }
-        }
-
-        if (jumpData.finishCurrent) {
-            jumpData.activityResult?.let { activityResult ->
-                setResult(activityResult.resultCode, activityResult.data)
-            }
-            finish()
-        }
-
-        jumpData.isDeprecated = true
     }
 
     /**
@@ -186,5 +160,4 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
             window.statusBarColor = ContextCompat.getColor(this, R.color.transparent)
         }
     }
-
 }

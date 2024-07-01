@@ -1,7 +1,5 @@
 package cc.kafuu.bilidownload.common.core
 
-import android.content.ComponentName
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,7 +9,6 @@ import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.lifecycle.ViewModelProvider
 import cc.kafuu.bilidownload.common.manager.PopMessageManager
-import cc.kafuu.bilidownload.common.model.ActivityJumpData
 import cc.kafuu.bilidownload.common.model.popmessage.PopMessage
 
 
@@ -19,8 +16,12 @@ abstract class CoreAdvancedDialog<V : ViewDataBinding, VM : CoreViewModel>(
     private val vmClass: Class<VM>,
     @LayoutRes val layoutId: Int,
     private val viewModelId: Int
-) : CoreBasicsDialog<V>(layoutId) {
+) : CoreBasicsDialog<V>(layoutId), IAvailableActivity {
+    private lateinit var mActivityJumpListener: ActivityJumpListener
+
     protected lateinit var mViewModel: VM
+
+    override fun requireAvailableActivity() = requireActivity()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -33,6 +34,7 @@ abstract class CoreAdvancedDialog<V : ViewDataBinding, VM : CoreViewModel>(
             mViewDataBinding.setVariable(viewModelId, mViewModel)
         }
         mViewDataBinding.lifecycleOwner = this
+        mActivityJumpListener = ActivityJumpListener(this)
         initPopMessage()
         initActJumpData()
         return mViewDataBinding.root
@@ -65,36 +67,8 @@ abstract class CoreAdvancedDialog<V : ViewDataBinding, VM : CoreViewModel>(
             return
         }
         mViewModel.activityJumpLiveData.observe(viewLifecycleOwner) {
-            onActivityJumpLiveDataChange(it)
+            mActivityJumpListener.onActivityJumpLiveDataChange(it)
         }
-    }
-
-    /**
-     * 当活动跳转的 LiveData 发生变化时被调用，处理Fragment跳转逻辑。
-     *
-     * @param jumpData Fragment跳转的数据，包含了目标活动和其他跳转信息。
-     */
-    private fun onActivityJumpLiveDataChange(jumpData: ActivityJumpData) {
-        if (jumpData.isDeprecated) {
-            return
-        }
-
-        jumpData.targetClass?.let { targetClass ->
-            (jumpData.targetIntent ?: Intent()).apply {
-                component = ComponentName(requireActivity(), targetClass)
-            }.also { targetIntent ->
-                startActivity(targetIntent)
-            }
-        }
-
-        if (jumpData.finishCurrent) {
-            jumpData.activityResult?.let { activityResult ->
-                requireActivity().setResult(activityResult.resultCode, activityResult.data)
-            }
-            requireActivity().finish()
-        }
-
-        jumpData.isDeprecated = true
     }
 }
 

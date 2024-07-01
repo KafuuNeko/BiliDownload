@@ -1,7 +1,5 @@
 package cc.kafuu.bilidownload.common.core
 
-import android.content.ComponentName
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -12,7 +10,6 @@ import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import cc.kafuu.bilidownload.common.manager.PopMessageManager
-import cc.kafuu.bilidownload.common.model.ActivityJumpData
 import cc.kafuu.bilidownload.common.model.popmessage.PopMessage
 
 /**
@@ -29,7 +26,8 @@ abstract class CoreFragment<V : ViewDataBinding, VM : CoreViewModel>(
     private val vmClass: Class<VM>,
     @LayoutRes private val layoutId: Int,
     private val viewModelId: Int
-) : Fragment() {
+) : Fragment(), IAvailableActivity {
+    private lateinit var mActivityJumpListener: ActivityJumpListener
 
     protected lateinit var mViewDataBinding: V
     protected lateinit var mViewModel: VM
@@ -38,6 +36,8 @@ abstract class CoreFragment<V : ViewDataBinding, VM : CoreViewModel>(
      * 子类需要实现这个函数来初始化视图组件。
      */
     abstract fun initViews()
+
+    override fun requireAvailableActivity() = requireActivity()
 
     /**
      * 完成数据绑定和视图模型的初始化工作，以及其他初始化操作。
@@ -57,6 +57,7 @@ abstract class CoreFragment<V : ViewDataBinding, VM : CoreViewModel>(
             mViewDataBinding.setVariable(viewModelId, mViewModel)
         }
         mViewDataBinding.lifecycleOwner = this
+        mActivityJumpListener = ActivityJumpListener(this)
         initPopMessage()
         initActJumpData()
         initViews()
@@ -90,35 +91,7 @@ abstract class CoreFragment<V : ViewDataBinding, VM : CoreViewModel>(
             return
         }
         mViewModel.activityJumpLiveData.observe(viewLifecycleOwner) {
-            onActivityJumpLiveDataChange(it)
+            mActivityJumpListener.onActivityJumpLiveDataChange(it)
         }
-    }
-
-    /**
-     * 当活动跳转的 LiveData 发生变化时被调用，处理Fragment跳转逻辑。
-     *
-     * @param jumpData Fragment跳转的数据，包含了目标活动和其他跳转信息。
-     */
-    private fun onActivityJumpLiveDataChange(jumpData: cc.kafuu.bilidownload.common.model.ActivityJumpData) {
-        if (jumpData.isDeprecated) {
-            return
-        }
-
-        jumpData.targetClass?.let { targetClass ->
-            (jumpData.targetIntent ?: Intent()).apply {
-                component = ComponentName(requireActivity(), targetClass)
-            }.also { targetIntent ->
-                startActivity(targetIntent)
-            }
-        }
-
-        if (jumpData.finishCurrent) {
-            jumpData.activityResult?.let { activityResult ->
-                requireActivity().setResult(activityResult.resultCode, activityResult.data)
-            }
-            requireActivity().finish()
-        }
-
-        jumpData.isDeprecated = true
     }
 }
