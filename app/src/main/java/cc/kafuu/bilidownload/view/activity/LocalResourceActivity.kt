@@ -10,7 +10,7 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.core.CoreActivity
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
-import cc.kafuu.bilidownload.common.utils.CommonLibs
+import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.databinding.ActivityLocalResourceBinding
 import cc.kafuu.bilidownload.view.dialog.ConfirmDialog
 import cc.kafuu.bilidownload.viewmodel.activity.LocalResourceVideModel

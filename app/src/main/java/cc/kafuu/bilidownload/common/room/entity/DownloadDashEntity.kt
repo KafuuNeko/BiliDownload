@@ -2,7 +2,7 @@ package cc.kafuu.bilidownload.common.room.entity
 
 import androidx.room.Entity
 import cc.kafuu.bilidownload.common.utils.BiliCodeUtils
-import cc.kafuu.bilidownload.common.utils.CommonLibs
+import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.utils.MimeTypeUtils
 import cc.kafuu.bilidownload.common.model.DashType
 import java.io.File

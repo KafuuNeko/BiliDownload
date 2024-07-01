@@ -2,10 +2,6 @@ package cc.kafuu.bilidownload.common.room.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
-import cc.kafuu.bilidownload.common.utils.CommonLibs
-import cc.kafuu.bilidownload.common.utils.MimeTypeUtils
-import java.io.File
 
 @Entity(tableName = "DownloadTask")
 data class DownloadTaskEntity(

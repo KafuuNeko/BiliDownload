@@ -3,7 +3,7 @@ package cc.kafuu.bilidownload.viewmodel.fragment
 import cc.kafuu.bilidownload.common.core.CoreViewModel
 import cc.kafuu.bilidownload.common.manager.AccountManager
 import cc.kafuu.bilidownload.common.network.NetworkConfig
-import cc.kafuu.bilidownload.common.utils.CommonLibs
+import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.view.activity.LoginActivity
 
 class MeViewModel : CoreViewModel() {

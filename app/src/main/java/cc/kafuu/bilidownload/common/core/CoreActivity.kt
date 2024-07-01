@@ -18,7 +18,7 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.manager.ActivityStackManager
 import cc.kafuu.bilidownload.common.manager.PopMessageManager
 import cc.kafuu.bilidownload.common.model.popmessage.PopMessage
-import cc.kafuu.bilidownload.common.utils.CommonLibs
+import cc.kafuu.bilidownload.common.CommonLibs
 
 /**
  * 本应用中所有Activity的基类，提供常用的数据绑定和视图模型设置功能。

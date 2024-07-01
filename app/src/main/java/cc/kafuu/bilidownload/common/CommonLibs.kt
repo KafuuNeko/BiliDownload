@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.common.utils
+package cc.kafuu.bilidownload.common
 
 import android.annotation.SuppressLint
 import android.content.Context

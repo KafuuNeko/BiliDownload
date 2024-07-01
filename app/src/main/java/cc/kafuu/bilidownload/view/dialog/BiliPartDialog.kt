@@ -1,6 +1,5 @@
 package cc.kafuu.bilidownload.view.dialog
 
-import android.content.res.Configuration
 import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import cc.kafuu.bilidownload.BR
@@ -8,7 +7,7 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.adapter.PartResourceRVAdapter
 import cc.kafuu.bilidownload.common.core.CoreAdvancedDialog
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
-import cc.kafuu.bilidownload.common.utils.CommonLibs
+import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.databinding.DialogBiliPartBinding
 import cc.kafuu.bilidownload.common.model.ConfirmDialogStatus
 import cc.kafuu.bilidownload.common.model.DashType

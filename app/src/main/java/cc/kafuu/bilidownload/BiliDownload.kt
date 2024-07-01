@@ -2,7 +2,7 @@ package cc.kafuu.bilidownload
 
 import android.app.Application
 import cc.kafuu.bilidownload.common.manager.AccountManager
-import cc.kafuu.bilidownload.common.utils.CommonLibs
+import cc.kafuu.bilidownload.common.CommonLibs
 import com.arialyy.aria.core.Aria
 
 class BiliDownload: Application() {

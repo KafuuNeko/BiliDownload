@@ -4,8 +4,7 @@ import androidx.lifecycle.MutableLiveData
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.core.CoreViewModel
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
-import cc.kafuu.bilidownload.common.utils.CommonLibs
-import cc.kafuu.bilidownload.common.model.ConfirmDialogStatus
+import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.model.DashType
 import cc.kafuu.bilidownload.common.model.bili.BiliStreamResourceModel
 

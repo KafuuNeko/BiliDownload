@@ -3,7 +3,7 @@ package cc.kafuu.bilidownload.common.room.repository
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.room.entity.BiliVideoMainEntity
 import cc.kafuu.bilidownload.common.room.entity.BiliVideoPartEntity
-import cc.kafuu.bilidownload.common.utils.CommonLibs
+import cc.kafuu.bilidownload.common.CommonLibs
 
 object BiliVideoRepository {
     private val mBiliVideoDao by lazy { CommonLibs.requireAppDatabase().biliVideoDao() }

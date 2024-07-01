@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
-import cc.kafuu.bilidownload.common.utils.CommonLibs
+import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.view.activity.HistoryDetailsActivity
 import com.arialyy.aria.core.Aria
 import com.bumptech.glide.load.resource.bitmap.CenterCrop

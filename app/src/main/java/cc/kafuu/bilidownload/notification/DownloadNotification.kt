@@ -4,7 +4,7 @@ import android.app.Notification
 import android.content.Context
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
-import cc.kafuu.bilidownload.common.utils.CommonLibs
+import cc.kafuu.bilidownload.common.CommonLibs
 
 class DownloadNotification(context: Context) : NotificationHelper(context) {
 

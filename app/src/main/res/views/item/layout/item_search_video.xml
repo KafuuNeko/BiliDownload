@@ -13,7 +13,7 @@
             name="data"
             type="cc.kafuu.bilidownload.common.model.bili.BiliVideoModel" />
 
-        <import type="cc.kafuu.bilidownload.common.utils.CommonLibs" />
+        <import type="cc.kafuu.bilidownload.common.CommonLibs" />
 
         <import type="cc.kafuu.bilidownload.R" />
 

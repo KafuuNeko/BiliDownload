@@ -7,7 +7,7 @@ import cc.kafuu.bilidownload.common.network.IServerCallback
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliAccountData
 import cc.kafuu.bilidownload.common.network.model.MyBiliAccountData
-import cc.kafuu.bilidownload.common.utils.CommonLibs
+import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.utils.NetworkUtils
 import cc.kafuu.bilidownload.common.model.bili.BiliAccountModel
 import com.google.gson.JsonObject

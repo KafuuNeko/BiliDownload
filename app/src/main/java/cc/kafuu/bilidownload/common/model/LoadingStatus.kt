@@ -2,7 +2,7 @@ package cc.kafuu.bilidownload.common.model
 
 import android.graphics.drawable.Drawable
 import cc.kafuu.bilidownload.R
-import cc.kafuu.bilidownload.common.utils.CommonLibs
+import cc.kafuu.bilidownload.common.CommonLibs
 
 class LoadingStatus private constructor(
     val statusCode: Int,

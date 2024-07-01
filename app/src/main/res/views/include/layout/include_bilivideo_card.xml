@@ -18,7 +18,7 @@
             name="createTime"
             type="String" />
 
-        <import type="cc.kafuu.bilidownload.common.utils.CommonLibs" />
+        <import type="cc.kafuu.bilidownload.common.CommonLibs" />
 
         <import type="cc.kafuu.bilidownload.R" />
 

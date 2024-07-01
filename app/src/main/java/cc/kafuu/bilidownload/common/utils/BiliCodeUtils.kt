@@ -1,6 +1,7 @@
 package cc.kafuu.bilidownload.common.utils
 
 import cc.kafuu.bilidownload.R
+import cc.kafuu.bilidownload.common.CommonLibs
 
 object BiliCodeUtils {
     fun getAudioQualityDescribe(id: Long): String {

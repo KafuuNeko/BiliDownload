@@ -5,7 +5,7 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.adapter.FragmentAdapter
 import cc.kafuu.bilidownload.common.core.CoreFragment
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
-import cc.kafuu.bilidownload.common.utils.CommonLibs
+import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.databinding.FragmentHomeBinding
 import cc.kafuu.bilidownload.viewmodel.fragment.HomeViewModel
 import com.google.android.material.tabs.TabLayoutMediator
