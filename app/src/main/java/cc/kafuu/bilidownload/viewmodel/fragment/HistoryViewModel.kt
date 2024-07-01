@@ -2,9 +2,9 @@ package cc.kafuu.bilidownload.viewmodel.fragment
 
 import androidx.lifecycle.LiveData
 import cc.kafuu.bilidownload.R
+import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
-import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.view.activity.HistoryDetailsActivity
 import com.arialyy.aria.core.Aria
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
@@ -15,8 +15,8 @@ class HistoryViewModel : RVViewModel() {
     lateinit var latestDownloadTaskLiveData: LiveData<List<DownloadTaskWithVideoDetails>>
 
     fun initData(vararg statuses: Int) {
-        latestDownloadTaskLiveData = CommonLibs.requireAppDatabase().downloadTaskDao()
-            .getDownloadTasksWithVideoDetailsLiveData(*statuses)
+        latestDownloadTaskLiveData = CommonLibs.requireAppDatabase()
+            .downloadTaskDao().getDownloadTasksWithVideoDetailsLiveData(*statuses)
     }
 
     fun getStatusIcon(task: DownloadTaskWithVideoDetails) = CommonLibs.getDrawable(

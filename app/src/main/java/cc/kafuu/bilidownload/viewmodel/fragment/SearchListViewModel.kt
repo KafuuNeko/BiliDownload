@@ -93,11 +93,8 @@ class SearchListViewModel : RVViewModel() {
                 else -> throw IllegalStateException("Unknown result from $result")
             }
         })
-        loadingStatusMessageMutableLiveData.postValue(
-            if (searchData.isEmpty()) LoadingStatus.emptyStatus() else LoadingStatus.doneStatus()
-        )
+        updateList(searchData)
         mNextPage++
-        listMutableLiveData.postValue(searchData)
     }
 
     private fun disposeResult(element: BiliSearchVideoResultData) = BiliVideoModel(
