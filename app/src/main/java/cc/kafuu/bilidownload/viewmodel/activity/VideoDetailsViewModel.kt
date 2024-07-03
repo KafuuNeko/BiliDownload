@@ -3,33 +3,45 @@ package cc.kafuu.bilidownload.viewmodel.activity
 import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import cc.kafuu.bilidownload.common.core.CoreViewModel
+import cc.kafuu.bilidownload.common.model.LoadingStatus
+import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
+import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
+import cc.kafuu.bilidownload.common.model.bili.BiliResourceModel
+import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
+import cc.kafuu.bilidownload.common.model.bili.BiliVideoPartModel
 import cc.kafuu.bilidownload.common.network.IServerCallback
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
 import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.utils.TimeUtils
-import cc.kafuu.bilidownload.common.model.LoadingStatus
-import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
-import cc.kafuu.bilidownload.common.model.bili.BiliResourceModel
-import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
-import cc.kafuu.bilidownload.common.model.bili.BiliVideoPartModel
-import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
+import cc.kafuu.bilidownload.common.utils.liveData
 
 class VideoDetailsViewModel : CoreViewModel() {
-    val loadingStatusLiveData = MutableLiveData(LoadingStatus.waitStatus())
-    val biliResourceModelLiveData = MutableLiveData<BiliResourceModel>()
-    val biliVideoPageListLiveData = MutableLiveData<List<BiliVideoPartModel>>()
+    private val mLoadingStatusLiveData = MutableLiveData(LoadingStatus.waitStatus())
+    val loadingStatusLiveData = mLoadingStatusLiveData.liveData()
+
+    private val mBiliResourceModelLiveData = MutableLiveData<BiliResourceModel>()
+    val biliResourceModelLiveData = mBiliResourceModelLiveData.liveData()
+
+    private val mBiliVideoPageListLiveData = MutableLiveData<List<BiliVideoPartModel>>()
+    val biliVideoPageListLiveData = mBiliVideoPageListLiveData.liveData()
+
     // 选中的片段
-    val selectedVideoPartLiveData = MutableLiveData<BiliVideoPartModel?>()
+    private val mSelectedVideoPartLiveData = MutableLiveData<BiliVideoPartModel?>()
+    val selectedVideoPartLiveData = mSelectedVideoPartLiveData.liveData()
+
     // 选中的片段视频流数据
-    val selectedBiliPlayStreamDashLiveData = MutableLiveData<BiliPlayStreamDash>()
+    private val mSelectedBiliPlayStreamDashLiveData = MutableLiveData<BiliPlayStreamDash>()
+    val selectedBiliPlayStreamDashLiveData = mSelectedBiliPlayStreamDashLiveData.liveData()
+
     // 正在加载视频流数据的片段
-    val loadingVideoPartLiveData = MutableLiveData<BiliVideoPartModel?>()
+    private val mLoadingVideoPartLiveData = MutableLiveData<BiliVideoPartModel?>()
+    val loadingVideoPartLiveData = mLoadingVideoPartLiveData.liveData()
 
     fun initData(media: BiliMediaModel) {
-        loadingStatusLiveData.value = LoadingStatus.loadingStatus()
-        biliResourceModelLiveData.value = media
+        mLoadingStatusLiveData.value = LoadingStatus.loadingStatus()
+        mBiliResourceModelLiveData.value = media
 
         val callback = object : IServerCallback<BiliSeasonData> {
             override fun onSuccess(
@@ -38,7 +50,7 @@ class VideoDetailsViewModel : CoreViewModel() {
                 message: String,
                 data: BiliSeasonData
             ) {
-                biliVideoPageListLiveData.postValue(data.episodes.map {
+                mBiliVideoPageListLiveData.postValue(data.episodes.map {
                     BiliVideoPartModel(
                         bvid = it.bvid,
                         cid = it.cid,
@@ -46,11 +58,11 @@ class VideoDetailsViewModel : CoreViewModel() {
                         remark = it.badge
                     )
                 })
-                loadingStatusLiveData.value = LoadingStatus.doneStatus()
+                mLoadingStatusLiveData.value = LoadingStatus.doneStatus()
             }
 
             override fun onFailure(httpCode: Int, code: Int, message: String) {
-                loadingStatusLiveData.value = LoadingStatus.errorStatus(
+                mLoadingStatusLiveData.value = LoadingStatus.errorStatus(
                     message = message
                 )
             }
@@ -66,11 +78,11 @@ class VideoDetailsViewModel : CoreViewModel() {
     }
 
     fun initData(video: BiliVideoModel) {
-        loadingStatusLiveData.value = LoadingStatus.loadingStatus()
-        biliResourceModelLiveData.value = video
+        mLoadingStatusLiveData.value = LoadingStatus.loadingStatus()
+        mBiliResourceModelLiveData.value = video
         val callback = object : IServerCallback<BiliVideoData> {
             override fun onSuccess(httpCode: Int, code: Int, message: String, data: BiliVideoData) {
-                biliVideoPageListLiveData.postValue(data.pages.map {
+                mBiliVideoPageListLiveData.postValue(data.pages.map {
                     BiliVideoPartModel(
                         bvid = video.bvid,
                         cid = it.cid,
@@ -78,11 +90,11 @@ class VideoDetailsViewModel : CoreViewModel() {
                         remark = TimeUtils.formatSecondTime(it.duration)
                     )
                 })
-                loadingStatusLiveData.value = LoadingStatus.doneStatus()
+                mLoadingStatusLiveData.value = LoadingStatus.doneStatus()
             }
 
             override fun onFailure(httpCode: Int, code: Int, message: String) {
-                loadingStatusLiveData.value = LoadingStatus.errorStatus(
+                mLoadingStatusLiveData.value = LoadingStatus.errorStatus(
                     message = message
                 )
             }
@@ -94,8 +106,8 @@ class VideoDetailsViewModel : CoreViewModel() {
     fun onPartSelected(item: BiliVideoPartModel) {
         if (loadingVideoPartLiveData.value != null) return
 
-        selectedVideoPartLiveData.value = item
-        loadingVideoPartLiveData.value = item
+        mSelectedVideoPartLiveData.value = item
+        mLoadingVideoPartLiveData.value = item
 
         val callback = object : IServerCallback<BiliPlayStreamDash> {
             override fun onSuccess(
@@ -104,13 +116,13 @@ class VideoDetailsViewModel : CoreViewModel() {
                 message: String,
                 data: BiliPlayStreamDash
             ) {
-                selectedBiliPlayStreamDashLiveData.postValue(data)
-                loadingVideoPartLiveData.postValue(null)
+                mSelectedBiliPlayStreamDashLiveData.postValue(data)
+                mLoadingVideoPartLiveData.postValue(null)
             }
 
             override fun onFailure(httpCode: Int, code: Int, message: String) {
                 popMessage(ToastMessageAction(message, Toast.LENGTH_SHORT))
-                loadingVideoPartLiveData.postValue(null)
+                mLoadingVideoPartLiveData.postValue(null)
             }
         }
         NetworkManager.biliVideoRepository.requestPlayStreamDash(item.bvid, item.cid, callback)

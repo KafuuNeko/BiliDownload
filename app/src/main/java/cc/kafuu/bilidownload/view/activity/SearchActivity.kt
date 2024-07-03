@@ -9,6 +9,7 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.core.CoreActivity
 import cc.kafuu.bilidownload.databinding.ActivitySearchBinding
 import cc.kafuu.bilidownload.common.constant.SearchType
+import cc.kafuu.bilidownload.common.utils.bindOnEditorAction
 import cc.kafuu.bilidownload.view.fragment.SearchListFragment
 import cc.kafuu.bilidownload.viewmodel.activity.SearchViewModel
 
@@ -42,6 +43,12 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
             hideSoftInput()
         }
         mViewDataBinding.spSearchType.onItemSelectedListener = this
+        mViewDataBinding.tvSearch.setOnClickListener {
+            mViewModel.onSearch(mViewDataBinding.etSearchContent.text.toString())
+        }
+        bindOnEditorAction(mViewDataBinding.etSearchContent) {
+            mViewModel.onSearch(mViewDataBinding.etSearchContent.text.toString())
+        }
     }
 
     private fun hideSoftInput() {

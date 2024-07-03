@@ -31,12 +31,12 @@ class SearchListViewModel : RVViewModel() {
         onSucceeded: (() -> Unit)? = null,
         onFailed: (() -> Unit)? = null
     ) {
-        if (keyword == null || loadingStatusMessageMutableLiveData.value?.statusCode == LoadingStatus.CODE_LOADING) {
+        if (keyword == null || mLoadingStatusMessageMutableLiveData.value?.statusCode == LoadingStatus.CODE_LOADING) {
             if (keyword != null) Log.d(TAG, "doSearch: Search execution")
             return
         }
         if (!loadMore) mNextPage = 1
-        loadingStatusMessageMutableLiveData.value = loadingStatus
+        mLoadingStatusMessageMutableLiveData.value = loadingStatus
 
         when (searchType) {
             SearchType.VIDEO -> mBiliSearchRepository.requestSearchVideo(
@@ -74,7 +74,7 @@ class SearchListViewModel : RVViewModel() {
         override fun onFailure(httpCode: Int, code: Int, message: String) {
             onFailed?.invoke()
             LoadingStatus.errorStatus(visibility = !loadMore, message = message).let {
-                loadingStatusMessageMutableLiveData.postValue(it)
+                mLoadingStatusMessageMutableLiveData.postValue(it)
             }
         }
     }

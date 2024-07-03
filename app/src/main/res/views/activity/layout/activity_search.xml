@@ -50,7 +50,6 @@
 
                 <EditText
                     android:id="@+id/et_search_content"
-                    bindOnEditorAction="@{()->viewModel.onSearch()}"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
@@ -64,7 +63,6 @@
                     android:imeOptions="actionSearch"
                     android:inputType="text|textNoSuggestions"
                     android:paddingHorizontal="5dp"
-                    android:text="@={viewModel.searchContextLiveData}"
                     android:textSize="14sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@+id/view"
@@ -101,7 +99,6 @@
                 android:id="@+id/tv_search"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:onClick="@{()->viewModel.onSearch()}"
                 android:padding="5dp"
                 android:text="@string/tv_search_text"
                 android:textColor="@color/primary_color" />

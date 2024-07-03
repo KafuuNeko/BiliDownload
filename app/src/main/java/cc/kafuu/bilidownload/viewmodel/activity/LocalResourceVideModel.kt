@@ -19,6 +19,7 @@ import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.utils.FFMpegUtils
 import cc.kafuu.bilidownload.common.utils.FileUtils
+import cc.kafuu.bilidownload.common.utils.liveData
 import java.io.File
 
 class LocalResourceVideModel : CoreViewModel() {
@@ -27,38 +28,43 @@ class LocalResourceVideModel : CoreViewModel() {
     }
 
     // 此页面加载状态，loading状态将显示加载动画（默认开启）
-    val loadingStatusLiveData = MutableLiveData(LoadingStatus.loadingStatus())
+    private val mLoadingStatusLiveData = MutableLiveData(LoadingStatus.loadingStatus())
+    val loadingStatusLiveData = mLoadingStatusLiveData.liveData()
 
     // 此资源隶属的任务详情
-    val taskDetailLiveData = MutableLiveData<DownloadTaskWithVideoDetails>()
+    private val mTaskDetailLiveData = MutableLiveData<DownloadTaskWithVideoDetails>()
+    val taskDetailLiveData = mTaskDetailLiveData.liveData()
 
     // 下载的资源实体
-    val resourceLiveData = MutableLiveData<DownloadResourceEntity>()
+    private val mResourceLiveData = MutableLiveData<DownloadResourceEntity>()
+    val resourceLiveData = mResourceLiveData.liveData()
 
     // 此资源文件信息
-    val localMediaDetailLiveData = MutableLiveData<LocalMediaDetail>()
+    private val mLocalMediaDetailLiveData = MutableLiveData<LocalMediaDetail>()
+    val localMediaDetailLiveData = mLocalMediaDetailLiveData.liveData()
 
-    val isExportingLiveData = MutableLiveData(false)
+    private val mIsExportingLiveData = MutableLiveData(false)
+    val isExportingLiveData = mIsExportingLiveData.liveData()
 
     fun updateResourceEntity(resource: DownloadResourceEntity) {
-        resourceLiveData.value = resource
+        mResourceLiveData.value = resource
         doLoadResourceDetails(resource)
     }
 
     fun updateTaskDetails(details: DownloadTaskWithVideoDetails) {
-        taskDetailLiveData.value = details
+        mTaskDetailLiveData.value = details
     }
 
     private fun doLoadResourceDetails(resource: DownloadResourceEntity) {
         object : IAsyncCallback<LocalMediaDetail, Exception> {
             override fun onSuccess(data: LocalMediaDetail) {
                 Log.d(TAG, "onSuccess: $data")
-                localMediaDetailLiveData.postValue(data)
+                mLocalMediaDetailLiveData.postValue(data)
             }
 
             override fun onFailure(exception: Exception) {
                 exception.printStackTrace()
-                loadingStatusLiveData.postValue(
+                mLoadingStatusLiveData.postValue(
                     LoadingStatus.errorStatus(message = exception.message ?: "Unknown exception")
                 )
             }
@@ -70,32 +76,32 @@ class LocalResourceVideModel : CoreViewModel() {
      */
     fun checkLoaded() {
         if (
-            taskDetailLiveData.value != null &&
-            resourceLiveData.value != null &&
-            localMediaDetailLiveData.value != null
+            mTaskDetailLiveData.value != null &&
+            mResourceLiveData.value != null &&
+            mLocalMediaDetailLiveData.value != null
         ) {
-            loadingStatusLiveData.postValue(LoadingStatus.doneStatus())
+            mLoadingStatusLiveData.postValue(LoadingStatus.doneStatus())
         }
     }
 
     fun tryShareResource(context: Context) {
-        val taskDetail = taskDetailLiveData.value ?: return
-        val resource = resourceLiveData.value ?: return
+        val taskDetail = mTaskDetailLiveData.value ?: return
+        val resource = mResourceLiveData.value ?: return
         FileUtils.tryShareFile(context, taskDetail.title, File(resource.file), resource.mimeType)
     }
 
     fun tryExportResource(createDocumentLauncher: ActivityResultLauncher<Intent>) {
-        if (isExportingLiveData.value == true) return
-        val resource = resourceLiveData.value ?: return
+        if (mIsExportingLiveData.value == true) return
+        val resource = mResourceLiveData.value ?: return
         val file = File(resource.file)
         FileUtils.tryExportFile(file, resource.mimeType, createDocumentLauncher)
     }
 
     fun exportResource(uri: Uri) {
-        val taskDetail = taskDetailLiveData.value ?: return
-        val resource = resourceLiveData.value ?: return
+        val taskDetail = mTaskDetailLiveData.value ?: return
+        val resource = mResourceLiveData.value ?: return
         val sourceFile = File(resource.file)
-        isExportingLiveData.postValue(true)
+        mIsExportingLiveData.postValue(true)
         if (!FileUtils.writeFileToUri(CommonLibs.requireContext(), uri, sourceFile)) {
             popMessage(
                 ToastMessageAction(
@@ -114,11 +120,11 @@ class LocalResourceVideModel : CoreViewModel() {
                 )
             )
         }
-        isExportingLiveData.postValue(false)
+        mIsExportingLiveData.postValue(false)
     }
 
     suspend fun deleteResource() {
-        val resource = resourceLiveData.value ?: return
+        val resource = mResourceLiveData.value ?: return
         val file = File(resource.file)
         if (file.exists() && !file.delete()) {
             popMessage(

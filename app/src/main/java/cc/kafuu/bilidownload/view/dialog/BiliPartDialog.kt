@@ -4,15 +4,15 @@ import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
-import cc.kafuu.bilidownload.common.adapter.PartResourceRVAdapter
-import cc.kafuu.bilidownload.common.core.dialog.CoreAdvancedDialog
-import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
 import cc.kafuu.bilidownload.common.CommonLibs
-import cc.kafuu.bilidownload.databinding.DialogBiliPartBinding
+import cc.kafuu.bilidownload.common.adapter.PartResourceRVAdapter
 import cc.kafuu.bilidownload.common.constant.ConfirmDialogStatus
 import cc.kafuu.bilidownload.common.constant.DashType
-import cc.kafuu.bilidownload.common.model.bili.BiliStreamResourceModel
+import cc.kafuu.bilidownload.common.core.dialog.CoreAdvancedDialog
 import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
+import cc.kafuu.bilidownload.common.model.bili.BiliStreamResourceModel
+import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
+import cc.kafuu.bilidownload.databinding.DialogBiliPartBinding
 import cc.kafuu.bilidownload.viewmodel.dialog.BiliPartDialogCallback
 import cc.kafuu.bilidownload.viewmodel.dialog.BiliPartViewModel
 
@@ -53,9 +53,10 @@ class BiliPartDialog : CoreAdvancedDialog<DialogBiliPartBinding, BiliPartViewMod
     }
 
     private fun initViewMode() {
-        mViewModel.titleLiveData.value = titleText
-        mViewModel.videoResourcesLiveData.value = videoList
-        mViewModel.audioResourcesLiveData.value = audioList
+        titleText?.also { mViewModel.updateTitle(it) }
+        videoList?.also { mViewModel.updateVideoResources(it) }
+        audioList?.also { mViewModel.updateAudioResources(it) }
+
         mViewModel.confirmCallback = confirmCallback
 
         mViewModel.dialogStatusLiveData.observe(this) {
@@ -110,7 +111,7 @@ class BiliPartDialog : CoreAdvancedDialog<DialogBiliPartBinding, BiliPartViewMod
                 Toast.LENGTH_SHORT
             )
         )
-        mViewModel.dialogStatusLiveData.value = ConfirmDialogStatus.CLOSED
+        mViewModel.changeStatus(ConfirmDialogStatus.CLOSED)
     }
 
     private fun onVideoSelectStatusChanged(item: BiliStreamResourceModel) {
@@ -127,16 +128,18 @@ class BiliPartDialog : CoreAdvancedDialog<DialogBiliPartBinding, BiliPartViewMod
     private fun updateConfirmText() {
         val audio = mViewModel.currentAudioResourceLiveData.value
         val video = mViewModel.currentVideoResourceLiveData.value
-        mViewModel.confirmTextLiveData.value = CommonLibs.getString(
-            if (audio == null && video == null) {
-                R.string.text_resource_not_selected
-            } else if (audio == null) {
-                R.string.text_resource_only_video
-            } else if (video == null) {
-                R.string.text_resource_only_audio
-            } else {
-                R.string.text_resource_download
-            }
+        mViewModel.updateConfirmText(
+            CommonLibs.getString(
+                if (audio == null && video == null) {
+                    R.string.text_resource_not_selected
+                } else if (audio == null) {
+                    R.string.text_resource_only_video
+                } else if (video == null) {
+                    R.string.text_resource_only_audio
+                } else {
+                    R.string.text_resource_download
+                }
+            )
         )
     }
 

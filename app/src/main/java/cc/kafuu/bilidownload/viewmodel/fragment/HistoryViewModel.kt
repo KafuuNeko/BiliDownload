@@ -13,6 +13,7 @@ class HistoryViewModel : RVViewModel() {
     val centerCrop = CenterCrop()
 
     lateinit var latestDownloadTaskLiveData: LiveData<List<DownloadTaskWithVideoDetails>>
+        private set
 
     fun initData(vararg statuses: Int) {
         latestDownloadTaskLiveData = CommonLibs.requireAppDatabase()
