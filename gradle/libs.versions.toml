@@ -45,6 +45,7 @@ ffmpeg-kit-full = { module = "com.arthenica:ffmpeg-kit-full", version.ref = "ffm
 github-glide = { module = "com.github.bumptech.glide:glide", version.ref = "glideVersion" }
 google-gson = { module = "com.google.code.gson:gson", version.ref = "gsonVersion" }
 hutool-crypto = { module = "cn.hutool:hutool-crypto", version.ref = "hutoolCrypto" }
+jetbrains-kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

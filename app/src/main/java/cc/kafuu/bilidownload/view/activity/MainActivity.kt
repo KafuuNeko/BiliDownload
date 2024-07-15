@@ -4,10 +4,10 @@ import android.os.Bundle
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.adapter.FragmentAdapter
-import cc.kafuu.bilidownload.common.core.CoreActivity
-import cc.kafuu.bilidownload.databinding.ActivityMainBinding
 import cc.kafuu.bilidownload.common.constant.MainTabType
+import cc.kafuu.bilidownload.common.core.CoreActivity
 import cc.kafuu.bilidownload.common.model.event.MainTabSwitchEvent
+import cc.kafuu.bilidownload.databinding.ActivityMainBinding
 import cc.kafuu.bilidownload.service.DownloadService
 import cc.kafuu.bilidownload.view.fragment.HomeFragment
 import cc.kafuu.bilidownload.view.fragment.MeFragment
@@ -45,9 +45,7 @@ class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
     override fun initViews() {
         setImmersionStatusBar()
         mViewDataBinding.vp2Content.apply {
-            adapter = FragmentAdapter(supportFragmentManager, lifecycle).apply {
-                addFragmentView(getFragments())
-            }
+            adapter = FragmentAdapter(supportFragmentManager, lifecycle, getFragments())
             isUserInputEnabled = false
             currentItem = MainTabType.TAB_HOME
         }
@@ -63,8 +61,8 @@ class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
     }
 
     private fun getFragments() = listOf(
-        HomeFragment.newInstance(),
-        MeFragment.newInstance()
+        HomeFragment.getBuilder(),
+        MeFragment.getBuilder()
     )
 
     @Subscribe(threadMode = ThreadMode.MAIN)
