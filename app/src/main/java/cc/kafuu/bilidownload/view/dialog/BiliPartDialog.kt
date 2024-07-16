@@ -8,56 +8,75 @@ import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.adapter.PartResourceRVAdapter
 import cc.kafuu.bilidownload.common.constant.ConfirmDialogStatus
 import cc.kafuu.bilidownload.common.constant.DashType
+import cc.kafuu.bilidownload.common.core.CoreFragmentBuilder
 import cc.kafuu.bilidownload.common.core.dialog.CoreAdvancedDialog
 import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
 import cc.kafuu.bilidownload.common.model.bili.BiliStreamResourceModel
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
+import cc.kafuu.bilidownload.common.utils.SerializationUtils.getSerializableByClass
 import cc.kafuu.bilidownload.databinding.DialogBiliPartBinding
-import cc.kafuu.bilidownload.viewmodel.dialog.BiliPartDialogCallback
 import cc.kafuu.bilidownload.viewmodel.dialog.BiliPartViewModel
 
+private typealias DialogResult = Pair<BiliPlayStreamResource?, BiliPlayStreamResource?>
 
-class BiliPartDialog : CoreAdvancedDialog<DialogBiliPartBinding, BiliPartViewModel>(
-    BiliPartViewModel::class.java,
-    R.layout.dialog_bili_part,
-    BR.viewModel
-) {
+class BiliPartDialog :
+    CoreAdvancedDialog<DialogBiliPartBinding, DialogResult, BiliPartViewModel>(
+        BiliPartViewModel::class.java,
+        R.layout.dialog_bili_part,
+        BR.viewModel
+    ) {
     companion object {
+        const val KEY_TITLE_TEXT = "title_text"
+        const val KEY_VIDEO_RESOURCES = "video_resources"
+        const val KEY_AUDIO_RESOURCES = "audio_resources"
+
         fun buildDialog(
             title: String,
             videoResources: List<BiliPlayStreamResource>?,
-            audioResources: List<BiliPlayStreamResource>?,
-            callback: BiliPartDialogCallback
-        ) = BiliPartDialog().apply {
-            titleText = title
-            videoList =
-                videoResources.orEmpty().map { BiliStreamResourceModel(it, DashType.VIDEO) }
-            audioList =
-                audioResources.orEmpty().map { BiliStreamResourceModel(it, DashType.AUDIO) }
-            confirmCallback = callback
-        }
+            audioResources: List<BiliPlayStreamResource>?
+        ) = CoreFragmentBuilder(BiliPartDialog::class).apply {
+            putArgument(KEY_TITLE_TEXT, title)
+            videoResources.orEmpty().map {
+                BiliStreamResourceModel(it, DashType.VIDEO)
+            }.also {
+                putArgument(KEY_VIDEO_RESOURCES, it.toTypedArray())
+            }
+            audioResources.orEmpty().map {
+                BiliStreamResourceModel(it, DashType.AUDIO)
+            }.also {
+                putArgument(KEY_AUDIO_RESOURCES, it.toTypedArray())
+            }
+        }.build()
     }
 
 
-    var titleText: String? = null
-    var videoList: List<BiliStreamResourceModel>? = null
-    var audioList: List<BiliStreamResourceModel>? = null
-    var confirmCallback: BiliPartDialogCallback? = null
+    private var mTitleText: String? = null
+    private var mVideoList: Array<BiliStreamResourceModel>? = null
+    private var mAudioList: Array<BiliStreamResourceModel>? = null
 
     private lateinit var mAudioListAdapter: PartResourceRVAdapter
     private lateinit var mVideoListAdapter: PartResourceRVAdapter
 
     override fun initViews() {
+        initArguments()
         initViewMode()
         initList()
     }
 
-    private fun initViewMode() {
-        titleText?.also { mViewModel.updateTitle(it) }
-        videoList?.also { mViewModel.updateVideoResources(it) }
-        audioList?.also { mViewModel.updateAudioResources(it) }
+    private fun initArguments() {
+        mTitleText = arguments?.getString(KEY_TITLE_TEXT)
+        mVideoList = arguments?.getSerializableByClass<Array<BiliStreamResourceModel>>(
+            KEY_VIDEO_RESOURCES
+        )
+        mAudioList = arguments?.getSerializableByClass<Array<BiliStreamResourceModel>>(
+            KEY_AUDIO_RESOURCES
+        )
+    }
 
-        mViewModel.confirmCallback = confirmCallback
+    private fun initViewMode() {
+        mTitleText?.also { mViewModel.updateTitle(it) }
+        mVideoList?.also { mViewModel.updateVideoResources(it.asList()) }
+        mAudioList?.also { mViewModel.updateAudioResources(it.asList()) }
 
         mViewModel.dialogStatusLiveData.observe(this) {
             onDialogStatusChanged(it)
@@ -93,25 +112,25 @@ class BiliPartDialog : CoreAdvancedDialog<DialogBiliPartBinding, BiliPartViewMod
         }
     }
 
-    private fun onDialogStatusChanged(status: Int) {
+    private fun onDialogStatusChanged(@ConfirmDialogStatus status: Int) {
         when (status) {
-            ConfirmDialogStatus.CLOSED -> dismissAllowingStateLoss()
+            ConfirmDialogStatus.CLOSED -> dismissWithResult()
             ConfirmDialogStatus.CONFIRMING -> onConfirm()
+            ConfirmDialogStatus.WAITING -> Unit
         }
     }
 
     private fun onConfirm() {
-        mViewModel.confirmCallback?.invoke(
-            mViewModel.currentVideoResourceLiveData.value?.resource,
-            mViewModel.currentAudioResourceLiveData.value?.resource
-        )
         mViewModel.popMessage(
             ToastMessageAction(
                 CommonLibs.getString(R.string.text_added_download_queue),
                 Toast.LENGTH_SHORT
             )
         )
-        mViewModel.changeStatus(ConfirmDialogStatus.CLOSED)
+        DialogResult(
+            mViewModel.currentVideoResourceLiveData.value?.resource,
+            mViewModel.currentAudioResourceLiveData.value?.resource
+        ).also { dismissWithResult(it) }
     }
 
     private fun onVideoSelectStatusChanged(item: BiliStreamResourceModel) {
@@ -128,19 +147,16 @@ class BiliPartDialog : CoreAdvancedDialog<DialogBiliPartBinding, BiliPartViewMod
     private fun updateConfirmText() {
         val audio = mViewModel.currentAudioResourceLiveData.value
         val video = mViewModel.currentVideoResourceLiveData.value
-        mViewModel.updateConfirmText(
-            CommonLibs.getString(
-                if (audio == null && video == null) {
-                    R.string.text_resource_not_selected
-                } else if (audio == null) {
-                    R.string.text_resource_only_video
-                } else if (video == null) {
-                    R.string.text_resource_only_audio
-                } else {
-                    R.string.text_resource_download
-                }
-            )
-        )
+        CommonLibs.getString(
+            if (audio == null && video == null) {
+                R.string.text_resource_not_selected
+            } else if (audio == null) {
+                R.string.text_resource_only_video
+            } else if (video == null) {
+                R.string.text_resource_only_audio
+            } else {
+                R.string.text_resource_download
+            }
+        ).also { mViewModel.updateConfirmText(it) }
     }
-
 }

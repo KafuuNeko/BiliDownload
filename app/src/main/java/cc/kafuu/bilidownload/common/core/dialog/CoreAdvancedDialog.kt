@@ -11,13 +11,15 @@ import androidx.lifecycle.ViewModelProvider
 import cc.kafuu.bilidownload.common.core.CoreViewModel
 import cc.kafuu.bilidownload.common.core.listener.IAvailableActivity
 import cc.kafuu.bilidownload.common.core.listener.ViewActionListener
+import java.io.Serializable
+import kotlin.reflect.KClass
 
 
-abstract class CoreAdvancedDialog<V : ViewDataBinding, VM : CoreViewModel>(
+abstract class CoreAdvancedDialog<V : ViewDataBinding, RS : Serializable, VM : CoreViewModel>(
     private val vmClass: Class<VM>,
     @LayoutRes val layoutId: Int,
     private val viewModelId: Int
-) : CoreBasicsDialog<V>(layoutId), IAvailableActivity {
+) : CoreBasicsDialog<V, RS>(layoutId), IAvailableActivity {
     private lateinit var mViewActionListener: ViewActionListener
 
     protected lateinit var mViewModel: VM

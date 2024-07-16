@@ -4,20 +4,17 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.lifecycleScope
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
+import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.core.CoreActivity
+import cc.kafuu.bilidownload.common.model.ResultWrapper
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
-import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.databinding.ActivityLocalResourceBinding
 import cc.kafuu.bilidownload.view.dialog.ConfirmDialog
 import cc.kafuu.bilidownload.viewmodel.activity.LocalResourceVideModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalResourceVideModel>(
@@ -34,25 +31,16 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
         }
     }
 
-    private var mCurrentDialog: DialogFragment? = null
-
     private lateinit var mCreateDocumentLauncher: ActivityResultLauncher<Intent>
-
-    private val mCoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val contracts = ActivityResultContracts.StartActivityForResult()
         mCreateDocumentLauncher = registerForActivityResult(contracts) {
             if (it.resultCode == RESULT_OK && it.data != null) {
-                mCoroutineScope.launch { mViewModel.exportResource(it.data?.data ?: return@launch) }
+                lifecycleScope.launch { mViewModel.exportResource(it.data?.data ?: return@launch) }
             }
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        mCoroutineScope.cancel()
     }
 
     override fun initViews() {
@@ -98,24 +86,17 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
         mViewModel.tryExportResource(mCreateDocumentLauncher)
     }
 
-    private fun onResourceDelete() {
-        if (mCurrentDialog?.isAdded == true) {
-            mCurrentDialog?.dismiss()
-        }
-
-        mCurrentDialog = ConfirmDialog.buildDialog(
+    private fun onResourceDelete() = lifecycleScope.launch {
+        val result = ConfirmDialog.buildDialog(
             CommonLibs.getString(R.string.text_delete_confirm),
             CommonLibs.getString(R.string.delete_resource_message),
             CommonLibs.getString(R.string.text_cancel),
             CommonLibs.getString(R.string.text_delete),
-        ) {
-            mCoroutineScope.launch { mViewModel.deleteResource() }
-            true
-        }.apply {
-            rightButtonTextColor = CommonLibs.getColor(R.color.white)
-            rightButtonBackground = CommonLibs.getDrawable(R.drawable.shape_button_delete)
+            rightButtonStyle = ConfirmDialog.Companion.ButtonStyle.Delete
+        ).showAndWaitResult(this@LocalResourceActivity)
+        if (result is ResultWrapper.Success && result.value) {
+            mViewModel.deleteResource()
         }
-        mCurrentDialog?.show(supportFragmentManager, null)
     }
 
 }

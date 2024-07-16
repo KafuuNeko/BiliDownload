@@ -2,26 +2,24 @@ package cc.kafuu.bilidownload.view.activity
 
 import android.content.Intent
 import android.util.Log
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.adapter.VideoPartRVAdapter
+import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.core.CoreActivity
 import cc.kafuu.bilidownload.common.manager.DownloadManager
-import cc.kafuu.bilidownload.common.constant.DashType
+import cc.kafuu.bilidownload.common.model.ResultWrapper
 import cc.kafuu.bilidownload.common.model.bili.BiliDashModel
 import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoPartModel
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
-import cc.kafuu.bilidownload.common.utils.SerializationUtils.getSerializable
+import cc.kafuu.bilidownload.common.utils.SerializationUtils.getSerializableByClass
 import cc.kafuu.bilidownload.databinding.ActivityVideoDetailsBinding
 import cc.kafuu.bilidownload.view.dialog.BiliPartDialog
 import cc.kafuu.bilidownload.viewmodel.activity.VideoDetailsViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDetailsViewModel>(
@@ -46,13 +44,6 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
         }
     }
 
-    private val mCoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-
-    override fun onDestroy() {
-        super.onDestroy()
-        mCoroutineScope.cancel()
-    }
-
     override fun initViews() {
         setImmersionStatusBar()
         if (!doInitData()) {
@@ -62,7 +53,7 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
         initList()
         mViewModel.selectedBiliPlayStreamDashLiveData.observe(this) {
             val part = mViewModel.selectedVideoPartLiveData.value ?: return@observe
-            createBiliPartDialog(part, it).show(supportFragmentManager, null)
+            createBiliPartDialog(part, it)
         }
         mViewModel.loadingVideoPartLiveData.observe(this) {
             onItemLoadingStatusChanged(
@@ -74,39 +65,34 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
     private fun createBiliPartDialog(
         part: BiliVideoPartModel,
         dash: BiliPlayStreamDash
-    ) = BiliPartDialog.buildDialog(
-        part.name,
-        dash.video,
-        dash.getAllAudio()
-    ) { selectedVideo, selectedAudio ->
-        Log.d(TAG, "selected: $selectedVideo, $selectedAudio")
-
-        val resources: List<BiliDashModel> = mutableListOf<BiliDashModel>().apply {
-            selectedVideo?.let { add(BiliDashModel.create(DashType.VIDEO, it)) }
-            selectedAudio?.let { add(BiliDashModel.create(DashType.AUDIO, it)) }
-        }
-
-        mCoroutineScope.launch {
+    ) = lifecycleScope.launch {
+        val result = BiliPartDialog.buildDialog(
+            part.name, dash.video, dash.getAllAudio()
+        ).showAndWaitResult(this@VideoDetailsActivity)
+        if (result is ResultWrapper.Success) {
+            val resources = mutableListOf<BiliDashModel>().apply {
+                result.value.first?.let { add(BiliDashModel.create(DashType.VIDEO, it)) }
+                result.value.second?.let { add(BiliDashModel.create(DashType.AUDIO, it)) }
+            }
             DownloadManager.startDownload(
-                this@VideoDetailsActivity,
-                part.bvid,
-                part.cid,
-                resources
+                this@VideoDetailsActivity, part.bvid, part.cid, resources
             )
+        } else {
+            Log.d(TAG, "createBiliPartDialog: $result")
         }
     }
 
     private fun doInitData() = when (intent.getStringExtra(KEY_OBJECT_TYPE)) {
         BiliVideoModel::class.simpleName -> {
             mViewModel.initData(
-                intent.getSerializable(KEY_OBJECT_INSTANCE, BiliVideoModel::class.java)
+                intent.getSerializableByClass<BiliVideoModel>(KEY_OBJECT_INSTANCE)!!
             )
             true
         }
 
         BiliMediaModel::class.simpleName -> {
             mViewModel.initData(
-                intent.getSerializable(KEY_OBJECT_INSTANCE, BiliMediaModel::class.java)
+                intent.getSerializableByClass<BiliMediaModel>(KEY_OBJECT_INSTANCE)!!
             )
             true
         }

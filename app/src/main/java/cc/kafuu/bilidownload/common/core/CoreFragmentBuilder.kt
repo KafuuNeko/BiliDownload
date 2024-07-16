@@ -21,10 +21,6 @@ class CoreFragmentBuilder<T : Fragment>(private val fragmentClass: KClass<T>) {
             is Long -> arguments.putLong(key, value)
             is Boolean -> arguments.putBoolean(key, value)
             is String -> arguments.putString(key, value)
-            is Array<*> -> if (value.isArrayOf<String>()) {
-                arguments.putStringArray(key, value as Array<String>)
-            }
-
             is Serializable -> arguments.putSerializable(key, value)
             is Bundle -> arguments.putBundle(key, value)
             else -> putExtraTypes(key, value)

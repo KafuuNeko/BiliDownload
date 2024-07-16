@@ -37,8 +37,6 @@ class BiliPartViewModel : CoreViewModel() {
     private val mConfirmTextLiveData = MutableLiveData(CommonLibs.getString(R.string.text_resource_not_selected))
     val confirmTextLiveData = mConfirmTextLiveData.liveData()
 
-    var confirmCallback: BiliPartDialogCallback? = null
-
     fun onConfirm() {
         mDialogStatusLiveData.value = ConfirmDialogStatus.CONFIRMING
     }

@@ -1,6 +1,7 @@
 package cc.kafuu.bilidownload.common.network.model
 
 import com.google.gson.annotations.SerializedName
+import java.io.Serializable
 
 // Bili取视频流响应
 data class BiliPlayStreamData(
@@ -58,7 +59,7 @@ data class BiliPlayStreamResource(
     val segmentBase: BiliPlayStreamSegmentBase,
     @SerializedName("codecid")
     val codecId: Long
-) {
+) : Serializable {
     fun getStreamUrl(): String {
         baseUrl?.let { return it }
         if (!backupUrl.isNullOrEmpty()) {

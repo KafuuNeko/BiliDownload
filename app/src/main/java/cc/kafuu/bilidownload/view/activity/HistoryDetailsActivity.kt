@@ -3,18 +3,20 @@ package cc.kafuu.bilidownload.view.activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
+import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.adapter.LocalResourceRVAdapter
 import cc.kafuu.bilidownload.common.core.CoreActivity
+import cc.kafuu.bilidownload.common.model.ResultWrapper
 import cc.kafuu.bilidownload.common.model.event.DownloadStatusChangeEvent
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
-import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.databinding.ActivityHistoryDetailsBinding
 import cc.kafuu.bilidownload.view.dialog.ConfirmDialog
 import cc.kafuu.bilidownload.viewmodel.activity.HistoryDetailsViewModel
+import kotlinx.coroutines.launch
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
@@ -33,8 +35,6 @@ class HistoryDetailsActivity : CoreActivity<ActivityHistoryDetailsBinding, Histo
             putExtra(KEY_ENTITY_ID, entityId)
         }
     }
-
-    private var mCurrentDialog: DialogFragment? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,24 +81,17 @@ class HistoryDetailsActivity : CoreActivity<ActivityHistoryDetailsBinding, Histo
         }
     }
 
-    private fun onDelete() {
-        if (mCurrentDialog?.isAdded == true) {
-            mCurrentDialog?.dismiss()
-        }
-
-        mCurrentDialog = ConfirmDialog.buildDialog(
+    private fun onDelete() = lifecycleScope.launch {
+        val result = ConfirmDialog.buildDialog(
             CommonLibs.getString(R.string.text_delete_confirm),
             CommonLibs.getString(R.string.delete_task_message),
             CommonLibs.getString(R.string.text_cancel),
             CommonLibs.getString(R.string.text_delete),
-        ) {
+            rightButtonStyle = ConfirmDialog.Companion.ButtonStyle.Delete
+        ).showAndWaitResult(this@HistoryDetailsActivity)
+        if (result is ResultWrapper.Success && result.value) {
             mViewModel.deleteDownloadTask()
-            true
-        }.apply {
-            rightButtonTextColor = CommonLibs.getColor(R.color.white)
-            rightButtonBackground = CommonLibs.getDrawable(R.drawable.shape_button_delete)
         }
-        mCurrentDialog?.show(supportFragmentManager, null)
     }
 
     @Subscribe(threadMode = ThreadMode.POSTING)

@@ -1,70 +1,93 @@
 package cc.kafuu.bilidownload.view.dialog
 
-import android.graphics.drawable.Drawable
+import androidx.annotation.ColorRes
+import androidx.annotation.DrawableRes
 import cc.kafuu.bilidownload.R
+import cc.kafuu.bilidownload.common.CommonLibs
+import cc.kafuu.bilidownload.common.core.CoreFragmentBuilder
 import cc.kafuu.bilidownload.common.core.dialog.CoreBasicsDialog
+import cc.kafuu.bilidownload.common.utils.SerializationUtils.getSerializableByClass
 import cc.kafuu.bilidownload.databinding.DialogConfirmBinding
+import java.io.Serializable
 
-typealias ConfirmDialogCallback = (() -> Boolean)
-
-class ConfirmDialog : CoreBasicsDialog<DialogConfirmBinding>(R.layout.dialog_confirm) {
+class ConfirmDialog : CoreBasicsDialog<DialogConfirmBinding, Boolean>(R.layout.dialog_confirm) {
 
     companion object {
+        const val KEY_TITLE = "title"
+        const val KEY_MESSAGE = "message"
+        const val KEY_LEFT_BUTTON_TEXT = "left_button_text"
+        const val KEY_RIGHT_BUTTON_TEXT = "right_button_text"
+        const val KEY_LEFT_BUTTON_STYLE = "left_button_style"
+        const val KEY_RIGHT_BUTTON_STYLE = "right_button_style"
+
+        enum class ButtonStyle(
+            @ColorRes val buttonTextColor: Int,
+            @DrawableRes val buttonBackground: Int
+        ) : Serializable {
+            General(R.color.white, R.drawable.shape_button_general),
+            Delete(R.color.white, R.drawable.shape_button_delete)
+        }
+
         fun buildDialog(
             title: String,
             message: String,
             leftButtonText: String,
             rightButtonText: String,
-            leftClickCallback: ConfirmDialogCallback? = null,
-            rightClickCallback: ConfirmDialogCallback? = null
-        ) = ConfirmDialog().apply {
-            this.title = title
-            this.message = message
-            this.leftButtonText = leftButtonText
-            this.rightButtonText = rightButtonText
-            this.leftClickCallback = leftClickCallback
-            this.rightClickCallback = rightClickCallback
-        }
+            leftButtonStyle: ButtonStyle = ButtonStyle.General,
+            rightButtonStyle: ButtonStyle = ButtonStyle.General
+        ) = CoreFragmentBuilder(ConfirmDialog::class).apply {
+            putArgument(KEY_TITLE, title)
+            putArgument(KEY_MESSAGE, message)
+            putArgument(KEY_LEFT_BUTTON_TEXT, leftButtonText)
+            putArgument(KEY_RIGHT_BUTTON_TEXT, rightButtonText)
+            putArgument(KEY_LEFT_BUTTON_STYLE, leftButtonStyle)
+            putArgument(KEY_RIGHT_BUTTON_STYLE, rightButtonStyle)
+        }.build()
     }
 
-    var title: String? = null
-    var message: String? = null
-    var leftButtonText: String? = null
-    var rightButtonText: String? = null
-
-    var leftClickCallback: ConfirmDialogCallback? = null
-    var rightClickCallback: ConfirmDialogCallback? = null
-
-    var rightButtonTextColor: Int? = null
-    var rightButtonBackground: Drawable? = null
+    private var mTitle: String? = null
+    private var mMessage: String? = null
+    private var mLeftButtonText: String? = null
+    private var mRightButtonText: String? = null
+    private var mLeftButtonStyle: ButtonStyle = ButtonStyle.General
+    private var mRightButtonStyle: ButtonStyle = ButtonStyle.General
 
     override fun initViews() {
         mViewDataBinding.init()
     }
 
     private fun DialogConfirmBinding.init() {
-        tvTitle.text = title
-        tvMessage.text = message
-
+        initArguments()
+        tvTitle.text = mTitle
+        tvMessage.text = mMessage
         tvBtnLeft.apply {
             setOnClickListener {
-                if (leftClickCallback == null || leftClickCallback?.invoke() == true) {
-                    dismissAllowingStateLoss()
-                }
+                dismissWithResult(false)
             }
-            leftButtonText?.let { this.text = it }
+            mLeftButtonText?.let { text = it }
+            setTextColor(CommonLibs.getColor(mLeftButtonStyle.buttonTextColor))
+            setBackgroundResource(mLeftButtonStyle.buttonBackground)
         }
-
         tvBtnRight.apply {
             setOnClickListener {
-                if (rightClickCallback?.invoke() == true) {
-                    dismissAllowingStateLoss()
-                }
+                dismissWithResult(true)
             }
-            rightButtonText?.let { this.text = it }
-            rightButtonTextColor?.let { this.setTextColor(it) }
-            rightButtonBackground?.let { this.setBackgroundDrawable(rightButtonBackground) }
+            mRightButtonText?.let { text = it }
+            setTextColor(CommonLibs.getColor(mRightButtonStyle.buttonTextColor))
+            setBackgroundResource(mRightButtonStyle.buttonBackground)
         }
+    }
 
+    private fun initArguments() {
+        mTitle = arguments?.getString(KEY_TITLE)
+        mMessage = arguments?.getString(KEY_MESSAGE)
+        mLeftButtonText = arguments?.getString(KEY_LEFT_BUTTON_TEXT)
+        mRightButtonText = arguments?.getString(KEY_RIGHT_BUTTON_TEXT)
+        arguments?.getSerializableByClass<ButtonStyle>(KEY_RIGHT_BUTTON_STYLE)?.let {
+            mRightButtonStyle = it
+        }
+        arguments?.getSerializableByClass<ButtonStyle>(KEY_LEFT_BUTTON_STYLE)?.let {
+            mLeftButtonStyle = it
+        }
     }
 }
