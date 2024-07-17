@@ -20,8 +20,8 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.withStarted
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
+import cc.kafuu.bilidownload.common.ext.getSerializableByClass
 import cc.kafuu.bilidownload.common.model.ResultWrapper
-import cc.kafuu.bilidownload.common.utils.SerializationUtils.getSerializableByClass
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.Serializable
 import kotlin.coroutines.resume
@@ -123,10 +123,11 @@ abstract class CoreBasicsDialog<V : ViewDataBinding, RS : Serializable>(
                 } catch (e: ClassCastException) {
                     ResultWrapper.Error(e)
                 }
-            } ?: ResultWrapper.Error(IllegalStateException("Result is null or not of expected type")))
+            }
+                ?: ResultWrapper.Error(IllegalStateException("Result is null or not of expected type")))
         }
     }
 
 }
 
-class DialogCancelledException(message: String): Exception(message)
+class DialogCancelledException(message: String) : Exception(message)

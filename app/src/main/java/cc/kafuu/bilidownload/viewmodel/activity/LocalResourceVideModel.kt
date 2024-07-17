@@ -8,7 +8,9 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.lifecycle.MutableLiveData
 import cc.kafuu.bilidownload.R
+import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.core.CoreViewModel
+import cc.kafuu.bilidownload.common.ext.liveData
 import cc.kafuu.bilidownload.common.model.IAsyncCallback
 import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.common.model.LocalMediaDetail
@@ -16,10 +18,8 @@ import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
 import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
-import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.utils.FFMpegUtils
 import cc.kafuu.bilidownload.common.utils.FileUtils
-import cc.kafuu.bilidownload.common.utils.liveData
 import java.io.File
 
 class LocalResourceVideModel : CoreViewModel() {

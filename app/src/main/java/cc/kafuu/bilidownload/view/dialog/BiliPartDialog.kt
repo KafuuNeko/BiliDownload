@@ -10,10 +10,10 @@ import cc.kafuu.bilidownload.common.constant.ConfirmDialogStatus
 import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.core.CoreFragmentBuilder
 import cc.kafuu.bilidownload.common.core.dialog.CoreAdvancedDialog
+import cc.kafuu.bilidownload.common.ext.getSerializableByClass
 import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
 import cc.kafuu.bilidownload.common.model.bili.BiliStreamResourceModel
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
-import cc.kafuu.bilidownload.common.utils.SerializationUtils.getSerializableByClass
 import cc.kafuu.bilidownload.databinding.DialogBiliPartBinding
 import cc.kafuu.bilidownload.viewmodel.dialog.BiliPartViewModel
 

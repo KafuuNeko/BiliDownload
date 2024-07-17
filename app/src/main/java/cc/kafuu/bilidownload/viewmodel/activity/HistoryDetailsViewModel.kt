@@ -3,13 +3,13 @@ package cc.kafuu.bilidownload.viewmodel.activity
 import androidx.lifecycle.MutableLiveData
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.core.CoreViewModel
+import cc.kafuu.bilidownload.common.ext.liveData
 import cc.kafuu.bilidownload.common.model.DownloadTaskStatus
 import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
 import cc.kafuu.bilidownload.common.utils.FileUtils
-import cc.kafuu.bilidownload.common.utils.liveData
 import cc.kafuu.bilidownload.service.DownloadService
 import cc.kafuu.bilidownload.view.activity.LocalResourceActivity
 import com.arialyy.aria.core.Aria

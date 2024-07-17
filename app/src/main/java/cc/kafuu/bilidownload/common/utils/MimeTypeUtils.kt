@@ -38,8 +38,6 @@ object MimeTypeUtils {
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" to "xlsx",
         "application/vnd.ms-powerpoint" to "ppt",
         "application/vnd.openxmlformats-officedocument.presentationml.presentation" to "pptx",
-
-        // 更多 MIME 类型...
     )
 
     /**

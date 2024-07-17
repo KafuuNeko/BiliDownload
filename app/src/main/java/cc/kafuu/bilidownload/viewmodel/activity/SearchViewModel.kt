@@ -3,7 +3,7 @@ package cc.kafuu.bilidownload.viewmodel.activity
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import cc.kafuu.bilidownload.common.core.CoreViewModel
-import cc.kafuu.bilidownload.common.utils.liveData
+import cc.kafuu.bilidownload.common.ext.liveData
 
 class SearchViewModel : CoreViewModel() {
     companion object {

@@ -9,6 +9,7 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.adapter.VideoPartRVAdapter
 import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.core.CoreActivity
+import cc.kafuu.bilidownload.common.ext.getSerializableByClass
 import cc.kafuu.bilidownload.common.manager.DownloadManager
 import cc.kafuu.bilidownload.common.model.ResultWrapper
 import cc.kafuu.bilidownload.common.model.bili.BiliDashModel
@@ -16,7 +17,6 @@ import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoPartModel
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
-import cc.kafuu.bilidownload.common.utils.SerializationUtils.getSerializableByClass
 import cc.kafuu.bilidownload.databinding.ActivityVideoDetailsBinding
 import cc.kafuu.bilidownload.view.dialog.BiliPartDialog
 import cc.kafuu.bilidownload.viewmodel.activity.VideoDetailsViewModel

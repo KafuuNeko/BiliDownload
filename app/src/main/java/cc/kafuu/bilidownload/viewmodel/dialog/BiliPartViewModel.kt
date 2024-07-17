@@ -2,13 +2,13 @@ package cc.kafuu.bilidownload.viewmodel.dialog
 
 import androidx.lifecycle.MutableLiveData
 import cc.kafuu.bilidownload.R
-import cc.kafuu.bilidownload.common.core.CoreViewModel
-import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
 import cc.kafuu.bilidownload.common.CommonLibs
-import cc.kafuu.bilidownload.common.constant.DashType
-import cc.kafuu.bilidownload.common.model.bili.BiliStreamResourceModel
 import cc.kafuu.bilidownload.common.constant.ConfirmDialogStatus
-import cc.kafuu.bilidownload.common.utils.liveData
+import cc.kafuu.bilidownload.common.constant.DashType
+import cc.kafuu.bilidownload.common.core.CoreViewModel
+import cc.kafuu.bilidownload.common.ext.liveData
+import cc.kafuu.bilidownload.common.model.bili.BiliStreamResourceModel
+import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
 
 typealias BiliPartDialogCallback = (video: BiliPlayStreamResource?, audio: BiliPlayStreamResource?) -> Unit
 
@@ -34,7 +34,8 @@ class BiliPartViewModel : CoreViewModel() {
     private val mPreviousResourceLiveData = MutableLiveData<BiliStreamResourceModel?>(null)
     val previousResourceLiveData = mPreviousResourceLiveData.liveData()
 
-    private val mConfirmTextLiveData = MutableLiveData(CommonLibs.getString(R.string.text_resource_not_selected))
+    private val mConfirmTextLiveData =
+        MutableLiveData(CommonLibs.getString(R.string.text_resource_not_selected))
     val confirmTextLiveData = mConfirmTextLiveData.liveData()
 
     fun onConfirm() {

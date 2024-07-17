@@ -3,6 +3,7 @@ package cc.kafuu.bilidownload.viewmodel.activity
 import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import cc.kafuu.bilidownload.common.core.CoreViewModel
+import cc.kafuu.bilidownload.common.ext.liveData
 import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
 import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
@@ -15,7 +16,6 @@ import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
 import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.utils.TimeUtils
-import cc.kafuu.bilidownload.common.utils.liveData
 
 class VideoDetailsViewModel : CoreViewModel() {
     private val mLoadingStatusLiveData = MutableLiveData(LoadingStatus.waitStatus())

@@ -1,11 +1,11 @@
 package cc.kafuu.bilidownload.viewmodel.activity
 
 import androidx.lifecycle.MutableLiveData
-import cc.kafuu.bilidownload.common.core.CoreViewModel
 import cc.kafuu.bilidownload.common.constant.MainTabType
-import cc.kafuu.bilidownload.common.utils.liveData
+import cc.kafuu.bilidownload.common.core.CoreViewModel
+import cc.kafuu.bilidownload.common.ext.liveData
 
-class MainViewModel: CoreViewModel() {
+class MainViewModel : CoreViewModel() {
     private val mTabPositionLiveData = MutableLiveData(MainTabType.TAB_HOME)
     val tabPositionLiveData = mTabPositionLiveData.liveData()
 

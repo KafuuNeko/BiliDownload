@@ -4,15 +4,16 @@ import android.os.Handler
 import android.os.Looper
 import androidx.lifecycle.MutableLiveData
 import cc.kafuu.bilidownload.common.core.CoreViewModel
+import cc.kafuu.bilidownload.common.ext.liveData
 import cc.kafuu.bilidownload.common.model.LoadingStatus
-import cc.kafuu.bilidownload.common.utils.liveData
 
 open class RVViewModel : CoreViewModel() {
     private val mHandler = Handler(Looper.getMainLooper())
 
-    private val mListMutableLiveData: MutableLiveData<MutableList<Any>> = MutableLiveData<MutableList<Any>>(
-        mutableListOf()
-    )
+    private val mListMutableLiveData: MutableLiveData<MutableList<Any>> =
+        MutableLiveData<MutableList<Any>>(
+            mutableListOf()
+        )
     val listMutableLiveData = mListMutableLiveData.liveData()
 
     protected val mLoadingStatusMessageMutableLiveData = MutableLiveData(LoadingStatus.waitStatus())

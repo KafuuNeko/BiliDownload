@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.common.utils
+package cc.kafuu.bilidownload.common.ext
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

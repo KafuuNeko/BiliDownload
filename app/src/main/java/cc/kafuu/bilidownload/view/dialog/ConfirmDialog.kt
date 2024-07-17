@@ -6,7 +6,7 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.core.CoreFragmentBuilder
 import cc.kafuu.bilidownload.common.core.dialog.CoreBasicsDialog
-import cc.kafuu.bilidownload.common.utils.SerializationUtils.getSerializableByClass
+import cc.kafuu.bilidownload.common.ext.getSerializableByClass
 import cc.kafuu.bilidownload.databinding.DialogConfirmBinding
 import java.io.Serializable
 
