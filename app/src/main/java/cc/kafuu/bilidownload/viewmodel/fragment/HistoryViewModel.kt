@@ -22,12 +22,12 @@ class HistoryViewModel : RVViewModel() {
 
     fun getStatusIcon(task: DownloadTaskWithVideoDetails) = CommonLibs.getDrawable(
         when (task.downloadTask.status) {
-            DownloadTaskEntity.STATUS_PREPARE -> R.drawable.ic_prepare
-            DownloadTaskEntity.STATUS_DOWNLOADING -> R.drawable.ic_downloading
-            DownloadTaskEntity.STATUS_DOWNLOAD_FAILED -> R.drawable.ic_download_failed_cloud
-            DownloadTaskEntity.STATUS_SYNTHESIS -> R.drawable.ic_synthesis
-            DownloadTaskEntity.STATUS_SYNTHESIS_FAILED -> R.drawable.ic_synthesis_failed
-            DownloadTaskEntity.STATUS_COMPLETED -> R.drawable.ic_download_done_cloud
+            DownloadTaskEntity.STATE_PREPARE -> R.drawable.ic_prepare
+            DownloadTaskEntity.STATE_DOWNLOADING -> R.drawable.ic_downloading
+            DownloadTaskEntity.STATE_DOWNLOAD_FAILED -> R.drawable.ic_download_failed_cloud
+            DownloadTaskEntity.STATE_SYNTHESIS -> R.drawable.ic_synthesis
+            DownloadTaskEntity.STATE_SYNTHESIS_FAILED -> R.drawable.ic_synthesis_failed
+            DownloadTaskEntity.STATE_COMPLETED -> R.drawable.ic_download_done_cloud
             else -> R.drawable.ic_unknown_med
         }
     )

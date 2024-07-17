@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload.view.dialog
 
+import android.os.Bundle
 import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import cc.kafuu.bilidownload.BR
@@ -8,9 +9,9 @@ import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.adapter.PartResourceRVAdapter
 import cc.kafuu.bilidownload.common.constant.ConfirmDialogStatus
 import cc.kafuu.bilidownload.common.constant.DashType
-import cc.kafuu.bilidownload.common.core.CoreFragmentBuilder
 import cc.kafuu.bilidownload.common.core.dialog.CoreAdvancedDialog
 import cc.kafuu.bilidownload.common.ext.getSerializableByClass
+import cc.kafuu.bilidownload.common.ext.putArgument
 import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
 import cc.kafuu.bilidownload.common.model.bili.BiliStreamResourceModel
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
@@ -34,19 +35,16 @@ class BiliPartDialog :
             title: String,
             videoResources: List<BiliPlayStreamResource>?,
             audioResources: List<BiliPlayStreamResource>?
-        ) = CoreFragmentBuilder(BiliPartDialog::class).apply {
-            putArgument(KEY_TITLE_TEXT, title)
-            videoResources.orEmpty().map {
-                BiliStreamResourceModel(it, DashType.VIDEO)
-            }.also {
-                putArgument(KEY_VIDEO_RESOURCES, it.toTypedArray())
-            }
-            audioResources.orEmpty().map {
-                BiliStreamResourceModel(it, DashType.AUDIO)
-            }.also {
-                putArgument(KEY_AUDIO_RESOURCES, it.toTypedArray())
-            }
-        }.build()
+        ) = BiliPartDialog().apply {
+            arguments = Bundle()
+                .putArgument(KEY_TITLE_TEXT, title)
+                .putArgument(KEY_VIDEO_RESOURCES, videoResources.orEmpty().map {
+                    BiliStreamResourceModel(it, DashType.VIDEO)
+                }.toTypedArray())
+                .putArgument(KEY_AUDIO_RESOURCES, audioResources.orEmpty().map {
+                    BiliStreamResourceModel(it, DashType.AUDIO)
+                }.toTypedArray())
+        }
     }
 
 

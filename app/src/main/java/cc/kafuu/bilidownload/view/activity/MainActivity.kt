@@ -61,8 +61,8 @@ class MainActivity : CoreActivity<ActivityMainBinding, MainViewModel>(
     }
 
     private fun getFragments() = listOf(
-        HomeFragment.getBuilder(),
-        MeFragment.getBuilder()
+        HomeFragment.builder(),
+        MeFragment.builder()
     )
 
     @Subscribe(threadMode = ThreadMode.MAIN)

@@ -17,8 +17,12 @@ class HomeFragment : CoreFragment<FragmentHomeBinding, HomeViewModel>(
     BR.viewModel
 ) {
     companion object {
+        object Builder: CoreFragmentBuilder<HomeFragment>() {
+            override fun onMallocFragment() = HomeFragment()
+        }
+
         @JvmStatic
-        fun getBuilder() = CoreFragmentBuilder(HomeFragment::class)
+        fun builder() = Builder
     }
 
     override fun initViews() {
@@ -33,25 +37,25 @@ class HomeFragment : CoreFragment<FragmentHomeBinding, HomeViewModel>(
     }
 
     private fun getFragments() = listOf(
-        CommonLibs.getString(R.string.home_tab_text_all) to HistoryFragment.getBuilder(
-            DownloadTaskEntity.STATUS_PREPARE,
-            DownloadTaskEntity.STATUS_DOWNLOADING,
-            DownloadTaskEntity.STATUS_DOWNLOAD_FAILED,
-            DownloadTaskEntity.STATUS_SYNTHESIS,
-            DownloadTaskEntity.STATUS_SYNTHESIS_FAILED,
-            DownloadTaskEntity.STATUS_COMPLETED
+        CommonLibs.getString(R.string.home_tab_text_all) to HistoryFragment.builder(
+            DownloadTaskEntity.STATE_PREPARE,
+            DownloadTaskEntity.STATE_DOWNLOADING,
+            DownloadTaskEntity.STATE_DOWNLOAD_FAILED,
+            DownloadTaskEntity.STATE_SYNTHESIS,
+            DownloadTaskEntity.STATE_SYNTHESIS_FAILED,
+            DownloadTaskEntity.STATE_COMPLETED
         ),
-        CommonLibs.getString(R.string.home_tab_text_completed) to HistoryFragment.getBuilder(
-            DownloadTaskEntity.STATUS_COMPLETED
+        CommonLibs.getString(R.string.home_tab_text_completed) to HistoryFragment.builder(
+            DownloadTaskEntity.STATE_COMPLETED
         ),
-        CommonLibs.getString(R.string.home_tab_text_running) to HistoryFragment.getBuilder(
-            DownloadTaskEntity.STATUS_PREPARE,
-            DownloadTaskEntity.STATUS_DOWNLOADING,
-            DownloadTaskEntity.STATUS_SYNTHESIS,
+        CommonLibs.getString(R.string.home_tab_text_running) to HistoryFragment.builder(
+            DownloadTaskEntity.STATE_PREPARE,
+            DownloadTaskEntity.STATE_DOWNLOADING,
+            DownloadTaskEntity.STATE_SYNTHESIS,
         ),
-        CommonLibs.getString(R.string.home_tab_text_failed) to HistoryFragment.getBuilder(
-            DownloadTaskEntity.STATUS_DOWNLOAD_FAILED,
-            DownloadTaskEntity.STATUS_SYNTHESIS_FAILED,
+        CommonLibs.getString(R.string.home_tab_text_failed) to HistoryFragment.builder(
+            DownloadTaskEntity.STATE_DOWNLOAD_FAILED,
+            DownloadTaskEntity.STATE_SYNTHESIS_FAILED,
         ),
     )
 }

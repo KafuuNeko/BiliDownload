@@ -59,8 +59,8 @@ class DownloadService : Service() {
         suspend fun resumeDownload(context: Context) {
             val intent = Intent(context, DownloadService::class.java)
             mDownloadTaskDao.getLatestDownloadTask(
-                DownloadTaskEntity.STATUS_DOWNLOADING,
-                DownloadTaskEntity.STATUS_PREPARE
+                DownloadTaskEntity.STATE_DOWNLOADING,
+                DownloadTaskEntity.STATE_PREPARE
             ).forEach {
                 if (it.downloadTaskId != null && !DownloadManager.containsTask(it.downloadTaskId!!)) {
                     intent.putExtra(KEY_ENTITY_ID, it.id)
@@ -149,7 +149,7 @@ class DownloadService : Service() {
             )
             // 如果无法获取视频详情，且这个任务还在准备阶段则直接删除任务
             // 因为没有对应获取视频详情失败的STATUS（也不需要）
-            if (entity.status == DownloadTaskEntity.STATUS_PREPARE) {
+            if (entity.status == DownloadTaskEntity.STATE_PREPARE) {
                 mServiceScope.launch { DownloadRepository.deleteDownloadTask(entity.id) }
             }
             Log.e(
@@ -219,7 +219,7 @@ class DownloadService : Service() {
      * */
     private suspend fun onDownloadFailed(entity: DownloadTaskEntity, task: DownloadGroupTask) {
         mDownloadTaskDao.update(entity.apply {
-            status = DownloadTaskEntity.STATUS_DOWNLOAD_FAILED
+            status = DownloadTaskEntity.STATE_DOWNLOAD_FAILED
         })
         mDownloadNotification.notificationDownloadFailed(entity)
     }
@@ -239,14 +239,14 @@ class DownloadService : Service() {
         val finalStatus = if (dashEntityList.size == 2 && videoDash != null && audioDash != null) {
             // 更新状态为正在合成
             mDownloadTaskDao.update(entity.apply {
-                status = DownloadTaskEntity.STATUS_SYNTHESIS
+                status = DownloadTaskEntity.STATE_SYNTHESIS
             })
             if (!tryMergeVideo(entity, videoDash, audioDash)) {
-                DownloadTaskEntity.STATUS_SYNTHESIS_FAILED
+                DownloadTaskEntity.STATE_SYNTHESIS_FAILED
             } else {
-                DownloadTaskEntity.STATUS_COMPLETED
+                DownloadTaskEntity.STATE_COMPLETED
             }
-        } else DownloadTaskEntity.STATUS_COMPLETED
+        } else DownloadTaskEntity.STATE_COMPLETED
 
         // 更新记录为最终状态
         mDownloadTaskDao.update(entity.apply {
@@ -262,9 +262,9 @@ class DownloadService : Service() {
             TAG,
             "Task [D${task.entity.id}, E${entity.id}] status change, percent: ${task.percent}%"
         )
-        if (entity.status != DownloadTaskEntity.STATUS_DOWNLOADING) {
+        if (entity.status != DownloadTaskEntity.STATE_DOWNLOADING) {
             mDownloadTaskDao.update(entity.apply {
-                status = DownloadTaskEntity.STATUS_DOWNLOADING
+                status = DownloadTaskEntity.STATE_DOWNLOADING
             })
         }
         mDownloadNotification.updateDownloadProgress(entity, task.percent)

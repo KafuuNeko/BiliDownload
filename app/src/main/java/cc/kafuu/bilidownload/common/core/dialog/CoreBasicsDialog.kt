@@ -116,15 +116,18 @@ abstract class CoreBasicsDialog<V : ViewDataBinding, RS : Serializable>(
                 continuation.resume(ResultWrapper.Error(DialogCancelledException("Cancelled")))
                 return@setFragmentResultListener
             }
-            continuation.resume(result.getSerializableByClass<Serializable>(KEY_RESULT)?.let {
+            (result.getSerializableByClass<Serializable>(KEY_RESULT)?.let {
                 try {
                     @Suppress("UNCHECKED_CAST")
                     ResultWrapper.Success(it as RS)
                 } catch (e: ClassCastException) {
                     ResultWrapper.Error(e)
                 }
+            } ?: ResultWrapper.Error(
+                IllegalStateException("Result is null or not of expected type")
+            )).also {
+                continuation.resume(it)
             }
-                ?: ResultWrapper.Error(IllegalStateException("Result is null or not of expected type")))
         }
     }
 

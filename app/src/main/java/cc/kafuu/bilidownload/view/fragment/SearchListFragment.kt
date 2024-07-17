@@ -2,8 +2,9 @@ package cc.kafuu.bilidownload.view.fragment
 
 import androidx.recyclerview.widget.LinearLayoutManager
 import cc.kafuu.bilidownload.common.adapter.SearchRVAdapter
-import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.common.constant.SearchType
+import cc.kafuu.bilidownload.common.core.CoreFragmentBuilder
+import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.viewmodel.fragment.SearchListViewModel
 import com.scwang.smart.refresh.layout.api.RefreshLayout
 import com.scwang.smart.refresh.layout.listener.OnRefreshListener
@@ -11,6 +12,14 @@ import com.scwang.smart.refresh.layout.listener.OnRefreshLoadMoreListener
 
 class SearchListFragment : RVFragment<SearchListViewModel>(SearchListViewModel::class.java),
     OnRefreshListener, OnRefreshLoadMoreListener {
+
+    companion object {
+        object Builder : CoreFragmentBuilder<SearchListFragment>() {
+            override fun onMallocFragment() = SearchListFragment()
+        }
+
+        fun builder() = Builder
+    }
 
     override fun initViews() {
         super.initViews()

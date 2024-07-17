@@ -1,12 +1,13 @@
 package cc.kafuu.bilidownload.view.dialog
 
+import android.os.Bundle
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
-import cc.kafuu.bilidownload.common.core.CoreFragmentBuilder
 import cc.kafuu.bilidownload.common.core.dialog.CoreBasicsDialog
 import cc.kafuu.bilidownload.common.ext.getSerializableByClass
+import cc.kafuu.bilidownload.common.ext.putArguments
 import cc.kafuu.bilidownload.databinding.DialogConfirmBinding
 import java.io.Serializable
 
@@ -35,14 +36,16 @@ class ConfirmDialog : CoreBasicsDialog<DialogConfirmBinding, Boolean>(R.layout.d
             rightButtonText: String,
             leftButtonStyle: ButtonStyle = ButtonStyle.General,
             rightButtonStyle: ButtonStyle = ButtonStyle.General
-        ) = CoreFragmentBuilder(ConfirmDialog::class).apply {
-            putArgument(KEY_TITLE, title)
-            putArgument(KEY_MESSAGE, message)
-            putArgument(KEY_LEFT_BUTTON_TEXT, leftButtonText)
-            putArgument(KEY_RIGHT_BUTTON_TEXT, rightButtonText)
-            putArgument(KEY_LEFT_BUTTON_STYLE, leftButtonStyle)
-            putArgument(KEY_RIGHT_BUTTON_STYLE, rightButtonStyle)
-        }.build()
+        ) = ConfirmDialog().apply {
+            arguments = Bundle().putArguments(
+                KEY_TITLE to title,
+                KEY_MESSAGE to message,
+                KEY_LEFT_BUTTON_TEXT to leftButtonText,
+                KEY_RIGHT_BUTTON_TEXT to rightButtonText,
+                KEY_LEFT_BUTTON_STYLE to leftButtonStyle,
+                KEY_RIGHT_BUTTON_STYLE to rightButtonStyle
+            )
+        }
     }
 
     private var mTitle: String? = null

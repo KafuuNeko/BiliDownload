@@ -248,7 +248,7 @@ object DownloadManager {
             .create()
 
         entity.downloadTaskId = downloadTaskId
-        entity.status = DownloadTaskEntity.STATUS_DOWNLOADING
+        entity.status = DownloadTaskEntity.STATE_DOWNLOADING
 
         mTaskEntityMap[downloadTaskId] = entity
         mCoroutineScope.launch { mDownloadTaskDao.update(entity) }

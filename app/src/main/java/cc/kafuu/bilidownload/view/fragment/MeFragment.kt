@@ -12,12 +12,16 @@ class MeFragment : CoreFragment<FragmentMeBinding, MeViewModel>(
     R.layout.fragment_me,
     BR.viewModel
 ) {
-    override fun initViews() {
+    companion object {
+        object Builder : CoreFragmentBuilder<MeFragment>() {
+            override fun onMallocFragment() = MeFragment()
+        }
 
+        @JvmStatic
+        fun builder() = Builder
     }
 
-    companion object {
-        @JvmStatic
-        fun getBuilder() = CoreFragmentBuilder(MeFragment::class)
+    override fun initViews() {
+
     }
 }

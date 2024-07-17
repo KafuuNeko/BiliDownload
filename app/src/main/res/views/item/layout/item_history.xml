@@ -124,7 +124,7 @@
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/tv_status_text"
-                    bindVisible="@{data.downloadTask.status == DownloadTaskEntity.STATUS_DOWNLOADING}"
+                    bindVisible="@{data.downloadTask.status == DownloadTaskEntity.STATE_DOWNLOADING}"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="center"
