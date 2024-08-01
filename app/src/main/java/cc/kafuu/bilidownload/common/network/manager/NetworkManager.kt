@@ -27,8 +27,12 @@ object NetworkManager {
         createService(NetworkConfig.BILI_PASSPORT_URL, BiliPassportService::class.java)
     }
 
+    val okHttpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder().addInterceptor(biliInterceptor).build()
+    }
+
     private fun <T> createService(baseUrl: String, serviceClass: Class<T>) = Retrofit.Builder()
-        .client(OkHttpClient.Builder().addInterceptor(biliInterceptor).build())
+        .client(okHttpClient)
         .baseUrl(baseUrl)
         .addConverterFactory(GsonConverterFactory.create())
         .build()

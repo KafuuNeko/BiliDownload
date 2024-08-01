@@ -11,15 +11,10 @@ class BiliVideoModel(
     pubDate: Long,
     val author: String,
     val bvid: String,
-    val sendDate: Long,
     val duration: String,
 ) : BiliResourceModel(title, cover, description, pubDate) {
     @SuppressLint("SimpleDateFormat")
     companion object {
         val mDateFormatter by lazy { SimpleDateFormat("yyyy-MM-dd") }
-    }
-
-    fun getSendFormatterDate(): String {
-        return mDateFormatter.format(Date(sendDate * 1000))
     }
 }

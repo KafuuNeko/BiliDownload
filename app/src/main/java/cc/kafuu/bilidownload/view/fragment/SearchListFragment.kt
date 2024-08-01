@@ -42,7 +42,7 @@ class SearchListFragment : RVFragment<SearchListViewModel>(SearchListViewModel::
 
     fun doSearch(keyword: String) {
         mViewModel.keyword = keyword
-        mViewModel.doSearch(LoadingStatus.loadingStatus(), false)
+        mViewModel.doSearch(LoadingStatus.loadingStatus(), loadMore = false, forceSearch = false)
     }
 
     fun onSearchTypeChange(@SearchType searchType: Int) {
@@ -53,7 +53,7 @@ class SearchListFragment : RVFragment<SearchListViewModel>(SearchListViewModel::
                 && statusCode != LoadingStatus.CODE_LOADING
         mViewModel.searchType = searchType
         if (needRefresh) {
-            mViewModel.doSearch(LoadingStatus.loadingStatus(), false)
+            mViewModel.doSearch(LoadingStatus.loadingStatus(), loadMore = false, forceSearch = true)
         }
     }
 
@@ -66,7 +66,7 @@ class SearchListFragment : RVFragment<SearchListViewModel>(SearchListViewModel::
 
     override fun onRefresh(refreshLayout: RefreshLayout) {
         val loadingStatus = LoadingStatus.loadingStatus(false)
-        mViewModel.doSearch(loadingStatus, false,
+        mViewModel.doSearch(loadingStatus, loadMore = false, forceSearch = true,
             onSucceeded = { refreshLayout.finishRefresh(true) },
             onFailed = { refreshLayout.finishRefresh(false) }
         )
@@ -74,7 +74,7 @@ class SearchListFragment : RVFragment<SearchListViewModel>(SearchListViewModel::
 
     override fun onLoadMore(refreshLayout: RefreshLayout) {
         val loadingStatus = LoadingStatus.loadingStatus(false)
-        mViewModel.doSearch(loadingStatus, true,
+        mViewModel.doSearch(loadingStatus, loadMore = true, forceSearch = true,
             onSucceeded = { refreshLayout.finishLoadMore(true) },
             onFailed = { refreshLayout.finishLoadMore(false) }
         )
