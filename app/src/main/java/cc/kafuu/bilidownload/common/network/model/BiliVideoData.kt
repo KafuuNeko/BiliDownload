@@ -20,7 +20,7 @@ data class BiliVideoData(
     @SerializedName("owner") val owner: BiliVideoOwner,
     @SerializedName("stat") val stat: BiliVideoStat,
     @SerializedName("dynamic") val dynamic: String,
-    @SerializedName("cid") val cid: Int,
+    @SerializedName("cid") val cid: Long,
     @SerializedName("dimension") val dimension: BiliVideoDimension,
     @SerializedName("pages") val pages: List<BiliVideoPage>,
     @SerializedName("subtitle") val subtitle: BiliVideoSubtitle,
