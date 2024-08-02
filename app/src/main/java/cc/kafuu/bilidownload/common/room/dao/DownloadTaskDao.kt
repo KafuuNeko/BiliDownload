@@ -24,7 +24,7 @@ interface DownloadTaskDao {
     suspend fun deleteTaskByTaskEntityId(taskEntityId: Long)
 
     @Query("SELECT * FROM DownloadTask WHERE status IN (:statuses)")
-    suspend fun getLatestDownloadTask(vararg statuses: Int): List<DownloadTaskEntity>
+    suspend fun queryDownloadTask(vararg statuses: Int): List<DownloadTaskEntity>
 
     @Query(
         """
@@ -36,7 +36,7 @@ interface DownloadTaskDao {
         ORDER BY task.id DESC
     """
     )
-    fun getDownloadTasksWithVideoDetailsLiveData(vararg statuses: Int): LiveData<List<DownloadTaskWithVideoDetails>>
+    fun queryDownloadTasksDetailsLiveData(vararg statuses: Int): LiveData<List<DownloadTaskWithVideoDetails>>
 
     @Query(
         """
@@ -47,10 +47,10 @@ interface DownloadTaskDao {
         WHERE task.id = :entityId
     """
     )
-    fun getDownloadTasksWithVideoDetailsLiveDataByEntityId(entityId: Long): LiveData<DownloadTaskWithVideoDetails>
+    fun queryDownloadTaskDetailByEntityId(entityId: Long): LiveData<DownloadTaskWithVideoDetails>
 
-    @Query("SELECT * FROM DownloadTask WHERE id = :id")
-    suspend fun getDownloadTaskById(id: Long): DownloadTaskEntity?
+    @Query("SELECT * FROM DownloadTask WHERE id = :entityId")
+    suspend fun getDownloadTaskById(entityId: Long): DownloadTaskEntity?
 
     @Query("SELECT * FROM DownloadTask WHERE downloadTaskId = :downloadTaskId")
     suspend fun getDownloadTaskByDownloadTaskId(downloadTaskId: Long): DownloadTaskEntity?

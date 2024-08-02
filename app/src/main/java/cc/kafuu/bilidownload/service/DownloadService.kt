@@ -7,9 +7,10 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import cc.kafuu.bilidownload.common.manager.DownloadManager
+import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.constant.DownloadResourceType
+import cc.kafuu.bilidownload.common.manager.DownloadManager
 import cc.kafuu.bilidownload.common.model.DownloadTaskStatus
 import cc.kafuu.bilidownload.common.model.event.DownloadRequestFailedEvent
 import cc.kafuu.bilidownload.common.model.event.DownloadStatusChangeEvent
@@ -18,7 +19,6 @@ import cc.kafuu.bilidownload.common.room.entity.DownloadDashEntity
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.room.repository.BiliVideoRepository
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
-import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.utils.FFMpegUtils
 import cc.kafuu.bilidownload.common.utils.MimeTypeUtils
 import cc.kafuu.bilidownload.notification.DownloadNotification
@@ -37,11 +37,10 @@ import kotlin.properties.Delegates
 
 class DownloadService : Service() {
     companion object {
+        private const val TAG = "DownloadService"
+
         private const val KEY_ENTITY_ID = "entityId"
 
-        private val mDownloadTaskDao = CommonLibs.requireAppDatabase().downloadTaskDao()
-
-        private const val TAG = "DownloadService"
         private fun startService(context: Context, intent: Intent) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(intent)
@@ -58,7 +57,7 @@ class DownloadService : Service() {
 
         suspend fun resumeDownload(context: Context) {
             val intent = Intent(context, DownloadService::class.java)
-            mDownloadTaskDao.getLatestDownloadTask(
+            DownloadRepository.queryDownloadTaskDetailByEntityId(
                 DownloadTaskEntity.STATE_DOWNLOADING,
                 DownloadTaskEntity.STATE_PREPARE
             ).forEach {
@@ -124,7 +123,7 @@ class DownloadService : Service() {
      * @param entityId entity id
      * */
     private suspend fun assigningTask(entityId: Long) {
-        val entity = mDownloadTaskDao.getDownloadTaskById(entityId)
+        val entity = DownloadRepository.getDownloadTaskById(entityId)
             ?: throw IllegalStateException("Task [E$entityId] get download task entity failed")
 
         // 尝试保存视频信息和请求下载
@@ -218,7 +217,7 @@ class DownloadService : Service() {
      * from [onDownloadStatusChangeEvent]
      * */
     private suspend fun onDownloadFailed(entity: DownloadTaskEntity, task: DownloadGroupTask) {
-        mDownloadTaskDao.update(entity.apply {
+        DownloadRepository.update(entity.apply {
             status = DownloadTaskEntity.STATE_DOWNLOAD_FAILED
         })
         mDownloadNotification.notificationDownloadFailed(entity)
@@ -238,7 +237,7 @@ class DownloadService : Service() {
 
         val finalStatus = if (dashEntityList.size == 2 && videoDash != null && audioDash != null) {
             // 更新状态为正在合成
-            mDownloadTaskDao.update(entity.apply {
+            DownloadRepository.update(entity.apply {
                 status = DownloadTaskEntity.STATE_SYNTHESIS
             })
             if (!tryMergeVideo(entity, videoDash, audioDash)) {
@@ -249,7 +248,7 @@ class DownloadService : Service() {
         } else DownloadTaskEntity.STATE_COMPLETED
 
         // 更新记录为最终状态
-        mDownloadTaskDao.update(entity.apply {
+        DownloadRepository.update(entity.apply {
             status = finalStatus
         })
     }
@@ -263,7 +262,7 @@ class DownloadService : Service() {
             "Task [D${task.entity.id}, E${entity.id}] status change, percent: ${task.percent}%"
         )
         if (entity.status != DownloadTaskEntity.STATE_DOWNLOADING) {
-            mDownloadTaskDao.update(entity.apply {
+            DownloadRepository.update(entity.apply {
                 status = DownloadTaskEntity.STATE_DOWNLOADING
             })
         }

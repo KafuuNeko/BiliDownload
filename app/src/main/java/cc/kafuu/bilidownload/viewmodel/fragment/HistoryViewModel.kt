@@ -5,6 +5,7 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
+import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
 import cc.kafuu.bilidownload.view.activity.HistoryDetailsActivity
 import com.arialyy.aria.core.Aria
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
@@ -16,8 +17,9 @@ class HistoryViewModel : RVViewModel() {
         private set
 
     fun initData(vararg statuses: Int) {
-        latestDownloadTaskLiveData = CommonLibs.requireAppDatabase()
-            .downloadTaskDao().getDownloadTasksWithVideoDetailsLiveData(*statuses)
+        latestDownloadTaskLiveData = DownloadRepository.queryDownloadTasksDetailsLiveData(
+            *statuses
+        )
     }
 
     fun getStatusIcon(task: DownloadTaskWithVideoDetails) = CommonLibs.getDrawable(

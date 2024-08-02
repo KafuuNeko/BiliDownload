@@ -2,18 +2,18 @@ package cc.kafuu.bilidownload.common.manager
 
 import android.content.Context
 import android.util.Log
+import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.model.DownloadTaskStatus
+import cc.kafuu.bilidownload.common.model.bili.BiliDashModel
+import cc.kafuu.bilidownload.common.model.event.DownloadRequestFailedEvent
+import cc.kafuu.bilidownload.common.model.event.DownloadStatusChangeEvent
 import cc.kafuu.bilidownload.common.network.IServerCallback
 import cc.kafuu.bilidownload.common.network.NetworkConfig
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
-import cc.kafuu.bilidownload.common.model.bili.BiliDashModel
 import cc.kafuu.bilidownload.common.room.entity.DownloadDashEntity
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
-import cc.kafuu.bilidownload.common.CommonLibs
-import cc.kafuu.bilidownload.common.model.event.DownloadRequestFailedEvent
-import cc.kafuu.bilidownload.common.model.event.DownloadStatusChangeEvent
 import cc.kafuu.bilidownload.service.DownloadService
 import com.arialyy.annotations.DownloadGroup
 import com.arialyy.annotations.DownloadGroup.onSubTaskFail
@@ -41,7 +41,6 @@ object DownloadManager {
 
     private val mTaskEntityMap = hashMapOf<Long, DownloadTaskEntity>()
     private val mDashEntityMap = hashMapOf<String, DownloadDashEntity>()
-    private val mDownloadTaskDao by lazy { CommonLibs.requireAppDatabase().downloadTaskDao() }
 
     fun containsTask(downloadTaskId: Long) = mTaskEntityMap.contains(downloadTaskId)
 
@@ -60,7 +59,7 @@ object DownloadManager {
      * */
     private suspend fun getDownloadTaskEntity(task: DownloadGroupTask): DownloadTaskEntity? {
         val entity = mTaskEntityMap[task.entity.id]
-            ?: mDownloadTaskDao.getDownloadTaskByDownloadTaskId(task.entity.id)
+            ?: DownloadRepository.getDownloadTaskByDownloadTaskId(task.entity.id)
         if (entity == null && DownloadTaskStatus.fromCode(task.state) != DownloadTaskStatus.CANCELLED) {
             // 查找不到对应的下载记录，则取消此下载任务
             Aria.download(this).load(task.entity.id).cancel(true)
@@ -85,7 +84,9 @@ object DownloadManager {
 
         Log.d(
             TAG,
-            "Task [D${task.entity.id}] download status change, status: ${DownloadTaskStatus.fromCode(task.state)}"
+            "Task [D${task.entity.id}] download status change, status: ${
+                DownloadTaskStatus.fromCode(task.state)
+            }"
         )
         mCoroutineScope.launch {
             val entity = getDownloadTaskEntity(task) ?: return@launch
@@ -146,7 +147,7 @@ object DownloadManager {
             // 此任务可能是下载过程中应用程序退出中断或者下载失败的任务被用户点击重新下载
             // 这两种情况都需要重新为任务分配一个新的id并重启下载
             Aria.download(this).loadGroup(entity.downloadTaskId!!).let {
-                mDownloadTaskDao.update(entity.apply { downloadTaskId = null })
+                DownloadRepository.update(entity.apply { downloadTaskId = null })
                 it.ignoreCheckPermissions().cancel(true)
             }
         }
@@ -251,7 +252,7 @@ object DownloadManager {
         entity.status = DownloadTaskEntity.STATE_DOWNLOADING
 
         mTaskEntityMap[downloadTaskId] = entity
-        mCoroutineScope.launch { mDownloadTaskDao.update(entity) }
+        mCoroutineScope.launch { DownloadRepository.update(entity) }
 
         Log.d(TAG, "Task [D${entity.downloadTaskId}] start download")
     }

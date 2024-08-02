@@ -1,13 +1,13 @@
 package cc.kafuu.bilidownload.common.room.repository
 
 import android.database.sqlite.SQLiteConstraintException
+import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.constant.DownloadResourceType
 import cc.kafuu.bilidownload.common.model.bili.BiliDashModel
 import cc.kafuu.bilidownload.common.room.entity.DownloadDashEntity
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
-import cc.kafuu.bilidownload.common.CommonLibs
 import java.io.File
 
 object DownloadRepository {
@@ -15,6 +15,10 @@ object DownloadRepository {
     private val mDownloadDashDao by lazy { CommonLibs.requireAppDatabase().downloadDashDao() }
     private val mDownloadResourceDao by lazy {
         CommonLibs.requireAppDatabase().downloadResourceDao()
+    }
+
+    suspend fun update(downloadTask: DownloadTaskEntity) {
+        mDownloadTaskDao.update(downloadTask)
     }
 
     @Throws(IllegalStateException::class, SQLiteConstraintException::class)
@@ -96,19 +100,66 @@ object DownloadRepository {
         mDownloadResourceDao.deleteTaskByTaskEntityId(taskEntityId)
     }
 
-    fun queryDownloadTask(entityId: Long) =
-        mDownloadTaskDao.getDownloadTasksWithVideoDetailsLiveDataByEntityId(entityId)
+    /**
+     * 查询下载任务详情集LiveData，返回的信息包含此任务信息以及视频等相关信息
+     */
+    fun queryDownloadTasksDetailsLiveData(vararg statuses: Int) = run {
+        mDownloadTaskDao.queryDownloadTasksDetailsLiveData(*statuses)
+    }
 
-    fun queryResourcesLiveDataByTaskEntityId(entityId: Long) =
+    /**
+     * 根据下载任务ID获取下载任务实体实例
+     */
+    suspend fun getDownloadTaskByDownloadTaskId(downloadTaskId: Long) = run {
+        mDownloadTaskDao.getDownloadTaskByDownloadTaskId(downloadTaskId)
+    }
+
+    /**
+     * 根据下载任务实体id获取下载详情信息LiveData, 包含此任务信息以及视频等相关信息
+     */
+    fun queryDownloadTaskDetailByEntityId(entityId: Long) = run {
+        mDownloadTaskDao.queryDownloadTaskDetailByEntityId(entityId)
+    }
+
+    /**
+     * 根据下载任务实体id查询和此任务有关的资源
+     */
+    fun queryResourcesLiveDataByTaskEntityId(entityId: Long) = run {
         mDownloadResourceDao.queryResourcesLiveDataByTaskEntityId(entityId)
+    }
 
-    private suspend fun queryResourcesByTaskEntityId(taskEntityId: Long) =
+    /**
+     * 根据下载任务实体id查询和此任务有关的资源（LiveData）
+     */
+    private suspend fun queryResourcesByTaskEntityId(taskEntityId: Long) = run {
         mDownloadResourceDao.queryResourcesByTaskEntityId(taskEntityId)
+    }
 
-    fun queryResourceLiveDataById(resourceId: Long) =
+    /**
+     * 根据资源id获取资源记录实例
+     */
+    fun queryResourceLiveDataById(resourceId: Long) = run {
         mDownloadResourceDao.queryResourceLiveDataById(resourceId)
+    }
 
-    suspend fun deleteResourceById(resourceId: Long) =
+    /**
+     * 根据资源id删除某个资源
+     */
+    suspend fun deleteResourceById(resourceId: Long) = run {
         mDownloadResourceDao.deleteById(resourceId)
+    }
 
+    /**
+     * 查询相关状态的任务实体集
+     */
+    suspend fun queryDownloadTaskDetailByEntityId(vararg statuses: Int) = run {
+        mDownloadTaskDao.queryDownloadTask(*statuses)
+    }
+
+    /**
+     * 根据下载任务的实体id取得此任务的实体实例
+     */
+    suspend fun getDownloadTaskById(entityId: Long) = run {
+        mDownloadTaskDao.getDownloadTaskById(entityId)
+    }
 }

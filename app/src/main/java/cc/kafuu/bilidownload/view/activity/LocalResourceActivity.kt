@@ -62,7 +62,7 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
             it?.let { mViewModel.updateResourceEntity(it) }
         }
 
-        DownloadRepository.queryDownloadTask(downloadEntityId).observe(this) {
+        DownloadRepository.queryDownloadTaskDetailByEntityId(downloadEntityId).observe(this) {
             it?.let { mViewModel.updateTaskDetails(it) }
         }
 

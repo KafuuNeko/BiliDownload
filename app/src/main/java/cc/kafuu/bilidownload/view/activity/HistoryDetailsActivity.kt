@@ -73,7 +73,7 @@ class HistoryDetailsActivity : CoreActivity<ActivityHistoryDetailsBinding, Histo
                 return
             }
         }
-        DownloadRepository.queryDownloadTask(entityId).observe(this) {
+        DownloadRepository.queryDownloadTaskDetailByEntityId(entityId).observe(this) {
             mViewModel.updateVideoDetails(it)
         }
         DownloadRepository.queryResourcesLiveDataByTaskEntityId(entityId).observe(this) {
