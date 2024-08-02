@@ -38,7 +38,7 @@
                 android:gravity="center"
                 android:maxLines="1"
                 android:textColor="@color/primary_color"
-                android:textSize="16sp"
+                android:textSize="@dimen/size_text_dialog_title"
                 android:textStyle="bold"
                 tools:text="@string/app_name" />
 
@@ -58,7 +58,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/text_video"
                         android:textColor="@color/general_text_color"
-                        android:textSize="12sp" />
+                        android:textSize="@dimen/size_text_dialog_content" />
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rv_video_select_list"
@@ -73,7 +73,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/text_audio"
                         android:textColor="@color/general_text_color"
-                        android:textSize="12sp" />
+                        android:textSize="@dimen/size_text_dialog_content" />
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rv_audio_select_list"
@@ -100,7 +100,8 @@
                             android:paddingHorizontal="30dp"
                             android:paddingVertical="10dp"
                             android:text="@string/text_cancel"
-                            android:textColor="@color/common_white" />
+                            android:textColor="@color/common_white"
+                            android:textSize="@dimen/size_text_button_size" />
 
                         <androidx.appcompat.widget.AppCompatTextView
                             android:layout_width="wrap_content"
@@ -115,7 +116,8 @@
                             android:paddingHorizontal="30dp"
                             android:paddingVertical="10dp"
                             android:text="@{viewModel.confirmTextLiveData}"
-                            android:textColor="@color/common_white" />
+                            android:textColor="@color/common_white"
+                            android:textSize="@dimen/size_text_button_size" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>

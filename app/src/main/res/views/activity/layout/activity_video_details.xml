@@ -45,8 +45,8 @@
                 android:layout_marginHorizontal="10dp"
                 android:layout_marginTop="10dp"
                 app:cover="@{viewModel.biliResourceModelLiveData.cover}"
-                app:title="@{viewModel.biliResourceModelLiveData.title}"
-                app:createTime="@{viewModel.biliResourceModelLiveData.pubFormatterDate}" />
+                app:createTime="@{viewModel.biliResourceModelLiveData.pubFormatterDate}"
+                app:title="@{viewModel.biliResourceModelLiveData.title}" />
 
             <androidx.core.widget.NestedScrollView
                 android:layout_width="match_parent"
@@ -76,6 +76,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/text_brief"
                                 android:textColor="@color/primary_color"
+                                android:textSize="@dimen/size_text_common_size"
                                 android:textStyle="bold" />
 
                             <androidx.appcompat.widget.AppCompatTextView
@@ -84,7 +85,8 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="10dp"
                                 android:autoLink="all"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
 

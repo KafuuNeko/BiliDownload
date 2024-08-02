@@ -97,7 +97,7 @@
                         android:layout_marginEnd="10dp"
                         android:text="@{viewModel.downloadProgressLiveData}"
                         android:textColor="@color/general_text_color"
-                        android:textSize="12sp"
+                        android:textSize="@dimen/size_text_common_size"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toBottomOf="@+id/pb_download_progress"
                         tools:text="128kb/s" />
@@ -120,6 +120,7 @@
                         android:onClick="@{()->viewModel.pauseOrContinue()}"
                         android:text="@{viewModel.downloadIsStoppedLiveData ? @string/text_continue : @string/text_pause}"
                         android:textColor="@color/common_white"
+                        android:textSize="@dimen/size_text_common_size"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toBottomOf="@+id/tv_downloading_progress" />
@@ -142,6 +143,7 @@
                         android:onClick="@{()->viewModel.cancelDownloadTask()}"
                         android:text="@string/text_cancel"
                         android:textColor="@color/common_white"
+                        android:textSize="@dimen/size_text_common_size"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toStartOf="@+id/tv_pause_or_continue"
                         app:layout_constraintTop_toBottomOf="@+id/tv_downloading_progress" />
@@ -169,7 +171,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/text_download_failed"
-                        android:textColor="@color/common_red" />
+                        android:textColor="@color/common_red"
+                        android:textSize="@dimen/size_text_common_size" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -190,7 +193,8 @@
                             android:minWidth="100dp"
                             android:minHeight="36dp"
                             android:text="@string/text_delete"
-                            android:textColor="@color/common_white" />
+                            android:textColor="@color/common_white"
+                            android:textSize="@dimen/size_text_common_size" />
 
                         <androidx.appcompat.widget.AppCompatTextView
                             android:layout_width="wrap_content"
@@ -206,7 +210,8 @@
                             android:minHeight="36dp"
                             android:onClick="@{()->viewModel.retryDownloadTask()}"
                             android:text="@string/text_retry"
-                            android:textColor="@color/common_white" />
+                            android:textColor="@color/common_white"
+                            android:textSize="@dimen/size_text_common_size" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -238,7 +243,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/text_synthesising"
-                        android:textColor="@color/general_text_color" />
+                        android:textColor="@color/general_text_color"
+                        android:textSize="@dimen/size_text_common_size" />
                 </LinearLayout>
 
             </androidx.cardview.widget.CardView>
@@ -273,6 +279,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/text_brief"
                                 android:textColor="@color/primary_color"
+                                android:textSize="@dimen/size_text_common_size"
                                 android:textStyle="bold" />
 
                             <androidx.appcompat.widget.AppCompatTextView
@@ -281,7 +288,8 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="10dp"
                                 android:autoLink="all"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
 
@@ -306,7 +314,8 @@
                         android:minWidth="100dp"
                         android:minHeight="36dp"
                         android:text="@string/text_delete"
-                        android:textColor="@color/common_white" />
+                        android:textColor="@color/common_white"
+                        android:textSize="@dimen/size_text_button_size" />
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>
 

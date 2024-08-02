@@ -91,7 +91,8 @@
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
                                 android:text="@string/text_resource_name"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
 
                             <androidx.appcompat.widget.AppCompatTextView
                                 android:layout_width="0dp"
@@ -102,7 +103,8 @@
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
                                 android:text="@{viewModel.resourceLiveData.name}"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -121,7 +123,8 @@
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
                                 android:text="@string/text_download_time"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
 
                             <androidx.appcompat.widget.AppCompatTextView
                                 android:layout_width="0dp"
@@ -132,7 +135,8 @@
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
                                 android:text="@{TimeUtils.INSTANCE.formatTimestamp(viewModel.resourceLiveData.creationTime)}"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -151,7 +155,8 @@
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
                                 android:text="@string/text_resource_size"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
 
                             <androidx.appcompat.widget.AppCompatTextView
                                 android:layout_width="0dp"
@@ -162,7 +167,8 @@
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
                                 android:text="@{FileUtils.INSTANCE.formatFileSize(viewModel.resourceLiveData.storageSizeBytes)}"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -182,7 +188,8 @@
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
                                 android:text="@string/text_media_format"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
 
                             <androidx.appcompat.widget.AppCompatTextView
                                 android:layout_width="0dp"
@@ -193,7 +200,8 @@
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
                                 android:text="@{viewModel.localMediaDetailLiveData.format}"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -213,7 +221,8 @@
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
                                 android:text="@string/text_media_duration"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
 
                             <androidx.appcompat.widget.AppCompatTextView
                                 android:layout_width="0dp"
@@ -224,7 +233,8 @@
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
                                 android:text="@{viewModel.localMediaDetailLiveData.duration}"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -244,7 +254,8 @@
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
                                 android:text="@string/text_media_video_codec"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
 
                             <androidx.appcompat.widget.AppCompatTextView
                                 android:layout_width="0dp"
@@ -255,7 +266,8 @@
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
                                 android:text="@{viewModel.localMediaDetailLiveData.videoCodec}"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -275,7 +287,8 @@
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
                                 android:text="@string/text_media_audio_codec"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
 
                             <androidx.appcompat.widget.AppCompatTextView
                                 android:layout_width="0dp"
@@ -286,7 +299,8 @@
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
                                 android:text="@{viewModel.localMediaDetailLiveData.audioCodec}"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -306,7 +320,8 @@
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
                                 android:text="@string/text_media_frame_rate"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
 
                             <androidx.appcompat.widget.AppCompatTextView
                                 android:layout_width="0dp"
@@ -317,7 +332,8 @@
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
                                 android:text="@{viewModel.localMediaDetailLiveData.frameRate}"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -337,7 +353,8 @@
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
                                 android:text="@string/text_media_resolution"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
 
                             <androidx.appcompat.widget.AppCompatTextView
                                 android:layout_width="0dp"
@@ -348,7 +365,8 @@
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
                                 android:text="@{viewModel.localMediaDetailLiveData.resolution}"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -368,7 +386,8 @@
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
                                 android:text="@string/text_media_audio_sample_rate"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
 
                             <androidx.appcompat.widget.AppCompatTextView
                                 android:layout_width="0dp"
@@ -379,7 +398,8 @@
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
                                 android:text="@{viewModel.localMediaDetailLiveData.audioSampleRate}"
-                                android:textColor="@color/general_text_color" />
+                                android:textColor="@color/general_text_color"
+                                android:textSize="@dimen/size_text_common_size" />
                         </LinearLayout>
 
                     </LinearLayout>
@@ -400,7 +420,8 @@
                     android:minWidth="100dp"
                     android:minHeight="36dp"
                     android:text="@string/text_open"
-                    android:textColor="@color/common_white" />
+                    android:textColor="@color/common_white"
+                    android:textSize="@dimen/size_text_button_size" />
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/tv_resource_export"
@@ -416,6 +437,7 @@
                     android:minWidth="100dp"
                     android:minHeight="36dp"
                     android:orientation="horizontal"
+                    android:textSize="@dimen/size_text_button_size"
                     tools:background="@drawable/shape_button_general">
 
                     <ProgressBar
@@ -434,6 +456,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/text_export"
                         android:textColor="@color/common_white"
+                        android:textSize="@dimen/size_text_common_size"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
@@ -455,7 +478,8 @@
                     android:minWidth="100dp"
                     android:minHeight="36dp"
                     android:text="@string/text_delete"
-                    android:textColor="@color/common_white" />
+                    android:textColor="@color/common_white"
+                    android:textSize="@dimen/size_text_button_size" />
 
             </LinearLayout>
 

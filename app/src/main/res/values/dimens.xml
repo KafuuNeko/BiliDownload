@@ -2,6 +2,19 @@
 <resources>
     <dimen name="size_text_main_tab">10sp</dimen>
     <dimen name="size_text_page_title">18sp</dimen>
+
+    <dimen name="size_text_common_size">13sp</dimen>
+
+    <dimen name="size_text_button_size">14sp</dimen>
+
+    <dimen name="size_text_window_title">16sp</dimen>
+
+    <dimen name="size_text_dialog_title">16sp</dimen>
+    <dimen name="size_text_dialog_content">13sp</dimen>
+
+    <dimen name="size_text_card_title">14sp</dimen>
+    <dimen name="size_text_card_content">12sp</dimen>
+
     <dimen name="card_item_corner_radius">10dp</dimen>
     <dimen name="card_item_elevation">3dp</dimen>
     <dimen name="button_corner_radius">40dp</dimen>

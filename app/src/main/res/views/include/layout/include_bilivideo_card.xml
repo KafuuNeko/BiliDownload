@@ -72,6 +72,7 @@
                     android:ellipsize="end"
                     android:maxLines="2"
                     android:textColor="@color/primary_color"
+                    android:textSize="@dimen/size_text_card_title"
                     android:textStyle="bold"
                     tools:text="【Mili】A Turtle's Heart" />
 
@@ -90,6 +91,7 @@
                         android:ellipsize="end"
                         android:maxLines="1"
                         android:textColor="@color/general_text_color"
+                        android:textSize="@dimen/size_text_card_content"
                         tools:text="2016-06-07" />
                 </LinearLayout>
             </LinearLayout>

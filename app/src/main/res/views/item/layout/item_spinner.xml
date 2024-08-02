@@ -12,5 +12,5 @@
     android:singleLine="true"
     android:textAlignment="inherit"
     android:textColor="@color/general_text_color"
-    android:textSize="14sp"
+    android:textSize="@dimen/size_text_card_content"
     tools:text="@string/app_name" />

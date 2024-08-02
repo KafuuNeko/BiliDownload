@@ -27,7 +27,7 @@
                 android:layout_marginTop="20dp"
                 android:gravity="center"
                 android:textColor="@color/primary_color"
-                android:textSize="19sp"
+                android:textSize="@dimen/size_text_dialog_title"
                 android:textStyle="bold"
                 tools:text="Confirm Changes" />
 
@@ -39,7 +39,7 @@
                 android:layout_marginTop="10dp"
                 android:gravity="center"
                 android:textColor="@color/general_text_color"
-                android:textSize="16sp"
+                android:textSize="@dimen/size_text_dialog_content"
                 tools:text="This is not today's reading content. Read anyway?" />
 
             <LinearLayout
@@ -63,7 +63,7 @@
                     android:paddingVertical="8dp"
                     android:text="@string/text_cancel"
                     android:textColor="@color/common_white"
-                    android:textSize="17sp" />
+                    android:textSize="@dimen/size_text_button_size" />
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/tv_btn_right"
@@ -79,7 +79,7 @@
                     android:paddingVertical="8dp"
                     android:text="@string/text_confirm"
                     android:textColor="@color/common_white"
-                    android:textSize="17sp"
+                    android:textSize="@dimen/size_text_button_size"
                     tools:text="@string/text_confirm" />
             </LinearLayout>
 

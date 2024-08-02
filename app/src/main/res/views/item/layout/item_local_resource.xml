@@ -50,6 +50,7 @@
                 android:maxLines="1"
                 android:text="@{data.name}"
                 android:textColor="@color/primary_color"
+                android:textSize="@dimen/size_text_card_title"
                 android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -77,6 +78,7 @@
                     android:maxLines="1"
                     android:text="@{TimeUtils.INSTANCE.formatTimestamp(data.creationTime)}"
                     android:textColor="@color/general_text_color"
+                    android:textSize="@dimen/size_text_card_content"
                     tools:text="2024-06-07 16:35:00" />
 
                 <androidx.appcompat.widget.AppCompatTextView
@@ -89,6 +91,7 @@
                     android:maxLines="1"
                     android:text="@{data.mimeType.toUpperCase()}"
                     android:textColor="@color/general_text_color"
+                    android:textSize="@dimen/size_text_card_content"
                     tools:text="VIDEO/MP4" />
 
                 <androidx.appcompat.widget.AppCompatTextView
@@ -101,6 +104,7 @@
                     android:maxLines="1"
                     android:text="@{FileUtils.INSTANCE.formatFileSize(data.storageSizeBytes)}"
                     android:textColor="@color/general_text_color"
+                    android:textSize="@dimen/size_text_card_content"
                     tools:text="26MB" />
 
             </LinearLayout>

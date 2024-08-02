@@ -70,6 +70,7 @@
                     android:ellipsize="end"
                     android:maxLines="1"
                     android:textColor="@color/primary_color"
+                    android:textSize="@dimen/size_text_card_title"
                     android:textStyle="bold"
                     tools:text="【Mili】A Turtle's Heart" />
 
@@ -88,6 +89,7 @@
                         android:ellipsize="end"
                         android:maxLines="1"
                         android:textColor="@color/general_text_color"
+                        android:textSize="@dimen/size_text_card_content"
                         tools:text="Mili" />
 
                     <androidx.appcompat.widget.AppCompatTextView
@@ -99,6 +101,7 @@
                         android:ellipsize="end"
                         android:maxLines="1"
                         android:textColor="@color/general_text_color"
+                        android:textSize="@dimen/size_text_card_content"
                         tools:text="2016-06-07" />
                 </LinearLayout>
 
@@ -117,6 +120,7 @@
                         android:ellipsize="end"
                         android:maxLines="1"
                         android:textColor="@color/general_text_color"
+                        android:textSize="@dimen/size_text_card_content"
                         tools:text="03:04" />
 
                     <androidx.appcompat.widget.AppCompatTextView
@@ -128,6 +132,7 @@
                         android:ellipsize="end"
                         android:maxLines="1"
                         android:textColor="@color/general_text_color"
+                        android:textSize="@dimen/size_text_card_content"
                         tools:text="Monday is a rainy day \nAnd I Stay inside letting time pass away" />
                 </LinearLayout>
             </LinearLayout>

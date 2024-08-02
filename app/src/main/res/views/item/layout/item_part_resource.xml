@@ -37,6 +37,7 @@
             <androidx.appcompat.widget.AppCompatTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textSize="@dimen/size_text_card_content"
                 android:text="@{data.type == DashType.VIDEO ? BiliCodeUtils.INSTANCE.getVideoQualityDescription(data.resource.id) : BiliCodeUtils.INSTANCE.getAudioQualityDescribe(data.resource.id)}"
                 android:textColor="@{viewModel.isSelected(data) ? @color/common_white : @color/general_text_color}"
                 tools:text="@string/video_description_1080p" />
@@ -45,6 +46,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
+                android:textSize="@dimen/size_text_card_content"
                 android:text="@{data.resource.codecs}"
                 android:textColor="@{viewModel.isSelected(data) ? @color/common_white : @color/general_text_color}"
                 tools:text="codecs" />

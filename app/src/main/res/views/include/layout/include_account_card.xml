@@ -5,6 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
+
         <variable
             name="onClick"
             type="android.view.View.OnClickListener" />
@@ -84,6 +85,7 @@
                     android:ellipsize="end"
                     android:maxLines="2"
                     android:textColor="@color/primary_color"
+                    android:textSize="@dimen/size_text_card_title"
                     android:textStyle="bold"
                     tools:text="KafuuNeko" />
 
@@ -98,6 +100,7 @@
                     android:ellipsize="end"
                     android:maxLines="1"
                     android:textColor="@color/general_text_color"
+                    android:textSize="@dimen/size_text_card_content"
                     tools:text="kafuuneko@gmail.com" />
             </LinearLayout>
 

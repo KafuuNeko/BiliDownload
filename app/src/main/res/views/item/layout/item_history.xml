@@ -72,7 +72,7 @@
                     android:maxLines="1"
                     android:text="@{data.title}"
                     android:textColor="@color/primary_color"
-                    android:textSize="14sp"
+                    android:textSize="@dimen/size_text_card_title"
                     android:textStyle="bold"
                     tools:text="文色徒然" />
 
@@ -86,7 +86,7 @@
                     android:maxLines="1"
                     android:text="@{data.partTitle}"
                     android:textColor="@color/general_text_color"
-                    android:textSize="12sp"
+                    android:textSize="@dimen/size_text_card_content"
                     tools:text="01 千夜版" />
 
                 <androidx.appcompat.widget.AppCompatTextView
@@ -99,7 +99,7 @@
                     android:maxLines="1"
                     android:text="@{TimeUtils.INSTANCE.formatTimestamp(data.downloadTask.createTime)}"
                     android:textColor="@color/general_text_color"
-                    android:textSize="12sp"
+                    android:textSize="@dimen/size_text_card_content"
                     tools:text="2024-05-14 16:00:00" />
             </LinearLayout>
 
@@ -131,7 +131,7 @@
                     android:gravity="center"
                     android:text="@{viewModel.getStatusText(data)}"
                     android:textColor="@color/secondary_color"
-                    android:textSize="10sp"
+                    android:textSize="@dimen/size_text_card_content"
                     tools:ignore="SmallSp"
                     tools:text="100%" />
 

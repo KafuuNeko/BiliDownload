@@ -65,7 +65,7 @@
                         android:onClick="@{()->viewModel.jumpSourceRepository()}"
                         android:paddingHorizontal="10dp"
                         android:text="@string/text_source_repository"
-                        android:textSize="16sp"
+                        android:textSize="@dimen/size_text_common_size"
                         app:drawableEndCompat="@drawable/ic_arrow_right" />
 
                     <View
@@ -89,7 +89,7 @@
                             android:gravity="center_vertical"
                             android:minHeight="40dp"
                             android:text="@string/tv_about_version_text"
-                            android:textSize="16sp" />
+                            android:textSize="@dimen/size_text_common_size" />
 
                         <androidx.appcompat.widget.AppCompatTextView
                             android:layout_width="wrap_content"
@@ -97,7 +97,7 @@
                             android:gravity="center_vertical"
                             android:text="@{CommonLibs.INSTANCE.getVersionName()}"
                             android:textColor="@color/general_text_color"
-                            android:textSize="16sp"
+                            android:textSize="@dimen/size_text_common_size"
                             tools:text="1.0.0" />
                     </LinearLayout>
 
@@ -118,7 +118,7 @@
                         android:onClick="@{()->viewModel.jumpOpenSourceLicenses()}"
                         android:paddingHorizontal="10dp"
                         android:text="@string/tv_about_license_text"
-                        android:textSize="16sp"
+                        android:textSize="@dimen/size_text_common_size"
                         app:drawableEndCompat="@drawable/ic_arrow_right" />
 
                     <View
@@ -138,7 +138,7 @@
                         android:onClick="@{()->viewModel.jumpFeedback()}"
                         android:paddingHorizontal="10dp"
                         android:text="@string/text_feedback"
-                        android:textSize="16sp"
+                        android:textSize="@dimen/size_text_common_size"
                         app:drawableEndCompat="@drawable/ic_arrow_right" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -164,7 +164,7 @@
                     android:onClick="@{()->viewModel.jumpGooglePlay()}"
                     android:padding="10dp"
                     android:text="@string/tv_grade_text"
-                    android:textSize="16sp"
+                    android:textSize="@dimen/size_text_common_size"
                     app:drawableEndCompat="@drawable/ic_arrow_right" />
             </androidx.cardview.widget.CardView>
 
@@ -182,7 +182,8 @@
                 android:minHeight="36dp"
                 android:onClick="@{()-> AccountManager.INSTANCE.logout()}"
                 android:text="@string/text_logout"
-                android:textColor="@color/common_white" />
+                android:textColor="@color/common_white"
+                android:textSize="@dimen/size_text_button_size" />
 
             <View
                 android:layout_width="match_parent"
