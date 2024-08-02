@@ -10,14 +10,14 @@
         <item name="colorSecondaryVariant">@color/secondary_color_variant</item>
         <item name="colorOnSecondary">@color/on_secondary_color</item>
         <!-- Status bar color. -->
-        <item name="android:statusBarColor">@color/white</item>
+        <item name="android:statusBarColor">@color/common_white</item>
         <!-- Customize your theme here. -->
-        <item name="android:windowBackground">@color/white</item>
+        <item name="android:windowBackground">@color/common_white</item>
     </style>
 
     <style name="Theme.Dialog" parent="Theme.AppCompat.Light.Dialog">
         <item name="windowNoTitle">true</item>
         <item name="android:windowCloseOnTouchOutside">false</item>
-        <item name="android:windowBackground">@color/transparent</item>
+        <item name="android:windowBackground">@color/common_transparent</item>
     </style>
 </resources>

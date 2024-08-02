@@ -38,7 +38,7 @@
                 android:layout_marginHorizontal="10dp"
                 android:layout_marginTop="10dp"
                 android:gravity="center"
-                android:textColor="@color/text_default_color"
+                android:textColor="@color/general_text_color"
                 android:textSize="16sp"
                 tools:text="This is not today's reading content. Read anyway?" />
 
@@ -62,7 +62,7 @@
                     android:gravity="center"
                     android:paddingVertical="8dp"
                     android:text="@string/text_cancel"
-                    android:textColor="@color/white"
+                    android:textColor="@color/common_white"
                     android:textSize="17sp" />
 
                 <androidx.appcompat.widget.AppCompatTextView
@@ -78,7 +78,7 @@
                     android:gravity="center"
                     android:paddingVertical="8dp"
                     android:text="@string/text_confirm"
-                    android:textColor="@color/white"
+                    android:textColor="@color/common_white"
                     android:textSize="17sp"
                     tools:text="@string/text_confirm" />
             </LinearLayout>

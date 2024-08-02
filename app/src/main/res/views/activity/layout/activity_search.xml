@@ -19,7 +19,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true"
-        android:background="@color/white">
+        android:background="@color/general_window_background_color">
 
         <LinearLayout
             android:id="@+id/ll_search_bar"
@@ -54,7 +54,7 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:autofillHints="none"
-                    android:background="@color/transparent"
+                    android:background="@color/common_transparent"
                     android:drawableStart="@drawable/ic_search"
                     android:focusable="true"
                     android:focusableInTouchMode="true"
@@ -75,7 +75,7 @@
                     android:layout_height="match_parent"
                     android:layout_marginTop="5dp"
                     android:layout_marginBottom="5dp"
-                    android:background="@color/text_default_color"
+                    android:background="@color/general_text_color"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@+id/sp_search_type"
                     app:layout_constraintTop_toTopOf="parent" />
@@ -86,7 +86,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="5dp"
-                    android:background="@color/transparent"
+                    android:background="@color/common_transparent"
                     android:gravity="center"
                     android:padding="5dp"
                     android:spinnerMode="dialog"

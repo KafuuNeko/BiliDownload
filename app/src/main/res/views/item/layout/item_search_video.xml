@@ -26,8 +26,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
-        app:cardElevation="@dimen/card_item_elevation"
-        app:cardCornerRadius="@dimen/card_item_corner_radius">
+        android:background="@color/general_item_background_color"
+        app:cardCornerRadius="@dimen/card_item_corner_radius"
+        app:cardElevation="@dimen/card_item_elevation">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -86,7 +87,7 @@
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:textColor="@color/text_default_color"
+                        android:textColor="@color/general_text_color"
                         tools:text="Mili" />
 
                     <androidx.appcompat.widget.AppCompatTextView
@@ -97,7 +98,7 @@
                         android:layout_marginStart="10dp"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:textColor="@color/text_default_color"
+                        android:textColor="@color/general_text_color"
                         tools:text="2016-06-07" />
                 </LinearLayout>
 
@@ -115,7 +116,7 @@
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:textColor="@color/text_default_color"
+                        android:textColor="@color/general_text_color"
                         tools:text="03:04" />
 
                     <androidx.appcompat.widget.AppCompatTextView
@@ -126,7 +127,7 @@
                         android:layout_marginStart="10dp"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:textColor="@color/text_default_color"
+                        android:textColor="@color/general_text_color"
                         tools:text="Monday is a rainy day \nAnd I Stay inside letting time pass away" />
                 </LinearLayout>
             </LinearLayout>

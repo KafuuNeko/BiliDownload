@@ -26,8 +26,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
-        app:cardElevation="@dimen/card_item_elevation"
-        app:cardCornerRadius="@dimen/card_item_corner_radius">
+        android:background="@color/general_item_background_color"
+        app:cardCornerRadius="@dimen/card_item_corner_radius"
+        app:cardElevation="@dimen/card_item_elevation">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -86,7 +87,7 @@
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
                         android:maxLines="2"
-                        android:textColor="@color/text_default_color"
+                        android:textColor="@color/general_text_color"
                         tools:text="心爱在木造房屋小镇度过的第二个夏天即将结束，季节即将变成各种盛大活动满载的秋季。不论是在学校还是在Rabbit House，都有很多开心的事情！心爱、智乃以及大家都难以抑制对未来的期待……！" />
                 </LinearLayout>
             </LinearLayout>

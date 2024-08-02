@@ -21,7 +21,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/white"
+        android:background="@color/general_window_background_color"
         android:fitsSystemWindows="true">
 
         <include
@@ -96,7 +96,7 @@
                         android:layout_marginTop="10dp"
                         android:layout_marginEnd="10dp"
                         android:text="@{viewModel.downloadProgressLiveData}"
-                        android:textColor="@color/text_default_color"
+                        android:textColor="@color/general_text_color"
                         android:textSize="12sp"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toBottomOf="@+id/pb_download_progress"
@@ -119,7 +119,7 @@
                         android:minHeight="36dp"
                         android:onClick="@{()->viewModel.pauseOrContinue()}"
                         android:text="@{viewModel.downloadIsStoppedLiveData ? @string/text_continue : @string/text_pause}"
-                        android:textColor="@color/white"
+                        android:textColor="@color/common_white"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toBottomOf="@+id/tv_downloading_progress" />
@@ -141,7 +141,7 @@
                         android:minHeight="36dp"
                         android:onClick="@{()->viewModel.cancelDownloadTask()}"
                         android:text="@string/text_cancel"
-                        android:textColor="@color/white"
+                        android:textColor="@color/common_white"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toStartOf="@+id/tv_pause_or_continue"
                         app:layout_constraintTop_toBottomOf="@+id/tv_downloading_progress" />
@@ -169,7 +169,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/text_download_failed"
-                        android:textColor="@color/red" />
+                        android:textColor="@color/common_red" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -190,7 +190,7 @@
                             android:minWidth="100dp"
                             android:minHeight="36dp"
                             android:text="@string/text_delete"
-                            android:textColor="@color/white" />
+                            android:textColor="@color/common_white" />
 
                         <androidx.appcompat.widget.AppCompatTextView
                             android:layout_width="wrap_content"
@@ -206,7 +206,7 @@
                             android:minHeight="36dp"
                             android:onClick="@{()->viewModel.retryDownloadTask()}"
                             android:text="@string/text_retry"
-                            android:textColor="@color/white" />
+                            android:textColor="@color/common_white" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -238,7 +238,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/text_synthesising"
-                        android:textColor="@color/text_default_color" />
+                        android:textColor="@color/general_text_color" />
                 </LinearLayout>
 
             </androidx.cardview.widget.CardView>
@@ -281,7 +281,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="10dp"
                                 android:autoLink="all"
-                                android:textColor="@color/text_default_color" />
+                                android:textColor="@color/general_text_color" />
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
 
@@ -306,7 +306,7 @@
                         android:minWidth="100dp"
                         android:minHeight="36dp"
                         android:text="@string/text_delete"
-                        android:textColor="@color/white" />
+                        android:textColor="@color/common_white" />
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>
 

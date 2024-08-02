@@ -35,6 +35,7 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setImmersionStatusBar()
         val contracts = ActivityResultContracts.StartActivityForResult()
         mCreateDocumentLauncher = registerForActivityResult(contracts) {
             if (it.resultCode == RESULT_OK && it.data != null) {

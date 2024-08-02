@@ -41,7 +41,7 @@
             android:onClick="@{()->viewModel.jumpSearchActivity()}"
             android:paddingHorizontal="5dp"
             android:text="@string/et_search_hint"
-            android:textColor="@color/text_default_color"
+            android:textColor="@color/general_text_color"
             app:drawableStartCompat="@drawable/ic_search" />
     </LinearLayout>
 </layout>

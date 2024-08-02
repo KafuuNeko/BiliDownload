@@ -21,7 +21,7 @@
         bindVisible="@{data.visibility}"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@{isCover ? @color/white : @color/transparent}"
+        android:background="@{isCover ? @color/general_window_background_color : @color/common_transparent}"
         android:gravity="center"
         android:orientation="vertical">
 

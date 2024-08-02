@@ -22,13 +22,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
+        android:background="@color/general_item_background_color"
         app:cardCornerRadius="@dimen/card_item_corner_radius"
         app:cardElevation="@dimen/card_item_elevation">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@{viewModel.isSelected(data) ? @color/secondary_color : @color/white}"
+            android:background="@{viewModel.isSelected(data) ? @color/secondary_color : @color/general_item_background_color}"
             android:onClick="@{()->viewModel.onSelected(data)}"
             android:orientation="horizontal"
             android:padding="10dp">
@@ -37,7 +38,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@{data.type == DashType.VIDEO ? BiliCodeUtils.INSTANCE.getVideoQualityDescription(data.resource.id) : BiliCodeUtils.INSTANCE.getAudioQualityDescribe(data.resource.id)}"
-                android:textColor="@{viewModel.isSelected(data) ? @color/white : @color/text_default_color}"
+                android:textColor="@{viewModel.isSelected(data) ? @color/common_white : @color/general_text_color}"
                 tools:text="@string/video_description_1080p" />
 
             <androidx.appcompat.widget.AppCompatTextView
@@ -45,7 +46,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:text="@{data.resource.codecs}"
-                android:textColor="@{viewModel.isSelected(data) ? @color/white : @color/text_default_color}"
+                android:textColor="@{viewModel.isSelected(data) ? @color/common_white : @color/general_text_color}"
                 tools:text="codecs" />
         </LinearLayout>
 

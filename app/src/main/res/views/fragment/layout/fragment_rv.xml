@@ -22,7 +22,7 @@
             android:id="@+id/refresh_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/white">
+            android:background="@color/general_window_background_color">
 
             <com.scwang.smart.refresh.header.ClassicsHeader
                 android:layout_width="match_parent"
@@ -33,7 +33,7 @@
                 bindDataList="@{viewModel.listMutableLiveData}"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@color/white"
+                android:background="@color/general_window_background_color"
                 android:overScrollMode="never" />
 
             <com.scwang.smart.refresh.footer.ClassicsFooter

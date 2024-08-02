@@ -57,7 +57,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/text_video"
-                        android:textColor="@color/text_default_color"
+                        android:textColor="@color/general_text_color"
                         android:textSize="12sp" />
 
                     <androidx.recyclerview.widget.RecyclerView
@@ -72,7 +72,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/text_audio"
-                        android:textColor="@color/text_default_color"
+                        android:textColor="@color/general_text_color"
                         android:textSize="12sp" />
 
                     <androidx.recyclerview.widget.RecyclerView
@@ -100,7 +100,7 @@
                             android:paddingHorizontal="30dp"
                             android:paddingVertical="10dp"
                             android:text="@string/text_cancel"
-                            android:textColor="@color/white" />
+                            android:textColor="@color/common_white" />
 
                         <androidx.appcompat.widget.AppCompatTextView
                             android:layout_width="wrap_content"
@@ -115,7 +115,7 @@
                             android:paddingHorizontal="30dp"
                             android:paddingVertical="10dp"
                             android:text="@{viewModel.confirmTextLiveData}"
-                            android:textColor="@color/white" />
+                            android:textColor="@color/common_white" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>

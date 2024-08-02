@@ -1,4 +1,4 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <!-- Base application theme. -->
     <style name="Theme.BiliDownload" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Primary brand color. -->
@@ -11,6 +11,5 @@
         <item name="colorOnSecondary">@color/on_secondary_color</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
-        <!-- Customize your theme here. -->
     </style>
 </resources>

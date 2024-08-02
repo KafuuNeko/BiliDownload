@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="common_transparent">#00FFFFFF</color>
+    <color name="common_green">#4CAF50</color>
+    <color name="common_red">#FF0000</color>
+    <color name="common_black">#FF000000</color>
+    <color name="common_white">#FFFFFFFF</color>
+    <color name="common_gray">#7F7F7F</color>
+    <color name="common_gray_50">#807F7F7F</color>
+
     <color name="ic_launcher_background">#FA7298</color>
 
     <color name="primary_color">#FA7298</color>
@@ -10,20 +18,12 @@
     <color name="secondary_color_variant">#5C83CF</color>
     <color name="on_secondary_color">#FFFFFF</color>
 
-    <color name="transparent">#00FFFFFF</color>
-
-    <color name="text_default_color">#707070</color>
-
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="gray">#7F7F7F</color>
-    <color name="gray_50">#807F7F7F</color>
-
-    <color name="color_main_tab_text_active">#333333</color>
-    <color name="color_main_tab_text_passive">#B7B7C9</color>
+    <color name="main_tab_text_active_color">#333333</color>
+    <color name="main_tab_text_passive_color">#B7B7C9</color>
 
     <color name="view_split_color">#809F9F9F</color>
 
-    <color name="green">#4CAF50</color>
-    <color name="red">#FF0000</color>
+    <color name="general_text_color">#707070</color>
+    <color name="general_window_background_color">@color/common_white</color>
+    <color name="general_item_background_color">@color/common_white</color>
 </resources>

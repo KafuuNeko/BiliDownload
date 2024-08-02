@@ -25,8 +25,8 @@ class ConfirmDialog : CoreBasicsDialog<DialogConfirmBinding, Boolean>(R.layout.d
             @ColorRes val buttonTextColor: Int,
             @DrawableRes val buttonBackground: Int
         ) : Serializable {
-            General(R.color.white, R.drawable.shape_button_general),
-            Delete(R.color.white, R.drawable.shape_button_delete)
+            General(R.color.common_white, R.drawable.shape_button_general),
+            Delete(R.color.common_white, R.drawable.shape_button_delete)
         }
 
         fun buildDialog(

@@ -30,7 +30,7 @@
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white"
+        android:background="@color/general_window_background_color"
         app:cardCornerRadius="@dimen/card_item_corner_radius"
         app:cardElevation="@dimen/card_item_elevation">
 
@@ -89,7 +89,7 @@
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:textColor="@color/text_default_color"
+                        android:textColor="@color/general_text_color"
                         tools:text="2016-06-07" />
                 </LinearLayout>
             </LinearLayout>

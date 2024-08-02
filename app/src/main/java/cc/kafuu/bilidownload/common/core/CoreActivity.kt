@@ -126,7 +126,7 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
             val insetsController = window.insetsController
             insetsController?.let {
                 it.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                window.statusBarColor = ContextCompat.getColor(this, R.color.transparent)
+                window.statusBarColor = ContextCompat.getColor(this, R.color.common_transparent)
                 it.setSystemBarsAppearance(
                     WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
                     WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
@@ -139,7 +139,7 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
                     or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                     or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                     or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR)  // 添加这一行来设置状态栏文字为深色
-            window.statusBarColor = ContextCompat.getColor(this, R.color.transparent)
+            window.statusBarColor = ContextCompat.getColor(this, R.color.common_transparent)
         }
     }
 }

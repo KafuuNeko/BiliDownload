@@ -10,7 +10,7 @@
         android:pivotY="480">
 
         <path
-            android:fillColor="@color/text_default_color"
+            android:fillColor="@color/general_text_color"
             android:pathData="M400,880 L0,480l400,-400 71,71 -329,329 329,329 -71,71Z"/>
 
     </group>
