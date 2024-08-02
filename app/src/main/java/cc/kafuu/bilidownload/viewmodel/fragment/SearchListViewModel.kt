@@ -46,6 +46,8 @@ class SearchListViewModel : RVViewModel() {
         }
         val keyword = keyword ?: return
 
+        mLoadingStatusMessageMutableLiveData.value = loadingStatus
+
         // 非强制搜索的情况，尝试解析搜索内容
         if (!forceSearch) {
             // 搜索的内容是否包含链接，如果包含则解析链接
@@ -60,7 +62,6 @@ class SearchListViewModel : RVViewModel() {
         }
 
         if (!loadMore) mNextPage = 1
-        mLoadingStatusMessageMutableLiveData.value = loadingStatus
 
         when (searchType) {
             SearchType.VIDEO -> mBiliSearchRepository.requestSearchVideo(
@@ -87,6 +88,9 @@ class SearchListViewModel : RVViewModel() {
         doSearch(LoadingStatus.loadingStatus(), loadMore = false, forceSearch = true)
     }
 
+    /**
+     * 尝试通过分析搜索文本中的链接直接跳转到视频详情页
+     */
     private fun doAnalysisUrl(text: String) {
         // 如果是分享链接
         if (text.contains("https://b23.tv/")) {
@@ -118,6 +122,9 @@ class SearchListViewModel : RVViewModel() {
         tryAnalysisId(id)
     }
 
+    /**
+     * 尝试直接解析视频id
+     */
     private fun tryAnalysisId(id: String) = try {
         doAnalysisId(id)
     } catch (e: Exception) {
@@ -209,6 +216,9 @@ class SearchListViewModel : RVViewModel() {
         }
     }
 
+    /**
+     * 创建搜索结果回调接口
+     */
     private fun <T> createSearchCallback(
         onSucceeded: (() -> Unit)?,
         onFailed: (() -> Unit)?,
@@ -232,6 +242,10 @@ class SearchListViewModel : RVViewModel() {
         }
     }
 
+    /**
+     * 搜索结果加载完成
+     * 将搜索结果解析为列表数据
+     */
     private fun onLoadingCompleted(data: BiliSearchData<*>, loadMore: Boolean) {
         Log.d(TAG, "onLoadingCompleted: $data")
         val searchData: MutableList<Any> = if (loadMore) {
@@ -276,10 +290,16 @@ class SearchListViewModel : RVViewModel() {
         pubDate = element.pubTime
     )
 
+    /**
+     * 进入视频详情页（视频）
+     */
     fun enterDetails(element: BiliVideoModel) {
         startActivity(VideoDetailsActivity::class.java, VideoDetailsActivity.buildIntent(element))
     }
 
+    /**
+     * 进入视频详情页（媒体）
+     */
     fun enterDetails(element: BiliMediaModel) {
         startActivity(VideoDetailsActivity::class.java, VideoDetailsActivity.buildIntent(element))
     }
