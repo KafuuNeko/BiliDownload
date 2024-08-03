@@ -39,7 +39,10 @@ object DownloadManager {
         Aria.download(this).register()
     }
 
+    // 下载任务ID与对应的实体记录映射
     private val mTaskEntityMap = hashMapOf<Long, DownloadTaskEntity>()
+
+    // 正在下载的流地址与对应的记录映射
     private val mDashEntityMap = hashMapOf<String, DownloadDashEntity>()
 
     fun containsTask(downloadTaskId: Long) = mTaskEntityMap.contains(downloadTaskId)
@@ -118,9 +121,9 @@ object DownloadManager {
      * 此函数还负责清理缓存 */
     private fun onTaskEnd(entity: DownloadTaskEntity, task: DownloadGroupTask) {
         task.entity.subEntities.forEach {
-            val entity = mDashEntityMap[it.url] ?: return@forEach
+            val taskEntity = mDashEntityMap[it.url] ?: return@forEach
             File(it.filePath).apply {
-                if (task.isComplete) renameTo(entity.getOutputFile())
+                if (task.isComplete) renameTo(taskEntity.getOutputFile())
             }
             mDashEntityMap.remove(it.url)
         }
