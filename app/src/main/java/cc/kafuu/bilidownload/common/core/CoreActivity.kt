@@ -19,6 +19,7 @@ import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.core.listener.IAvailableActivity
 import cc.kafuu.bilidownload.common.core.listener.ViewActionListener
 import cc.kafuu.bilidownload.common.manager.ActivityStackManager
+import cc.kafuu.bilidownload.common.model.action.ViewAction
 
 /**
  * 本应用中所有Activity的基类，提供常用的数据绑定和视图模型设置功能。
@@ -61,7 +62,7 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
             mViewDataBinding.setVariable(viewModelId, mViewModel)
         }
         mViewDataBinding.lifecycleOwner = this
-        mViewActionListener = ViewActionListener(this)
+        mViewActionListener = ViewActionListener(this, this)
         initViewAction()
         initViews()
     }
@@ -95,8 +96,15 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
         }
 
         mViewModel.viewActionLiveData.observe(this) {
-            mViewActionListener.onViewAction(it)
+            onViewAction(it)
         }
+    }
+
+    /**
+     * 有新的ViewAction事件时触发此函数
+     */
+    protected open fun onViewAction(action: ViewAction) {
+        mViewActionListener.onViewAction(action)
     }
 
     /**

@@ -96,4 +96,5 @@
     <string name="text_resource_size">Resource Size</string>
     <string name="text_bangumi">Bangumi</string>
     <string name="text_movie">Movie</string>
+    <string name="logout_confirm_message">Do you want to log out of the current account immediately?</string>
 </resources>

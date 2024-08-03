@@ -96,4 +96,5 @@
     <string name="text_resource_size">资源大小</string>
     <string name="text_bangumi">番剧</string>
     <string name="text_movie">影视</string>
+    <string name="logout_confirm_message">是否立即退出当前账户?</string>
 </resources>

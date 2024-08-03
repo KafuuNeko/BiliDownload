@@ -11,8 +11,8 @@ import androidx.lifecycle.ViewModelProvider
 import cc.kafuu.bilidownload.common.core.CoreViewModel
 import cc.kafuu.bilidownload.common.core.listener.IAvailableActivity
 import cc.kafuu.bilidownload.common.core.listener.ViewActionListener
+import cc.kafuu.bilidownload.common.model.action.ViewAction
 import java.io.Serializable
-import kotlin.reflect.KClass
 
 
 abstract class CoreAdvancedDialog<V : ViewDataBinding, RS : Serializable, VM : CoreViewModel>(
@@ -37,7 +37,7 @@ abstract class CoreAdvancedDialog<V : ViewDataBinding, RS : Serializable, VM : C
             mViewDataBinding.setVariable(viewModelId, mViewModel)
         }
         mViewDataBinding.lifecycleOwner = this
-        mViewActionListener = ViewActionListener(this)
+        mViewActionListener = ViewActionListener(this, this)
         initViewAction()
         return mViewDataBinding.root
     }
@@ -52,8 +52,15 @@ abstract class CoreAdvancedDialog<V : ViewDataBinding, RS : Serializable, VM : C
         }
 
         mViewModel.viewActionLiveData.observe(viewLifecycleOwner) {
-            mViewActionListener.onViewAction(it)
+            onViewAction(it)
         }
+    }
+
+    /**
+     * 有新的ViewAction事件时触发此函数
+     */
+    protected open fun onViewAction(action: ViewAction) {
+        mViewActionListener.onViewAction(action)
     }
 }
 

@@ -180,7 +180,7 @@
                 android:foreground="?attr/selectableItemBackground"
                 android:gravity="center"
                 android:minHeight="36dp"
-                android:onClick="@{()-> AccountManager.INSTANCE.logout()}"
+                android:onClick="@{()-> viewModel.tryLogout()}"
                 android:text="@string/text_logout"
                 android:textColor="@color/common_white"
                 android:textSize="@dimen/size_text_button_size" />

@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import cc.kafuu.bilidownload.common.core.listener.IAvailableActivity
 import cc.kafuu.bilidownload.common.core.listener.ViewActionListener
+import cc.kafuu.bilidownload.common.model.action.ViewAction
 
 /**
  * 本应用中所有Fragment的基类，提供了常用的数据绑定和视图模型设置功能。
@@ -57,7 +58,7 @@ abstract class CoreFragment<V : ViewDataBinding, VM : CoreViewModel>(
             mViewDataBinding.setVariable(viewModelId, mViewModel)
         }
         mViewDataBinding.lifecycleOwner = this
-        mViewActionListener = ViewActionListener(this)
+        mViewActionListener = ViewActionListener(this, this)
         initViewAction()
         initViews()
         return mViewDataBinding.root
@@ -73,7 +74,14 @@ abstract class CoreFragment<V : ViewDataBinding, VM : CoreViewModel>(
         }
 
         mViewModel.viewActionLiveData.observe(viewLifecycleOwner) {
-            mViewActionListener.onViewAction(it)
+            onViewAction(it)
         }
+    }
+
+    /**
+     * 有新的ViewAction事件时触发此函数
+     */
+    protected open fun onViewAction(action: ViewAction) {
+        mViewActionListener.onViewAction(action)
     }
 }
