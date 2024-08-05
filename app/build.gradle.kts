@@ -17,6 +17,12 @@ android {
         versionName = "2.1.3.foss"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        ksp {
+            arg("room.schemaLocation", "$projectDir/schemas")
+            arg("room.incremental", "true")
+            arg("room.expandProjection", "true")
+        }
     }
 
     buildTypes {
@@ -63,12 +69,14 @@ android {
     }
 }
 
-extra.set("abiCodes", mapOf(
-    "x86" to 1,
-    "x86_64" to 2,
-    "armeabi-v7a" to 3,
-    "arm64-v8a" to 4
-))
+extra.set(
+    "abiCodes", mapOf(
+        "x86" to 1,
+        "x86_64" to 2,
+        "armeabi-v7a" to 3,
+        "arm64-v8a" to 4
+    )
+)
 
 dependencies {
     file("libs").listFiles { file -> file.extension == "aar" }?.forEach { aarFile ->
@@ -76,6 +84,7 @@ dependencies {
     }
 
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.activity)
     implementation(libs.jetbrains.kotlin.reflect)
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
@@ -86,15 +95,17 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.design)
 
+
+    // room
     implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.activity)
+    implementation(libs.androidx.room.ktx)
+    annotationProcessor(libs.androidx.room.room.compiler3)
     ksp(libs.androidx.room.compiler)
 
     //gson
     implementation(libs.google.gson)
 
     //coroutines
-    implementation(libs.androidx.room.ktx)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
 
