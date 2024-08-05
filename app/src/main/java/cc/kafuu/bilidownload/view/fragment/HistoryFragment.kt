@@ -71,7 +71,7 @@ class HistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::class.jav
     fun handleTaskRunning(task: DownloadGroupTask) {
         // 查找
         val changeIndex = mViewModel.latestDownloadTaskLiveData.value?.indexOfFirst {
-            it.downloadTask.downloadTaskId == task.entity.id
+            it.downloadTask.groupId == task.entity.id
         }
         // 不存在在当前列表中
         if (changeIndex == null || changeIndex == -1) {

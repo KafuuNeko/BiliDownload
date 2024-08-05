@@ -1,9 +1,12 @@
-package cc.kafuu.bilidownload.common.room.database
+package cc.kafuu.bilidownload.common.room
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
+import androidx.room.RenameColumn
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.AutoMigrationSpec
 import cc.kafuu.bilidownload.common.room.dao.BiliVideoDao
 import cc.kafuu.bilidownload.common.room.dao.DownloadDashDao
 import cc.kafuu.bilidownload.common.room.dao.DownloadResourceDao
@@ -23,7 +26,11 @@ import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
         DownloadResourceEntity::class,
         DownloadDashEntity::class
     ],
-    version = 1
+    exportSchema = true,
+    version = 2,
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2, spec = AutoMigrationSpecVersion1To2::class),
+    ]
 )
 abstract class AppDatabase : RoomDatabase() {
     companion object {
@@ -46,3 +53,11 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun biliVideoDao(): BiliVideoDao
     abstract fun downloadDashDao(): DownloadDashDao
 }
+
+
+@RenameColumn.Entries(
+    RenameColumn("DownloadTask", "downloadTaskId", "groupId"),
+    RenameColumn("DownloadResource", "taskEntityId", "taskId"),
+    RenameColumn("DownloadDash", "taskEntityId", "taskId"),
+)
+class AutoMigrationSpecVersion1To2 : AutoMigrationSpec

@@ -33,7 +33,7 @@ object DownloadRepository {
         resources.map {
             DownloadDashEntity(
                 dashId = it.dashId,
-                taskEntityId = taskId,
+                taskId = taskId,
                 codecId = it.codecId,
                 type = it.type,
                 codecs = it.codecs,
@@ -56,7 +56,7 @@ object DownloadRepository {
         resourceFile: File,
         mimeType: String
     ) = DownloadResourceEntity(
-        taskEntityId = downloadTaskEntity.id,
+        taskId = downloadTaskEntity.id,
         type = downloadResourceType,
         name = resourceName,
         mimeType = mimeType,
@@ -87,17 +87,17 @@ object DownloadRepository {
     /*
     * 删除下载任务及其相关联的记录，同时删除关联的文件和目录
     * */
-    suspend fun deleteDownloadTask(taskEntityId: Long) {
-        CommonLibs.requireDownloadCacheDir(taskEntityId).let {
+    suspend fun deleteDownloadTask(taskId: Long) {
+        CommonLibs.requireDownloadCacheDir(taskId).let {
             it.deleteRecursively()
             it.delete()
         }
-        queryResourcesByTaskEntityId(taskEntityId).forEach {
+        queryResourcesByTaskId(taskId).forEach {
             File(it.file).delete()
         }
-        mDownloadTaskDao.deleteTaskByTaskEntityId(taskEntityId)
-        mDownloadDashDao.deleteTaskByTaskEntityId(taskEntityId)
-        mDownloadResourceDao.deleteTaskByTaskEntityId(taskEntityId)
+        mDownloadTaskDao.deleteTaskByTaskId(taskId)
+        mDownloadDashDao.deleteTaskByTaskId(taskId)
+        mDownloadResourceDao.deleteTaskByTaskId(taskId)
     }
 
     /**
@@ -108,31 +108,31 @@ object DownloadRepository {
     }
 
     /**
-     * 根据下载任务ID获取下载任务实体实例
+     * 根据下载任务组ID获取下载任务实体实例
      */
-    suspend fun getDownloadTaskByDownloadTaskId(downloadTaskId: Long) = run {
-        mDownloadTaskDao.getDownloadTaskByDownloadTaskId(downloadTaskId)
+    suspend fun getDownloadTaskByGroupId(groupId: Long) = run {
+        mDownloadTaskDao.getDownloadTaskByGroupId(groupId)
     }
 
     /**
      * 根据下载任务实体id获取下载详情信息LiveData, 包含此任务信息以及视频等相关信息
      */
-    fun queryDownloadTaskDetailByEntityId(entityId: Long) = run {
-        mDownloadTaskDao.queryDownloadTaskDetailByEntityId(entityId)
+    fun queryDownloadTaskDetailByTaskId(entityId: Long) = run {
+        mDownloadTaskDao.queryDownloadTaskDetailByTaskId(entityId)
     }
 
     /**
      * 根据下载任务实体id查询和此任务有关的资源
      */
-    fun queryResourcesLiveDataByTaskEntityId(entityId: Long) = run {
-        mDownloadResourceDao.queryResourcesLiveDataByTaskEntityId(entityId)
+    fun queryResourcesLiveDataByTaskId(entityId: Long) = run {
+        mDownloadResourceDao.queryResourcesLiveDataByTaskId(entityId)
     }
 
     /**
      * 根据下载任务实体id查询和此任务有关的资源（LiveData）
      */
-    private suspend fun queryResourcesByTaskEntityId(taskEntityId: Long) = run {
-        mDownloadResourceDao.queryResourcesByTaskEntityId(taskEntityId)
+    private suspend fun queryResourcesByTaskId(taskId: Long) = run {
+        mDownloadResourceDao.queryResourcesByTaskId(taskId)
     }
 
     /**
@@ -152,14 +152,14 @@ object DownloadRepository {
     /**
      * 查询相关状态的任务实体集
      */
-    suspend fun queryDownloadTaskDetailByEntityId(vararg statuses: Int) = run {
+    suspend fun queryDownloadTaskDetailByTaskId(vararg statuses: Int) = run {
         mDownloadTaskDao.queryDownloadTask(*statuses)
     }
 
     /**
      * 根据下载任务的实体id取得此任务的实体实例
      */
-    suspend fun getDownloadTaskById(entityId: Long) = run {
-        mDownloadTaskDao.getDownloadTaskById(entityId)
+    suspend fun getDownloadTaskByTaskId(id: Long) = run {
+        mDownloadTaskDao.getDownloadTaskByTaskId(id)
     }
 }

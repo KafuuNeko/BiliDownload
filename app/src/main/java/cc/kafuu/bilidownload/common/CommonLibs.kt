@@ -9,7 +9,7 @@ import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
-import cc.kafuu.bilidownload.common.room.database.AppDatabase
+import cc.kafuu.bilidownload.common.room.AppDatabase
 import java.io.File
 
 

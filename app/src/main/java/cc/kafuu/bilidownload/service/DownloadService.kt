@@ -39,7 +39,7 @@ class DownloadService : Service() {
     companion object {
         private const val TAG = "DownloadService"
 
-        private const val KEY_ENTITY_ID = "entityId"
+        private const val KEY_TASK_ID = "taskId"
 
         private fun startService(context: Context, intent: Intent) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -51,18 +51,18 @@ class DownloadService : Service() {
 
         fun startDownload(context: Context, taskId: Long) {
             val intent = Intent(context, DownloadService::class.java)
-            intent.putExtra(KEY_ENTITY_ID, taskId)
+            intent.putExtra(KEY_TASK_ID, taskId)
             startService(context, intent)
         }
 
         suspend fun resumeDownload(context: Context) {
             val intent = Intent(context, DownloadService::class.java)
-            DownloadRepository.queryDownloadTaskDetailByEntityId(
+            DownloadRepository.queryDownloadTaskDetailByTaskId(
                 DownloadTaskEntity.STATE_DOWNLOADING,
                 DownloadTaskEntity.STATE_PREPARE
             ).forEach {
-                if (it.downloadTaskId != null && !DownloadManager.containsTask(it.downloadTaskId!!)) {
-                    intent.putExtra(KEY_ENTITY_ID, it.id)
+                if (it.groupId != null && !DownloadManager.containsTaskGroup(it.groupId!!)) {
+                    intent.putExtra(KEY_TASK_ID, it.id)
                     startService(context, intent)
                 }
             }
@@ -99,7 +99,7 @@ class DownloadService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val entityId = intent?.getLongExtra(KEY_ENTITY_ID, -1L)
+        val entityId = intent?.getLongExtra(KEY_TASK_ID, -1L)
         if (entityId == null || entityId == -1L) {
             return super.onStartCommand(intent, flags, startId)
         }
@@ -120,17 +120,17 @@ class DownloadService : Service() {
 
     /**
      * 分配下载任务
-     * @param entityId entity id
+     * @param taskId 下载任务ID
      * */
-    private suspend fun assigningTask(entityId: Long) {
-        val entity = DownloadRepository.getDownloadTaskById(entityId)
-            ?: throw IllegalStateException("Task [E$entityId] get download task entity failed")
+    private suspend fun assigningTask(taskId: Long) {
+        val taskEntity = DownloadRepository.getDownloadTaskByTaskId(taskId)
+            ?: throw IllegalStateException("Task [T$taskId] get download task entity failed")
 
         // 尝试保存视频信息和请求下载
-        doSaveVideoDetails(entity)
+        doSaveVideoDetails(taskEntity)
 
         // 开始请求下载
-        DownloadManager.requestDownload(entity)
+        DownloadManager.requestDownload(taskEntity)
     }
 
     /**
@@ -138,27 +138,27 @@ class DownloadService : Service() {
      * previous: [assigningTask]
      * 1. 请求获取视频详情；2. 根据获取到的数据更新数据库；
      * */
-    private suspend fun doSaveVideoDetails(entity: DownloadTaskEntity) {
-        NetworkManager.biliVideoRepository.syncRequestVideoDetail(entity.biliBvid) { responseCode, returnCode, message ->
+    private suspend fun doSaveVideoDetails(task: DownloadTaskEntity) {
+        NetworkManager.biliVideoRepository.syncRequestVideoDetail(task.biliBvid) { responseCode, returnCode, message ->
             mDownloadNotification.notificationGetVideoDetailsFailed(
-                entity,
+                task,
                 responseCode,
                 returnCode,
                 message
             )
             // 如果无法获取视频详情，且这个任务还在准备阶段则直接删除任务
             // 因为没有对应获取视频详情失败的STATUS（也不需要）
-            if (entity.status == DownloadTaskEntity.STATE_PREPARE) {
-                mServiceScope.launch { DownloadRepository.deleteDownloadTask(entity.id) }
+            if (task.status == DownloadTaskEntity.STATE_PREPARE) {
+                mServiceScope.launch { DownloadRepository.deleteDownloadTask(task.id) }
             }
             Log.e(
                 TAG,
-                "Task [E${entity.id}] get video details failed, responseCode: $responseCode, returnCode: $returnCode, message: $message"
+                "Task [T${task.id}] get video details failed, responseCode: $responseCode, returnCode: $returnCode, message: $message"
             )
         }?.let {
             // 更新数据库中的视频信息
-            BiliVideoRepository.doInsertOrUpdateVideoDetails(it, entity.biliCid)
-        } ?: throw IllegalStateException("Task [E${entity.id}] get video details failed")
+            BiliVideoRepository.doInsertOrUpdateVideoDetails(it, task.biliCid)
+        } ?: throw IllegalStateException("Task [T${task.id}] get video details failed")
     }
 
 
@@ -168,7 +168,7 @@ class DownloadService : Service() {
     fun onRequestFailedEvent(event: DownloadRequestFailedEvent) {
         mRunningTaskCount--
         mDownloadNotification.notificationRequestFailed(
-            event.entity,
+            event.task,
             event.httpCode,
             event.code,
             event.message
@@ -181,31 +181,31 @@ class DownloadService : Service() {
     fun onDownloadStatusChangeEvent(event: DownloadStatusChangeEvent) {
         Log.d(
             TAG,
-            "Task [D${event.task.entity.id}, E${event.entity.id}] status change, status: ${event.status}"
+            "Task [G${event.group.entity.id}, T${event.task.id}] status change, status: ${event.status}"
         )
         mServiceScope.launch {
             when (event.status) {
-                DownloadTaskStatus.FAILURE -> onDownloadFailed(event.entity, event.task)
+                DownloadTaskStatus.FAILURE -> onDownloadFailed(event.task, event.group)
                 DownloadTaskStatus.COMPLETED -> onDownloadCompleted(
-                    event.entity,
-                    event.task
+                    event.task,
+                    event.group
                 )
 
                 DownloadTaskStatus.EXECUTING -> onDownloadExecuting(
-                    event.entity,
-                    event.task
+                    event.task,
+                    event.group
                 )
 
                 DownloadTaskStatus.CANCELLED -> onDownloadCancelled(
-                    event.entity,
-                    event.task
+                    event.task,
+                    event.group
                 )
 
                 else -> Unit
             }
             // 是终止态
             if (event.status.isEndStatus) {
-                mDownloadNotification.updateDownloadProgress(event.entity, null)
+                mDownloadNotification.updateDownloadProgress(event.task, null)
                 mRunningTaskCount--
             }
         }
@@ -216,20 +216,20 @@ class DownloadService : Service() {
      * 下载失败
      * from [onDownloadStatusChangeEvent]
      * */
-    private suspend fun onDownloadFailed(entity: DownloadTaskEntity, task: DownloadGroupTask) {
-        DownloadRepository.update(entity.apply {
+    private suspend fun onDownloadFailed(task: DownloadTaskEntity, group: DownloadGroupTask) {
+        DownloadRepository.update(task.apply {
             status = DownloadTaskEntity.STATE_DOWNLOAD_FAILED
         })
-        mDownloadNotification.notificationDownloadFailed(entity)
+        mDownloadNotification.notificationDownloadFailed(task)
     }
 
     /**
      * 完成下载操作
      * from [onDownloadStatusChangeEvent]
      * */
-    private suspend fun onDownloadCompleted(entity: DownloadTaskEntity, task: DownloadGroupTask) {
-        val currentStatus = DownloadRepository.getDownloadTaskById(entity.id)?.status ?: return
-        val dashEntityList = DownloadRepository.queryDashList(entity)
+    private suspend fun onDownloadCompleted(task: DownloadTaskEntity, group: DownloadGroupTask) {
+        val currentStatus = DownloadRepository.getDownloadTaskByTaskId(task.id)?.status ?: return
+        val dashEntityList = DownloadRepository.queryDashList(task)
 
         // 检查当前的状态是否为正在合成或者完成状态，若是则不执行
         if (currentStatus == DownloadTaskEntity.STATE_SYNTHESIS ||
@@ -237,14 +237,14 @@ class DownloadService : Service() {
         ) {
             Log.e(
                 TAG,
-                "Task [D${task.entity.id}, E${entity.id}] The current state cannot perform the synthesis operation, status: $currentStatus"
+                "Task [G${group.entity.id}, T${task.id}] The current state cannot perform the synthesis operation, status: $currentStatus"
             )
             return
         }
 
         // 登记资源
         dashEntityList.forEach {
-            DownloadRepository.registerResource(entity, it)
+            DownloadRepository.registerResource(task, it)
         }
 
         val videoDash = dashEntityList.find { it.type == DashType.VIDEO }
@@ -252,11 +252,11 @@ class DownloadService : Service() {
 
         val finalStatus = if (dashEntityList.size == 2 && videoDash != null && audioDash != null) {
             // 立即更新状态为正在合成
-            DownloadRepository.update(entity.apply {
+            DownloadRepository.update(task.apply {
                 status = DownloadTaskEntity.STATE_SYNTHESIS
             })
             // 尝试合成音视频
-            if (!tryMergeVideo(entity, videoDash, audioDash)) {
+            if (!tryMergeVideo(task, videoDash, audioDash)) {
                 DownloadTaskEntity.STATE_SYNTHESIS_FAILED
             } else {
                 DownloadTaskEntity.STATE_COMPLETED
@@ -264,7 +264,7 @@ class DownloadService : Service() {
         } else DownloadTaskEntity.STATE_COMPLETED
 
         // 更新记录为最终状态
-        DownloadRepository.update(entity.apply {
+        DownloadRepository.update(task.apply {
             status = finalStatus
         })
     }
@@ -272,25 +272,25 @@ class DownloadService : Service() {
     /**
      * 下载任务执行中...
      * from [onDownloadStatusChangeEvent]*/
-    private suspend fun onDownloadExecuting(entity: DownloadTaskEntity, task: DownloadGroupTask) {
+    private suspend fun onDownloadExecuting(task: DownloadTaskEntity, group: DownloadGroupTask) {
         Log.d(
             TAG,
-            "Task [D${task.entity.id}, E${entity.id}] status change, percent: ${task.percent}%"
+            "Task [G${group.entity.id}, T${task.id}] status change, percent: ${group.percent}%"
         )
-        if (entity.status != DownloadTaskEntity.STATE_DOWNLOADING) {
-            DownloadRepository.update(entity.apply {
+        if (task.status != DownloadTaskEntity.STATE_DOWNLOADING) {
+            DownloadRepository.update(task.apply {
                 status = DownloadTaskEntity.STATE_DOWNLOADING
             })
         }
-        mDownloadNotification.updateDownloadProgress(entity, task.percent)
+        mDownloadNotification.updateDownloadProgress(task, group.percent)
     }
 
     /**
      * 下载任务被取消
      * from [onDownloadStatusChangeEvent] */
-    private suspend fun onDownloadCancelled(entity: DownloadTaskEntity, task: DownloadGroupTask) {
-        DownloadRepository.deleteDownloadTask(entity.id)
-        mDownloadNotification.notificationDownloadCancel(entity)
+    private suspend fun onDownloadCancelled(task: DownloadTaskEntity, group: DownloadGroupTask) {
+        DownloadRepository.deleteDownloadTask(task.id)
+        mDownloadNotification.notificationDownloadCancel(task)
     }
 
     /**

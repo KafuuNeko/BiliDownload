@@ -5,7 +5,7 @@ import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import com.arialyy.aria.core.task.DownloadGroupTask
 
 class DownloadStatusChangeEvent(
-    entity: DownloadTaskEntity,
-    val task: DownloadGroupTask,
+    task: DownloadTaskEntity,
+    val group: DownloadGroupTask,
     val status: DownloadTaskStatus
-): DownloadTaskEvent(entity)
+): DownloadTaskEvent(task)

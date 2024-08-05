@@ -21,8 +21,8 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
         CommonLibs.getString(R.string.notification_title_download_foreground),
     ).build()
 
-    private fun showEntityMessageNotification(
-        entity: DownloadTaskEntity,
+    private fun showTaskMessageNotification(
+        task: DownloadTaskEntity,
         title: CharSequence,
         message: CharSequence?
     ) {
@@ -36,16 +36,16 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
         }
     }
 
-    private fun showEntityProgressMessageNotification(
-        entity: DownloadTaskEntity,
+    private fun showTaskProgressMessageNotification(
+        task: DownloadTaskEntity,
         title: CharSequence,
         percent: Int?
     ) {
-        val id = mNotificationId.getOrPut(entity.id) { getNewNotificationId() }
+        val id = mNotificationId.getOrPut(task.id) { getNewNotificationId() }
 
         if (percent == null) {
             mNotificationManager.cancel(id)
-            mNotificationId.remove(entity.id)
+            mNotificationId.remove(task.id)
             return
         }
 
@@ -59,64 +59,64 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
         }
     }
 
-    fun updateDownloadProgress(entity: DownloadTaskEntity, percent: Int?) {
-        showEntityProgressMessageNotification(
-            entity,
+    fun updateDownloadProgress(task: DownloadTaskEntity, percent: Int?) {
+        showTaskProgressMessageNotification(
+            task,
             CommonLibs.getString(R.string.notification_downloading_title)
-                .format("${entity.biliBvid}(${entity.id})"),
+                .format("${task.biliBvid}(${task.id})"),
             percent
         )
     }
 
-    fun notificationDownloadCancel(entity: DownloadTaskEntity) {
-        showEntityMessageNotification(
-            entity,
+    fun notificationDownloadCancel(task: DownloadTaskEntity) {
+        showTaskMessageNotification(
+            task,
             CommonLibs.getString(R.string.notification_cancelled_download_title),
             CommonLibs.getString(R.string.notification_cancelled_download_message)
-                .format("${entity.biliBvid}(${entity.id})")
+                .format("${task.biliBvid}(${task.id})")
         )
     }
 
-    fun notificationSynthesisFailed(entity: DownloadTaskEntity) {
-        showEntityMessageNotification(
-            entity,
+    fun notificationSynthesisFailed(task: DownloadTaskEntity) {
+        showTaskMessageNotification(
+            task,
             CommonLibs.getString(R.string.notification_synthesis_failed_title),
             CommonLibs.getString(R.string.notification_synthesis_failed_message)
-                .format("${entity.biliBvid}(${entity.id})")
+                .format("${task.biliBvid}(${task.id})")
         )
     }
 
-    fun notificationDownloadFailed(entity: DownloadTaskEntity) {
-        showEntityMessageNotification(
-            entity,
+    fun notificationDownloadFailed(task: DownloadTaskEntity) {
+        showTaskMessageNotification(
+            task,
             CommonLibs.getString(R.string.notification_download_failed_title),
             CommonLibs.getString(R.string.notification_download_failed_message)
-                .format("${entity.biliBvid}(${entity.id})")
+                .format("${task.biliBvid}(${task.id})")
         )
     }
 
     fun notificationRequestFailed(
-        entity: DownloadTaskEntity,
+        task: DownloadTaskEntity,
         httpCode: Int,
         code: Int,
         message: String
     ) {
-        showEntityMessageNotification(
-            entity,
+        showTaskMessageNotification(
+            task,
             CommonLibs.getString(R.string.notification_request_failed_title),
             CommonLibs.getString(R.string.notification_request_failed_message)
-                .format("${entity.biliBvid}(${entity.id})", httpCode, code, message),
+                .format("${task.biliBvid}(${task.id})", httpCode, code, message),
         )
     }
 
     fun notificationGetVideoDetailsFailed(
-        entity: DownloadTaskEntity,
+        task: DownloadTaskEntity,
         responseCode: Int,
         returnCode: Int,
         message: String
     ) {
-        showEntityMessageNotification(
-            entity,
+        showTaskMessageNotification(
+            task,
             CommonLibs.getString(R.string.notification_get_video_details_failed_title),
             CommonLibs.getString(R.string.notification_get_video_details_failed_message)
                 .format(responseCode, returnCode, message)

@@ -42,7 +42,7 @@ class HistoryDetailsViewModel : CoreViewModel() {
     val loadingStatusLiveData = mLoadingStatusLiveData.liveData()
 
     fun updateVideoDetails(details: DownloadTaskWithVideoDetails?) {
-        if (details == null || details.downloadTask.downloadTaskId == null) {
+        if (details == null || details.downloadTask.groupId == null) {
             finishActivity()
             return
         }
@@ -57,7 +57,7 @@ class HistoryDetailsViewModel : CoreViewModel() {
      * 更新下载状态
      */
     fun updateDownloadStatus() {
-        val downloadId = mDownloadDetailsLiveData.value?.downloadTask?.downloadTaskId ?: return
+        val downloadId = mDownloadDetailsLiveData.value?.downloadTask?.groupId ?: return
         Aria.download(this).getGroupEntity(downloadId)?.let {
             val process =
                 "${FileUtils.formatFileSize(it.currentProgress)}/${FileUtils.formatFileSize(it.fileSize)}"
@@ -82,7 +82,7 @@ class HistoryDetailsViewModel : CoreViewModel() {
      * 取消当前的下载任务
      */
     fun cancelDownloadTask() {
-        val downloadId = mDownloadDetailsLiveData.value?.downloadTask?.downloadTaskId ?: return
+        val downloadId = mDownloadDetailsLiveData.value?.downloadTask?.groupId ?: return
         Aria.download(this).loadGroup(downloadId)?.ignoreCheckPermissions()?.cancel(true)
     }
 
@@ -101,7 +101,7 @@ class HistoryDetailsViewModel : CoreViewModel() {
     fun deleteDownloadTask() {
         val entity = mDownloadDetailsLiveData.value?.downloadTask ?: return
         runBlocking { DownloadRepository.deleteDownloadTask(entity.id) }
-        entity.downloadTaskId?.let {
+        entity.groupId?.let {
             Aria.download(this).loadGroup(it).ignoreCheckPermissions().cancel(true)
         }
         finishActivity()
@@ -111,7 +111,7 @@ class HistoryDetailsViewModel : CoreViewModel() {
      * 暂停或者继续下载任务
      */
     fun pauseOrContinue() {
-        val taskId = mDownloadDetailsLiveData.value?.downloadTask?.downloadTaskId ?: return
+        val taskId = mDownloadDetailsLiveData.value?.downloadTask?.groupId ?: return
         val taskGroup = Aria.download(this).loadGroup(taskId).ignoreCheckPermissions()
         if (downloadIsStoppedLiveData.value == true) taskGroup.resume() else taskGroup.stop()
     }

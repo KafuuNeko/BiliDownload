@@ -7,10 +7,10 @@ import cc.kafuu.bilidownload.common.utils.MimeTypeUtils
 import cc.kafuu.bilidownload.common.constant.DashType
 import java.io.File
 
-@Entity(primaryKeys = ["dashId", "taskEntityId", "codecId"], tableName = "DownloadDash")
+@Entity(primaryKeys = ["dashId", "taskId", "codecId"], tableName = "DownloadDash")
 data class DownloadDashEntity (
     val dashId: Long,
-    val taskEntityId: Long,
+    val taskId: Long,
     val codecId: Long,
     @DashType val type: Int,
     val mimeType: String,
@@ -20,7 +20,7 @@ data class DownloadDashEntity (
         // 根据mimetype取得文件后缀名
         val suffix = MimeTypeUtils.getExtensionFromMimeType(mimeType) ?: "bin"
         // 取得合成文件输出路径
-        return File(CommonLibs.requireResourcesDir(), "stream-$taskEntityId-$dashId-$codecId.$suffix")
+        return File(CommonLibs.requireResourcesDir(), "stream-$taskId-$dashId-$codecId.$suffix")
     }
 
     fun getQualityDetails(defaultText: String) = when(type) {

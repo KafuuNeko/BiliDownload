@@ -62,7 +62,7 @@
 
             <!-- 任务正在下载中时显示 -->
             <androidx.cardview.widget.CardView
-                bindVisible="@{viewModel.downloadDetailsLiveData != null &amp;&amp; viewModel.downloadDetailsLiveData.downloadTask.status == DownloadTaskEntity.STATE_DOWNLOADING &amp;&amp; viewModel.downloadDetailsLiveData.downloadTask.downloadTaskId != -1}"
+                bindVisible="@{viewModel.downloadDetailsLiveData != null &amp;&amp; viewModel.downloadDetailsLiveData.downloadTask.status == DownloadTaskEntity.STATE_DOWNLOADING &amp;&amp; viewModel.downloadDetailsLiveData.downloadTask.groupId != -1}"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
@@ -152,7 +152,7 @@
 
             <!-- 下载失败时显示 -->
             <androidx.cardview.widget.CardView
-                bindVisible="@{viewModel.downloadDetailsLiveData != null &amp;&amp; (viewModel.downloadDetailsLiveData.downloadTask.status == DownloadTaskEntity.STATE_DOWNLOAD_FAILED || viewModel.downloadDetailsLiveData.downloadTask.downloadTaskId == -1)}"
+                bindVisible="@{viewModel.downloadDetailsLiveData != null &amp;&amp; (viewModel.downloadDetailsLiveData.downloadTask.status == DownloadTaskEntity.STATE_DOWNLOAD_FAILED || viewModel.downloadDetailsLiveData.downloadTask.groupId == -1)}"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"

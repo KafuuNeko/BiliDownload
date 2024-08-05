@@ -73,10 +73,10 @@ class HistoryDetailsActivity : CoreActivity<ActivityHistoryDetailsBinding, Histo
                 return
             }
         }
-        DownloadRepository.queryDownloadTaskDetailByEntityId(entityId).observe(this) {
+        DownloadRepository.queryDownloadTaskDetailByTaskId(entityId).observe(this) {
             mViewModel.updateVideoDetails(it)
         }
-        DownloadRepository.queryResourcesLiveDataByTaskEntityId(entityId).observe(this) {
+        DownloadRepository.queryResourcesLiveDataByTaskId(entityId).observe(this) {
             mViewModel.updateDownloadResources(it)
         }
     }
@@ -96,7 +96,7 @@ class HistoryDetailsActivity : CoreActivity<ActivityHistoryDetailsBinding, Histo
 
     @Subscribe(threadMode = ThreadMode.POSTING)
     fun onDownloadStatusChangeEvent(event: DownloadStatusChangeEvent) {
-        if (event.entity.id != mViewModel.downloadDetailsLiveData.value?.downloadTask?.id) return
+        if (event.task.id != mViewModel.downloadDetailsLiveData.value?.downloadTask?.id) return
         mViewModel.updateDownloadStatus()
     }
 

@@ -7,7 +7,7 @@ import cc.kafuu.bilidownload.common.constant.DownloadResourceType
 @Entity(tableName = "DownloadResource")
 data class DownloadResourceEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
-    val taskEntityId: Long,
+    val taskId: Long,
     @DownloadResourceType val type: Int,
     val name: String,
     val mimeType: String,

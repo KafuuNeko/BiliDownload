@@ -26,7 +26,7 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
         private const val KEY_TASK_ENTITY_ID = "taskEntityId"
         private const val KEY_RESOURCE_ID = "resourceId"
         fun buildIntent(resource: DownloadResourceEntity) = Intent().apply {
-            putExtra(KEY_TASK_ENTITY_ID, resource.taskEntityId)
+            putExtra(KEY_TASK_ENTITY_ID, resource.taskId)
             putExtra(KEY_RESOURCE_ID, resource.id)
         }
     }
@@ -62,7 +62,7 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
             it?.let { mViewModel.updateResourceEntity(it) }
         }
 
-        DownloadRepository.queryDownloadTaskDetailByEntityId(downloadEntityId).observe(this) {
+        DownloadRepository.queryDownloadTaskDetailByTaskId(downloadEntityId).observe(this) {
             it?.let { mViewModel.updateTaskDetails(it) }
         }
 

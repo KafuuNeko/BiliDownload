@@ -35,7 +35,7 @@ class HistoryViewModel : RVViewModel() {
     )
 
     fun getStatusText(task: DownloadTaskWithVideoDetails): String {
-        val percent = task.downloadTask.downloadTaskId?.let {
+        val percent = task.downloadTask.groupId?.let {
             Aria.download(this).loadGroup(it).percent
         }
         return "${percent ?: 0}%"

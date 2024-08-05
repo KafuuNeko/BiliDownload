@@ -18,8 +18,8 @@ interface DownloadResourceDao {
     @Update
     suspend fun update(resourceEntity: DownloadResourceEntity)
 
-    @Query("DELETE FROM DownloadResource WHERE taskEntityId = :taskEntityId")
-    suspend fun deleteTaskByTaskEntityId(taskEntityId: Long)
+    @Query("DELETE FROM DownloadResource WHERE taskId = :taskId")
+    suspend fun deleteTaskByTaskId(taskId: Long)
 
     // 根据ID删除ResourceEntity
     @Query("DELETE FROM DownloadResource WHERE id = :id")
@@ -30,11 +30,11 @@ interface DownloadResourceDao {
     suspend fun queryAllResources(): List<DownloadResourceEntity>
 
     // 根据taskId查询ResourceEntity
-    @Query("SELECT * FROM DownloadResource WHERE taskEntityId = :taskEntityId")
-    suspend fun queryResourcesByTaskEntityId(taskEntityId: Long): List<DownloadResourceEntity>
+    @Query("SELECT * FROM DownloadResource WHERE taskId = :taskEntityId")
+    suspend fun queryResourcesByTaskId(taskEntityId: Long): List<DownloadResourceEntity>
 
-    @Query("SELECT * FROM DownloadResource WHERE taskEntityId = :taskEntityId")
-    fun queryResourcesLiveDataByTaskEntityId(taskEntityId: Long): LiveData<List<DownloadResourceEntity>>
+    @Query("SELECT * FROM DownloadResource WHERE taskId = :taskEntityId")
+    fun queryResourcesLiveDataByTaskId(taskEntityId: Long): LiveData<List<DownloadResourceEntity>>
 
     // 根据ID查询单个ResourceEntity
     @Query("SELECT * FROM DownloadResource WHERE id = :id")
