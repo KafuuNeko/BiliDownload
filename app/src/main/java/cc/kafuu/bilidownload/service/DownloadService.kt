@@ -142,9 +142,7 @@ class DownloadService : Service() {
         NetworkManager.biliVideoRepository.syncRequestVideoDetail(task.biliBvid) { responseCode, returnCode, message ->
             mDownloadNotification.notificationGetVideoDetailsFailed(
                 task,
-                responseCode,
-                returnCode,
-                message
+                responseCode, returnCode, message
             )
             // 如果无法获取视频详情，且这个任务还在准备阶段则直接删除任务
             // 因为没有对应获取视频详情失败的STATUS（也不需要）
@@ -169,9 +167,7 @@ class DownloadService : Service() {
         mRunningTaskCount--
         mDownloadNotification.notificationRequestFailed(
             event.task,
-            event.httpCode,
-            event.code,
-            event.message
+            event.httpCode, event.code, event.message
         )
     }
 
@@ -186,21 +182,9 @@ class DownloadService : Service() {
         mServiceScope.launch {
             when (event.status) {
                 DownloadTaskStatus.FAILURE -> onDownloadFailed(event.task, event.group)
-                DownloadTaskStatus.COMPLETED -> onDownloadCompleted(
-                    event.task,
-                    event.group
-                )
-
-                DownloadTaskStatus.EXECUTING -> onDownloadExecuting(
-                    event.task,
-                    event.group
-                )
-
-                DownloadTaskStatus.CANCELLED -> onDownloadCancelled(
-                    event.task,
-                    event.group
-                )
-
+                DownloadTaskStatus.COMPLETED -> onDownloadCompleted(event.task, event.group)
+                DownloadTaskStatus.EXECUTING -> onDownloadExecuting(event.task, event.group)
+                DownloadTaskStatus.CANCELLED -> onDownloadCancelled(event.task, event.group)
                 else -> Unit
             }
             // 是终止态
@@ -243,8 +227,10 @@ class DownloadService : Service() {
         }
 
         // 登记资源
-        dashEntityList.forEach {
-            DownloadRepository.registerResource(task, it)
+        if (currentStatus != DownloadTaskEntity.STATE_SYNTHESIS_FAILED) {
+            dashEntityList.forEach {
+                DownloadRepository.registerResource(task, it)
+            }
         }
 
         val videoDash = dashEntityList.find { it.type == DashType.VIDEO }
@@ -315,14 +301,17 @@ class DownloadService : Service() {
         )
 
         // 如果合成成功就登记资源
-        if (isSuccess) DownloadRepository.registerResource(
-            entity,
-            "Merge Resource",
-            DownloadResourceType.MIXED,
-            outputFile,
-            videoDash.mimeType
-        )
-        else mDownloadNotification.notificationSynthesisFailed(entity)
+        if (isSuccess) {
+            DownloadRepository.registerResource(
+                entity,
+                "Merge Resource",
+                DownloadResourceType.MIXED,
+                outputFile,
+                videoDash.mimeType
+            )
+        } else {
+            mDownloadNotification.notificationSynthesisFailed(entity)
+        }
 
         return isSuccess
     }
