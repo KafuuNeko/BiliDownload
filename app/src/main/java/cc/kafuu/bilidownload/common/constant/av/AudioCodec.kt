@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.common.constant.av.codec
+package cc.kafuu.bilidownload.common.constant.av
 
 enum class AudioCodec(fullName: String) {
     AAC("aac"),

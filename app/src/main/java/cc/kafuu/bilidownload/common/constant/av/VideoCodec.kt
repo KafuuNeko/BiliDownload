@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.common.constant.av.codec
+package cc.kafuu.bilidownload.common.constant.av
 
 enum class VideoCodec(fullName: String) {
     H264("libx264"),
