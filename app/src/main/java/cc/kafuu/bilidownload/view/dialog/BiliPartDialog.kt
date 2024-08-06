@@ -18,10 +18,10 @@ import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
 import cc.kafuu.bilidownload.databinding.DialogBiliPartBinding
 import cc.kafuu.bilidownload.viewmodel.dialog.BiliPartViewModel
 
-private typealias DialogResult = Pair<BiliPlayStreamResource?, BiliPlayStreamResource?>
+private typealias BiliPartDialogResult = Pair<BiliPlayStreamResource?, BiliPlayStreamResource?>
 
 class BiliPartDialog :
-    CoreAdvancedDialog<DialogBiliPartBinding, DialogResult, BiliPartViewModel>(
+    CoreAdvancedDialog<DialogBiliPartBinding, BiliPartDialogResult, BiliPartViewModel>(
         BiliPartViewModel::class.java,
         R.layout.dialog_bili_part,
         BR.viewModel
@@ -125,7 +125,7 @@ class BiliPartDialog :
                 Toast.LENGTH_SHORT
             )
         )
-        DialogResult(
+        BiliPartDialogResult(
             mViewModel.currentVideoResourceLiveData.value?.resource,
             mViewModel.currentAudioResourceLiveData.value?.resource
         ).also { dismissWithResult(it) }
