@@ -63,6 +63,10 @@ class LocalResourceVideModel : CoreViewModel() {
     private val mIsConvertingLiveData = MutableLiveData(false)
     val isConvertingLiveData = mIsConvertingLiveData.liveData()
 
+    // 音视频转换进度
+    private val mConvertProgressLiveData = MutableLiveData<String>()
+    val convertProgressLiveData = mConvertProgressLiveData.liveData()
+
     // 转换格式线程
     private var mConvertSession: FFmpegSession? = null
 
@@ -138,6 +142,23 @@ class LocalResourceVideModel : CoreViewModel() {
         val details = mLocalMediaDetailLiveData.value ?: return
         val resource = resourceLiveData.value ?: return
         val format = details.getAVFormatOrNull() ?: return
+
+        if (mConvertSession?.state == SessionState.RUNNING) {
+            popDialog(
+                ConfirmDialog.buildDialog(
+                    CommonLibs.getString(R.string.text_convert),
+                    CommonLibs.getString(R.string.convert_stop_message),
+                    CommonLibs.getString(R.string.text_cancel),
+                    CommonLibs.getString(R.string.text_stop),
+                    rightButtonStyle = ConfirmDialog.Companion.ButtonStyle.Stop
+                ),
+                success = {
+                    if (it is Boolean && it) mConvertSession?.cancel()
+                }
+            )
+            return
+        }
+
         val audioCodec = details.getAudioAVCodecOrNull()
         val videoCodec = details.getVideoAVCodecOrNull()
         popDialog(
@@ -242,12 +263,21 @@ class LocalResourceVideModel : CoreViewModel() {
             mIsConvertingLiveData.postValue(false)
         }
 
+        mConvertProgressLiveData.value = CommonLibs.getString(R.string.convert_progress, 0.0f)
+
         return FFMpegUtils.convertMediaAsync(
             sourceFile = resource.file,
             targetFile = convertCacheFile.absolutePath,
             videoCodec = sourceVideoCodec?.let { it to (result.videoCodec ?: return null) },
             audioCodec = sourceAudioCodec?.let { it to (result.audioCodec ?: return null) },
-            onProgress = { Log.d(TAG, "doCovertResource: times: $it") },
+            onProgress = {
+                val durationMillis = details.duration * 1000
+                val progress = if (details.duration == 0.0) 0.0 else (it / durationMillis) * 100
+                mConvertProgressLiveData.postValue(
+                    CommonLibs.getString(R.string.convert_progress, progress)
+                )
+                Log.d(TAG, "doCovertResource: times: $it/${details.duration}, progress: $progress")
+            },
             onComplete = completeCallback
         )
     }
@@ -283,10 +313,6 @@ class LocalResourceVideModel : CoreViewModel() {
                 LocalResourceActivity.buildIntent(resource.taskId, resourceId)
             )
         }
-
-        popMessage(
-            ToastMessageAction(CommonLibs.getString(R.string.convert_resource_success_message))
-        )
     }
 
     /**

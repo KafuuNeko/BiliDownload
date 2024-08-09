@@ -100,5 +100,7 @@
     <string name="text_convert">Convert</string>
     <string name="convert_resource_failed_message">Conversion failure</string>
     <string name="resource_have_mission_progress">A task is being executed. Please wait</string>
-    <string name="convert_resource_success_message">Successful conversion</string>
+    <string name="convert_progress">%.2f/100.00 Converting…</string>
+    <string name="convert_stop_message">Do you want to stop conversion?</string>
+    <string name="text_stop">Stop</string>
 </resources>

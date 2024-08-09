@@ -19,7 +19,11 @@ data class LocalMediaDetail(
     /**
      * 媒体文件的总播放时长(时:分:秒.毫秒)
      */
-    val duration: String?,
+    val formatDuration: String?,
+    /**
+     * 媒体文件的总播放时长(毫秒)
+     */
+    val duration: Double,
     /**
      * 视频流使用的编解码器
      */

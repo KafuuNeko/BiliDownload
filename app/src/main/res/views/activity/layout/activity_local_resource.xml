@@ -205,7 +205,7 @@
                         </LinearLayout>
 
                         <LinearLayout
-                            bindVisible="@{viewModel.localMediaDetailLiveData.duration != null}"
+                            bindVisible="@{viewModel.localMediaDetailLiveData.formatDuration != null}"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
@@ -232,7 +232,7 @@
                                 android:gravity="center_vertical|start"
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
-                                android:text="@{viewModel.localMediaDetailLiveData.duration}"
+                                android:text="@{viewModel.localMediaDetailLiveData.formatDuration}"
                                 android:textColor="@color/general_text_color"
                                 android:textSize="@dimen/size_text_common_size" />
                         </LinearLayout>
@@ -469,7 +469,6 @@
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/tv_resource_covert"
-                    bindEnable="@{!viewModel.isConvertingLiveData}"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="10dp"
@@ -501,13 +500,14 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:minHeight="16dp"
-                        android:text="@string/text_convert"
+                        android:text="@{viewModel.isConvertingLiveData ? viewModel.convertProgressLiveData : @string/text_convert}"
                         android:textColor="@color/common_white"
                         android:textSize="@dimen/size_text_common_size"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        app:layout_constraintTop_toTopOf="parent"
+                        tools:text="@string/text_convert" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 

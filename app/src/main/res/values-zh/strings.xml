@@ -100,5 +100,7 @@
     <string name="text_convert">转换</string>
     <string name="convert_resource_failed_message">转换失败</string>
     <string name="resource_have_mission_progress">有任务正在执行，请稍等。</string>
-    <string name="convert_resource_success_message">转换成功</string>
+    <string name="convert_progress">%.2f/100.00 转换中…</string>
+    <string name="convert_stop_message">是否停止转换?</string>
+    <string name="text_stop">停止</string>
 </resources>
