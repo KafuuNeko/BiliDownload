@@ -1,11 +1,8 @@
 package cc.kafuu.bilidownload.viewmodel.activity
 
-import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultLauncher
 import androidx.lifecycle.MutableLiveData
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
@@ -14,6 +11,7 @@ import cc.kafuu.bilidownload.common.ext.liveData
 import cc.kafuu.bilidownload.common.model.IAsyncCallback
 import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.common.model.LocalMediaDetail
+import cc.kafuu.bilidownload.common.model.action.ViewAction
 import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
 import cc.kafuu.bilidownload.common.model.av.AVFormat
 import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
@@ -22,6 +20,7 @@ import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
 import cc.kafuu.bilidownload.common.utils.FFMpegUtils
 import cc.kafuu.bilidownload.common.utils.FileUtils
 import cc.kafuu.bilidownload.common.utils.TimeUtils
+import cc.kafuu.bilidownload.view.dialog.ConfirmDialog
 import cc.kafuu.bilidownload.view.dialog.ConvertDialog
 import kotlinx.coroutines.runBlocking
 import java.io.File
@@ -29,6 +28,14 @@ import java.io.File
 class LocalResourceVideModel : CoreViewModel() {
     companion object {
         private const val TAG = "LocalResourceVideModel"
+
+        class ShareResourceAction(
+            val title: String, val file: File, val mimetype: String
+        ) : ViewAction()
+
+        class ExportResourceAction(
+            val file: File, val mimetype: String
+        ) : ViewAction()
     }
 
     // 此页面加载状态，loading状态将显示加载动画（默认开启）
@@ -100,22 +107,27 @@ class LocalResourceVideModel : CoreViewModel() {
     }
 
     /**
-     * @brief 尝试询问用户如何分析此资源
+     * @brief 尝试询问用户如何分享此资源
      */
-    fun tryShareResource(context: Context) {
+    fun tryShareResource() {
         val taskDetail = mTaskDetailLiveData.value ?: return
         val resource = mResourceLiveData.value ?: return
-        FileUtils.tryShareFile(context, taskDetail.title, File(resource.file), resource.mimeType)
+        sendViewAction(
+            ShareResourceAction(
+                taskDetail.title,
+                File(resource.file),
+                resource.mimeType
+            )
+        )
     }
 
     /**
      * @brief 尝试询问用户要将此资源导出到何处
      */
-    fun tryExportResource(createDocumentLauncher: ActivityResultLauncher<Intent>) {
+    fun tryExportResource() {
         if (mIsExportingLiveData.value == true) return
         val resource = mResourceLiveData.value ?: return
-        val file = File(resource.file)
-        FileUtils.tryExportFile(file, resource.mimeType, createDocumentLauncher)
+        sendViewAction(ExportResourceAction(File(resource.file), resource.mimeType))
     }
 
     /**
@@ -146,6 +158,22 @@ class LocalResourceVideModel : CoreViewModel() {
     }
 
     /**
+     * @brief 尝试询问用户是否立即删除此资源
+     */
+    fun tryDeleteResource() {
+        val dialog = ConfirmDialog.buildDialog(
+            CommonLibs.getString(R.string.text_delete_confirm),
+            CommonLibs.getString(R.string.delete_resource_message),
+            CommonLibs.getString(R.string.text_cancel),
+            CommonLibs.getString(R.string.text_delete),
+            rightButtonStyle = ConfirmDialog.Companion.ButtonStyle.Delete
+        )
+        popDialog(dialog, success = {
+            if (it is Boolean && it) doDeleteResource()
+        })
+    }
+
+    /**
      * @brief 导出资源
      */
     fun exportResource(uri: Uri) {
@@ -173,7 +201,7 @@ class LocalResourceVideModel : CoreViewModel() {
     /**
      * @brief 删除此资源
      */
-    suspend fun doDeleteResource() {
+    private suspend fun doDeleteResource() {
         val resource = mResourceLiveData.value ?: return
         val file = File(resource.file)
         if (file.exists() && !file.delete()) {

@@ -8,13 +8,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
-import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.core.CoreActivity
-import cc.kafuu.bilidownload.common.model.ResultWrapper
+import cc.kafuu.bilidownload.common.model.action.ViewAction
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
+import cc.kafuu.bilidownload.common.utils.FileUtils
 import cc.kafuu.bilidownload.databinding.ActivityLocalResourceBinding
-import cc.kafuu.bilidownload.view.dialog.ConfirmDialog
 import cc.kafuu.bilidownload.viewmodel.activity.LocalResourceVideModel
 import kotlinx.coroutines.launch
 
@@ -54,8 +53,7 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
     }
 
     override fun initViews() {
-        if (!initObserver()) return
-        mViewDataBinding.initView()
+        initObserver()
     }
 
     private fun initObserver(): Boolean {
@@ -82,31 +80,17 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
         return true
     }
 
-    private fun ActivityLocalResourceBinding.initView() {
-        tvResourceOpen.setOnClickListener { onResourceOpen() }
-        tvResourceExport.setOnClickListener { onResourceExport() }
-        tvResourceDelete.setOnClickListener { onResourceDelete() }
+    override fun onViewAction(action: ViewAction) = when (action) {
+        is LocalResourceVideModel.Companion.ShareResourceAction -> onShareResource(action)
+        is LocalResourceVideModel.Companion.ExportResourceAction -> onExportResource(action)
+        else -> super.onViewAction(action)
     }
 
-    private fun onResourceOpen() {
-        mViewModel.tryShareResource(this)
+    private fun onExportResource(action: LocalResourceVideModel.Companion.ExportResourceAction) {
+        FileUtils.tryExportFile(action.file, action.mimetype, mCreateDocumentLauncher)
     }
 
-    private fun onResourceExport() {
-        mViewModel.tryExportResource(mCreateDocumentLauncher)
+    private fun onShareResource(action: LocalResourceVideModel.Companion.ShareResourceAction) {
+        FileUtils.tryShareFile(this, action.title, action.file, action.mimetype)
     }
-
-    private fun onResourceDelete() = lifecycleScope.launch {
-        val result = ConfirmDialog.buildDialog(
-            CommonLibs.getString(R.string.text_delete_confirm),
-            CommonLibs.getString(R.string.delete_resource_message),
-            CommonLibs.getString(R.string.text_cancel),
-            CommonLibs.getString(R.string.text_delete),
-            rightButtonStyle = ConfirmDialog.Companion.ButtonStyle.Delete
-        ).showAndWaitResult(this@LocalResourceActivity)
-        if (result is ResultWrapper.Success && result.value) {
-            mViewModel.doDeleteResource()
-        }
-    }
-
 }

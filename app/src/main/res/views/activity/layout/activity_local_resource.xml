@@ -419,6 +419,7 @@
                     android:gravity="center"
                     android:minWidth="100dp"
                     android:minHeight="36dp"
+                    android:onClick="@{()->viewModel.tryShareResource()}"
                     android:text="@string/text_open"
                     android:textColor="@color/common_white"
                     android:textSize="@dimen/size_text_button_size" />
@@ -436,6 +437,7 @@
                     android:gravity="center"
                     android:minWidth="100dp"
                     android:minHeight="36dp"
+                    android:onClick="@{()->viewModel.tryExportResource()}"
                     android:orientation="horizontal"
                     android:textSize="@dimen/size_text_button_size"
                     tools:background="@drawable/shape_button_general">
@@ -443,8 +445,8 @@
                     <ProgressBar
                         style="?android:attr/progressBarStyle"
                         bindVisible="@{viewModel.isExportingLiveData}"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
                         android:layout_margin="10dp"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toStartOf="@+id/tv_export_text"
@@ -454,6 +456,7 @@
                         android:id="@+id/tv_export_text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:minHeight="16dp"
                         android:text="@string/text_export"
                         android:textColor="@color/common_white"
                         android:textSize="@dimen/size_text_common_size"
@@ -486,8 +489,8 @@
                     <ProgressBar
                         style="?android:attr/progressBarStyle"
                         bindVisible="@{viewModel.isCoveringLiveData}"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
                         android:layout_margin="10dp"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toStartOf="@+id/tv_covert_text"
@@ -497,6 +500,7 @@
                         android:id="@+id/tv_covert_text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:minHeight="16dp"
                         android:text="@string/text_convert"
                         android:textColor="@color/common_white"
                         android:textSize="@dimen/size_text_common_size"
@@ -520,6 +524,7 @@
                     android:gravity="center"
                     android:minWidth="100dp"
                     android:minHeight="36dp"
+                    android:onClick="@{()->viewModel.tryDeleteResource()}"
                     android:text="@string/text_delete"
                     android:textColor="@color/common_white"
                     android:textSize="@dimen/size_text_button_size" />
