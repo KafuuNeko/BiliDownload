@@ -21,6 +21,8 @@ import cc.kafuu.bilidownload.common.utils.FileUtils
 import cc.kafuu.bilidownload.view.activity.LocalResourceActivity
 import cc.kafuu.bilidownload.view.dialog.ConfirmDialog
 import cc.kafuu.bilidownload.view.dialog.ConvertDialog
+import com.arthenica.ffmpegkit.FFmpegSession
+import com.arthenica.ffmpegkit.SessionState
 import kotlinx.coroutines.runBlocking
 import java.io.File
 
@@ -58,11 +60,11 @@ class LocalResourceVideModel : CoreViewModel() {
     val isExportingLiveData = mIsExportingLiveData.liveData()
 
     // 是否正在转换
-    private val mIsCoveringLiveData = MutableLiveData(false)
-    val isCoveringLiveData = mIsCoveringLiveData.liveData()
+    private val mIsConvertingLiveData = MutableLiveData(false)
+    val isConvertingLiveData = mIsConvertingLiveData.liveData()
 
     // 转换格式线程
-    private var mConvertThread: Thread? = null
+    private var mConvertSession: FFmpegSession? = null
 
     fun updateResourceEntity(resource: DownloadResourceEntity) {
         mResourceLiveData.value = resource
@@ -141,17 +143,10 @@ class LocalResourceVideModel : CoreViewModel() {
         popDialog(
             ConvertDialog.buildDialog(resource.name, format, audioCodec, videoCodec),
             success = {
-                if (mConvertThread != null) return@popDialog
-                mIsCoveringLiveData.value = true
-                mConvertThread = Thread {
-                    if (doCovertResource(it as ConvertDialog.Companion.Result)) {
-                        return@Thread
-                    }
-                    popMessage(
-                        ToastMessageAction(CommonLibs.getString(R.string.convert_resource_failed_message))
-                    )
-                }
-                mConvertThread?.start()
+                if (mConvertSession?.state == SessionState.RUNNING) return@popDialog
+                mIsConvertingLiveData.value = true
+                mConvertSession = doCovertResource(it as ConvertDialog.Companion.Result)
+                if (mConvertSession == null) onConvertFailed()
             }
         )
     }
@@ -221,53 +216,55 @@ class LocalResourceVideModel : CoreViewModel() {
     }
 
     /**
-     * @brief 尝试转换音视频封装格式或音视频流编码
+     * @brief 以异步的形式开始转换音视频封装格式或音视频流编码
+     *
+     * @return 成功返回FFMpeg转换进程的Session，否则返回空
      */
-    private fun doCovertResource(result: ConvertDialog.Companion.Result): Boolean {
-        val details = mLocalMediaDetailLiveData.value ?: return false
-        val resource = resourceLiveData.value ?: return false
+    private fun doCovertResource(result: ConvertDialog.Companion.Result): FFmpegSession? {
+        val details = mLocalMediaDetailLiveData.value ?: return null
+        val resource = resourceLiveData.value ?: return null
 
         val sourceAudioCodec = details.getAudioAVCodecOrNull()
         val sourceVideoCodec = details.getVideoAVCodecOrNull()
 
         val targetName =
             "convert-${resource.taskId}-${System.currentTimeMillis()}.${result.format.suffix}"
-        val covertCacheFile = File(CommonLibs.requireConvertTemporaryDir(), targetName)
+        val convertCacheFile = File(CommonLibs.requireConvertTemporaryDir(), targetName)
 
-        val isSuccess = FFMpegUtils.convertMedia(
-            resource.file, covertCacheFile.absolutePath,
-            sourceVideoCodec?.let { it to (result.videoCodec ?: return false) },
-            sourceAudioCodec?.let { it to (result.audioCodec ?: return false) }
-        )
-
-        if (isSuccess) {
-            onCovertFinish(targetName, covertCacheFile, result)
+        // FFMpeg转换完成回调
+        val completeCallback = { isSuccess: Boolean ->
+            if (isSuccess) {
+                onConvertSuccess(targetName, convertCacheFile, result)
+            } else {
+                onConvertFailed()
+            }
+            convertCacheFile.delete()
+            mIsConvertingLiveData.postValue(false)
         }
 
-        covertCacheFile.delete()
-
-        mIsCoveringLiveData.postValue(false)
-        mConvertThread = null
-
-        return isSuccess
+        return FFMpegUtils.convertMediaAsync(
+            sourceFile = resource.file,
+            targetFile = convertCacheFile.absolutePath,
+            videoCodec = sourceVideoCodec?.let { it to (result.videoCodec ?: return null) },
+            audioCodec = sourceAudioCodec?.let { it to (result.audioCodec ?: return null) },
+            onProgress = { Log.d(TAG, "doCovertResource: times: $it") },
+            onComplete = completeCallback
+        )
     }
 
-
     /**
-     * @brief 转换执行完成
+     * @brief 转换执行成功
      */
-    private fun onCovertFinish(
+    private fun onConvertSuccess(
         targetName: String,
-        covertCacheFile: File,
+        convertCacheFile: File,
         targetResult: ConvertDialog.Companion.Result
     ) {
         val resource = mResourceLiveData.value ?: return
         val targetFile = File(CommonLibs.requireResourcesDir(), targetName)
         // 将临时文件移动到资源目录
-        if (!covertCacheFile.renameTo(targetFile)) {
-            popMessage(
-                ToastMessageAction(CommonLibs.getString(R.string.convert_resource_failed_message))
-            )
+        if (!convertCacheFile.renameTo(targetFile)) {
+            onConvertFailed()
             return
         }
         val audioCodecName = targetResult.audioCodec?.let { ",${it.name}" } ?: ""
@@ -293,6 +290,15 @@ class LocalResourceVideModel : CoreViewModel() {
     }
 
     /**
+     * @brief 转换执行成失败
+     */
+    private fun onConvertFailed() {
+        popMessage(
+            ToastMessageAction(CommonLibs.getString(R.string.convert_resource_failed_message))
+        )
+    }
+
+    /**
      * @brief 捕获activity退出事件，判断当前是否有任务正在执行，如果有则阻止退出
      */
     override fun finishActivity(activityResult: ActivityResult?) {
@@ -309,7 +315,7 @@ class LocalResourceVideModel : CoreViewModel() {
      * @brief 是否有导出或者转换任务正在执行
      */
     private fun isTaskProgressing(): Boolean {
-        return mIsExportingLiveData.value == true || mIsCoveringLiveData.value == true
+        return mIsExportingLiveData.value == true || mIsConvertingLiveData.value == true
     }
 
 }

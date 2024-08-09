@@ -5,6 +5,7 @@ import cc.kafuu.bilidownload.common.model.IAsyncCallback
 import cc.kafuu.bilidownload.common.model.LocalMediaDetail
 import cc.kafuu.bilidownload.common.model.av.AVCodec
 import com.arthenica.ffmpegkit.FFmpegKit
+import com.arthenica.ffmpegkit.FFmpegSession
 import com.arthenica.ffmpegkit.FFprobeKit
 import com.arthenica.ffmpegkit.ReturnCode
 import com.google.gson.JsonParser
@@ -13,24 +14,28 @@ object FFMpegUtils {
     private const val TAG = "FFMpegUtils"
 
     /**
-     * @brief 转换音视频封装格式、编码
+     * @brief 以异步的形式转换视频封装格式、编码
      */
-    fun convertMedia(
-        sourceFile: String,
-        targetFile: String,
-        videoCodec: Pair<AVCodec, AVCodec>?,
-        audioCodec: Pair<AVCodec, AVCodec>?,
-    ): Boolean {
+    fun convertMediaAsync(
+        sourceFile: String, targetFile: String,
+        videoCodec: Pair<AVCodec, AVCodec>?, audioCodec: Pair<AVCodec, AVCodec>?,
+        onProgress: (time: Double) -> Unit, onComplete: (success: Boolean) -> Unit
+    ): FFmpegSession {
         val videoCodecParam = videoCodec?.let {
             if (it.first != it.second) "-c:v ${it.second.fullName}" else "-c:v copy"
         } ?: ""
         val audioCodecParam = audioCodec?.let {
             if (it.first != it.second) "-c:a ${it.second.fullName}" else "-c:a copy"
         } ?: ""
+
         val command = "-i \"$sourceFile\" $videoCodecParam $audioCodecParam \"$targetFile\""
-        Log.d(TAG, "convertMedia: $command")
-        val session = FFmpegKit.execute(command)
-        return ReturnCode.isSuccess(session.returnCode)
+        Log.d(TAG, "convertMediaWithStatistics: $command")
+
+        return FFmpegKit.executeAsync(command,
+            { onComplete(ReturnCode.isSuccess(it.returnCode)) },
+            { Log.d(TAG, it.message) },
+            { onProgress(it.time) }
+        )
     }
 
     /**

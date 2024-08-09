@@ -469,12 +469,12 @@
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/tv_resource_covert"
-                    bindEnable="@{!viewModel.isCoveringLiveData}"
+                    bindEnable="@{!viewModel.isConvertingLiveData}"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="10dp"
                     android:layout_marginTop="10dp"
-                    android:background="@{viewModel.isCoveringLiveData ? @drawable/shape_button_disable : @drawable/shape_button_general}"
+                    android:background="@{viewModel.isConvertingLiveData ? @drawable/shape_button_disable : @drawable/shape_button_general}"
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground"
@@ -488,7 +488,7 @@
 
                     <ProgressBar
                         style="?android:attr/progressBarStyle"
-                        bindVisible="@{viewModel.isCoveringLiveData}"
+                        bindVisible="@{viewModel.isConvertingLiveData}"
                         android:layout_width="16dp"
                         android:layout_height="16dp"
                         android:layout_margin="10dp"
