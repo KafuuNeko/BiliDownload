@@ -2,6 +2,7 @@ package cc.kafuu.bilidownload.view.activity
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
@@ -23,8 +24,8 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
     BR.viewModel
 ) {
     companion object {
-        private const val KEY_TASK_ENTITY_ID = "taskEntityId"
-        private const val KEY_RESOURCE_ID = "resourceId"
+        private const val KEY_TASK_ENTITY_ID = "task_entity_id"
+        private const val KEY_RESOURCE_ID = "resource_id"
         fun buildIntent(resource: DownloadResourceEntity) = Intent().apply {
             putExtra(KEY_TASK_ENTITY_ID, resource.taskId)
             putExtra(KEY_RESOURCE_ID, resource.id)
@@ -42,6 +43,14 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
                 lifecycleScope.launch { mViewModel.exportResource(it.data?.data ?: return@launch) }
             }
         }
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            mViewModel.finishActivity()
+            return true
+        }
+        return super.onKeyDown(keyCode, event)
     }
 
     override fun initViews() {
@@ -96,7 +105,7 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
             rightButtonStyle = ConfirmDialog.Companion.ButtonStyle.Delete
         ).showAndWaitResult(this@LocalResourceActivity)
         if (result is ResultWrapper.Success && result.value) {
-            mViewModel.deleteResource()
+            mViewModel.doDeleteResource()
         }
     }
 

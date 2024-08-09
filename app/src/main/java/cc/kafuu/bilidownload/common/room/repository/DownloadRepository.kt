@@ -47,16 +47,16 @@ object DownloadRepository {
         mDownloadDashDao.queryDashListByTaskEntityId(entity.id)
 
     /**
-     * 为指定的任务登记资源
+     * @brief 为指定的任务登记资源
      * */
     suspend fun registerResource(
-        downloadTaskEntity: DownloadTaskEntity,
+        downloadTaskId: Long,
         resourceName: String,
         @DownloadResourceType downloadResourceType: Int,
         resourceFile: File,
         mimeType: String
     ) = DownloadResourceEntity(
-        taskId = downloadTaskEntity.id,
+        taskId = downloadTaskId,
         type = downloadResourceType,
         name = resourceName,
         mimeType = mimeType,
@@ -76,7 +76,7 @@ object DownloadRepository {
         }
         val resourceName = if (downloadDashEntity.type == DashType.AUDIO) "AUDIO" else "VIDEO"
         return registerResource(
-            downloadTaskEntity,
+            downloadTaskEntity.id,
             resourceName,
             downloadResourceType,
             downloadDashEntity.getOutputFile(),
@@ -84,9 +84,9 @@ object DownloadRepository {
         )
     }
 
-    /*
-    * 删除下载任务及其相关联的记录，同时删除关联的文件和目录
-    * */
+    /**
+    * @brief 删除下载任务及其相关联的记录，同时删除关联的文件和目录
+    */
     suspend fun deleteDownloadTask(taskId: Long) {
         CommonLibs.requireDownloadCacheDir(taskId).let {
             it.deleteRecursively()
@@ -101,63 +101,63 @@ object DownloadRepository {
     }
 
     /**
-     * 查询下载任务详情集LiveData，返回的信息包含此任务信息以及视频等相关信息
+     * @brief 查询下载任务详情集LiveData，返回的信息包含此任务信息以及视频等相关信息
      */
     fun queryDownloadTasksDetailsLiveData(vararg statuses: Int) = run {
         mDownloadTaskDao.queryDownloadTasksDetailsLiveData(*statuses)
     }
 
     /**
-     * 根据下载任务组ID获取下载任务实体实例
+     * @brief 根据下载任务组ID获取下载任务实体实例
      */
     suspend fun getDownloadTaskByGroupId(groupId: Long) = run {
         mDownloadTaskDao.getDownloadTaskByGroupId(groupId)
     }
 
     /**
-     * 根据下载任务实体id获取下载详情信息LiveData, 包含此任务信息以及视频等相关信息
+     * @brief 根据下载任务实体id获取下载详情信息LiveData, 包含此任务信息以及视频等相关信息
      */
     fun queryDownloadTaskDetailByTaskId(entityId: Long) = run {
         mDownloadTaskDao.queryDownloadTaskDetailByTaskId(entityId)
     }
 
     /**
-     * 根据下载任务实体id查询和此任务有关的资源
+     * @brief 根据下载任务实体id查询和此任务有关的资源
      */
     fun queryResourcesLiveDataByTaskId(entityId: Long) = run {
         mDownloadResourceDao.queryResourcesLiveDataByTaskId(entityId)
     }
 
     /**
-     * 根据下载任务实体id查询和此任务有关的资源（LiveData）
+     * @brief 根据下载任务实体id查询和此任务有关的资源（LiveData）
      */
     private suspend fun queryResourcesByTaskId(taskId: Long) = run {
         mDownloadResourceDao.queryResourcesByTaskId(taskId)
     }
 
     /**
-     * 根据资源id获取资源记录实例
+     * @brief 根据资源id获取资源记录实例
      */
     fun queryResourceLiveDataById(resourceId: Long) = run {
         mDownloadResourceDao.queryResourceLiveDataById(resourceId)
     }
 
     /**
-     * 根据资源id删除某个资源
+     * @brief 根据资源id删除某个资源
      */
     suspend fun deleteResourceById(resourceId: Long) = run {
         mDownloadResourceDao.deleteById(resourceId)
     }
 
     /**
-     * 查询相关状态的任务实体集
+     * @brief 查询相关状态的任务实体集
      */
     suspend fun queryDownloadTaskDetailByTaskId(vararg statuses: Int) = run {
         mDownloadTaskDao.queryDownloadTask(*statuses)
     }
 
     /**
-     * 根据下载任务的实体id取得此任务的实体实例
+     * @brief 根据下载任务的实体id取得此任务的实体实例
      */
     suspend fun getDownloadTaskByTaskId(id: Long) = run {
         mDownloadTaskDao.getDownloadTaskByTaskId(id)

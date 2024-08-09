@@ -57,6 +57,8 @@ object CommonLibs {
 
     fun requireResourcesDir() = requireExternalFilesDir("resources")
 
+    fun requireConvertTemporaryDir() = requireExternalFilesDir("temporary", "convert")
+
     fun getVersionName(): String =
         requireContext().packageManager.getPackageInfo(requireContext().packageName, 0).versionName
 

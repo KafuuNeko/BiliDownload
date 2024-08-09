@@ -1,6 +1,13 @@
 package cc.kafuu.bilidownload.common.model
 
+import cc.kafuu.bilidownload.common.model.av.AVCodec
+import cc.kafuu.bilidownload.common.model.av.AVFormat
+
 data class LocalMediaDetail(
+    /**
+     * 解析的媒体文件地址
+     */
+    val path: String,
     /**
      * 未解析的原始输出数据
      */
@@ -33,4 +40,14 @@ data class LocalMediaDetail(
      * 音频的采样率，以 Hz表示
      */
     val audioSampleRate: String?
-)
+) {
+    fun getAVFormatOrNull() = AVFormat.fromFilePath(path)
+
+    fun getVideoAVCodecOrNull() = videoCodec?.let {
+        AVCodec.fromCodecName(it)
+    }
+
+    fun getAudioAVCodecOrNull() = audioCodec?.let {
+        AVCodec.fromCodecName(it)
+    }
+}

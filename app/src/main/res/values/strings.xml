@@ -97,4 +97,8 @@
     <string name="text_bangumi">Bangumi</string>
     <string name="text_movie">Movie</string>
     <string name="logout_confirm_message">Do you want to log out of the current account immediately?</string>
+    <string name="text_convert">Convert</string>
+    <string name="convert_resource_failed_message">Conversion failure</string>
+    <string name="resource_have_mission_progress">A task is being executed. Please wait</string>
+    <string name="convert_resource_success_message">Successful conversion</string>
 </resources>

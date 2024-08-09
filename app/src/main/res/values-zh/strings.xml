@@ -97,4 +97,8 @@
     <string name="text_bangumi">番剧</string>
     <string name="text_movie">影视</string>
     <string name="logout_confirm_message">是否立即退出当前账户?</string>
+    <string name="text_convert">转换</string>
+    <string name="convert_resource_failed_message">转换失败</string>
+    <string name="resource_have_mission_progress">有任务正在执行，请稍等。</string>
+    <string name="convert_resource_success_message">转换成功</string>
 </resources>

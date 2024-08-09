@@ -8,9 +8,6 @@ import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.core.CoreViewModel
 import cc.kafuu.bilidownload.common.ext.liveData
 import cc.kafuu.bilidownload.common.model.bili.BiliStreamResourceModel
-import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
-
-typealias BiliPartDialogCallback = (video: BiliPlayStreamResource?, audio: BiliPlayStreamResource?) -> Unit
 
 class BiliPartViewModel : CoreViewModel() {
     private val mDialogStatusLiveData = MutableLiveData(ConfirmDialogStatus.WAITING)

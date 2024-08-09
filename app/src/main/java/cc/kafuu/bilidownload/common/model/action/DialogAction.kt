@@ -5,6 +5,6 @@ import java.io.Serializable
 
 class DialogAction(
     val dialog: CoreBasicsDialog<*, *>,
-    val failed: ((exception: Throwable) -> Unit)? = null,
-    val success: ((result: Serializable) -> Unit)? = null,
+    val failed: (suspend (exception: Throwable) -> Unit)? = null,
+    val success: (suspend (result: Serializable) -> Unit)? = null,
 ) : ViewAction()

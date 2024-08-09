@@ -280,18 +280,18 @@ class DownloadService : Service() {
     }
 
     /**
-     * 尝试合成视频
+     * @brief 尝试合成视频
      * 如果视频合成成功后自动登记资源
      * */
     private suspend fun tryMergeVideo(
-        entity: DownloadTaskEntity,
+        task: DownloadTaskEntity,
         videoDash: DownloadDashEntity,
         audioDash: DownloadDashEntity
     ): Boolean {
         val suffix = MimeTypeUtils.getExtensionFromMimeType(videoDash.mimeType) ?: "mkv"
         val outputFile = File(
             CommonLibs.requireResourcesDir(),
-            "merge-${entity.id}-${System.currentTimeMillis()}.$suffix"
+            "merge-${task.id}-${System.currentTimeMillis()}.$suffix"
         )
 
         val isSuccess = FFMpegUtils.mergeMedia(
@@ -303,14 +303,14 @@ class DownloadService : Service() {
         // 如果合成成功就登记资源
         if (isSuccess) {
             DownloadRepository.registerResource(
-                entity,
+                task.id,
                 "Merge Resource",
                 DownloadResourceType.MIXED,
                 outputFile,
                 videoDash.mimeType
             )
         } else {
-            mDownloadNotification.notificationSynthesisFailed(entity)
+            mDownloadNotification.notificationSynthesisFailed(task)
         }
 
         return isSuccess

@@ -199,7 +199,7 @@
                                 android:gravity="center_vertical|start"
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
-                                android:text="@{viewModel.localMediaDetailLiveData.format}"
+                                android:text="@{viewModel.localMediaDetailLiveData.getAVFormatOrNull().name()}"
                                 android:textColor="@color/general_text_color"
                                 android:textSize="@dimen/size_text_common_size" />
                         </LinearLayout>
@@ -265,7 +265,7 @@
                                 android:gravity="center_vertical|start"
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
-                                android:text="@{viewModel.localMediaDetailLiveData.videoCodec}"
+                                android:text="@{viewModel.localMediaDetailLiveData.getVideoAVCodecOrNull().name()}"
                                 android:textColor="@color/general_text_color"
                                 android:textSize="@dimen/size_text_common_size" />
                         </LinearLayout>
@@ -298,7 +298,7 @@
                                 android:gravity="center_vertical|start"
                                 android:maxLines="2"
                                 android:paddingHorizontal="10dp"
-                                android:text="@{viewModel.localMediaDetailLiveData.audioCodec}"
+                                android:text="@{viewModel.localMediaDetailLiveData.getAudioAVCodecOrNull().name()}"
                                 android:textColor="@color/general_text_color"
                                 android:textSize="@dimen/size_text_common_size" />
                         </LinearLayout>
@@ -455,6 +455,49 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/text_export"
+                        android:textColor="@color/common_white"
+                        android:textSize="@dimen/size_text_common_size"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/tv_resource_covert"
+                    bindEnable="@{!viewModel.isCoveringLiveData}"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="10dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@{viewModel.isCoveringLiveData ? @drawable/shape_button_disable : @drawable/shape_button_general}"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:minWidth="100dp"
+                    android:minHeight="36dp"
+                    android:onClick="@{()->viewModel.tryCovertResource()}"
+                    android:orientation="horizontal"
+                    android:textSize="@dimen/size_text_button_size"
+                    tools:background="@drawable/shape_button_general">
+
+                    <ProgressBar
+                        style="?android:attr/progressBarStyle"
+                        bindVisible="@{viewModel.isCoveringLiveData}"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_margin="10dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/tv_covert_text"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_covert_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/text_convert"
                         android:textColor="@color/common_white"
                         android:textSize="@dimen/size_text_common_size"
                         app:layout_constraintBottom_toBottomOf="parent"

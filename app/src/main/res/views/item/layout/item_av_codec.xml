@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <variable
+            name="viewModel"
+            type="cc.kafuu.bilidownload.viewmodel.dialog.ConvertViewModel" />
+
+        <variable
+            name="data"
+            type="cc.kafuu.bilidownload.common.model.av.AVCodec" />
+
+        <import type="cc.kafuu.bilidownload.common.constant.MediaSteamType" />
+    </data>
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:background="@color/general_item_background_color"
+        app:cardCornerRadius="@dimen/card_item_corner_radius"
+        app:cardElevation="@dimen/card_item_elevation">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@{viewModel.isSelected(data) ? @color/secondary_color : @color/general_item_background_color}"
+            android:onClick="@{()->viewModel.updateCurrentCodec(data)}"
+            android:orientation="horizontal"
+            android:padding="10dp">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@{data.name()}"
+                android:textColor="@{viewModel.isSelected(data) ? @color/common_white : @color/general_text_color}"
+                android:textSize="@dimen/size_text_card_content"
+                tools:text="AAC" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:text="@{data.fullName}"
+                android:textColor="@{viewModel.isSelected(data) ? @color/common_white : @color/general_text_color}"
+                android:textSize="@dimen/size_text_card_content"
+                tools:text="aac" />
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+</layout>

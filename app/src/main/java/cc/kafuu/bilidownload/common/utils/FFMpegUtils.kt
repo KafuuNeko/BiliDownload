@@ -3,6 +3,7 @@ package cc.kafuu.bilidownload.common.utils
 import android.util.Log
 import cc.kafuu.bilidownload.common.model.IAsyncCallback
 import cc.kafuu.bilidownload.common.model.LocalMediaDetail
+import cc.kafuu.bilidownload.common.model.av.AVCodec
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.FFprobeKit
 import com.arthenica.ffmpegkit.ReturnCode
@@ -10,6 +11,27 @@ import com.google.gson.JsonParser
 
 object FFMpegUtils {
     private const val TAG = "FFMpegUtils"
+
+    /**
+     * @brief 转换音视频封装格式、编码
+     */
+    fun convertMedia(
+        sourceFile: String,
+        targetFile: String,
+        videoCodec: Pair<AVCodec, AVCodec>?,
+        audioCodec: Pair<AVCodec, AVCodec>?,
+    ): Boolean {
+        val videoCodecParam = videoCodec?.let {
+            if (it.first != it.second) "-c:v ${it.second.fullName}" else "-c:v copy"
+        } ?: ""
+        val audioCodecParam = audioCodec?.let {
+            if (it.first != it.second) "-c:a ${it.second.fullName}" else "-c:a copy"
+        } ?: ""
+        val command = "-i \"$sourceFile\" $videoCodecParam $audioCodecParam \"$targetFile\""
+        Log.d(TAG, "convertMedia: $command")
+        val session = FFmpegKit.execute(command)
+        return ReturnCode.isSuccess(session.returnCode)
+    }
 
     /**
      * @brief 合并音频或视频
@@ -35,14 +57,14 @@ object FFMpegUtils {
             val output = session.output
             Log.d(TAG, "getMediaInfo: $output")
             if (ReturnCode.isSuccess(session.returnCode)) {
-                callback.onSuccess(parseMediaInfo(output))
+                callback.onSuccess(parseMediaInfo(filePath, output))
             } else {
                 callback.onFailure(Exception("Failed to get media info, return code: ${session.returnCode}"))
             }
         }
     }
 
-    private fun parseMediaInfo(output: String): LocalMediaDetail {
+    private fun parseMediaInfo(filePath: String, output: String): LocalMediaDetail {
         val jsonObject = JsonParser.parseString(output).asJsonObject
         val format = jsonObject.getAsJsonObject("format")
         val streams = jsonObject.getAsJsonArray("streams")
@@ -75,6 +97,7 @@ object FFMpegUtils {
         }
 
         return LocalMediaDetail(
+            path = filePath,
             raw = output,
             format = format.get("format_name")?.asString,
             duration = formattedDuration,

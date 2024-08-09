@@ -43,7 +43,7 @@ open class CoreViewModel : ViewModel() {
      * 结束现有activity
      */
     @JvmOverloads
-    fun finishActivity(activityResult: ActivityResult? = null) {
+    open fun finishActivity(activityResult: ActivityResult? = null) {
         sendViewAction(
             ActivityJumpAction(
                 null,
@@ -66,8 +66,8 @@ open class CoreViewModel : ViewModel() {
      */
     fun popDialog(
         dialog: CoreBasicsDialog<*, *>,
-        failed: ((exception: Throwable) -> Unit)? = null,
-        success: ((result: Serializable) -> Unit)? = null
+        failed: (suspend (exception: Throwable) -> Unit)? = null,
+        success: (suspend (result: Serializable) -> Unit)? = null
     ) {
         sendViewAction(DialogAction(dialog, failed, success))
     }

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <variable
+            name="viewModel"
+            type="cc.kafuu.bilidownload.viewmodel.dialog.ConvertViewModel" />
+
+        <import type="cc.kafuu.bilidownload.common.utils.ViewDataBindingUtilsKt" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="330dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:background="@drawable/shape_dialog_background"
+            android:orientation="vertical"
+            android:padding="10dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_resource_title"
+                bindSpannable="@{viewModel.titleLiveData}"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="1"
+                android:textColor="@color/primary_color"
+                android:textSize="@dimen/size_text_dialog_title"
+                android:textStyle="bold"
+                tools:text="@string/app_name" />
+
+            <androidx.core.widget.NestedScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/text_media_format"
+                        android:textColor="@color/general_text_color"
+                        android:textSize="@dimen/size_text_dialog_content" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rv_format_select_list"
+                        bindDataList="@{viewModel.avFormatListLiveData}"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        bindVisible="@{viewModel.initialVideoCodecLiveData != null &amp;&amp; viewModel.formatLiveData.videoSupportCodecs != null}"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/text_media_video_codec"
+                        android:textColor="@color/general_text_color"
+                        android:textSize="@dimen/size_text_dialog_content" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rv_video_select_list"
+                        bindDataList="@{viewModel.formatLiveData.videoSupportCodecs}"
+                        bindVisible="@{viewModel.initialVideoCodecLiveData != null &amp;&amp; viewModel.formatLiveData.videoSupportCodecs != null}"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        bindVisible="@{viewModel.initialAudioCodecLiveData != null &amp;&amp; viewModel.formatLiveData.audioSupportCodecs != null}"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/text_media_audio_codec"
+                        android:textColor="@color/general_text_color"
+                        android:textSize="@dimen/size_text_dialog_content" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rv_audio_select_list"
+                        bindDataList="@{viewModel.formatLiveData.audioSupportCodecs}"
+                        bindVisible="@{viewModel.initialAudioCodecLiveData != null &amp;&amp; viewModel.formatLiveData.audioSupportCodecs != null}"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="end|center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="10dp">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/shape_button_cancel"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:onClick="@{()->viewModel.onCancel()}"
+                            android:paddingHorizontal="30dp"
+                            android:paddingVertical="10dp"
+                            android:text="@string/text_cancel"
+                            android:textColor="@color/common_white"
+                            android:textSize="@dimen/size_text_button_size" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            bindEnable="@{viewModel.formatLiveData != viewModel.initialFormatLiveData || viewModel.audioCodecLiveData != viewModel.initialAudioCodecLiveData || viewModel.videoCodecLiveData != viewModel.initialVideoCodecLiveData}"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="20dp"
+                            android:background="@drawable/shape_button_general"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:onClick="@{()->viewModel.onConfirm()}"
+                            android:paddingHorizontal="30dp"
+                            android:paddingVertical="10dp"
+                            android:text="@string/text_convert"
+                            android:textColor="@color/common_white"
+                            android:textSize="@dimen/size_text_button_size" />
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.core.widget.NestedScrollView>
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

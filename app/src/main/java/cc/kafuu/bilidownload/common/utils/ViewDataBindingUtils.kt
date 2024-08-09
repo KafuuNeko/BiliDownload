@@ -104,6 +104,11 @@ fun bindVisible(view: View, visibility: Boolean) {
     view.visibility = if (visibility) View.VISIBLE else View.GONE
 }
 
+@BindingAdapter(value = ["bindEnable"])
+fun bindEnable(view: View, enable: Boolean) {
+    view.isEnabled = enable
+}
+
 @BindingAdapter(value = ["bindOnEditorAction"])
 fun bindOnEditorAction(textView: TextView, onEditorActionLambda: () -> Unit) {
     textView.setOnEditorActionListener { _, _, _ ->
