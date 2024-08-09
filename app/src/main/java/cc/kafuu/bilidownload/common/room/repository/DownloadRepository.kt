@@ -63,12 +63,12 @@ object DownloadRepository {
         storageSizeBytes = resourceFile.length(),
         creationTime = System.currentTimeMillis(),
         file = resourceFile.path
-    ).also { mDownloadResourceDao.insert(it) }
+    ).let { mDownloadResourceDao.insert(it) }
 
     suspend fun registerResource(
         downloadTaskEntity: DownloadTaskEntity,
         downloadDashEntity: DownloadDashEntity,
-    ): DownloadResourceEntity {
+    ): Long {
         val downloadResourceType = when (downloadDashEntity.type) {
             DashType.AUDIO -> DownloadResourceType.AUDIO
             DashType.VIDEO -> DownloadResourceType.VIDEO

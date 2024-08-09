@@ -13,13 +13,12 @@ import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.common.model.LocalMediaDetail
 import cc.kafuu.bilidownload.common.model.action.ViewAction
 import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
-import cc.kafuu.bilidownload.common.model.av.AVFormat
 import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
 import cc.kafuu.bilidownload.common.utils.FFMpegUtils
 import cc.kafuu.bilidownload.common.utils.FileUtils
-import cc.kafuu.bilidownload.common.utils.TimeUtils
+import cc.kafuu.bilidownload.view.activity.LocalResourceActivity
 import cc.kafuu.bilidownload.view.dialog.ConfirmDialog
 import cc.kafuu.bilidownload.view.dialog.ConvertDialog
 import kotlinx.coroutines.runBlocking
@@ -242,7 +241,7 @@ class LocalResourceVideModel : CoreViewModel() {
         )
 
         if (isSuccess) {
-            onCovertFinish(targetName, covertCacheFile, result.format)
+            onCovertFinish(targetName, covertCacheFile, result)
         }
 
         covertCacheFile.delete()
@@ -260,7 +259,7 @@ class LocalResourceVideModel : CoreViewModel() {
     private fun onCovertFinish(
         targetName: String,
         covertCacheFile: File,
-        targetFormat: AVFormat,
+        targetResult: ConvertDialog.Companion.Result
     ) {
         val resource = mResourceLiveData.value ?: return
         val targetFile = File(CommonLibs.requireResourcesDir(), targetName)
@@ -271,16 +270,23 @@ class LocalResourceVideModel : CoreViewModel() {
             )
             return
         }
+        val audioCodecName = targetResult.audioCodec?.let { ",${it.name}" } ?: ""
+        val videoCodecName = targetResult.videoCodec?.let { ",${it.name}" } ?: ""
         // 登记资源
         runBlocking {
-            DownloadRepository.registerResource(
+            val resourceId = DownloadRepository.registerResource(
                 resource.taskId,
-                "Convert-${TimeUtils.formatTimestamp(System.currentTimeMillis())}",
+                "Convert(${targetResult.format.name}$audioCodecName$videoCodecName)",
                 resource.type,
                 targetFile.absoluteFile,
-                targetFormat.mimeType
+                targetResult.format.mimeType
+            )
+            startActivity(
+                LocalResourceActivity::class.java,
+                LocalResourceActivity.buildIntent(resource.taskId, resourceId)
             )
         }
+
         popMessage(
             ToastMessageAction(CommonLibs.getString(R.string.convert_resource_success_message))
         )

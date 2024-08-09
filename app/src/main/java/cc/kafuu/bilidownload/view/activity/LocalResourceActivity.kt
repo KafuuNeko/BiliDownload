@@ -25,9 +25,12 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
     companion object {
         private const val KEY_TASK_ENTITY_ID = "task_entity_id"
         private const val KEY_RESOURCE_ID = "resource_id"
-        fun buildIntent(resource: DownloadResourceEntity) = Intent().apply {
-            putExtra(KEY_TASK_ENTITY_ID, resource.taskId)
-            putExtra(KEY_RESOURCE_ID, resource.id)
+        fun buildIntent(resource: DownloadResourceEntity) =
+            buildIntent(resource.taskId, resource.id)
+
+        fun buildIntent(taskId: Long, resourceId: Long) = Intent().apply {
+            putExtra(KEY_TASK_ENTITY_ID, taskId)
+            putExtra(KEY_RESOURCE_ID, resourceId)
         }
     }
 
