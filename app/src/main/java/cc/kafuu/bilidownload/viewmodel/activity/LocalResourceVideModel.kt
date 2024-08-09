@@ -161,6 +161,13 @@ class LocalResourceVideModel : CoreViewModel() {
      * @brief 尝试询问用户是否立即删除此资源
      */
     fun tryDeleteResource() {
+        if (isTaskProgressing()) {
+            // 党有任务进行时不允许进行删除操作
+            popMessage(
+                ToastMessageAction(CommonLibs.getString(R.string.resource_have_mission_progress))
+            )
+            return
+        }
         val dialog = ConfirmDialog.buildDialog(
             CommonLibs.getString(R.string.text_delete_confirm),
             CommonLibs.getString(R.string.delete_resource_message),
@@ -283,13 +290,20 @@ class LocalResourceVideModel : CoreViewModel() {
      * @brief 捕获activity退出事件，判断当前是否有任务正在执行，如果有则阻止退出
      */
     override fun finishActivity(activityResult: ActivityResult?) {
-        if (mIsExportingLiveData.value == true || mIsCoveringLiveData.value == true) {
+        if (isTaskProgressing()) {
             popMessage(
                 ToastMessageAction(CommonLibs.getString(R.string.resource_have_mission_progress))
             )
             return
         }
         super.finishActivity(activityResult)
+    }
+
+    /**
+     * @brief 是否有导出或者转换任务正在执行
+     */
+    private fun isTaskProgressing(): Boolean {
+        return mIsExportingLiveData.value == true || mIsCoveringLiveData.value == true
     }
 
 }
