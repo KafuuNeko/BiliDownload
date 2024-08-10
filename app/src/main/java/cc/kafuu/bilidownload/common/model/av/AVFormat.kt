@@ -22,19 +22,19 @@ enum class AVFormat(
 
     MKV(
         "mkv", "video/x-matroska",
-        listOf(AVCodec.H264, AVCodec.H265, AVCodec.VP8, AVCodec.VP9, AVCodec.AV1),
+        listOf(AVCodec.H264, AVCodec.H265, AVCodec.VP8, AVCodec.VP9, AVCodec.AV1, AVCodec.Theora),
         listOf(AVCodec.AAC, AVCodec.MP3, AVCodec.FLAC, AVCodec.OPUS)
     ),
 
     MOV(
         "mov", "video/quicktime",
-        listOf(AVCodec.H264, AVCodec.H265, AVCodec.VP8, AVCodec.VP9, AVCodec.AV1),
+        listOf(AVCodec.H264, AVCodec.H265, AVCodec.AV1),
         listOf(AVCodec.AAC, AVCodec.MP3, AVCodec.ALAC)
     ),
 
     MP4(
         "mp4", "video/mp4",
-        listOf(AVCodec.H264, AVCodec.H265, AVCodec.VP8, AVCodec.VP9, AVCodec.AV1),
+        listOf(AVCodec.H264, AVCodec.H265, AVCodec.AV1),
         listOf(AVCodec.AAC, AVCodec.MP3, AVCodec.ALAC, AVCodec.FLAC, AVCodec.AC3)
     ),
 
@@ -42,6 +42,12 @@ enum class AVFormat(
         "webm", "video/webm",
         listOf(AVCodec.VP8, AVCodec.VP9, AVCodec.AV1),
         listOf(AVCodec.VORBIS, AVCodec.OPUS)
+    ),
+
+    OGG(
+        "ogg", "video/ogg",
+        listOf(AVCodec.Theora),
+        listOf(AVCodec.VORBIS, AVCodec.OPUS, AVCodec.FLAC)
     ),
 
     MP3(
@@ -65,25 +71,13 @@ enum class AVFormat(
     AIFF(
         "aiff", "audio/aiff",
         null,
-        listOf(AVCodec.AAC, AVCodec.ALAC, AVCodec.MP3)
-    ),
-
-    AMR(
-        "amr", "audio/amr",
-        null,
-        listOf(AVCodec.AMR)
+        listOf(AVCodec.PCM)
     ),
 
     FLAC(
         "flac", "audio/flac",
         null,
         listOf(AVCodec.FLAC)
-    ),
-
-    OGG(
-        "ogg", "audio/ogg",
-        null,
-        listOf(AVCodec.VORBIS, AVCodec.OPUS, AVCodec.AC3)
     );
 
     companion object {
