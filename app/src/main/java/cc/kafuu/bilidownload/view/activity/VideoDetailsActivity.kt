@@ -51,34 +51,10 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
             return
         }
         initList()
-        mViewModel.selectedBiliPlayStreamDashLiveData.observe(this) {
-            val part = mViewModel.selectedVideoPartLiveData.value ?: return@observe
-            createBiliPartDialog(part, it)
-        }
         mViewModel.loadingVideoPartLiveData.observe(this) {
             onItemLoadingStatusChanged(
                 it ?: mViewModel.selectedVideoPartLiveData.value ?: return@observe
             )
-        }
-    }
-
-    private fun createBiliPartDialog(
-        part: BiliVideoPartModel,
-        dash: BiliPlayStreamDash
-    ) = lifecycleScope.launch {
-        val result = BiliPartDialog.buildDialog(
-            part.name, dash.video, dash.getAllAudio()
-        ).showAndWaitResult(this@VideoDetailsActivity)
-        if (result is ResultWrapper.Success) {
-            val resources = mutableListOf<BiliDashModel>().apply {
-                result.value.first?.let { add(BiliDashModel.create(DashType.VIDEO, it)) }
-                result.value.second?.let { add(BiliDashModel.create(DashType.AUDIO, it)) }
-            }
-            DownloadManager.startDownload(
-                this@VideoDetailsActivity, part.bvid, part.cid, resources
-            )
-        } else {
-            Log.d(TAG, "createBiliPartDialog: $result")
         }
     }
 

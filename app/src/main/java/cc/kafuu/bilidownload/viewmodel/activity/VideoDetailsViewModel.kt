@@ -2,10 +2,14 @@ package cc.kafuu.bilidownload.viewmodel.activity
 
 import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
+import cc.kafuu.bilidownload.common.CommonLibs
+import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.core.CoreViewModel
 import cc.kafuu.bilidownload.common.ext.liveData
+import cc.kafuu.bilidownload.common.manager.DownloadManager
 import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
+import cc.kafuu.bilidownload.common.model.bili.BiliDashModel
 import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
 import cc.kafuu.bilidownload.common.model.bili.BiliResourceModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
@@ -16,6 +20,7 @@ import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
 import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.utils.TimeUtils
+import cc.kafuu.bilidownload.view.dialog.BiliPartDialog
 
 class VideoDetailsViewModel : CoreViewModel() {
     private val mLoadingStatusLiveData = MutableLiveData(LoadingStatus.waitStatus())
@@ -30,10 +35,6 @@ class VideoDetailsViewModel : CoreViewModel() {
     // 选中的片段
     private val mSelectedVideoPartLiveData = MutableLiveData<BiliVideoPartModel?>()
     val selectedVideoPartLiveData = mSelectedVideoPartLiveData.liveData()
-
-    // 选中的片段视频流数据
-    private val mSelectedBiliPlayStreamDashLiveData = MutableLiveData<BiliPlayStreamDash>()
-    val selectedBiliPlayStreamDashLiveData = mSelectedBiliPlayStreamDashLiveData.liveData()
 
     // 正在加载视频流数据的片段
     private val mLoadingVideoPartLiveData = MutableLiveData<BiliVideoPartModel?>()
@@ -116,7 +117,7 @@ class VideoDetailsViewModel : CoreViewModel() {
                 message: String,
                 data: BiliPlayStreamDash
             ) {
-                mSelectedBiliPlayStreamDashLiveData.postValue(data)
+                popSelectedVideoPartDialog(item, data)
                 mLoadingVideoPartLiveData.postValue(null)
             }
 
@@ -127,4 +128,23 @@ class VideoDetailsViewModel : CoreViewModel() {
         }
         NetworkManager.biliVideoRepository.requestPlayStreamDash(item.bvid, item.cid, callback)
     }
+
+    private fun popSelectedVideoPartDialog(
+        part: BiliVideoPartModel,
+        dash: BiliPlayStreamDash
+    ) = popDialog(
+        dialog = BiliPartDialog.buildDialog(
+            part.name, dash.video, dash.getAllAudio()
+        ),
+        success = {
+            val result = it as BiliPartDialog.Companion.Result
+            val resources = mutableListOf<BiliDashModel>().apply {
+                result.videoStream?.let { res -> add(BiliDashModel.create(DashType.VIDEO, res)) }
+                result.audioStream?.let { res -> add(BiliDashModel.create(DashType.AUDIO, res)) }
+            }
+            DownloadManager.startDownload(
+                CommonLibs.requireContext(), part.bvid, part.cid, resources
+            )
+        }
+    )
 }

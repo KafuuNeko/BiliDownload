@@ -17,11 +17,10 @@ import cc.kafuu.bilidownload.common.model.bili.BiliStreamResourceModel
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
 import cc.kafuu.bilidownload.databinding.DialogBiliPartBinding
 import cc.kafuu.bilidownload.viewmodel.dialog.BiliPartViewModel
-
-private typealias BiliPartDialogResult = Pair<BiliPlayStreamResource?, BiliPlayStreamResource?>
+import java.io.Serializable
 
 class BiliPartDialog :
-    CoreAdvancedDialog<DialogBiliPartBinding, BiliPartDialogResult, BiliPartViewModel>(
+    CoreAdvancedDialog<DialogBiliPartBinding, BiliPartDialog.Companion.Result, BiliPartViewModel>(
         BiliPartViewModel::class.java,
         R.layout.dialog_bili_part,
         BR.viewModel
@@ -45,6 +44,11 @@ class BiliPartDialog :
                     BiliStreamResourceModel(it, DashType.AUDIO)
                 }.toTypedArray())
         }
+
+        data class Result(
+            val videoStream: BiliPlayStreamResource?,
+            val audioStream: BiliPlayStreamResource?
+        ) : Serializable
     }
 
 
@@ -125,9 +129,9 @@ class BiliPartDialog :
                 Toast.LENGTH_SHORT
             )
         )
-        BiliPartDialogResult(
-            mViewModel.currentVideoResourceLiveData.value?.resource,
-            mViewModel.currentAudioResourceLiveData.value?.resource
+        Result(
+            videoStream = mViewModel.currentVideoResourceLiveData.value?.resource,
+            audioStream = mViewModel.currentAudioResourceLiveData.value?.resource
         ).also { dismissWithResult(it) }
     }
 
