@@ -44,6 +44,12 @@ enum class AVFormat(
         listOf(AVCodec.VORBIS, AVCodec.OPUS)
     ),
 
+    MP3(
+        "mp3", "audio/mp3",
+        null,
+        listOf(AVCodec.MP3)
+    ),
+
     AAC(
         "aac", "audio/aac",
         null,
