@@ -26,6 +26,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@{viewModel.isSelected(data) ? @color/secondary_color : @color/general_item_background_color}"
+            android:gravity="center"
             android:onClick="@{()->viewModel.updateFormat(data)}"
             android:orientation="horizontal"
             android:padding="10dp">

@@ -2,7 +2,7 @@ package cc.kafuu.bilidownload.view.dialog
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
@@ -65,7 +65,7 @@ class ConvertDialog :
             rvVideoSelectList,
             rvAudioSelectList
         ).forEach {
-            it.layoutManager = LinearLayoutManager(requireContext())
+            it.layoutManager = GridLayoutManager(requireContext(), 3)
             it.adapter = ConvertSelectRVAdapter(mViewModel, requireContext())
         }
 
