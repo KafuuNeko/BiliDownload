@@ -1,6 +1,8 @@
 package cc.kafuu.bilidownload.common.network.service
 
 import cc.kafuu.bilidownload.common.network.model.BiliAccountData
+import cc.kafuu.bilidownload.common.network.model.BiliFavoriteDetailsData
+import cc.kafuu.bilidownload.common.network.model.BiliFavoriteListData
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
 import cc.kafuu.bilidownload.common.network.model.BiliRespond
 import cc.kafuu.bilidownload.common.network.model.BiliSearchData
@@ -48,6 +50,18 @@ interface BiliApiService {
 
     @GET("x/member/web/account")
     fun requestMyAccount(): Call<BiliRespond<MyBiliAccountData>>
+
+    @GET("x/v3/fav/folder/created/list-all")
+    fun requestUserFavorites(
+        @Query("up_mid") mid: Long,
+        @Query("type") type: Int,
+    ): Call<BiliRespond<BiliFavoriteListData>>
+
+    fun requestFavoriteDetails(
+        @Query("media_id") id: Long,
+        @Query("ps") ps: Int,
+        @Query("pn") pn: Int,
+    ): Call<BiliRespond<BiliFavoriteDetailsData>>
 
     @GET
     fun requestAccountData(@Url fullUrl: String?): Call<BiliRespond<BiliAccountData>>
