@@ -4,7 +4,7 @@ import androidx.lifecycle.MutableLiveData
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.core.CoreViewModel
 import cc.kafuu.bilidownload.common.ext.liveData
-import cc.kafuu.bilidownload.common.model.DownloadTaskStatus
+import cc.kafuu.bilidownload.common.model.DownloadStatus
 import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
@@ -63,11 +63,11 @@ class HistoryDetailsViewModel : CoreViewModel() {
                 "${FileUtils.formatFileSize(it.currentProgress)}/${FileUtils.formatFileSize(it.fileSize)}"
             mDownloadPercentLiveData.postValue(it.percent)
             mDownloadProgressLiveData.postValue(process)
-            val status = DownloadTaskStatus.fromCode(it.state)
-            if (status == DownloadTaskStatus.CANCELLED) {
+            val status = DownloadStatus.fromCode(it.state)
+            if (status == DownloadStatus.CANCELLED) {
                 finishActivity()
             }
-            mDownloadIsStoppedLiveData.postValue(status == DownloadTaskStatus.STOPPED)
+            mDownloadIsStoppedLiveData.postValue(status == DownloadStatus.STOPPED)
         }
     }
 

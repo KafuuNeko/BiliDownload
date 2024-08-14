@@ -3,7 +3,8 @@ package cc.kafuu.bilidownload.common.manager
 import android.content.Context
 import android.util.Log
 import cc.kafuu.bilidownload.common.CommonLibs
-import cc.kafuu.bilidownload.common.model.DownloadTaskStatus
+import cc.kafuu.bilidownload.common.model.DownloadStatus
+import cc.kafuu.bilidownload.common.model.TaskStatus
 import cc.kafuu.bilidownload.common.model.bili.BiliDashModel
 import cc.kafuu.bilidownload.common.model.event.DownloadRequestFailedEvent
 import cc.kafuu.bilidownload.common.model.event.DownloadStatusChangeEvent
@@ -63,7 +64,7 @@ object DownloadManager {
     private suspend fun getDownloadTaskEntity(group: DownloadGroupTask): DownloadTaskEntity? {
         val entity = mTaskEntityMap[group.entity.id]
             ?: DownloadRepository.getDownloadTaskByGroupId(group.entity.id)
-        if (entity == null && DownloadTaskStatus.fromCode(group.state) != DownloadTaskStatus.CANCELLED) {
+        if (entity == null && DownloadStatus.fromCode(group.state) != DownloadStatus.CANCELLED) {
             // 查找不到对应的下载记录，则取消此下载任务
             Aria.download(this).load(group.entity.id).cancel(true)
             Log.d(TAG, "Task [G${group.entity.id}]: entity cannot be found, task cancelled")
@@ -88,12 +89,12 @@ object DownloadManager {
         Log.d(
             TAG,
             "Task [D${group.entity.id}] download status change, status: ${
-                DownloadTaskStatus.fromCode(group.state)
+                DownloadStatus.fromCode(group.state)
             }"
         )
         mCoroutineScope.launch {
             val entity = getDownloadTaskEntity(group) ?: return@launch
-            val status = DownloadTaskStatus.fromCode(group.state)
+            val status = DownloadStatus.fromCode(group.state)
             if (status.isEndStatus) {
                 // 状态为终止态
                 onTaskEnd(entity, group)
@@ -110,7 +111,7 @@ object DownloadManager {
         mCoroutineScope.launch {
             val entity = getDownloadTaskEntity(group) ?: return@launch
             EventBus.getDefault().post(
-                DownloadStatusChangeEvent(entity, group, DownloadTaskStatus.FAILURE)
+                DownloadStatusChangeEvent(entity, group, DownloadStatus.FAILURE)
             )
         }
     }
@@ -252,7 +253,7 @@ object DownloadManager {
             .create()
 
         task.groupId = groupId
-        task.status = DownloadTaskEntity.STATE_DOWNLOADING
+        task.status = TaskStatus.DOWNLOADING.code
 
         mTaskEntityMap[groupId] = task
         mCoroutineScope.launch { DownloadRepository.update(task) }

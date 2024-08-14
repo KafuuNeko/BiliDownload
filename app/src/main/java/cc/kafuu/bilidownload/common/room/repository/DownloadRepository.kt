@@ -4,6 +4,7 @@ import android.database.sqlite.SQLiteConstraintException
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.constant.DownloadResourceType
+import cc.kafuu.bilidownload.common.model.TaskStatus
 import cc.kafuu.bilidownload.common.model.bili.BiliDashModel
 import cc.kafuu.bilidownload.common.room.entity.DownloadDashEntity
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
@@ -85,8 +86,8 @@ object DownloadRepository {
     }
 
     /**
-    * @brief 删除下载任务及其相关联的记录，同时删除关联的文件和目录
-    */
+     * @brief 删除下载任务及其相关联的记录，同时删除关联的文件和目录
+     */
     suspend fun deleteDownloadTask(taskId: Long) {
         CommonLibs.requireDownloadCacheDir(taskId).let {
             it.deleteRecursively()
@@ -103,8 +104,8 @@ object DownloadRepository {
     /**
      * @brief 查询下载任务详情集LiveData，返回的信息包含此任务信息以及视频等相关信息
      */
-    fun queryDownloadTasksDetailsLiveData(vararg statuses: Int) = run {
-        mDownloadTaskDao.queryDownloadTasksDetailsLiveData(*statuses)
+    fun queryDownloadTasksDetailsLiveData(status: List<TaskStatus>) = run {
+        mDownloadTaskDao.queryDownloadTasksDetailsLiveData(*status.map { it.code }.toIntArray())
     }
 
     /**
@@ -152,8 +153,8 @@ object DownloadRepository {
     /**
      * @brief 查询相关状态的任务实体集
      */
-    suspend fun queryDownloadTaskDetailByTaskId(vararg statuses: Int) = run {
-        mDownloadTaskDao.queryDownloadTask(*statuses)
+    suspend fun queryDownloadTaskDetailByTaskId(vararg statuses: TaskStatus) = run {
+        mDownloadTaskDao.queryDownloadTask(*(statuses.map { it.code }.toIntArray()))
     }
 
     /**

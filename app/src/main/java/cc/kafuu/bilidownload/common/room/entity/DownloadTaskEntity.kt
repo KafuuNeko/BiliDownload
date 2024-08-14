@@ -2,6 +2,7 @@ package cc.kafuu.bilidownload.common.room.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import cc.kafuu.bilidownload.common.model.TaskStatus
 
 @Entity(tableName = "DownloadTask")
 data class DownloadTaskEntity(
@@ -10,7 +11,7 @@ data class DownloadTaskEntity(
     // 下载组ID（每个下载任务都拥有一个对应的下载组）
     var groupId: Long? = null,
     // 当前下载任务状态
-    var status: Int = STATE_PREPARE,
+    var status: Int = TaskStatus.PREPARE.code,
     // BVID
     val biliBvid: String,
     // CID
@@ -19,24 +20,6 @@ data class DownloadTaskEntity(
     val createTime: Long = System.currentTimeMillis()
 ) {
     companion object {
-        // 准备好下载
-        const val STATE_PREPARE = 0
-
-        // 正在下载
-        const val STATE_DOWNLOADING = 1
-
-        // 下载失败
-        const val STATE_DOWNLOAD_FAILED = -1
-
-        // 正在进行音视频合成处理
-        const val STATE_SYNTHESIS = 2
-
-        // 合成处理失败
-        const val STATE_SYNTHESIS_FAILED = -2
-
-        // 下载任务完成（下载与视频合并）
-        const val STATE_COMPLETED = 3
-
         fun createEntity(
             bvid: String,
             cid: Long,

@@ -11,7 +11,8 @@ import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.constant.DownloadResourceType
 import cc.kafuu.bilidownload.common.manager.DownloadManager
-import cc.kafuu.bilidownload.common.model.DownloadTaskStatus
+import cc.kafuu.bilidownload.common.model.DownloadStatus
+import cc.kafuu.bilidownload.common.model.TaskStatus
 import cc.kafuu.bilidownload.common.model.event.DownloadRequestFailedEvent
 import cc.kafuu.bilidownload.common.model.event.DownloadStatusChangeEvent
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
@@ -58,8 +59,8 @@ class DownloadService : Service() {
         suspend fun resumeDownload(context: Context) {
             val intent = Intent(context, DownloadService::class.java)
             DownloadRepository.queryDownloadTaskDetailByTaskId(
-                DownloadTaskEntity.STATE_DOWNLOADING,
-                DownloadTaskEntity.STATE_PREPARE
+                TaskStatus.DOWNLOADING,
+                TaskStatus.PREPARE
             ).forEach {
                 if (it.groupId != null && !DownloadManager.containsTaskGroup(it.groupId!!)) {
                     intent.putExtra(KEY_TASK_ID, it.id)
@@ -146,7 +147,7 @@ class DownloadService : Service() {
             )
             // 如果无法获取视频详情，且这个任务还在准备阶段则直接删除任务
             // 因为没有对应获取视频详情失败的STATUS（也不需要）
-            if (task.status == DownloadTaskEntity.STATE_PREPARE) {
+            if (task.status == TaskStatus.PREPARE.code) {
                 mServiceScope.launch { DownloadRepository.deleteDownloadTask(task.id) }
             }
             Log.e(
@@ -181,10 +182,10 @@ class DownloadService : Service() {
         )
         mServiceScope.launch {
             when (event.status) {
-                DownloadTaskStatus.FAILURE -> onDownloadFailed(event.task, event.group)
-                DownloadTaskStatus.COMPLETED -> onDownloadCompleted(event.task, event.group)
-                DownloadTaskStatus.EXECUTING -> onDownloadExecuting(event.task, event.group)
-                DownloadTaskStatus.CANCELLED -> onDownloadCancelled(event.task, event.group)
+                DownloadStatus.FAILURE -> onDownloadFailed(event.task, event.group)
+                DownloadStatus.COMPLETED -> onDownloadCompleted(event.task, event.group)
+                DownloadStatus.EXECUTING -> onDownloadExecuting(event.task, event.group)
+                DownloadStatus.CANCELLED -> onDownloadCancelled(event.task, event.group)
                 else -> Unit
             }
             // 是终止态
@@ -202,7 +203,7 @@ class DownloadService : Service() {
      * */
     private suspend fun onDownloadFailed(task: DownloadTaskEntity, group: DownloadGroupTask) {
         DownloadRepository.update(task.apply {
-            status = DownloadTaskEntity.STATE_DOWNLOAD_FAILED
+            status = TaskStatus.DOWNLOAD_FAILED.code
         })
         mDownloadNotification.notificationDownloadFailed(task)
     }
@@ -212,12 +213,14 @@ class DownloadService : Service() {
      * from [onDownloadStatusChangeEvent]
      * */
     private suspend fun onDownloadCompleted(task: DownloadTaskEntity, group: DownloadGroupTask) {
-        val currentStatus = DownloadRepository.getDownloadTaskByTaskId(task.id)?.status ?: return
+        val currentStatus = DownloadRepository.getDownloadTaskByTaskId(task.id)?.status?.let { c ->
+            TaskStatus.entries.find { it.code == c }
+        } ?: return
         val dashEntityList = DownloadRepository.queryDashList(task)
 
         // 检查当前的状态是否为正在合成或者完成状态，若是则不执行
-        if (currentStatus == DownloadTaskEntity.STATE_SYNTHESIS ||
-            currentStatus == DownloadTaskEntity.STATE_COMPLETED
+        if (currentStatus == TaskStatus.SYNTHESIS ||
+            currentStatus == TaskStatus.COMPLETED
         ) {
             Log.e(
                 TAG,
@@ -227,7 +230,7 @@ class DownloadService : Service() {
         }
 
         // 登记资源
-        if (currentStatus != DownloadTaskEntity.STATE_SYNTHESIS_FAILED) {
+        if (currentStatus != TaskStatus.SYNTHESIS_FAILED) {
             dashEntityList.forEach {
                 DownloadRepository.registerResource(task, it)
             }
@@ -239,19 +242,19 @@ class DownloadService : Service() {
         val finalStatus = if (dashEntityList.size == 2 && videoDash != null && audioDash != null) {
             // 立即更新状态为正在合成
             DownloadRepository.update(task.apply {
-                status = DownloadTaskEntity.STATE_SYNTHESIS
+                status = TaskStatus.SYNTHESIS.code
             })
             // 尝试合成音视频
             if (!tryMergeVideo(task, videoDash, audioDash)) {
-                DownloadTaskEntity.STATE_SYNTHESIS_FAILED
+                TaskStatus.SYNTHESIS_FAILED
             } else {
-                DownloadTaskEntity.STATE_COMPLETED
+                TaskStatus.COMPLETED
             }
-        } else DownloadTaskEntity.STATE_COMPLETED
+        } else TaskStatus.COMPLETED
 
         // 更新记录为最终状态
         DownloadRepository.update(task.apply {
-            status = finalStatus
+            status = finalStatus.code
         })
     }
 
@@ -263,9 +266,9 @@ class DownloadService : Service() {
             TAG,
             "Task [G${group.entity.id}, T${task.id}] status change, percent: ${group.percent}%"
         )
-        if (task.status != DownloadTaskEntity.STATE_DOWNLOADING) {
+        if (task.status != TaskStatus.DOWNLOADING.code) {
             DownloadRepository.update(task.apply {
-                status = DownloadTaskEntity.STATE_DOWNLOADING
+                status = TaskStatus.DOWNLOADING.code
             })
         }
         mDownloadNotification.updateDownloadProgress(task, group.percent)

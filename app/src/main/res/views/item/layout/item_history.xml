@@ -22,6 +22,8 @@
         <import type="cc.kafuu.bilidownload.common.utils.TimeUtils" />
 
         <import type="cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity" />
+
+        <import type="cc.kafuu.bilidownload.common.model.TaskStatus" />
     </data>
 
     <androidx.cardview.widget.CardView
@@ -125,7 +127,7 @@
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/tv_status_text"
-                    bindVisible="@{data.downloadTask.status == DownloadTaskEntity.STATE_DOWNLOADING}"
+                    bindVisible="@{data.downloadTask.status == TaskStatus.DOWNLOADING.code}"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="center"
