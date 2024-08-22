@@ -57,11 +57,21 @@ interface BiliApiService {
         @Query("type") type: Int,
     ): Call<BiliRespond<BiliFavoriteListData>>
 
+    @GET("x/v3/fav/resource/list")
     fun requestFavoriteDetails(
         @Query("media_id") id: Long,
         @Query("ps") ps: Int,
         @Query("pn") pn: Int,
     ): Call<BiliRespond<BiliFavoriteDetailsData>>
+
+    @GET("x/web-interface/history/cursor")
+    fun requestHistoryCursor(
+        @Query("max") max: Long,
+        @Query("business") business: String = "",
+        @Query("view_at") viewAt: Long = 0,
+        @Query("type") type: String = "all",
+        @Query("ps") ps: Int
+    )
 
     @GET
     fun requestAccountData(@Url fullUrl: String?): Call<BiliRespond<BiliAccountData>>
