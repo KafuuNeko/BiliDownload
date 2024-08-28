@@ -109,14 +109,6 @@ data class BiliSearchVideoResultData(
     @SerializedName("pubdate") val pubDate: Long,
     @SerializedName("senddate") val sendDate: Long,
     val duration: String,
-    @SerializedName("badgepay") val badgePay: Boolean,
-    @SerializedName("hit_columns") val hitColumns: List<String>,
-    @SerializedName("view_type") val viewType: String?,
-    @SerializedName("is_pay") val isPay: Int,
-    @SerializedName("is_union_video") val isUnionVideo: Int,
-    @SerializedName("rec_tags") val recTags: Any?,
-    @SerializedName("new_rec_tags") val newRecTags: List<Any?>,
-    @SerializedName("rank_score") val rankScore: Int
 )
 
 data class BiliSearchMediaResultData(
@@ -127,12 +119,10 @@ data class BiliSearchMediaResultData(
     @SerializedName("org_title") val orgTitle: String?,
     val cover: String,
     @SerializedName("media_type") val mediaType: Int,
-    val areas: String,
     val styles: String,
     val cv: String,
     val staff: String,
     @SerializedName("goto_url") val gotoUrl: String,
     val desc: String,
-    val corner: Int,
     @SerializedName("pubtime") val pubTime: Long,
 )

@@ -66,7 +66,6 @@ data class BiliVideoStat(
     @SerializedName("like") val like: Int,
     @SerializedName("dislike") val dislike: Int,
     @SerializedName("evaluation") val evaluation: String,
-    @SerializedName("vt") val vt: Int
 )
 
 data class BiliVideoDimension(
@@ -107,10 +106,6 @@ data class BiliVideoSubtitleAuthor(
     @SerializedName("sex") val sex: String,
     @SerializedName("face") val face: String,
     @SerializedName("sign") val sign: String,
-    @SerializedName("rank") val rank: Int,
-    @SerializedName("birthday") val birthday: Int,
-    @SerializedName("is_fake_account") val isFakeAccount: Int,
-    @SerializedName("is_deleted") val isDeleted: Int
 )
 
 data class BiliVideoStaff(

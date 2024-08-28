@@ -10,7 +10,6 @@ data class BiliAccountData(
     @SerializedName("face_nft") val isNftAvatar: Int,
     @SerializedName("face_nft_type") val nftAvatarType: Int?,
     val sign: String,
-    val rank: Int,
     val level: Int, // 0-6 级
     @SerializedName("jointime") val joinTime: Int,
     @SerializedName("moral") val moralValue: Int, // 节操 默认70
