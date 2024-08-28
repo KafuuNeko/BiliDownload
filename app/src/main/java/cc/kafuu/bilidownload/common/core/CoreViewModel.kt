@@ -30,13 +30,13 @@ open class CoreViewModel : ViewModel() {
         targetIntent: Intent? = null,
         finishCurrent: Boolean = false
     ) {
-        viewActionLiveData.postValue(
-            ActivityJumpAction(
-                targetIntent,
-                targetClass,
-                finishCurrent
-            )
-        )
+        ActivityJumpAction(
+            targetIntent,
+            targetClass,
+            finishCurrent
+        ).also {
+            sendViewAction(it)
+        }
     }
 
     /**
@@ -44,14 +44,14 @@ open class CoreViewModel : ViewModel() {
      */
     @JvmOverloads
     open fun finishActivity(activityResult: ActivityResult? = null) {
-        sendViewAction(
-            ActivityJumpAction(
-                null,
-                null,
-                true,
-                activityResult
-            )
-        )
+        ActivityJumpAction(
+            null,
+            null,
+            true,
+            activityResult
+        ).also {
+            sendViewAction(it)
+        }
     }
 
     /**
