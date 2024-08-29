@@ -28,7 +28,9 @@ data class BiliFavoriteData(
     val favState: Int,
     // 收藏夹内容数量
     @SerializedName("media_count")
-    val mediaCount: Int
+    val mediaCount: Int,
+    // 收藏夹封面图片url
+    val cover: String?,
 )
 
 data class BiliFavoriteMedia(

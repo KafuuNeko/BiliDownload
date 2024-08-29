@@ -18,7 +18,7 @@ class BiliAccountRepository(
     private val biliPassportService: BiliPassportService
 ) : BiliRepository() {
     /**
-     * 通过mid获取账户数据（异步方式）
+     * 同步请求通过mid获取账户数据
      */
     @Throws(IOException::class, IllegalStateException::class)
     fun syncRequestAccountData(
@@ -79,6 +79,14 @@ class BiliAccountRepository(
         id: Long, ps: Int, pn: Int,
         callback: IServerCallback<BiliFavoriteDetailsData>
     ) = biliApiService.requestFavoriteDetails(id, ps, pn).enqueue(callback) { it }
+
+    /**
+     * 同步请求获取某个收藏夹封面图片Url
+     */
+    fun syncRequestFavoriteCover(
+        id: Long,
+        onFailure: ((Int, Int, String) -> Unit)? = null
+    ) = biliApiService.requestFavoriteInfo(id).execute(onFailure) { it.cover }
 
     /**
      * 请求获取用户稿件历史记录
