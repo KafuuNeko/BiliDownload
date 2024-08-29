@@ -103,4 +103,6 @@
     <string name="convert_progress">%.2f/100.00 Converting…</string>
     <string name="convert_stop_message">Do you want to stop conversion?</string>
     <string name="text_stop">Stop</string>
+    <string name="personal_tab_history">History</string>
+    <string name="default_remind_loading">Loading...</string>
 </resources>

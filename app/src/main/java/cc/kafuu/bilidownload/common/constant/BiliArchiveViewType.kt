@@ -1,11 +1,11 @@
 package cc.kafuu.bilidownload.common.constant
 
 import androidx.annotation.IntDef
-@IntDef(SearchResultViewType.VIDEO_VIEW, SearchResultViewType.MEDIA_VIEW)
+@IntDef(BiliArchiveViewType.VIDEO_VIEW, BiliArchiveViewType.MEDIA_VIEW)
 @Retention(
     AnnotationRetention.SOURCE
 )
-annotation class SearchResultViewType {
+annotation class BiliArchiveViewType {
     companion object {
         const val VIDEO_VIEW = 0
         const val MEDIA_VIEW = 1

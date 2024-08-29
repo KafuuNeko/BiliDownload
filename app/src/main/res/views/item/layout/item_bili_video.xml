@@ -7,11 +7,11 @@
 
         <variable
             name="viewModel"
-            type="cc.kafuu.bilidownload.viewmodel.fragment.SearchListViewModel" />
+            type="cc.kafuu.bilidownload.viewmodel.fragment.BiliRVViewModel" />
 
         <variable
             name="data"
-            type="cc.kafuu.bilidownload.common.model.bili.BiliMediaModel" />
+            type="cc.kafuu.bilidownload.common.model.bili.BiliVideoModel" />
 
         <import type="cc.kafuu.bilidownload.common.CommonLibs" />
 
@@ -72,7 +72,7 @@
                     android:textColor="@color/primary_color"
                     android:textSize="@dimen/size_text_card_title"
                     android:textStyle="bold"
-                    tools:text="请问您今天要来点兔子吗？BLOOM" />
+                    tools:text="【Mili】A Turtle's Heart" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -83,14 +83,57 @@
 
                     <androidx.appcompat.widget.AppCompatTextView
                         android:id="@+id/tv_author"
-                        bindSpannable="@{data.description}"
+                        bindSpannable="@{data.author}"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
-                        android:maxLines="2"
+                        android:maxLines="1"
                         android:textColor="@color/general_text_color"
                         android:textSize="@dimen/size_text_card_content"
-                        tools:text="心爱在木造房屋小镇度过的第二个夏天即将结束，季节即将变成各种盛大活动满载的秋季。不论是在学校还是在Rabbit House，都有很多开心的事情！心爱、智乃以及大家都难以抑制对未来的期待……！" />
+                        tools:text="Mili" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_formatter_date"
+                        bindSpannable="@{data.pubFormatterDate}"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:textColor="@color/general_text_color"
+                        android:textSize="@dimen/size_text_card_content"
+                        tools:text="2016-06-07" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_duration"
+                        bindSpannable="@{data.duration}"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:textColor="@color/general_text_color"
+                        android:textSize="@dimen/size_text_card_content"
+                        tools:text="03:04" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_description"
+                        bindSpannable="@{data.description}"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:textColor="@color/general_text_color"
+                        android:textSize="@dimen/size_text_card_content"
+                        tools:text="Monday is a rainy day \nAnd I Stay inside letting time pass away" />
                 </LinearLayout>
             </LinearLayout>
 

@@ -6,6 +6,7 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.core.CoreFragment
 import cc.kafuu.bilidownload.common.core.CoreRVAdapter
 import cc.kafuu.bilidownload.common.manager.RVToTopVisibleListener
+import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.databinding.FragmentRvBinding
 import cc.kafuu.bilidownload.viewmodel.fragment.RVViewModel
 import com.scwang.smart.refresh.layout.listener.OnRefreshListener
@@ -18,11 +19,15 @@ abstract class RVFragment<VM : RVViewModel>(
     R.layout.fragment_rv,
     BR.viewModel
 ) {
+    private var mEnableRefresh: Boolean = true
+    private var mEnableLoadMore: Boolean = true
+
     abstract fun getRVAdapter(): CoreRVAdapter<*>?
     abstract fun getRVLayoutManager(): androidx.recyclerview.widget.RecyclerView.LayoutManager?
 
     override fun initViews() {
         mViewDataBinding.initViews()
+        mViewModel.init()
     }
 
     private fun FragmentRvBinding.initViews() {
@@ -34,11 +39,19 @@ abstract class RVFragment<VM : RVViewModel>(
         ivTop.setOnClickListener { resetScrollPosition(false) }
     }
 
+    private fun RVViewModel.init() {
+        loadingStatusMessageMutableLiveData.observe(this@RVFragment) {
+            onLoadingStatusChange(it)
+        }
+    }
+
     fun setEnableRefresh(enable: Boolean) {
+        mEnableRefresh = enable
         mViewDataBinding.refreshLayout.setEnableRefresh(enable)
     }
 
     fun setEnableLoadMore(enable: Boolean) {
+        mEnableLoadMore = enable
         mViewDataBinding.refreshLayout.setEnableLoadMore(enable)
     }
 
@@ -50,7 +63,7 @@ abstract class RVFragment<VM : RVViewModel>(
         mViewDataBinding.refreshLayout.setOnRefreshLoadMoreListener(refreshLoadMoreListener)
     }
 
-    fun resetScrollPosition(autoRefresh: Boolean) {
+    open fun resetScrollPosition(autoRefresh: Boolean) {
         mViewDataBinding.rvContent.apply {
             val manager = layoutManager as LinearLayoutManager
             manager.scrollToPosition(0)
@@ -59,5 +72,12 @@ abstract class RVFragment<VM : RVViewModel>(
         if (autoRefresh) {
             mViewDataBinding.refreshLayout.autoRefresh()
         }
+    }
+
+    private fun onLoadingStatusChange(status: LoadingStatus) {
+        val sc = status.statusCode
+        val enableRefresh = (sc != LoadingStatus.CODE_WAIT && sc != LoadingStatus.CODE_LOADING)
+        mViewDataBinding.refreshLayout.setEnableRefresh(mEnableRefresh && enableRefresh)
+        mViewDataBinding.refreshLayout.setEnableLoadMore(mEnableLoadMore && enableRefresh)
     }
 }

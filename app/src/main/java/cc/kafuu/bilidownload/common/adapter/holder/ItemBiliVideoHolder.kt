@@ -4,10 +4,10 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.common.core.CoreRVHolder
-import cc.kafuu.bilidownload.databinding.ItemSearchMediaBinding
+import cc.kafuu.bilidownload.databinding.ItemBiliVideoBinding
 
-class ItemSearchMediaHolder(parent: ViewGroup) : CoreRVHolder<ItemSearchMediaBinding>(
-    ItemSearchMediaBinding.inflate(
+class ItemBiliVideoHolder(parent: ViewGroup) : CoreRVHolder<ItemBiliVideoBinding>(
+    ItemBiliVideoBinding.inflate(
         LayoutInflater.from(parent.context), parent, false
     )
 ) {

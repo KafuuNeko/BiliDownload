@@ -3,7 +3,7 @@ package cc.kafuu.bilidownload.view.fragment
 import android.os.Bundle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import cc.kafuu.bilidownload.common.adapter.HistoryRVAdapter
+import cc.kafuu.bilidownload.common.adapter.DownloadHistoryRVAdapter
 import cc.kafuu.bilidownload.common.core.CoreFragmentBuilder
 import cc.kafuu.bilidownload.common.ext.getSerializableByClass
 import cc.kafuu.bilidownload.common.model.TaskStatus
@@ -12,13 +12,13 @@ import com.arialyy.annotations.DownloadGroup
 import com.arialyy.aria.core.Aria
 import com.arialyy.aria.core.task.DownloadGroupTask
 
-class HistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::class.java) {
+class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::class.java) {
     companion object {
         private const val KEY_STATES = "states"
 
         class Builder(private val states: List<TaskStatus>) :
-            CoreFragmentBuilder<HistoryFragment>() {
-            override fun onMallocFragment() = HistoryFragment()
+            CoreFragmentBuilder<DownloadHistoryFragment>() {
+            override fun onMallocFragment() = DownloadHistoryFragment()
             override fun onPreparationArguments() {
                 putArgument(KEY_STATES, states.toTypedArray())
             }
@@ -29,8 +29,8 @@ class HistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::class.jav
     }
 
     private lateinit var mStates: Array<TaskStatus>
-    private val mAdapter: HistoryRVAdapter by lazy {
-        HistoryRVAdapter(
+    private val mAdapter: DownloadHistoryRVAdapter by lazy {
+        DownloadHistoryRVAdapter(
             mViewModel, requireContext()
         )
     }

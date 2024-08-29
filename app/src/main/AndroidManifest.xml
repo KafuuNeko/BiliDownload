@@ -64,6 +64,11 @@
             android:configChanges="orientation|screenSize"
             android:exported="false" />
 
+        <activity
+            android:name=".view.activity.PersonalDetailsActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="false" />
+
         <service
             android:name=".service.DownloadService"
             android:foregroundServiceType="dataSync" />

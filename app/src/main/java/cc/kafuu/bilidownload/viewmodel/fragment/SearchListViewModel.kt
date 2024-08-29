@@ -15,11 +15,10 @@ import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.utils.BvConvertUtils
 import cc.kafuu.bilidownload.common.utils.NetworkUtils
 import cc.kafuu.bilidownload.common.utils.TimeUtils
-import cc.kafuu.bilidownload.view.activity.VideoDetailsActivity
 import java.util.Locale
 import java.util.regex.Pattern
 
-class SearchListViewModel : RVViewModel() {
+class SearchListViewModel : BiliRVViewModel() {
     var keyword: String? = null
 
     @SearchType
@@ -40,13 +39,13 @@ class SearchListViewModel : RVViewModel() {
         onSucceeded: (() -> Unit)? = null,
         onFailed: (() -> Unit)? = null
     ) {
-        if (keyword == null || mLoadingStatusMessageMutableLiveData.value?.statusCode == LoadingStatus.CODE_LOADING) {
+        if (keyword == null || loadingStatusMessageMutableLiveData.value?.statusCode == LoadingStatus.CODE_LOADING) {
             if (keyword != null) Log.d(TAG, "doSearch: Search execution")
             return
         }
         val keyword = keyword ?: return
 
-        mLoadingStatusMessageMutableLiveData.value = loadingStatus
+        setLoadingStatus(loadingStatus)
 
         // 非强制搜索的情况，尝试解析搜索内容
         if (!forceSearch) {
@@ -182,7 +181,7 @@ class SearchListViewModel : RVViewModel() {
             ).also {
                 enterDetails(it)
             }
-            mLoadingStatusMessageMutableLiveData.postValue(LoadingStatus.doneStatus())
+            postLoadingStatus(LoadingStatus.doneStatus())
         }
 
         override fun onFailure(httpCode: Int, code: Int, message: String) {
@@ -197,17 +196,16 @@ class SearchListViewModel : RVViewModel() {
     private fun createSeasonDetailCallback() = object : IServerCallback<BiliSeasonData> {
         override fun onSuccess(httpCode: Int, code: Int, message: String, data: BiliSeasonData) {
             BiliMediaModel(
-                mediaId = data.mediaId,
-                seasonId = data.seasonId,
                 title = data.title,
                 cover = data.cover,
-                mediaType = data.type,
                 description = data.evaluate,
-                pubDate = data.episodes.firstOrNull()?.pubTime ?: 0
+                pubDate = data.episodes.firstOrNull()?.pubTime ?: 0,
+                mediaId = data.mediaId,
+                seasonId = data.seasonId
             ).also {
                 enterDetails(it)
             }
-            mLoadingStatusMessageMutableLiveData.postValue(LoadingStatus.doneStatus())
+            postLoadingStatus(LoadingStatus.doneStatus())
         }
 
         override fun onFailure(httpCode: Int, code: Int, message: String) {
@@ -237,7 +235,7 @@ class SearchListViewModel : RVViewModel() {
         override fun onFailure(httpCode: Int, code: Int, message: String) {
             onFailed?.invoke()
             LoadingStatus.errorStatus(visibility = !loadMore, message = message).let {
-                mLoadingStatusMessageMutableLiveData.postValue(it)
+                postLoadingStatus(it)
             }
         }
     }
@@ -281,28 +279,13 @@ class SearchListViewModel : RVViewModel() {
      * 将BiliSearchMediaResultData解析为BiliMediaModel
      */
     private fun disposeResult(element: BiliSearchMediaResultData) = BiliMediaModel(
-        mediaId = element.mediaId,
-        seasonId = element.seasonId,
         title = element.title,
         cover = element.cover,
-        mediaType = element.mediaType,
         description = element.desc,
-        pubDate = element.pubTime
+        pubDate = element.pubTime,
+        mediaId = element.mediaId,
+        seasonId = element.seasonId
     )
-
-    /**
-     * 进入视频详情页（视频）
-     */
-    fun enterDetails(element: BiliVideoModel) {
-        startActivity(VideoDetailsActivity::class.java, VideoDetailsActivity.buildIntent(element))
-    }
-
-    /**
-     * 进入视频详情页（媒体）
-     */
-    fun enterDetails(element: BiliMediaModel) {
-        startActivity(VideoDetailsActivity::class.java, VideoDetailsActivity.buildIntent(element))
-    }
 
     /**
      * 根据url地址视频的BV号或AV号

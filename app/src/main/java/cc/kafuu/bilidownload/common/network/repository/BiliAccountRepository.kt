@@ -6,6 +6,7 @@ import cc.kafuu.bilidownload.common.network.manager.WbiManager
 import cc.kafuu.bilidownload.common.network.model.BiliAccountData
 import cc.kafuu.bilidownload.common.network.model.BiliFavoriteDetailsData
 import cc.kafuu.bilidownload.common.network.model.BiliFavoriteListData
+import cc.kafuu.bilidownload.common.network.model.BiliHistoryData
 import cc.kafuu.bilidownload.common.network.model.MyBiliAccountData
 import cc.kafuu.bilidownload.common.network.service.BiliApiService
 import cc.kafuu.bilidownload.common.network.service.BiliPassportService
@@ -61,9 +62,7 @@ class BiliAccountRepository(
      */
     fun requestMyAccountData(
         callback: IServerCallback<MyBiliAccountData>
-    ) = biliApiService.requestMyAccount().enqueue(callback) {
-        it
-    }
+    ) = biliApiService.requestMyAccount().enqueue(callback) { it }
 
     /**
      * 请求获取用户收藏夹
@@ -71,9 +70,7 @@ class BiliAccountRepository(
     fun requestUserFavorites(
         mid: Long, type: Int,
         callback: IServerCallback<BiliFavoriteListData>
-    ) = biliApiService.requestUserFavorites(mid, type).enqueue(callback) {
-        it
-    }
+    ) = biliApiService.requestUserFavorites(mid, type).enqueue(callback) { it }
 
     /**
      * 请求获取某个收藏夹详情
@@ -81,9 +78,24 @@ class BiliAccountRepository(
     fun requestFavoriteDetails(
         id: Long, ps: Int, pn: Int,
         callback: IServerCallback<BiliFavoriteDetailsData>
-    ) = biliApiService.requestFavoriteDetails(id, ps, pn).enqueue(callback) {
-        it
-    }
+    ) = biliApiService.requestFavoriteDetails(id, ps, pn).enqueue(callback) { it }
+
+    /**
+     * 请求获取用户稿件历史记录
+     */
+    fun requestArchiveHistory(
+        max: Long = 0,
+        ps: Int = 20,
+        business: String = "",
+        viewAt: Long = 0,
+        callback: IServerCallback<BiliHistoryData>
+    ) = biliApiService.requestHistoryCursor(
+        max = max,
+        ps = ps,
+        type = "archive",
+        viewAt = viewAt,
+        business = business
+    ).enqueue(callback) { it }
 
     /**
      * 账号登出

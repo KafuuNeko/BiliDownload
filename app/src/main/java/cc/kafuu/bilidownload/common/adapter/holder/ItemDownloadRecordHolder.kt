@@ -4,10 +4,10 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.common.core.CoreRVHolder
-import cc.kafuu.bilidownload.databinding.ItemHistoryBinding
+import cc.kafuu.bilidownload.databinding.ItemDownloadRecordBinding
 
-class ItemHistoryHolder(parent: ViewGroup) : CoreRVHolder<ItemHistoryBinding>(
-    ItemHistoryBinding.inflate(
+class ItemDownloadRecordHolder(parent: ViewGroup) : CoreRVHolder<ItemDownloadRecordBinding>(
+    ItemDownloadRecordBinding.inflate(
         LayoutInflater.from(parent.context), parent, false
     )
 ) {

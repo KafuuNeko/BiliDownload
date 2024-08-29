@@ -84,6 +84,7 @@
                     android:layout_marginTop="4dp"
                     android:ellipsize="end"
                     android:maxLines="2"
+                    android:text="@string/default_remind_loading"
                     android:textColor="@color/primary_color"
                     android:textSize="@dimen/size_text_card_title"
                     android:textStyle="bold"

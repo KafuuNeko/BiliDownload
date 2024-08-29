@@ -22,6 +22,5 @@ class MeFragment : CoreFragment<FragmentMeBinding, MeViewModel>(
     }
 
     override fun initViews() {
-
     }
 }

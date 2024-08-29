@@ -3,13 +3,13 @@ package cc.kafuu.bilidownload.common.manager
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
+import cc.kafuu.bilidownload.common.CommonLibs
+import cc.kafuu.bilidownload.common.model.bili.BiliAccountModel
 import cc.kafuu.bilidownload.common.network.IServerCallback
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliAccountData
 import cc.kafuu.bilidownload.common.network.model.MyBiliAccountData
-import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.utils.NetworkUtils
-import cc.kafuu.bilidownload.common.model.bili.BiliAccountModel
 import com.google.gson.JsonObject
 
 object AccountManager {
@@ -73,14 +73,7 @@ object AccountManager {
             ) {
                 Log.d(TAG, "requestAccountFace onSuccess: $data")
                 updateCookieLocalCache()
-                accountLiveData.postValue(
-                    BiliAccountModel(
-                        mid = data.mid,
-                        nickname = data.name,
-                        profile = data.avatarUrl,
-                        sign = data.sign
-                    )
-                )
+                accountLiveData.postValue(BiliAccountModel.createByBiliAccountData(data))
             }
 
             override fun onFailure(httpCode: Int, code: Int, message: String) {

@@ -5,7 +5,6 @@ class BiliMediaModel(
     cover: String,
     description: String,
     pubDate: Long,
-    val mediaType: Int,
     val mediaId: Long,
     val seasonId: Long,
 ): BiliResourceModel(title, cover, description, pubDate)

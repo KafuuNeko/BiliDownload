@@ -26,29 +26,29 @@ class HomeFragment : CoreFragment<FragmentHomeBinding, HomeViewModel>(
     }
 
     override fun initViews() {
-        val fragments = getFragments()
+        val fragments = getFragmentBuilders()
         mViewDataBinding.vp2Home.apply {
             adapter = FragmentAdapter(childFragmentManager, lifecycle, fragments.map { it.second })
         }
         TabLayoutMediator(
             mViewDataBinding.tlPageSelector,
             mViewDataBinding.vp2Home
-        ) { tab, position -> tab.text = fragments[position].first }.attach()
+        ) { tab, position -> tab.text = CommonLibs.getString(fragments[position].first) }.attach()
     }
 
-    private fun getFragments() = listOf(
-        CommonLibs.getString(R.string.home_tab_text_all) to HistoryFragment.builder(
+    private fun getFragmentBuilders() = listOf(
+        R.string.home_tab_text_all to DownloadHistoryFragment.builder(
             *TaskStatus.entries.toTypedArray()
         ),
-        CommonLibs.getString(R.string.home_tab_text_completed) to HistoryFragment.builder(
+        R.string.home_tab_text_completed to DownloadHistoryFragment.builder(
             TaskStatus.COMPLETED
         ),
-        CommonLibs.getString(R.string.home_tab_text_running) to HistoryFragment.builder(
+        R.string.home_tab_text_running to DownloadHistoryFragment.builder(
             TaskStatus.PREPARE,
             TaskStatus.DOWNLOADING,
             TaskStatus.SYNTHESIS,
         ),
-        CommonLibs.getString(R.string.home_tab_text_failed) to HistoryFragment.builder(
+        R.string.home_tab_text_failed to DownloadHistoryFragment.builder(
             TaskStatus.DOWNLOAD_FAILED,
             TaskStatus.SYNTHESIS_FAILED,
         ),

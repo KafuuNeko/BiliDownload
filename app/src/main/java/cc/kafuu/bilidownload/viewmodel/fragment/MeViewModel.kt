@@ -6,15 +6,20 @@ import cc.kafuu.bilidownload.common.core.CoreViewModel
 import cc.kafuu.bilidownload.common.manager.AccountManager
 import cc.kafuu.bilidownload.common.network.NetworkConfig
 import cc.kafuu.bilidownload.view.activity.LoginActivity
+import cc.kafuu.bilidownload.view.activity.PersonalDetailsActivity
 import cc.kafuu.bilidownload.view.dialog.ConfirmDialog
 
 class MeViewModel : CoreViewModel() {
 
-    fun jumpLogin() {
-        if (AccountManager.accountLiveData.value != null) {
+    fun jumpLoginOrAccount() {
+        val accountData = AccountManager.accountLiveData.value ?: kotlin.run {
+            startActivity(LoginActivity::class.java)
             return
         }
-        startActivity(LoginActivity::class.java)
+        startActivity(
+            PersonalDetailsActivity::class.java,
+            PersonalDetailsActivity.buildIntent(accountData.mid)
+        )
     }
 
     fun jumpSourceRepository() {

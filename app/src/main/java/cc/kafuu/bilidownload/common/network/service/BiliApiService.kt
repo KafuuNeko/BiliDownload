@@ -3,6 +3,7 @@ package cc.kafuu.bilidownload.common.network.service
 import cc.kafuu.bilidownload.common.network.model.BiliAccountData
 import cc.kafuu.bilidownload.common.network.model.BiliFavoriteDetailsData
 import cc.kafuu.bilidownload.common.network.model.BiliFavoriteListData
+import cc.kafuu.bilidownload.common.network.model.BiliHistoryData
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
 import cc.kafuu.bilidownload.common.network.model.BiliRespond
 import cc.kafuu.bilidownload.common.network.model.BiliSearchData
@@ -71,7 +72,7 @@ interface BiliApiService {
         @Query("view_at") viewAt: Long = 0,
         @Query("type") type: String = "all",
         @Query("ps") ps: Int
-    )
+    ): Call<BiliRespond<BiliHistoryData>>
 
     @GET
     fun requestAccountData(@Url fullUrl: String?): Call<BiliRespond<BiliAccountData>>

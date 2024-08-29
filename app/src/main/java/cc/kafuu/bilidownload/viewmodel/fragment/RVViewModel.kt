@@ -16,7 +16,7 @@ open class RVViewModel : CoreViewModel() {
         )
     val listMutableLiveData = mListMutableLiveData.liveData()
 
-    protected val mLoadingStatusMessageMutableLiveData = MutableLiveData(LoadingStatus.waitStatus())
+    private val mLoadingStatusMessageMutableLiveData = MutableLiveData(LoadingStatus.waitStatus())
     val loadingStatusMessageMutableLiveData = mLoadingStatusMessageMutableLiveData.liveData()
 
     fun updateList(newList: MutableList<Any>) {
@@ -26,8 +26,16 @@ open class RVViewModel : CoreViewModel() {
         }
 
         mListMutableLiveData.value = newList
-        mLoadingStatusMessageMutableLiveData.value =
+        setLoadingStatus(
             if (newList.isEmpty()) LoadingStatus.emptyStatus() else LoadingStatus.doneStatus()
+        )
     }
 
+    protected fun postLoadingStatus(status: LoadingStatus) {
+        mLoadingStatusMessageMutableLiveData.postValue(status)
+    }
+
+    protected fun setLoadingStatus(status: LoadingStatus) {
+        mLoadingStatusMessageMutableLiveData.value = status
+    }
 }

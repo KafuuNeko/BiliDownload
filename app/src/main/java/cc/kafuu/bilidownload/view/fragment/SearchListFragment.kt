@@ -1,7 +1,7 @@
 package cc.kafuu.bilidownload.view.fragment
 
 import androidx.recyclerview.widget.LinearLayoutManager
-import cc.kafuu.bilidownload.common.adapter.SearchRVAdapter
+import cc.kafuu.bilidownload.common.adapter.BiliRVAdapter
 import cc.kafuu.bilidownload.common.constant.SearchType
 import cc.kafuu.bilidownload.common.core.CoreFragmentBuilder
 import cc.kafuu.bilidownload.common.model.LoadingStatus
@@ -23,17 +23,12 @@ class SearchListFragment : RVFragment<SearchListViewModel>(SearchListViewModel::
 
     override fun initViews() {
         super.initViews()
-        mViewModel.loadingStatusMessageMutableLiveData.observe(this) {
-            onLoadingStatusChange(it)
-        }
         setOnRefreshListener(this)
         setOnRefreshLoadMoreListener(this)
     }
 
-    private val mAdapter: SearchRVAdapter by lazy {
-        SearchRVAdapter(
-            mViewModel, requireContext()
-        )
+    private val mAdapter: BiliRVAdapter by lazy {
+        BiliRVAdapter(mViewModel, requireContext())
     }
 
     override fun getRVAdapter() = mAdapter
@@ -55,13 +50,6 @@ class SearchListFragment : RVFragment<SearchListViewModel>(SearchListViewModel::
         if (needRefresh) {
             mViewModel.doSearch(LoadingStatus.loadingStatus(), loadMore = false, forceSearch = true)
         }
-    }
-
-    private fun onLoadingStatusChange(status: LoadingStatus) {
-        val sc = status.statusCode
-        val enableRefresh = (sc != LoadingStatus.CODE_WAIT && sc != LoadingStatus.CODE_LOADING)
-        setEnableRefresh(enableRefresh)
-        setEnableLoadMore(enableRefresh)
     }
 
     override fun onRefresh(refreshLayout: RefreshLayout) {

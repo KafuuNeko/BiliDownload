@@ -1,10 +1,12 @@
 package cc.kafuu.bilidownload.common.utils
 
+import android.annotation.SuppressLint
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 object TimeUtils {
+    @SuppressLint("DefaultLocale")
     fun formatSecondTime(seconds: Long): String {
         val hours = seconds / 3600
         val minutes = (seconds % 3600) / 60
@@ -18,6 +20,7 @@ object TimeUtils {
         return formatter.format(Date(timestamp))
     }
 
+    @SuppressLint("DefaultLocale")
     fun formatDuration(durationInSeconds: Double): String {
         val hours = (durationInSeconds / 3600).toInt()
         val minutes = ((durationInSeconds % 3600) / 60).toInt()
