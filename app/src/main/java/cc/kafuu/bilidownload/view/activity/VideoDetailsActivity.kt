@@ -30,8 +30,8 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
     companion object {
         private const val TAG = "VideoDetailsActivity"
 
-        private const val KEY_OBJECT_TYPE = "objectType"
-        private const val KEY_OBJECT_INSTANCE = "objectInstance"
+        private const val KEY_OBJECT_TYPE = "object_type"
+        private const val KEY_OBJECT_INSTANCE = "object_instance"
 
         fun buildIntent(video: BiliVideoModel) = Intent().apply {
             putExtra(KEY_OBJECT_TYPE, BiliVideoModel::class.simpleName)

@@ -29,7 +29,7 @@ class HistoryDetailsActivity : CoreActivity<ActivityHistoryDetailsBinding, Histo
     companion object {
         private const val TAG = "HistoryDetailsActivity"
 
-        private const val KEY_ENTITY_ID = "entityId"
+        private const val KEY_ENTITY_ID = "entity_id"
 
         fun buildIntent(entityId: Long) = Intent().apply {
             putExtra(KEY_ENTITY_ID, entityId)
