@@ -33,8 +33,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:contentDescription="@string/tl_page_selector_content_description"
             android:background="@color/general_window_background_color"
+            android:contentDescription="@string/tl_page_selector_content_description"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/ll_top_bar"
@@ -43,7 +43,9 @@
             app:tabIndicatorFullWidth="false"
             app:tabIndicatorHeight="4dp"
             app:tabMode="scrollable"
-            app:tabRippleColor="@color/common_transparent" />
+            app:tabRippleColor="@color/common_transparent"
+            app:tabSelectedTextColor="@color/primary_color"
+            app:tabTextColor="@color/general_text_color" />
 
         <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/vp2_home"
