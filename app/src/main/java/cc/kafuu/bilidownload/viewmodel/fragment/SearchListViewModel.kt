@@ -272,7 +272,12 @@ class SearchListViewModel : BiliRVViewModel() {
         description = element.description,
         cover = "https:${element.pic}",
         pubDate = element.pubDate,
-        duration = element.duration
+        duration = element.duration.let {
+            val time = it.split(":")
+            val minute = time.getOrNull(0)?.toIntOrNull() ?: 0
+            val second = time.getOrNull(1)?.toIntOrNull() ?: 0
+            TimeUtils.formatDuration((minute * 60 + second).toDouble())
+        }
     )
 
     /**

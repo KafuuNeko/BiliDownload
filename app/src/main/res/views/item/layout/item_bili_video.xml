@@ -82,37 +82,6 @@
                     android:orientation="horizontal">
 
                     <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/tv_author"
-                        bindSpannable="@{data.author}"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:ellipsize="end"
-                        android:maxLines="1"
-                        android:textColor="@color/general_text_color"
-                        android:textSize="@dimen/size_text_card_content"
-                        tools:text="Mili" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/tv_formatter_date"
-                        bindSpannable="@{data.pubFormatterDate}"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
-                        android:ellipsize="end"
-                        android:maxLines="1"
-                        android:textColor="@color/general_text_color"
-                        android:textSize="@dimen/size_text_card_content"
-                        tools:text="2016-06-07" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginTop="8dp"
-                    android:orientation="horizontal">
-
-                    <androidx.appcompat.widget.AppCompatTextView
                         android:id="@+id/tv_duration"
                         bindSpannable="@{data.duration}"
                         android:layout_width="wrap_content"
@@ -134,6 +103,37 @@
                         android:textColor="@color/general_text_color"
                         android:textSize="@dimen/size_text_card_content"
                         tools:text="Monday is a rainy day \nAnd I Stay inside letting time pass away" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_formatter_date"
+                        bindSpannable="@{data.pubFormatterDate}"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:textColor="@color/general_text_color"
+                        android:textSize="@dimen/size_text_card_content"
+                        tools:text="2016-06-07" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_author"
+                        bindSpannable="@{data.author}"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:textColor="@color/general_text_color"
+                        android:textSize="@dimen/size_text_card_content"
+                        tools:text="Mili" />
                 </LinearLayout>
             </LinearLayout>
 
