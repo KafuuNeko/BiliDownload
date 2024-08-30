@@ -10,7 +10,7 @@ import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.common.constant.BiliArchiveViewType
 import cc.kafuu.bilidownload.viewmodel.fragment.BiliRVViewModel
 
-class BiliRVAdapter(viewModel: BiliRVViewModel, context: Context) :
+class BiliResourceRVAdapter(viewModel: BiliRVViewModel, context: Context) :
     CoreRVAdapter<BiliRVViewModel>(viewModel, context) {
 
     override fun getItemViewType(position: Int) = when(getItemData(position)) {

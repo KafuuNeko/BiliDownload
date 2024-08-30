@@ -104,4 +104,8 @@
     <string name="convert_stop_message">是否停止转换?</string>
     <string name="text_stop">停止</string>
     <string name="personal_tab_history">历史</string>
+    <string name="default_remind_loading">加载中…</string>
+    <string name="favorite_contents">%1$d个内容</string>
+    <string name="personal_tab_favorite">收藏</string>
+
 </resources>

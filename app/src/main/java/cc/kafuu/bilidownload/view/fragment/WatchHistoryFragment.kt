@@ -1,7 +1,7 @@
 package cc.kafuu.bilidownload.view.fragment
 
 import androidx.recyclerview.widget.LinearLayoutManager
-import cc.kafuu.bilidownload.common.adapter.BiliRVAdapter
+import cc.kafuu.bilidownload.common.adapter.BiliResourceRVAdapter
 import cc.kafuu.bilidownload.common.core.CoreFragmentBuilder
 import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.viewmodel.fragment.WatchHistoryViewModel
@@ -20,8 +20,8 @@ class WatchHistoryFragment : RVFragment<WatchHistoryViewModel>(WatchHistoryViewM
         fun builder() = Builder()
     }
 
-    private val mAdapter: BiliRVAdapter by lazy {
-        BiliRVAdapter(mViewModel, requireContext())
+    private val mAdapter: BiliResourceRVAdapter by lazy {
+        BiliResourceRVAdapter(mViewModel, requireContext())
     }
 
     override fun initViews() {

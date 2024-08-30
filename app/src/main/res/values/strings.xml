@@ -104,5 +104,7 @@
     <string name="convert_stop_message">Do you want to stop conversion?</string>
     <string name="text_stop">Stop</string>
     <string name="personal_tab_history">History</string>
-    <string name="default_remind_loading">Loading...</string>
+    <string name="default_remind_loading">Loading…</string>
+    <string name="favorite_contents">%1$d contents</string>
+    <string name="personal_tab_favorite">Favorite</string>
 </resources>

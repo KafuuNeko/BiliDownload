@@ -39,7 +39,7 @@ class PersonalDetailsViewModel : CoreViewModel() {
                 message: String,
                 data: BiliAccountData
             ) {
-                mBiliAccountLiveData.postValue(BiliAccountModel.createByBiliAccountData(data))
+                mBiliAccountLiveData.postValue(BiliAccountModel.create(data))
             }
 
             override fun onFailure(httpCode: Int, code: Int, message: String) {

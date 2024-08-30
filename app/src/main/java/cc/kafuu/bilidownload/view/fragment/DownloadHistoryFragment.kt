@@ -28,7 +28,6 @@ class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::c
         fun builder(vararg states: TaskStatus) = Builder(states.toList())
     }
 
-    private lateinit var mStates: Array<TaskStatus>
     private val mAdapter: DownloadHistoryRVAdapter by lazy {
         DownloadHistoryRVAdapter(
             mViewModel, requireContext()
@@ -37,9 +36,6 @@ class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::c
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        mStates = arguments?.getSerializableByClass<Array<TaskStatus>>(
-            KEY_STATES
-        ) ?: arrayOf()
         Aria.download(this).register()
     }
 
@@ -50,14 +46,19 @@ class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::c
 
     override fun initViews() {
         super.initViews()
-        initViewMode()
+
+        val states = arguments?.getSerializableByClass<Array<TaskStatus>>(
+            KEY_STATES
+        ) ?: arrayOf()
+
+        mViewModel.init(states)
         initSmartRefreshLayout()
     }
 
-    private fun initViewMode() {
-        mViewModel.initData(mStates.toList())
-        mViewModel.latestDownloadTaskLiveData.observe(this) {
-            mViewModel.updateList(it.toMutableList())
+    private fun HistoryViewModel.init(states: Array<TaskStatus>) {
+        initData(states.toList())
+        latestDownloadTaskLiveData.observe(this@DownloadHistoryFragment) {
+            updateList(it.toMutableList())
         }
     }
 

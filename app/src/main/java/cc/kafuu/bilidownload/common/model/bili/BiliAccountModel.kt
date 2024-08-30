@@ -9,7 +9,7 @@ data class BiliAccountModel(
     val sign: String
 ) {
     companion object {
-        fun createByBiliAccountData(data: BiliAccountData) = BiliAccountModel(
+        fun create(data: BiliAccountData) = BiliAccountModel(
             mid = data.mid,
             nickname = data.name,
             profile = data.avatarUrl,

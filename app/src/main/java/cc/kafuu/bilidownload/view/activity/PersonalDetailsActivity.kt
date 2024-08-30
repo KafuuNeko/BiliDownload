@@ -9,6 +9,7 @@ import cc.kafuu.bilidownload.common.core.CoreActivity
 import cc.kafuu.bilidownload.common.core.CoreFragmentBuilder
 import cc.kafuu.bilidownload.common.manager.AccountManager
 import cc.kafuu.bilidownload.databinding.ActivityPersonalDetailsBinding
+import cc.kafuu.bilidownload.view.fragment.FavoriteListFragment
 import cc.kafuu.bilidownload.view.fragment.WatchHistoryFragment
 import cc.kafuu.bilidownload.viewmodel.activity.PersonalDetailsViewModel
 import com.google.android.material.tabs.TabLayoutMediator
@@ -34,7 +35,7 @@ class PersonalDetailsActivity :
     }
 
     private fun ActivityPersonalDetailsBinding.initViews(mid: Long) {
-        val fragments = getFragmentBuilders(mid == AccountManager.accountLiveData.value?.mid)
+        val fragments = getFragmentBuilders(mid)
         vp2Personal.apply {
             adapter =
                 FragmentAdapter(supportFragmentManager, lifecycle, fragments.map { it.second })
@@ -48,11 +49,15 @@ class PersonalDetailsActivity :
         initData(mid)
     }
 
-    private fun getFragmentBuilders(isMyself: Boolean): List<Pair<Int, CoreFragmentBuilder<*>>> {
+    private fun getFragmentBuilders(mid: Long): List<Pair<Int, CoreFragmentBuilder<*>>> {
+        val isMyself = mid == AccountManager.accountLiveData.value?.mid
+
         val fragmentBuilders = mutableListOf<Pair<Int, CoreFragmentBuilder<*>>>()
         if (isMyself) {
             fragmentBuilders.add(R.string.personal_tab_history to WatchHistoryFragment.builder())
         }
+        fragmentBuilders.add(R.string.personal_tab_favorite to FavoriteListFragment.builder(mid))
+
         return fragmentBuilders
     }
 

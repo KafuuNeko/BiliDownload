@@ -73,7 +73,7 @@ object AccountManager {
             ) {
                 Log.d(TAG, "requestAccountFace onSuccess: $data")
                 updateCookieLocalCache()
-                accountLiveData.postValue(BiliAccountModel.createByBiliAccountData(data))
+                accountLiveData.postValue(BiliAccountModel.create(data))
             }
 
             override fun onFailure(httpCode: Int, code: Int, message: String) {
