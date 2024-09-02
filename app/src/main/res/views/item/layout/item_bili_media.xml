@@ -7,7 +7,7 @@
 
         <variable
             name="viewModel"
-            type="cc.kafuu.bilidownload.viewmodel.fragment.BiliRVViewModel" />
+            type="cc.kafuu.bilidownload.viewmodel.common.BiliRVViewModel" />
 
         <variable
             name="data"

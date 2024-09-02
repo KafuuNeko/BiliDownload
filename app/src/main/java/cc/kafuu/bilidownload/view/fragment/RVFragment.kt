@@ -8,7 +8,7 @@ import cc.kafuu.bilidownload.common.core.CoreRVAdapter
 import cc.kafuu.bilidownload.common.manager.RVToTopVisibleListener
 import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.databinding.FragmentRvBinding
-import cc.kafuu.bilidownload.viewmodel.fragment.RVViewModel
+import cc.kafuu.bilidownload.viewmodel.common.RVViewModel
 import com.scwang.smart.refresh.layout.listener.OnRefreshListener
 import com.scwang.smart.refresh.layout.listener.OnRefreshLoadMoreListener
 

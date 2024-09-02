@@ -1,8 +1,9 @@
-package cc.kafuu.bilidownload.viewmodel.fragment
+package cc.kafuu.bilidownload.viewmodel.common
 
 import cc.kafuu.bilidownload.common.model.bili.BiliFavoriteModel
 import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
+import cc.kafuu.bilidownload.view.activity.FavoriteDetailsActivity
 import cc.kafuu.bilidownload.view.activity.VideoDetailsActivity
 
 open class BiliRVViewModel : RVViewModel() {
@@ -24,6 +25,6 @@ open class BiliRVViewModel : RVViewModel() {
      * 进入收藏夹详情页
      */
     fun enterDetails(element: BiliFavoriteModel) {
-
+        startActivity(FavoriteDetailsActivity::class.java, FavoriteDetailsActivity.buildIntent(element))
     }
 }

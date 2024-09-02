@@ -74,6 +74,8 @@ class BiliAccountRepository(
 
     /**
      * 请求获取某个收藏夹详情
+     * @param ps 每页数量
+     * @param pn 页码
      */
     fun requestFavoriteDetails(
         id: Long, ps: Int, pn: Int,

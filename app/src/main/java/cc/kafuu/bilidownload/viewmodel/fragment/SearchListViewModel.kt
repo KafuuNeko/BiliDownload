@@ -14,7 +14,7 @@ import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.utils.BvConvertUtils
 import cc.kafuu.bilidownload.common.utils.NetworkUtils
-import cc.kafuu.bilidownload.common.utils.TimeUtils
+import cc.kafuu.bilidownload.viewmodel.common.BiliRVViewModel
 import java.util.Locale
 import java.util.regex.Pattern
 
@@ -170,17 +170,7 @@ class SearchListViewModel : BiliRVViewModel() {
      */
     private fun createVideoDetailCallback() = object : IServerCallback<BiliVideoData> {
         override fun onSuccess(httpCode: Int, code: Int, message: String, data: BiliVideoData) {
-            BiliVideoModel(
-                author = data.owner.name,
-                bvid = data.bvid,
-                title = data.title,
-                description = data.desc,
-                cover = data.pic,
-                pubDate = data.pubDate,
-                duration = TimeUtils.formatDuration(data.duration.toDouble())
-            ).also {
-                enterDetails(it)
-            }
+            enterDetails(BiliVideoModel.create(data))
             postLoadingStatus(LoadingStatus.doneStatus())
         }
 
@@ -195,16 +185,7 @@ class SearchListViewModel : BiliRVViewModel() {
      */
     private fun createSeasonDetailCallback() = object : IServerCallback<BiliSeasonData> {
         override fun onSuccess(httpCode: Int, code: Int, message: String, data: BiliSeasonData) {
-            BiliMediaModel(
-                title = data.title,
-                cover = data.cover,
-                description = data.evaluate,
-                pubDate = data.episodes.firstOrNull()?.pubTime ?: 0,
-                mediaId = data.mediaId,
-                seasonId = data.seasonId
-            ).also {
-                enterDetails(it)
-            }
+            enterDetails(BiliMediaModel.create(data))
             postLoadingStatus(LoadingStatus.doneStatus())
         }
 
@@ -265,32 +246,12 @@ class SearchListViewModel : BiliRVViewModel() {
     /**
      * 将BiliSearchVideoResultData解析为BiliVideoModel
      */
-    private fun disposeResult(element: BiliSearchVideoResultData) = BiliVideoModel(
-        author = element.author,
-        bvid = element.bvid,
-        title = element.title,
-        description = element.description,
-        cover = "https:${element.pic}",
-        pubDate = element.pubDate,
-        duration = element.duration.let {
-            val time = it.split(":")
-            val minute = time.getOrNull(0)?.toIntOrNull() ?: 0
-            val second = time.getOrNull(1)?.toIntOrNull() ?: 0
-            TimeUtils.formatDuration((minute * 60 + second).toDouble())
-        }
-    )
+    private fun disposeResult(element: BiliSearchVideoResultData) = BiliVideoModel.create(element)
 
     /**
      * 将BiliSearchMediaResultData解析为BiliMediaModel
      */
-    private fun disposeResult(element: BiliSearchMediaResultData) = BiliMediaModel(
-        title = element.title,
-        cover = element.cover,
-        description = element.desc,
-        pubDate = element.pubTime,
-        mediaId = element.mediaId,
-        seasonId = element.seasonId
-    )
+    private fun disposeResult(element: BiliSearchMediaResultData) = BiliMediaModel.create(element)
 
     /**
      * 根据url地址视频的BV号或AV号

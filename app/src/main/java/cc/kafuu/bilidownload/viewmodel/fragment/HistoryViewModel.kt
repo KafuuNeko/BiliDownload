@@ -7,6 +7,7 @@ import cc.kafuu.bilidownload.common.model.TaskStatus
 import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
 import cc.kafuu.bilidownload.view.activity.HistoryDetailsActivity
+import cc.kafuu.bilidownload.viewmodel.common.RVViewModel
 import com.arialyy.aria.core.Aria
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 

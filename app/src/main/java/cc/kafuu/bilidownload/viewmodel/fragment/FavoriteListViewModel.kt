@@ -8,6 +8,7 @@ import cc.kafuu.bilidownload.common.network.IServerCallback
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliFavoriteData
 import cc.kafuu.bilidownload.common.network.model.BiliFavoriteListData
+import cc.kafuu.bilidownload.viewmodel.common.BiliRVViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll

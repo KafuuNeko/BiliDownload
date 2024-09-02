@@ -1,6 +1,7 @@
 package cc.kafuu.bilidownload.common.model.bili
 
 import cc.kafuu.bilidownload.common.network.model.BiliFavoriteData
+import java.io.Serializable
 
 data class BiliFavoriteModel(
     // 收藏夹mlid（完整id), 收藏夹原始id+创建者mid尾号2位
@@ -15,7 +16,7 @@ data class BiliFavoriteModel(
     val mediaCount: Int,
     // 收藏夹封面图片url
     val cover: String?,
-) {
+): Serializable {
     companion object {
         fun create(data: BiliFavoriteData, cover: String?) = BiliFavoriteModel(
             id = data.id,

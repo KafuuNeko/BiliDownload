@@ -8,7 +8,7 @@ import cc.kafuu.bilidownload.common.core.CoreRVAdapter
 import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.common.constant.BiliArchiveViewType
-import cc.kafuu.bilidownload.viewmodel.fragment.BiliRVViewModel
+import cc.kafuu.bilidownload.viewmodel.common.BiliRVViewModel
 
 class BiliResourceRVAdapter(viewModel: BiliRVViewModel, context: Context) :
     CoreRVAdapter<BiliRVViewModel>(viewModel, context) {

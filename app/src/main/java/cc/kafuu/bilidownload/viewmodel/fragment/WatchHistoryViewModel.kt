@@ -9,7 +9,7 @@ import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliHistoryCursor
 import cc.kafuu.bilidownload.common.network.model.BiliHistoryData
 import cc.kafuu.bilidownload.common.network.model.BiliHistoryItem
-import cc.kafuu.bilidownload.common.utils.TimeUtils
+import cc.kafuu.bilidownload.viewmodel.common.BiliRVViewModel
 
 class WatchHistoryViewModel : BiliRVViewModel() {
     private val mBiliAccountRepository = NetworkManager.biliAccountRepository
@@ -67,24 +67,9 @@ class WatchHistoryViewModel : BiliRVViewModel() {
 
         data.mapNotNull {
             if (it.history.epid != null && it.history.epid != 0L) {
-                BiliMediaModel(
-                    title = it.title,
-                    cover = it.cover ?: return@mapNotNull null,
-                    description = it.longTitle,
-                    pubDate = it.viewAt,
-                    mediaId = it.history.epid,
-                    seasonId = 0,
-                )
+                BiliMediaModel.create(it)
             } else if (it.history.bvid != null) {
-                BiliVideoModel(
-                    title = it.title,
-                    cover = it.cover ?: return@mapNotNull null,
-                    description = it.longTitle,
-                    pubDate = it.viewAt,
-                    author = it.authorName,
-                    bvid = it.history.bvid,
-                    duration = TimeUtils.formatDuration(it.duration?.toDouble() ?: 0.0)
-                )
+                BiliVideoModel.create(it)
             } else null
         }.also {
             list.addAll(it)

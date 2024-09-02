@@ -5,7 +5,7 @@ import android.view.ViewGroup
 import cc.kafuu.bilidownload.common.adapter.holder.ItemBiliFavoriteHolder
 import cc.kafuu.bilidownload.common.core.CoreRVAdapter
 import cc.kafuu.bilidownload.common.core.CoreRVHolder
-import cc.kafuu.bilidownload.viewmodel.fragment.BiliRVViewModel
+import cc.kafuu.bilidownload.viewmodel.common.BiliRVViewModel
 
 class BiliFavoriteRVAdapter(viewModel: BiliRVViewModel, context: Context) :
     CoreRVAdapter<BiliRVViewModel>(viewModel, context) {

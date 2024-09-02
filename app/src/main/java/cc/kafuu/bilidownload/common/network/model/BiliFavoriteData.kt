@@ -11,7 +11,7 @@ data class BiliFavoriteDetailsData(
     @SerializedName("info")
     val favoriteData: BiliFavoriteData,
     @SerializedName("medias")
-    val medias: List<BiliFavoriteMedia>,
+    val medias: List<BiliFavoriteMedia>?,
 )
 
 data class BiliFavoriteData(

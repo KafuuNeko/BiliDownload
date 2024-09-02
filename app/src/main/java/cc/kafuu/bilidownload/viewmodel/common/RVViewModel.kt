@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.viewmodel.fragment
+package cc.kafuu.bilidownload.viewmodel.common
 
 import android.os.Handler
 import android.os.Looper

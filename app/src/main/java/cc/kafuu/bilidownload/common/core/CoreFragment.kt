@@ -38,7 +38,15 @@ abstract class CoreFragment<V : ViewDataBinding, VM : CoreViewModel>(
      */
     abstract fun initViews()
 
+    /**
+     * 取得Fragment寄生Activity
+     */
     override fun requireAvailableActivity() = requireActivity()
+
+    /**
+     * 取得ViewModel，如果此函数返回null则会自动构建一个生命周期等同于此Fragment的ViewModel
+     */
+    protected open fun getViewModel(): VM? = null
 
     /**
      * 完成数据绑定和视图模型的初始化工作，以及其他初始化操作。
@@ -53,7 +61,7 @@ abstract class CoreFragment<V : ViewDataBinding, VM : CoreViewModel>(
         savedInstanceState: Bundle?
     ): View {
         mViewDataBinding = DataBindingUtil.inflate(inflater, layoutId, container, false)
-        mViewModel = ViewModelProvider(this)[vmClass]
+        mViewModel = getViewModel() ?: ViewModelProvider(this)[vmClass]
         if (viewModelId != 0) {
             mViewDataBinding.setVariable(viewModelId, mViewModel)
         }
