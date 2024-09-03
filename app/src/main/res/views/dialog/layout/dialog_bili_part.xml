@@ -14,13 +14,12 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:padding="10dp">
 
         <LinearLayout
-            android:layout_width="330dp"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="32dp"
-            android:layout_marginEnd="32dp"
             android:background="@drawable/shape_dialog_background"
             android:orientation="vertical"
             android:padding="10dp"
@@ -45,7 +44,8 @@
             <androidx.core.widget.NestedScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp">
+                android:layout_marginTop="10dp"
+                android:layout_weight="1">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -58,7 +58,8 @@
                         android:layout_height="wrap_content"
                         android:text="@string/text_video"
                         android:textColor="@color/general_text_color"
-                        android:textSize="@dimen/size_text_dialog_content" />
+                        android:textSize="@dimen/size_text_dialog_content"
+                        android:textStyle="bold" />
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rv_video_select_list"
@@ -73,7 +74,8 @@
                         android:layout_height="wrap_content"
                         android:text="@string/text_audio"
                         android:textColor="@color/general_text_color"
-                        android:textSize="@dimen/size_text_dialog_content" />
+                        android:textSize="@dimen/size_text_dialog_content"
+                        android:textStyle="bold" />
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rv_audio_select_list"
@@ -81,46 +83,46 @@
                         bindVisible="@{!viewModel.audioResourcesLiveData.empty}"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="end|center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="10dp">
-
-                        <androidx.appcompat.widget.AppCompatTextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/shape_button_cancel"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:foreground="?attr/selectableItemBackground"
-                            android:onClick="@{() -> viewModel.onClose()}"
-                            android:paddingHorizontal="30dp"
-                            android:paddingVertical="10dp"
-                            android:text="@string/text_cancel"
-                            android:textColor="@color/common_white"
-                            android:textSize="@dimen/size_text_button_size" />
-
-                        <androidx.appcompat.widget.AppCompatTextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="20dp"
-                            android:background="@drawable/shape_button_general"
-                            android:clickable="true"
-                            android:enabled="@{viewModel.currentVideoResourceLiveData != null || viewModel.currentAudioResourceLiveData != null}"
-                            android:focusable="true"
-                            android:foreground="?attr/selectableItemBackground"
-                            android:onClick="@{() -> viewModel.onConfirm()}"
-                            android:paddingHorizontal="30dp"
-                            android:paddingVertical="10dp"
-                            android:text="@{viewModel.confirmTextLiveData}"
-                            android:textColor="@color/common_white"
-                            android:textSize="@dimen/size_text_button_size" />
-                    </LinearLayout>
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="end|center_vertical"
+                android:orientation="horizontal"
+                android:padding="10dp">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/shape_button_cancel"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:onClick="@{() -> viewModel.onClose()}"
+                    android:paddingHorizontal="30dp"
+                    android:paddingVertical="10dp"
+                    android:text="@string/text_cancel"
+                    android:textColor="@color/common_white"
+                    android:textSize="@dimen/size_text_button_size" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:background="@drawable/shape_button_general"
+                    android:clickable="true"
+                    android:enabled="@{viewModel.currentVideoResourceLiveData != null || viewModel.currentAudioResourceLiveData != null}"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:onClick="@{() -> viewModel.onConfirm()}"
+                    android:paddingHorizontal="30dp"
+                    android:paddingVertical="10dp"
+                    android:text="@{viewModel.confirmTextLiveData}"
+                    android:textColor="@color/common_white"
+                    android:textSize="@dimen/size_text_button_size" />
+            </LinearLayout>
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
