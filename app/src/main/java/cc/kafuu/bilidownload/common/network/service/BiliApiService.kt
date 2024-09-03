@@ -8,6 +8,7 @@ import cc.kafuu.bilidownload.common.network.model.BiliHistoryData
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
 import cc.kafuu.bilidownload.common.network.model.BiliRespond
 import cc.kafuu.bilidownload.common.network.model.BiliSearchData
+import cc.kafuu.bilidownload.common.network.model.BiliSearchManuscriptData
 import cc.kafuu.bilidownload.common.network.model.BiliSearchMediaResultData
 import cc.kafuu.bilidownload.common.network.model.BiliSearchVideoResultData
 import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
@@ -88,4 +89,7 @@ interface BiliApiService {
 
     @GET
     fun requestSearchMedia(@Url fullUrl: String?): Call<BiliRespond<BiliSearchData<BiliSearchMediaResultData>>>
+
+    @GET
+    fun requestSearchManuscript(@Url fullUrl: String?): Call<BiliRespond<BiliSearchManuscriptData>>
 }
