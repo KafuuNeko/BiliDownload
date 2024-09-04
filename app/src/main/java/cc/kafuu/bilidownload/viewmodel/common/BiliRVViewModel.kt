@@ -7,6 +7,23 @@ import cc.kafuu.bilidownload.view.activity.FavoriteDetailsActivity
 import cc.kafuu.bilidownload.view.activity.VideoDetailsActivity
 
 open class BiliRVViewModel : RVViewModel() {
+
+    /**
+     * 刷新数据列表
+     */
+    open fun onRefreshData(
+        onSucceeded: (() -> Unit)? = null,
+        onFailed: (() -> Unit)? = null,
+    ) = Unit
+
+    /**
+     * 加载更多数据
+     */
+    open fun onLoadMoreData(
+        onSucceeded: (() -> Unit)? = null,
+        onFailed: (() -> Unit)? = null,
+    ) = Unit
+
     /**
      * 进入视频详情页（视频）
      */
@@ -25,6 +42,9 @@ open class BiliRVViewModel : RVViewModel() {
      * 进入收藏夹详情页
      */
     fun enterDetails(element: BiliFavoriteModel) {
-        startActivity(FavoriteDetailsActivity::class.java, FavoriteDetailsActivity.buildIntent(element))
+        startActivity(
+            FavoriteDetailsActivity::class.java,
+            FavoriteDetailsActivity.buildIntent(element)
+        )
     }
 }

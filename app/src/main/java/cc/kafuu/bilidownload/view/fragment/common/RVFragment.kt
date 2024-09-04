@@ -1,4 +1,4 @@
-package cc.kafuu.bilidownload.view.fragment
+package cc.kafuu.bilidownload.view.fragment.common
 
 import androidx.recyclerview.widget.LinearLayoutManager
 import cc.kafuu.bilidownload.BR
@@ -23,7 +23,10 @@ abstract class RVFragment<VM : RVViewModel>(
     private var mEnableLoadMore: Boolean = true
 
     abstract fun getRVAdapter(): CoreRVAdapter<*>?
-    abstract fun getRVLayoutManager(): androidx.recyclerview.widget.RecyclerView.LayoutManager?
+
+    open fun getRVLayoutManager(): androidx.recyclerview.widget.RecyclerView.LayoutManager? {
+        return LinearLayoutManager(context)
+    }
 
     override fun initViews() {
         mViewDataBinding.initViews()

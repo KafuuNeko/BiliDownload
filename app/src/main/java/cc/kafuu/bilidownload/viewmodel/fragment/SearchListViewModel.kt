@@ -32,6 +32,30 @@ class SearchListViewModel : BiliRVViewModel() {
         private val mBiliVideoRepository = NetworkManager.biliVideoRepository
     }
 
+    /**
+     * 刷新数据列表
+     */
+    override fun onRefreshData(onSucceeded: (() -> Unit)?, onFailed: (() -> Unit)?) {
+        doSearch(
+            loadingStatus = LoadingStatus.loadingStatus(false),
+            loadMore = false,
+            forceSearch = true,
+            onSucceeded, onFailed
+        )
+    }
+
+    /**
+     * 加载更多数据
+     */
+    override fun onLoadMoreData(onSucceeded: (() -> Unit)?, onFailed: (() -> Unit)?) {
+        doSearch(
+            loadingStatus = LoadingStatus.loadingStatus(false),
+            loadMore = true,
+            forceSearch = true,
+            onSucceeded, onFailed
+        )
+    }
+
     fun doSearch(
         loadingStatus: LoadingStatus,
         loadMore: Boolean,

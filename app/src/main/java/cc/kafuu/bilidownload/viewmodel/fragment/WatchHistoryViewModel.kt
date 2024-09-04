@@ -15,6 +15,22 @@ class WatchHistoryViewModel : BiliRVViewModel() {
     private val mBiliAccountRepository = NetworkManager.biliAccountRepository
     private var mLastHistoryCursor: BiliHistoryCursor? = null
 
+    override fun onRefreshData(onSucceeded: (() -> Unit)?, onFailed: (() -> Unit)?) {
+        loadData(
+            loadingStatus = LoadingStatus.loadingStatus(false),
+            loadMore = false,
+            onSucceeded, onFailed
+        )
+    }
+
+    override fun onLoadMoreData(onSucceeded: (() -> Unit)?, onFailed: (() -> Unit)?) {
+        loadData(
+            loadingStatus = LoadingStatus.loadingStatus(false),
+            loadMore = true,
+            onSucceeded, onFailed
+        )
+    }
+
     fun loadData(
         loadingStatus: LoadingStatus,
         loadMore: Boolean,
@@ -77,5 +93,4 @@ class WatchHistoryViewModel : BiliRVViewModel() {
 
         updateList(list)
     }
-
 }

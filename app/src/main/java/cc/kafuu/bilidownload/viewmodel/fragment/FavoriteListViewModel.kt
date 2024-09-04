@@ -24,14 +24,14 @@ class FavoriteListViewModel : BiliRVViewModel() {
 
     fun initData(mid: Long) {
         mMid = mid
+        onRefreshData()
     }
 
-    fun loadData(
-        loadingStatus: LoadingStatus,
-        onSucceeded: (() -> Unit)? = null,
-        onFailed: (() -> Unit)? = null,
+    override fun onRefreshData(
+        onSucceeded: (() -> Unit)?,
+        onFailed: (() -> Unit)?,
     ) {
-        setLoadingStatus(loadingStatus)
+        setLoadingStatus(LoadingStatus.loadingStatus(false))
         val callback = object : IServerCallback<BiliFavoriteListData> {
             override fun onSuccess(
                 httpCode: Int,

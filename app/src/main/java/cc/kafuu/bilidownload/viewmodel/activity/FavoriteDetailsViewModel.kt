@@ -25,6 +25,22 @@ class FavoriteDetailsViewModel : BiliRVViewModel() {
     // 最近一次加载的页码
     private var mLatestPage = 0
 
+    override fun onRefreshData(onSucceeded: (() -> Unit)?, onFailed: (() -> Unit)?) {
+        loadData(
+            loadingStatus = LoadingStatus.loadingStatus(false),
+            loadMore = false,
+            onSucceeded, onFailed
+        )
+    }
+
+    override fun onLoadMoreData(onSucceeded: (() -> Unit)?, onFailed: (() -> Unit)?) {
+        loadData(
+            loadingStatus = LoadingStatus.loadingStatus(false),
+            loadMore = true,
+            onSucceeded, onFailed
+        )
+    }
+
     fun initData(favoriteModel: BiliFavoriteModel) {
         mBiliFavoriteLiveData.value = favoriteModel
     }

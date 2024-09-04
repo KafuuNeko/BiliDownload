@@ -7,6 +7,7 @@ import cc.kafuu.bilidownload.common.adapter.DownloadHistoryRVAdapter
 import cc.kafuu.bilidownload.common.core.CoreFragmentBuilder
 import cc.kafuu.bilidownload.common.ext.getSerializableByClass
 import cc.kafuu.bilidownload.common.model.TaskStatus
+import cc.kafuu.bilidownload.view.fragment.common.RVFragment
 import cc.kafuu.bilidownload.viewmodel.fragment.HistoryViewModel
 import com.arialyy.annotations.DownloadGroup
 import com.arialyy.aria.core.Aria
@@ -68,8 +69,6 @@ class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::c
     }
 
     override fun getRVAdapter() = mAdapter
-
-    override fun getRVLayoutManager(): RecyclerView.LayoutManager = LinearLayoutManager(context)
 
     /**
      * 监听下载任务执行进度，并绑定此任务是否存在于列表，若是存在则通知adapter更新*/
