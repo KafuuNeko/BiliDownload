@@ -107,5 +107,5 @@
     <string name="default_remind_loading">加载中…</string>
     <string name="favorite_contents">%1$d个内容</string>
     <string name="personal_tab_favorite">收藏</string>
-
+    <string name="personal_tab_manuscript">稿件</string>
 </resources>

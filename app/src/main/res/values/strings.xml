@@ -107,4 +107,5 @@
     <string name="default_remind_loading">Loading…</string>
     <string name="favorite_contents">%1$d contents</string>
     <string name="personal_tab_favorite">Favorite</string>
+    <string name="personal_tab_manuscript">Manuscript</string>
 </resources>

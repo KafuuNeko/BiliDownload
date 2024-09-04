@@ -10,6 +10,7 @@ import cc.kafuu.bilidownload.common.core.CoreFragmentBuilder
 import cc.kafuu.bilidownload.common.manager.AccountManager
 import cc.kafuu.bilidownload.databinding.ActivityPersonalDetailsBinding
 import cc.kafuu.bilidownload.view.fragment.FavoriteListFragment
+import cc.kafuu.bilidownload.view.fragment.ManuscriptFragment
 import cc.kafuu.bilidownload.view.fragment.WatchHistoryFragment
 import cc.kafuu.bilidownload.viewmodel.activity.PersonalDetailsViewModel
 import com.google.android.material.tabs.TabLayoutMediator
@@ -56,6 +57,7 @@ class PersonalDetailsActivity :
         if (isMyself) {
             fragmentBuilders.add(R.string.personal_tab_history to WatchHistoryFragment.builder())
         }
+        fragmentBuilders.add(R.string.personal_tab_manuscript to ManuscriptFragment.builder(mid))
         fragmentBuilders.add(R.string.personal_tab_favorite to FavoriteListFragment.builder(mid))
 
         return fragmentBuilders

@@ -3,6 +3,7 @@ package cc.kafuu.bilidownload.common.model.bili
 import android.annotation.SuppressLint
 import cc.kafuu.bilidownload.common.network.model.BiliFavoriteMedia
 import cc.kafuu.bilidownload.common.network.model.BiliHistoryItem
+import cc.kafuu.bilidownload.common.network.model.BiliSearchManuscriptVideo
 import cc.kafuu.bilidownload.common.network.model.BiliSearchVideoResultData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.utils.BvConvertUtils
@@ -67,6 +68,16 @@ class BiliVideoModel(
             pubDate = data.pubTime,
             author = data.upper.name,
             duration = TimeUtils.formatDuration(data.duration.toDouble())
+        )
+
+        fun create(data: BiliSearchManuscriptVideo) = BiliVideoModel(
+            title = data.title,
+            bvid = data.bvid,
+            cover = data.pic,
+            description = data.description,
+            pubDate = data.created,
+            author = data.author,
+            duration = data.length
         )
     }
 }
