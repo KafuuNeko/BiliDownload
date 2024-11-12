@@ -1,6 +1,8 @@
 package cc.kafuu.bilidownload.common
 
 import android.annotation.SuppressLint
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -68,5 +70,14 @@ object CommonLibs {
         }.also {
             requireContext().startActivity(it)
         }
+    }
+
+    fun copyToClipboard(label: String, text: String): Boolean {
+        val clipboard = mContext?.getSystemService(Context.CLIPBOARD_SERVICE)
+        if (clipboard != null && clipboard is ClipboardManager) {
+            clipboard.setPrimaryClip(ClipData.newPlainText("label", text))
+            return true
+        }
+        return false
     }
 }

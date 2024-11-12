@@ -108,4 +108,6 @@
     <string name="favorite_contents">%1$d个内容</string>
     <string name="personal_tab_favorite">收藏</string>
     <string name="personal_tab_manuscript">稿件</string>
+    <string name="success_copy_video_info">您已成功将视频信息拷贝到剪切板</string>
+    <string name="video_details_format">标题: %1$s\n描述: %2$s</string>
 </resources>

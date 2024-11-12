@@ -2,6 +2,7 @@ package cc.kafuu.bilidownload.viewmodel.activity
 
 import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
+import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.core.CoreViewModel
@@ -147,4 +148,20 @@ class VideoDetailsViewModel : CoreViewModel() {
             )
         }
     )
+
+    fun onDescriptionLongClick(): Boolean {
+        val resource = mBiliResourceModelLiveData.value ?: return false
+        val isSuccess = CommonLibs.copyToClipboard(
+            label = resource.title,
+            text = CommonLibs.getString(
+                R.string.video_details_format,
+                resource.title,
+                resource.description
+            )
+        )
+        if (isSuccess) {
+            popMessage(ToastMessageAction(CommonLibs.getString(R.string.success_copy_video_info)))
+        }
+        return isSuccess
+    }
 }

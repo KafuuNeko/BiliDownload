@@ -108,4 +108,6 @@
     <string name="favorite_contents">%1$d contents</string>
     <string name="personal_tab_favorite">Favorite</string>
     <string name="personal_tab_manuscript">Manuscript</string>
+    <string name="success_copy_video_info">You have successfully copied the video information to the clipboard</string>
+    <string name="video_details_format">Title: %1$s\nDescription: %2$s</string>
 </resources>
