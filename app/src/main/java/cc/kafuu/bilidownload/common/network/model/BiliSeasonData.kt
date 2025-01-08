@@ -29,22 +29,22 @@ data class BiliSeasonData(
 
 data class BiliSeasonActivity(
     @SerializedName("head_bg_url") val headBgUrl: String?,
-    val id: Int,
+    val id: Long,
     val title: String
 )
 
 data class BiliSeasonEpisode(
-    val aid: Int,
+    val aid: Long,
     val badge: String?,
     val bvid: String,
     val cid: Long,
     val cover: String,
     val from: String,
-    val id: Int,
+    val id: Long,
     val link: String,
     @SerializedName("long_title") val longTitle: String,
     @SerializedName("pub_time") val pubTime: Long,
-    val pv: Int,
+    val pv: Long,
     @SerializedName("release_date") val releaseDate: String?,
     @SerializedName("share_copy") val shareCopy: String,
     @SerializedName("share_url") val shareUrl: String,
