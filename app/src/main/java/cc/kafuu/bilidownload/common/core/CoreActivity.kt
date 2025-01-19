@@ -138,7 +138,7 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
                 it.setSystemBarsAppearance(
                     WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
                     WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
-                )  // 设置状态栏文字为深色
+                )
             }
         } else {
             // 旧版本
