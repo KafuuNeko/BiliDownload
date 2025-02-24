@@ -13,6 +13,7 @@ import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
 import cc.kafuu.bilidownload.common.model.bili.BiliDashModel
 import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
 import cc.kafuu.bilidownload.common.model.bili.BiliResourceModel
+import cc.kafuu.bilidownload.common.model.bili.BiliUpData
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoPartModel
 import cc.kafuu.bilidownload.common.network.IServerCallback
@@ -21,6 +22,7 @@ import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
 import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.utils.TimeUtils
+import cc.kafuu.bilidownload.view.activity.PersonalDetailsActivity
 import cc.kafuu.bilidownload.view.dialog.BiliPartDialog
 
 class VideoDetailsViewModel : CoreViewModel() {
@@ -32,6 +34,9 @@ class VideoDetailsViewModel : CoreViewModel() {
 
     private val mBiliVideoPageListLiveData = MutableLiveData<List<BiliVideoPartModel>>()
     val biliVideoPageListLiveData = mBiliVideoPageListLiveData.liveData()
+
+    private val mBiliUpDataLiveData = MutableLiveData<BiliUpData?>(null)
+    val biliUpDataLiveData = mBiliUpDataLiveData.liveData()
 
     // 选中的片段
     private val mSelectedVideoPartLiveData = MutableLiveData<BiliVideoPartModel?>()
@@ -92,6 +97,7 @@ class VideoDetailsViewModel : CoreViewModel() {
                         remark = TimeUtils.formatSecondTime(it.duration)
                     )
                 })
+                mBiliUpDataLiveData.value = BiliUpData.from(data.owner)
                 mLoadingStatusLiveData.value = LoadingStatus.doneStatus()
             }
 
@@ -163,5 +169,13 @@ class VideoDetailsViewModel : CoreViewModel() {
             popMessage(ToastMessageAction(CommonLibs.getString(R.string.success_copy_video_info)))
         }
         return isSuccess
+    }
+
+    fun onClickUp() {
+        val mid = mBiliUpDataLiveData.value?.mid ?: return
+        startActivity(
+            PersonalDetailsActivity::class.java,
+            PersonalDetailsActivity.buildIntent(mid)
+        )
     }
 }

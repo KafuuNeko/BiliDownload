@@ -10,6 +10,12 @@
             type="cc.kafuu.bilidownload.viewmodel.activity.VideoDetailsViewModel" />
 
         <import type="cc.kafuu.bilidownload.common.utils.ViewDataBindingUtilsKt" />
+
+        <import type="cc.kafuu.bilidownload.common.CommonLibs" />
+
+        <import type="cc.kafuu.bilidownload.R" />
+
+        <import type="cc.kafuu.bilidownload.common.utils.GlideUtils" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -87,6 +93,37 @@
                                 android:autoLink="all"
                                 android:textColor="@color/general_text_color"
                                 android:textSize="@dimen/size_text_common_size" />
+
+                            <LinearLayout
+                                bindVisible="@{viewModel.biliUpDataLiveData != null}"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical|end"
+                                android:onClick="@{()->viewModel.onClickUp()}"
+                                android:orientation="horizontal"
+                                android:paddingTop="5dp">
+
+                                <ImageView
+                                    bindImageUrl="@{viewModel.biliUpDataLiveData.face}"
+                                    bindPlaceholder="@{CommonLibs.INSTANCE.getDrawable(R.drawable.ic_2233)}"
+                                    bindTransformation="@{GlideUtils.INSTANCE.circleCrop}"
+                                    android:layout_width="26dp"
+                                    android:layout_height="26dp"
+                                    android:contentDescription="@{viewModel.biliUpDataLiveData.name}" />
+
+                                <View
+                                    android:layout_width="5dp"
+                                    android:layout_height="5dp" />
+
+                                <androidx.appcompat.widget.AppCompatTextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@{viewModel.biliUpDataLiveData.name}"
+                                    android:textColor="@color/primary_color"
+                                    android:textSize="@dimen/size_text_common_size"
+                                    android:textStyle="bold"
+                                    tools:text="Kano" />
+                            </LinearLayout>
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
 
