@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName
 
 data class BiliFavoriteListData(
     val count: Int,
-    val list: List<BiliFavoriteData>
+    val list: List<BiliFavoriteData>?
 )
 
 data class BiliFavoriteDetailsData(

@@ -2,7 +2,6 @@ package cc.kafuu.bilidownload.viewmodel.fragment
 
 import androidx.lifecycle.viewModelScope
 import cc.kafuu.bilidownload.common.model.LoadingStatus
-import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
 import cc.kafuu.bilidownload.common.model.bili.BiliFavoriteModel
 import cc.kafuu.bilidownload.common.network.IServerCallback
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
@@ -40,16 +39,16 @@ class FavoriteListViewModel : BiliRVViewModel() {
                 data: BiliFavoriteListData
             ) {
                 viewModelScope.launch {
-                    updateList(withContext(Dispatchers.IO) {
-                        onFavoritesLoaded(data.list).toMutableList()
-                    })
+                    val list = data.list ?: emptyList()
+                    updateList(withContext(Dispatchers.IO) { onFavoritesLoaded(list).toMutableList() })
                     onSucceeded?.invoke()
                 }
+                setLoadingStatus(LoadingStatus.doneStatus())
             }
 
             override fun onFailure(httpCode: Int, code: Int, message: String) {
                 onFailed?.invoke()
-                popMessage(ToastMessageAction(message))
+                setLoadingStatus(LoadingStatus.errorStatus(message = message))
             }
         }
         mBiliAccountRepository.requestUserFavorites(mid = mMid, type = 2, callback)
