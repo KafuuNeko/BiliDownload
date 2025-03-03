@@ -59,6 +59,7 @@ object FileUtils {
      */
     fun tryExportFile(
         file: File,
+        name: String,
         mimetype: String,
         createDocumentLauncher: ActivityResultLauncher<Intent>
     ) {
@@ -66,7 +67,7 @@ object FileUtils {
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = mimetype
-            putExtra(Intent.EXTRA_TITLE, file.name)
+            putExtra(Intent.EXTRA_TITLE, name)
         }
         createDocumentLauncher.launch(intent)
     }

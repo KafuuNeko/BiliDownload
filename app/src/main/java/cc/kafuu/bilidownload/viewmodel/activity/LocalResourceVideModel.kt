@@ -7,6 +7,8 @@ import androidx.lifecycle.MutableLiveData
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.core.CoreViewModel
+import cc.kafuu.bilidownload.common.ext.getSplitExtension
+import cc.kafuu.bilidownload.common.ext.limit
 import cc.kafuu.bilidownload.common.ext.liveData
 import cc.kafuu.bilidownload.common.model.IAsyncCallback
 import cc.kafuu.bilidownload.common.model.LoadingStatus
@@ -35,7 +37,9 @@ class LocalResourceVideModel : CoreViewModel() {
         ) : ViewAction()
 
         class ExportResourceAction(
-            val file: File, val mimetype: String
+            val file: File,
+            val name: String,
+            val mimetype: String
         ) : ViewAction()
     }
 
@@ -132,7 +136,16 @@ class LocalResourceVideModel : CoreViewModel() {
     fun tryExportResource() {
         if (mIsExportingLiveData.value == true) return
         val resource = mResourceLiveData.value ?: return
-        sendViewAction(ExportResourceAction(File(resource.file), resource.mimeType))
+        val taskDetail = mTaskDetailLiveData.value ?: return
+        val file = File(resource.file)
+        val defaultName = "${taskDetail.title} - ${taskDetail.partTitle}".limit(128)
+        sendViewAction(
+            ExportResourceAction(
+                file = file,
+                name = "${defaultName}${file.getSplitExtension()}",
+                mimetype = resource.mimeType
+            )
+        )
     }
 
     /**

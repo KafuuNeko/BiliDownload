@@ -90,7 +90,7 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
     }
 
     private fun onExportResource(action: LocalResourceVideModel.Companion.ExportResourceAction) {
-        FileUtils.tryExportFile(action.file, action.mimetype, mCreateDocumentLauncher)
+        FileUtils.tryExportFile(action.file, action.name, action.mimetype, mCreateDocumentLauncher)
     }
 
     private fun onShareResource(action: LocalResourceVideModel.Companion.ShareResourceAction) {
