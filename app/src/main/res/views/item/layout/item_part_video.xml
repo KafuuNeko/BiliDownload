@@ -25,6 +25,7 @@
         android:focusable="true"
         android:foreground="?attr/selectableItemBackground"
         android:onClick="@{()->viewModel.onPartSelected(data)}"
+        android:onLongClick="@{()->viewModel.onItemLongClick(data)}"
         app:cardCornerRadius="@dimen/card_item_corner_radius"
         app:cardElevation="@dimen/card_item_elevation">
 
@@ -39,29 +40,38 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:ellipsize="end"
-                android:textSize="@dimen/size_text_card_content"
                 android:maxLines="3"
                 android:padding="10dp"
                 android:text="@{data.name}"
                 android:textColor="@color/general_text_color"
+                android:textSize="@dimen/size_text_card_content"
                 tools:text="@string/app_name" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:textSize="@dimen/size_text_card_content"
                 android:text="@{data.remark}"
                 android:textColor="@color/general_text_color"
+                android:textSize="@dimen/size_text_card_content"
                 tools:text="00:03:43" />
 
             <ImageView
-                bindVisible="@{viewModel.loadingVideoPartLiveData != data}"
+                bindVisible="@{viewModel.loadingVideoPartLiveData != data &amp;&amp; !viewModel.multipleSelectModeLiveData}"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_marginHorizontal="10dp"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_arrow_right" />
+
+            <ImageView
+                bindVisible="@{viewModel.loadingVideoPartLiveData != data &amp;&amp; viewModel.multipleSelectModeLiveData}"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginHorizontal="10dp"
+                android:importantForAccessibility="no"
+                android:src="@{viewModel.multipleSelectItemsLiveData.contains(data)?@drawable/ic_checked:@drawable/ic_uncheck}"
+                tools:visibility="gone" />
 
             <ProgressBar
                 style="?android:attr/progressBarStyleSmall"

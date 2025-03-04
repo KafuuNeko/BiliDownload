@@ -110,4 +110,6 @@
     <string name="personal_tab_manuscript">Manuscript</string>
     <string name="success_copy_video_info">You have successfully copied the video information to the clipboard</string>
     <string name="video_details_format">Title: %1$s\nDescription: %2$s</string>
+    <string name="text_download">Download</string>
+    <string name="text_select_the_resource_to_download">Select the resource to download</string>
 </resources>
