@@ -30,10 +30,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import java.io.File
+import java.util.concurrent.Executors
 import kotlin.properties.Delegates
 
 class DownloadService : Service() {
@@ -41,6 +43,8 @@ class DownloadService : Service() {
         private const val TAG = "DownloadService"
 
         private const val KEY_TASK_ID = "taskId"
+
+        private val mTaskFinishedExecutor = Executors.newSingleThreadExecutor()
 
         private fun startService(context: Context, intent: Intent) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -182,8 +186,11 @@ class DownloadService : Service() {
         )
         mServiceScope.launch {
             when (event.status) {
+                DownloadStatus.COMPLETED -> mTaskFinishedExecutor.execute {
+                    runBlocking { onDownloadCompleted(event.task, event.group) }
+                }
+
                 DownloadStatus.FAILURE -> onDownloadFailed(event.task, event.group)
-                DownloadStatus.COMPLETED -> onDownloadCompleted(event.task, event.group)
                 DownloadStatus.EXECUTING -> onDownloadExecuting(event.task, event.group)
                 DownloadStatus.CANCELLED -> onDownloadCancelled(event.task, event.group)
                 else -> Unit
@@ -231,9 +238,7 @@ class DownloadService : Service() {
 
         // 登记资源
         if (currentStatus != TaskStatus.SYNTHESIS_FAILED) {
-            dashEntityList.forEach {
-                DownloadRepository.registerResource(task, it)
-            }
+            dashEntityList.forEach { DownloadRepository.registerResource(task, it) }
         }
 
         val videoDash = dashEntityList.find { it.type == DashType.VIDEO }
@@ -241,9 +246,7 @@ class DownloadService : Service() {
 
         val finalStatus = if (dashEntityList.size == 2 && videoDash != null && audioDash != null) {
             // 立即更新状态为正在合成
-            DownloadRepository.update(task.apply {
-                status = TaskStatus.SYNTHESIS.code
-            })
+            DownloadRepository.update(task.apply { status = TaskStatus.SYNTHESIS.code })
             // 尝试合成音视频
             if (!tryMergeVideo(task, videoDash, audioDash)) {
                 TaskStatus.SYNTHESIS_FAILED
@@ -253,9 +256,7 @@ class DownloadService : Service() {
         } else TaskStatus.COMPLETED
 
         // 更新记录为最终状态
-        DownloadRepository.update(task.apply {
-            status = finalStatus.code
-        })
+        DownloadRepository.update(task.apply { status = finalStatus.code })
     }
 
     /**
