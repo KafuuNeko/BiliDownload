@@ -222,7 +222,10 @@ class VideoDetailsViewModel : CoreViewModel() {
             dash = dashList.first()
         ) as? ResultWrapper.Success)?.value?.let {
             it.videoStream to it.audioStream
-        } ?: return@launch
+        } ?: kotlin.run {
+            mLatestChangeIndexLiveData.value = -1
+            return@launch
+        }
         // 处理用户选择的每一个片段
         partList.forEachIndexed { index, part ->
             val dash = dashList[index]
