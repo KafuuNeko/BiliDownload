@@ -169,6 +169,33 @@
                     app:drawableEndCompat="@drawable/ic_arrow_right" />
             </androidx.cardview.widget.CardView>
 
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="10dp"
+                android:layout_marginTop="10dp"
+                android:background="@color/general_item_background_color"
+                app:cardCornerRadius="@dimen/card_item_corner_radius"
+                app:cardElevation="@dimen/card_item_elevation">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/common_transparent"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:minHeight="40dp"
+                    android:onClick="@{()->viewModel.clearData()}"
+                    android:padding="10dp"
+                    android:text="@{viewModel.clearingDataLiveData?@string/tv_clearing_data:@string/tv_clear_data}"
+                    android:textColor="@color/common_red"
+                    android:textSize="@dimen/size_text_common_size"
+                    bindEnable="@{!viewModel.clearingDataLiveData}"
+                    app:drawableEndCompat="@drawable/ic_arrow_right" />
+            </androidx.cardview.widget.CardView>
+
             <androidx.appcompat.widget.AppCompatTextView
                 bindVisible="@{AccountManager.INSTANCE.accountLiveData != null}"
                 android:layout_width="match_parent"

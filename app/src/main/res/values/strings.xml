@@ -112,4 +112,8 @@
     <string name="video_details_format">Title: %1$s\nDescription: %2$s</string>
     <string name="text_download">Download</string>
     <string name="text_select_the_resource_to_download">Select the resource to download</string>
+    <string name="tv_clear_data">Clear data</string>
+    <string name="clear_data_message">Warning! This operation will clear all completed download records, and it cannot be undone. Please proceed with caution!</string>
+    <string name="text_clear_data">Clear data</string>
+    <string name="tv_clearing_data">Data cleaning…</string>
 </resources>

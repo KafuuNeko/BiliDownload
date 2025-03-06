@@ -44,6 +44,18 @@ interface DownloadTaskDao {
         FROM DownloadTask task
         INNER JOIN BiliVideoMain video ON task.biliBvid = video.biliBvid
         INNER JOIN BiliVideoPart part ON task.biliBvid = part.biliBvid AND task.biliCid = part.biliCid
+        WHERE task.status IN (:statuses)
+        ORDER BY task.id DESC
+    """
+    )
+    suspend fun queryDownloadTasksDetails(vararg statuses: Int): List<DownloadTaskWithVideoDetails>
+
+    @Query(
+        """
+        SELECT task.*, video.title, video.description, video.cover, part.partTitle
+        FROM DownloadTask task
+        INNER JOIN BiliVideoMain video ON task.biliBvid = video.biliBvid
+        INNER JOIN BiliVideoPart part ON task.biliBvid = part.biliBvid AND task.biliCid = part.biliCid
         WHERE task.id = :entityId
     """
     )

@@ -28,7 +28,8 @@ class ConfirmDialog : CoreBasicsDialog<DialogConfirmBinding, Boolean>(R.layout.d
             General(R.color.common_white, R.drawable.shape_button_general),
             Delete(R.color.common_white, R.drawable.shape_button_red),
             Logout(R.color.common_white, R.drawable.shape_button_red),
-            Stop(R.color.common_white, R.drawable.shape_button_red)
+            Stop(R.color.common_white, R.drawable.shape_button_red),
+            ClearData(R.color.common_white, R.drawable.shape_button_red),
         }
 
         fun buildDialog(

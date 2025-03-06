@@ -109,6 +109,13 @@ object DownloadRepository {
     }
 
     /**
+     * @brief 查询下载任务详情集LiveData，返回的信息包含此任务信息以及视频等相关信息
+     */
+    suspend fun queryDownloadTasksDetails(status: List<TaskStatus>) = run {
+        mDownloadTaskDao.queryDownloadTasksDetails(*status.map { it.code }.toIntArray())
+    }
+
+    /**
      * @brief 根据下载任务组ID获取下载任务实体实例
      */
     suspend fun getDownloadTaskByGroupId(groupId: Long) = run {

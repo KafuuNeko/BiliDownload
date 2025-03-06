@@ -110,4 +110,10 @@
     <string name="personal_tab_manuscript">稿件</string>
     <string name="success_copy_video_info">您已成功将视频信息拷贝到剪切板</string>
     <string name="video_details_format">标题: %1$s\n描述: %2$s</string>
+    <string name="text_download">下载</string>
+    <string name="text_select_the_resource_to_download">选择要下载的资源</string>
+    <string name="tv_clear_data">清除数据</string>
+    <string name="clear_data_message">警告！此操作将清除所有已完成的下载记录，且无法撤销。请谨慎操作！</string>
+    <string name="text_clear_data">清除数据</string>
+    <string name="tv_clearing_data">数据清理中…</string>
 </resources>
