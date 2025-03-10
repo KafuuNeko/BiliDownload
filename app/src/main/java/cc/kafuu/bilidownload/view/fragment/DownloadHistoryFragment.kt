@@ -1,17 +1,21 @@
 package cc.kafuu.bilidownload.view.fragment
 
 import android.os.Bundle
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import cc.kafuu.bilidownload.common.adapter.DownloadHistoryRVAdapter
 import cc.kafuu.bilidownload.common.core.CoreFragmentBuilder
 import cc.kafuu.bilidownload.common.ext.getSerializableByClass
 import cc.kafuu.bilidownload.common.model.TaskStatus
+import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
+import cc.kafuu.bilidownload.common.utils.DebounceQueue
 import cc.kafuu.bilidownload.view.fragment.common.RVFragment
 import cc.kafuu.bilidownload.viewmodel.fragment.HistoryViewModel
 import com.arialyy.annotations.DownloadGroup
 import com.arialyy.aria.core.Aria
 import com.arialyy.aria.core.task.DownloadGroupTask
+import kotlinx.coroutines.launch
 
 class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::class.java) {
     companion object {
@@ -27,6 +31,18 @@ class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::c
 
         @JvmStatic
         fun builder(vararg states: TaskStatus) = Builder(states.toList())
+    }
+
+    // 下载列表状态更新任务队列（限制每2秒允许更新一次，避免列表因为更新导致频繁闪烁与性能问题）
+    private val mListUpdateTask = DebounceQueue<List<DownloadTaskWithVideoDetails>>(
+        scope = lifecycleScope,
+        delayMillis = 2000
+    ) { tasks ->
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                mViewModel.updateList(tasks.toMutableList())
+            }
+        }
     }
 
     private val mAdapter: DownloadHistoryRVAdapter by lazy {
@@ -59,7 +75,7 @@ class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::c
     private fun HistoryViewModel.init(states: Array<TaskStatus>) {
         initData(states.toList())
         latestDownloadTaskLiveData.observe(this@DownloadHistoryFragment) {
-            updateList(it.toMutableList())
+            mListUpdateTask.schedule(it)
         }
     }
 
