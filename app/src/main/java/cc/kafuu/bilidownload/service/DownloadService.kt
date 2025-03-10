@@ -29,6 +29,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.greenrobot.eventbus.EventBus
@@ -247,16 +248,33 @@ class DownloadService : Service() {
         val finalStatus = if (dashEntityList.size == 2 && videoDash != null && audioDash != null) {
             // 立即更新状态为正在合成
             DownloadRepository.update(task.apply { status = TaskStatus.SYNTHESIS.code })
-            // 尝试合成音视频
-            if (!tryMergeVideo(task, videoDash, audioDash)) {
-                TaskStatus.SYNTHESIS_FAILED
-            } else {
-                TaskStatus.COMPLETED
-            }
-        } else TaskStatus.COMPLETED
+            // 执行音视频合成逻辑
+            doMergeMediaTask(task, videoDash, audioDash)
+        } else {
+            TaskStatus.COMPLETED
+        }
 
         // 更新记录为最终状态
         DownloadRepository.update(task.apply { status = finalStatus.code })
+    }
+
+    /**
+     * 执行音视频合并逻辑
+     */
+    private suspend fun doMergeMediaTask(
+        task: DownloadTaskEntity,
+        videoDash: DownloadDashEntity,
+        audioDash: DownloadDashEntity
+    ): TaskStatus {
+        // 如果合成失败将在一百毫秒后重新将尝试合成，如果再次失败则音视频合成失败
+        repeat(2) { attempt ->
+            if (tryMergeVideo(task, videoDash, audioDash)) {
+                return TaskStatus.COMPLETED
+            }
+            delay(100)
+        }
+        mDownloadNotification.notificationSynthesisFailed(task)
+        return TaskStatus.SYNTHESIS_FAILED
     }
 
     /**
@@ -314,7 +332,7 @@ class DownloadService : Service() {
                 videoDash.mimeType
             )
         } else {
-            mDownloadNotification.notificationSynthesisFailed(task)
+            if (outputFile.exists()) outputFile.delete()
         }
 
         return isSuccess

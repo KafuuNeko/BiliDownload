@@ -251,9 +251,9 @@
 
             </androidx.cardview.widget.CardView>
 
-            <!-- 下载完成展示的内容 -->
+            <!-- 下载完成展示的内容(合成失败也在此展示) -->
             <androidx.core.widget.NestedScrollView
-                bindVisible="@{viewModel.downloadDetailsLiveData != null &amp;&amp; viewModel.downloadDetailsLiveData.downloadTask.status == TaskStatus.COMPLETED.code}"
+                bindVisible="@{viewModel.downloadDetailsLiveData != null &amp;&amp; (viewModel.downloadDetailsLiveData.downloadTask.status == TaskStatus.COMPLETED.code || viewModel.downloadDetailsLiveData.downloadTask.status == TaskStatus.SYNTHESIS_FAILED.code)}"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
