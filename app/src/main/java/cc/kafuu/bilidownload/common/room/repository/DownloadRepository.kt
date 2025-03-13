@@ -51,25 +51,31 @@ object DownloadRepository {
      * @brief 为指定的任务登记资源
      * */
     suspend fun registerResource(
+        id: Long = 0L,
         downloadTaskId: Long,
         resourceName: String,
         @DownloadResourceType downloadResourceType: Int,
         resourceFile: File,
         mimeType: String
-    ) = DownloadResourceEntity(
-        taskId = downloadTaskId,
-        type = downloadResourceType,
-        name = resourceName,
-        mimeType = mimeType,
-        storageSizeBytes = resourceFile.length(),
-        creationTime = System.currentTimeMillis(),
-        file = resourceFile.path
-    ).let { mDownloadResourceDao.insert(it) }
+    ): DownloadResourceEntity {
+        val entity = DownloadResourceEntity(
+            id = id,
+            taskId = downloadTaskId,
+            type = downloadResourceType,
+            name = resourceName,
+            mimeType = mimeType,
+            storageSizeBytes = resourceFile.length(),
+            creationTime = System.currentTimeMillis(),
+            file = resourceFile.path
+        )
+        val id = mDownloadResourceDao.insert(entity)
+        return entity.copy(id = id)
+    }
 
     suspend fun registerResource(
         downloadTaskEntity: DownloadTaskEntity,
         downloadDashEntity: DownloadDashEntity,
-    ): Long {
+    ): DownloadResourceEntity {
         val downloadResourceType = when (downloadDashEntity.type) {
             DashType.AUDIO -> DownloadResourceType.AUDIO
             DashType.VIDEO -> DownloadResourceType.VIDEO
@@ -77,12 +83,22 @@ object DownloadRepository {
         }
         val resourceName = if (downloadDashEntity.type == DashType.AUDIO) "AUDIO" else "VIDEO"
         return registerResource(
-            downloadTaskEntity.id,
-            resourceName,
-            downloadResourceType,
-            downloadDashEntity.getOutputFile(),
-            downloadDashEntity.mimeType
+            downloadTaskId = downloadTaskEntity.id,
+            resourceName = resourceName,
+            downloadResourceType = downloadResourceType,
+            resourceFile = downloadDashEntity.getOutputFile(),
+            mimeType = downloadDashEntity.mimeType
         )
+    }
+
+    /**
+     * 插入或更新资源实体
+     */
+    suspend fun updateOrInsertResource(
+        entity: DownloadResourceEntity
+    ): DownloadResourceEntity {
+        val id = mDownloadResourceDao.insert(entity)
+        return entity.copy(id = id)
     }
 
     /**
@@ -99,6 +115,18 @@ object DownloadRepository {
         mDownloadTaskDao.deleteTaskByTaskId(taskId)
         mDownloadDashDao.deleteTaskByTaskId(taskId)
         mDownloadResourceDao.deleteTaskByTaskId(taskId)
+    }
+
+    /**
+     * 删除某个任务所有合成类型的资源
+     */
+    suspend fun deleteDownloadTaskMixedResource(taskId: Long) {
+        mDownloadResourceDao.queryResourceByTaskIdAndResourceType(
+            taskId, DownloadResourceType.MIXED
+        ).forEach {
+            File(it.file).run { if (exists()) delete() }
+            mDownloadResourceDao.deleteById(it.id)
+        }
     }
 
     /**

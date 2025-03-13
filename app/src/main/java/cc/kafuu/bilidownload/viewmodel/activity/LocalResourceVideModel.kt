@@ -315,12 +315,12 @@ class LocalResourceVideModel : CoreViewModel() {
         // 登记资源
         runBlocking {
             val resourceId = DownloadRepository.registerResource(
-                resource.taskId,
-                "Convert(${targetResult.format.name}$audioCodecName$videoCodecName)",
-                resource.type,
-                targetFile.absoluteFile,
-                targetResult.format.mimeType
-            )
+                downloadTaskId = resource.taskId,
+                resourceName = "Convert(${targetResult.format.name}$audioCodecName$videoCodecName)",
+                downloadResourceType = resource.type,
+                resourceFile = targetFile.absoluteFile,
+                mimeType = targetResult.format.mimeType
+            ).id
             startActivity(
                 LocalResourceActivity::class.java,
                 LocalResourceActivity.buildIntent(resource.taskId, resourceId)

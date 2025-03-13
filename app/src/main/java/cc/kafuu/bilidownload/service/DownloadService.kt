@@ -65,7 +65,8 @@ class DownloadService : Service() {
             val intent = Intent(context, DownloadService::class.java)
             DownloadRepository.queryDownloadTaskDetailByTaskId(
                 TaskStatus.DOWNLOADING,
-                TaskStatus.PREPARE
+                TaskStatus.PREPARE,
+                TaskStatus.SYNTHESIS
             ).forEach {
                 if (it.groupId != null && !DownloadManager.containsTaskGroup(it.groupId!!)) {
                     intent.putExtra(KEY_TASK_ID, it.id)
@@ -132,6 +133,15 @@ class DownloadService : Service() {
         val taskEntity = DownloadRepository.getDownloadTaskByTaskId(taskId)
             ?: throw IllegalStateException("Task [T$taskId] get download task entity failed")
 
+        // 如果此任务处于合成状态，则可能是因为此任务在合成执行过程中应用退出导致合成中断
+        if (taskEntity.status == TaskStatus.SYNTHESIS.code) {
+            // 清理资源
+            DownloadRepository.deleteDownloadTaskMixedResource(taskId)
+            // 重新走任务下载完成流程
+            onDownloadCompleted(taskEntity, true)
+            return
+        }
+
         // 尝试保存视频信息和请求下载
         doSaveVideoDetails(taskEntity)
 
@@ -188,7 +198,7 @@ class DownloadService : Service() {
         mServiceScope.launch {
             when (event.status) {
                 DownloadStatus.COMPLETED -> mTaskFinishedExecutor.execute {
-                    runBlocking { onDownloadCompleted(event.task, event.group) }
+                    runBlocking { onDownloadCompleted(event.task) }
                 }
 
                 DownloadStatus.FAILURE -> onDownloadFailed(event.task, event.group)
@@ -220,28 +230,32 @@ class DownloadService : Service() {
      * 完成下载操作
      * from [onDownloadStatusChangeEvent]
      * */
-    private suspend fun onDownloadCompleted(task: DownloadTaskEntity, group: DownloadGroupTask) {
+    private suspend fun onDownloadCompleted(
+        task: DownloadTaskEntity,
+        isResume: Boolean = false
+    ) {
         val currentStatus = DownloadRepository.getDownloadTaskByTaskId(task.id)?.status?.let { c ->
             TaskStatus.entries.find { it.code == c }
         } ?: return
         val dashEntityList = DownloadRepository.queryDashList(task)
 
-        // 检查当前的状态是否为正在合成或者完成状态，若是则不执行
-        if (currentStatus == TaskStatus.SYNTHESIS ||
-            currentStatus == TaskStatus.COMPLETED
+        // 如果来源不是任务恢复则检查当前的状态是否为正在合成或者完成状态，若是则不执行
+        if (!isResume &&
+            (currentStatus == TaskStatus.SYNTHESIS || currentStatus == TaskStatus.COMPLETED)
         ) {
             Log.e(
                 TAG,
-                "Task [G${group.entity.id}, T${task.id}] The current state cannot perform the synthesis operation, status: $currentStatus"
+                "Task [T${task.id}] The current state cannot perform the synthesis operation, status: $currentStatus"
             )
             return
         }
 
-        // 登记资源
-        if (currentStatus != TaskStatus.SYNTHESIS_FAILED) {
+        // 如果当前任务处于正在下载状态，则将Dash资源注册
+        if (currentStatus == TaskStatus.DOWNLOADING) {
             dashEntityList.forEach { DownloadRepository.registerResource(task, it) }
         }
 
+        // 取得Dash资源执行合并操作
         val videoDash = dashEntityList.find { it.type == DashType.VIDEO }
         val audioDash = dashEntityList.find { it.type == DashType.AUDIO }
 
@@ -315,26 +329,32 @@ class DownloadService : Service() {
             CommonLibs.requireResourcesDir(),
             "merge-${task.id}-${System.currentTimeMillis()}.$suffix"
         )
-
+        // 预登记合成资源
+        val resourceEntity = DownloadRepository.registerResource(
+            downloadTaskId = task.id,
+            resourceName = "Merge Resource",
+            downloadResourceType = DownloadResourceType.MIXED,
+            resourceFile = outputFile,
+            mimeType = videoDash.mimeType
+        )
+        // 尝试合成
         val isSuccess = FFMpegUtils.mergeMedia(
             videoDash.getOutputFile().path,
             audioDash.getOutputFile().path,
             outputFile.path
         )
-
-        // 如果合成成功就登记资源
         if (isSuccess) {
-            DownloadRepository.registerResource(
-                task.id,
-                "Merge Resource",
-                DownloadResourceType.MIXED,
-                outputFile,
-                videoDash.mimeType
-            )
+            // 合成成功，更新登记资源尺寸
+            resourceEntity.copy(
+                storageSizeBytes = outputFile.length(),
+            ).run {
+                DownloadRepository.updateOrInsertResource(this)
+            }
         } else {
+            // 如果合成失败则清理合成输出资源
+            DownloadRepository.deleteResourceById(resourceEntity.id)
             if (outputFile.exists()) outputFile.delete()
         }
-
         return isSuccess
     }
 }
