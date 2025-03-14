@@ -128,7 +128,7 @@ open class BiliRepository {
             ) ?: throw IllegalStateException(message)
         } else try {
             val body = response.body()!!
-            processingData(body.data ?: body.result!!)
+            processingData(body.data ?: body.result!!) ?: throw IllegalStateException("Data null")
         } catch (e: Exception) {
             e.printStackTrace()
             onFailure?.invoke(
