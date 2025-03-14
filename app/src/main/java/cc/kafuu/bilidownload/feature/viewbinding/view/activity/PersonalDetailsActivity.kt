@@ -30,6 +30,7 @@ class PersonalDetailsActivity :
     }
 
     override fun initViews() {
+        setImmersionStatusBar()
         val mid = intent.getLongExtra(KEY_MID, 0)
         mViewDataBinding.initViews(mid)
         mViewModel.init(mid)

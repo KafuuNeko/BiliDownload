@@ -14,7 +14,8 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/general_window_background_color">
+        android:background="@color/general_window_background_color"
+        android:fitsSystemWindows="true">
 
         <include
             android:id="@+id/include_title"
@@ -79,8 +80,8 @@
             android:id="@+id/vp2_personal"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_marginTop="8dp"
             android:layout_marginHorizontal="12dp"
+            android:layout_marginTop="8dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
