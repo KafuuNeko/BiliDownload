@@ -7,6 +7,8 @@
         <variable
             name="viewModel"
             type="cc.kafuu.bilidownload.viewmodel.activity.PersonalDetailsViewModel" />
+
+        <import type="cc.kafuu.bilidownload.common.utils.ViewDataBindingUtilsKt" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -22,49 +24,67 @@
             app:title="@{viewModel.biliAccountLiveData == null ? @string/default_remind_loading : viewModel.biliAccountLiveData.nickname}"
             app:viewModel="@{viewModel}" />
 
-        <include
-            android:id="@+id/include_account_card"
-            layout="@layout/include_account_card"
+        <androidx.cardview.widget.CardView
+            android:id="@+id/card_account"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="10dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginTop="12dp"
+            app:cardCornerRadius="@dimen/card_item_corner_radius"
+            app:cardElevation="@dimen/card_item_elevation"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/include_title"
-            app:nickname="@{viewModel.biliAccountLiveData.nickname}"
-            app:profile="@{viewModel.biliAccountLiveData.profile}"
-            app:sign="@{viewModel.biliAccountLiveData.sign}" />
+            app:layout_constraintTop_toBottomOf="@+id/include_title">
 
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/tl_page_selector"
-            android:layout_width="0dp"
+            <include
+                android:id="@+id/include_account_card"
+                layout="@layout/include_account_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:nickname="@{viewModel.biliAccountLiveData.nickname}"
+                app:profile="@{viewModel.biliAccountLiveData.profile}"
+                app:sign="@{viewModel.biliAccountLiveData.sign}" />
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/card_tabs"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="10dp"
-            android:layout_marginTop="10dp"
-            android:layout_weight="1"
-            android:background="@color/general_window_background_color"
-            android:contentDescription="@string/tl_page_selector_content_description"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginTop="12dp"
+            app:cardCornerRadius="@dimen/card_item_corner_radius"
+            app:cardElevation="@dimen/card_item_elevation"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/include_account_card"
-            app:tabBackground="@color/common_transparent"
-            app:tabIndicatorColor="@color/primary_color"
-            app:tabIndicatorFullWidth="false"
-            app:tabIndicatorHeight="4dp"
-            app:tabMode="scrollable"
-            app:tabRippleColor="@color/common_transparent"
-            app:tabSelectedTextColor="@color/primary_color"
-            app:tabTextColor="@color/general_text_color" />
+            app:layout_constraintTop_toBottomOf="@+id/card_account">
+
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tl_page_selector"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@color/general_window_background_color"
+                android:contentDescription="@string/tl_page_selector_content_description"
+                app:tabBackground="@color/common_transparent"
+                app:tabIndicatorColor="@color/primary_color"
+                app:tabIndicatorFullWidth="false"
+                app:tabIndicatorHeight="4dp"
+                app:tabMode="scrollable"
+                app:tabRippleColor="@color/common_transparent"
+                app:tabSelectedTextColor="@color/primary_color"
+                app:tabTextColor="@color/general_text_color" />
+        </androidx.cardview.widget.CardView>
 
         <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/vp2_personal"
             android:layout_width="0dp"
             android:layout_height="0dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginHorizontal="12dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tl_page_selector" />
+            app:layout_constraintTop_toBottomOf="@+id/card_tabs" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
