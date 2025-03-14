@@ -6,7 +6,7 @@
 
         <variable
             name="viewModel"
-            type="cc.kafuu.bilidownload.viewmodel.activity.SearchViewModel" />
+            type="cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity.SearchViewModel" />
 
         <import type="cc.kafuu.bilidownload.common.utils.ViewDataBindingUtilsKt" />
 
@@ -108,7 +108,7 @@
 
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/fv_fragment"
-            android:name="cc.kafuu.bilidownload.view.fragment.SearchListFragment"
+            android:name="cc.kafuu.bilidownload.feature.viewbinding.view.fragment.SearchListFragment"
             android:layout_width="0dp"
             android:layout_height="0dp"
             app:layout_constraintBottom_toBottomOf="parent"

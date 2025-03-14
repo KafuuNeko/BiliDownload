@@ -7,7 +7,7 @@
 
         <variable
             name="viewModel"
-            type="cc.kafuu.bilidownload.viewmodel.activity.VideoDetailsViewModel" />
+            type="cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity.VideoDetailsViewModel" />
 
         <import type="cc.kafuu.bilidownload.common.utils.ViewDataBindingUtilsKt" />
 

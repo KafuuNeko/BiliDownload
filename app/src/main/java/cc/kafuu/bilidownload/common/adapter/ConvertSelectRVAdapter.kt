@@ -4,11 +4,11 @@ import android.content.Context
 import android.view.ViewGroup
 import cc.kafuu.bilidownload.common.adapter.holder.ItemAVCodecHolder
 import cc.kafuu.bilidownload.common.adapter.holder.ItemAVFormatHolder
-import cc.kafuu.bilidownload.common.core.CoreRVAdapter
-import cc.kafuu.bilidownload.common.core.CoreRVHolder
+import cc.kafuu.bilidownload.common.core.viewbinding.CoreRVAdapter
+import cc.kafuu.bilidownload.common.core.viewbinding.CoreRVHolder
 import cc.kafuu.bilidownload.common.model.av.AVCodec
 import cc.kafuu.bilidownload.common.model.av.AVFormat
-import cc.kafuu.bilidownload.viewmodel.dialog.ConvertViewModel
+import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.dialog.ConvertViewModel
 
 class ConvertSelectRVAdapter(viewModel: ConvertViewModel, context: Context) :
     CoreRVAdapter<ConvertViewModel>(viewModel, context) {

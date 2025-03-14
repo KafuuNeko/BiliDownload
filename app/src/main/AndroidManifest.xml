@@ -29,9 +29,8 @@
                 android:resource="@xml/resource_paths" />
         </provider>
 
-
         <activity
-            android:name=".view.activity.MainActivity"
+            android:name=".feature.viewbinding.view.activity.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -41,36 +40,36 @@
         </activity>
 
         <activity
-            android:name=".view.activity.SearchActivity"
+            android:name=".feature.viewbinding.view.activity.SearchActivity"
             android:exported="false" />
 
         <activity
-            android:name=".view.activity.VideoDetailsActivity"
+            android:name=".feature.viewbinding.view.activity.VideoDetailsActivity"
             android:configChanges="orientation|screenSize"
             android:exported="false" />
 
         <activity
-            android:name=".view.activity.LoginActivity"
+            android:name=".feature.viewbinding.view.activity.LoginActivity"
             android:configChanges="orientation|screenSize"
             android:exported="false" />
 
         <activity
-            android:name=".view.activity.HistoryDetailsActivity"
+            android:name=".feature.viewbinding.view.activity.HistoryDetailsActivity"
             android:configChanges="orientation|screenSize"
             android:exported="false" />
 
         <activity
-            android:name=".view.activity.LocalResourceActivity"
+            android:name=".feature.viewbinding.view.activity.LocalResourceActivity"
             android:configChanges="orientation|screenSize"
             android:exported="false" />
 
         <activity
-            android:name=".view.activity.PersonalDetailsActivity"
+            android:name=".feature.viewbinding.view.activity.PersonalDetailsActivity"
             android:configChanges="orientation|screenSize"
             android:exported="false" />
 
         <activity
-            android:name=".view.activity.FavoriteDetailsActivity"
+            android:name=".feature.viewbinding.view.activity.FavoriteDetailsActivity"
             android:configChanges="orientation|screenSize"
             android:exported="false" />
 

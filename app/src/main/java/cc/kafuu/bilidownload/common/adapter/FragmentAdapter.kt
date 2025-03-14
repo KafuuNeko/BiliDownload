@@ -3,7 +3,7 @@ package cc.kafuu.bilidownload.common.adapter
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Lifecycle
 import androidx.viewpager2.adapter.FragmentStateAdapter
-import cc.kafuu.bilidownload.common.core.CoreFragmentBuilder
+import cc.kafuu.bilidownload.common.core.viewbinding.CoreFragmentBuilder
 
 
 class FragmentAdapter(

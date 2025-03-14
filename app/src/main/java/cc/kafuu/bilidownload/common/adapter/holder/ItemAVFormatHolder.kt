@@ -3,7 +3,7 @@ package cc.kafuu.bilidownload.common.adapter.holder
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import cc.kafuu.bilidownload.BR
-import cc.kafuu.bilidownload.common.core.CoreRVHolder
+import cc.kafuu.bilidownload.common.core.viewbinding.CoreRVHolder
 import cc.kafuu.bilidownload.databinding.ItemAvFormatBinding
 
 class ItemAVFormatHolder(parent: ViewGroup) : CoreRVHolder<ItemAvFormatBinding>(

@@ -7,7 +7,7 @@
 
         <variable
             name="viewModel"
-            type="cc.kafuu.bilidownload.common.core.CoreViewModel" />
+            type="cc.kafuu.bilidownload.common.core.viewbinding.CoreViewModel" />
 
         <variable
             name="title"

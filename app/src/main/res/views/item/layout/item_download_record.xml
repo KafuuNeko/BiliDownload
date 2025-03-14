@@ -7,7 +7,7 @@
 
         <variable
             name="viewModel"
-            type="cc.kafuu.bilidownload.viewmodel.fragment.HistoryViewModel" />
+            type="cc.kafuu.bilidownload.feature.viewbinding.viewmodel.fragment.HistoryViewModel" />
 
         <variable
             name="data"

@@ -13,6 +13,7 @@ import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import cc.kafuu.bilidownload.common.room.AppDatabase
 import java.io.File
+import androidx.core.net.toUri
 
 
 @SuppressLint("StaticFieldLeak")
@@ -61,12 +62,15 @@ object CommonLibs {
 
     fun requireConvertTemporaryDir() = requireExternalFilesDir("temporary", "convert")
 
-    fun getVersionName(): String =
-        requireContext().packageManager.getPackageInfo(requireContext().packageName, 0).versionName
+    fun getVersionName(): String {
+        return requireContext().packageManager.getPackageInfo(
+            requireContext().packageName, 0
+        ).versionName ?: "Unknown"
+    }
 
     fun jumpToUrl(url: String) {
-        Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
-            setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        Intent(Intent.ACTION_VIEW, url.toUri()).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }.also {
             requireContext().startActivity(it)
         }

@@ -6,7 +6,7 @@
 
         <variable
             name="viewModel"
-            type="cc.kafuu.bilidownload.viewmodel.activity.LoginViewModel" />
+            type="cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity.LoginViewModel" />
     </data>
 
     <LinearLayout

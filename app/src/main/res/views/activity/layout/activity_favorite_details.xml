@@ -7,7 +7,7 @@
 
         <variable
             name="viewModel"
-            type="cc.kafuu.bilidownload.viewmodel.activity.FavoriteDetailsViewModel" />
+            type="cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity.FavoriteDetailsViewModel" />
 
         <import type="cc.kafuu.bilidownload.common.CommonLibs" />
 

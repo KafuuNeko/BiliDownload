@@ -1,6 +1,6 @@
 package cc.kafuu.bilidownload.common.model.action
 
-import cc.kafuu.bilidownload.common.core.dialog.CoreBasicsDialog
+import cc.kafuu.bilidownload.common.core.viewbinding.dialog.CoreBasicsDialog
 import java.io.Serializable
 
 class DialogAction(

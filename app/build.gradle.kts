@@ -1,18 +1,19 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
-    id("com.google.devtools.ksp") version "1.9.21-1.0.15"
+    alias(libs.plugins.kotlin.compose)
+    id("com.google.devtools.ksp") version "2.0.21-1.0.28"
     id("kotlin-kapt")
 }
 
 android {
     namespace = "cc.kafuu.bilidownload"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "cc.kafuu.bilidownload"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 2_01_05
         versionName = "2.1.5.foss"
 
@@ -43,6 +44,7 @@ android {
     }
     buildFeatures {
         dataBinding = true
+        compose = true
     }
     splits {
         abi {
@@ -83,6 +85,8 @@ dependencies {
         implementation(files(aarFile))
     }
 
+
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity)
     implementation(libs.jetbrains.kotlin.reflect)
@@ -95,11 +99,17 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.design)
 
+    implementation(libs.androidx.activity.compose)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.material3)
 
     // room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-    annotationProcessor(libs.androidx.room.room.compiler3)
+    annotationProcessor(libs.androidx.room.compiler)
     ksp(libs.androidx.room.compiler)
 
     //gson
@@ -141,4 +151,8 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.ui.test.junit4)
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
 }

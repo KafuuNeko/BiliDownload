@@ -6,7 +6,7 @@
 
         <variable
             name="viewModel"
-            type="cc.kafuu.bilidownload.viewmodel.activity.PersonalDetailsViewModel" />
+            type="cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity.PersonalDetailsViewModel" />
 
         <import type="cc.kafuu.bilidownload.common.utils.ViewDataBindingUtilsKt" />
     </data>

@@ -4,11 +4,11 @@ import android.content.Context
 import android.view.ViewGroup
 import cc.kafuu.bilidownload.common.adapter.holder.ItemBiliMediaHolder
 import cc.kafuu.bilidownload.common.adapter.holder.ItemBiliVideoHolder
-import cc.kafuu.bilidownload.common.core.CoreRVAdapter
+import cc.kafuu.bilidownload.common.core.viewbinding.CoreRVAdapter
 import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.common.constant.BiliArchiveViewType
-import cc.kafuu.bilidownload.viewmodel.common.BiliRVViewModel
+import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.common.BiliRVViewModel
 
 class BiliResourceRVAdapter(viewModel: BiliRVViewModel, context: Context) :
     CoreRVAdapter<BiliRVViewModel>(viewModel, context) {

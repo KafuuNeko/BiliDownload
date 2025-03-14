@@ -17,7 +17,7 @@ import androidx.databinding.BindingAdapter
 import androidx.recyclerview.widget.RecyclerView
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
-import cc.kafuu.bilidownload.common.core.CoreRVAdapter
+import cc.kafuu.bilidownload.common.core.viewbinding.CoreRVAdapter
 import cc.kafuu.bilidownload.common.model.bili.BiliAccountModel
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.Transformation

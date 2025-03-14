@@ -7,7 +7,7 @@
 
         <variable
             name="viewModel"
-            type="cc.kafuu.bilidownload.viewmodel.activity.VideoDetailsViewModel" />
+            type="cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity.VideoDetailsViewModel" />
 
         <variable
             name="data"
