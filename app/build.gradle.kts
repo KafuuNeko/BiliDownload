@@ -112,6 +112,7 @@ dependencies {
     //retrofit
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
+    implementation(libs.converter.scalars)
 
     //Aria
     implementation(libs.aria.core)
@@ -131,6 +132,9 @@ dependencies {
 
     //Event bus
     implementation(libs.eventbus)
+
+    // jsoup
+    implementation(libs.jsoup)
 
     implementation(libs.arthenica.smart.exception.java)
 

@@ -9,6 +9,7 @@ fragmentKtx = "1.6.2"
 glideVersion = "4.16.0"
 gsonVersion = "2.10.1"
 hutoolCrypto = "5.8.27"
+jsoup = "1.16.1"
 kotlin = "1.9.22"
 coreKtx = "1.12.0"
 junit = "4.13.2"
@@ -39,6 +40,7 @@ aria-compiler = { module = "me.laoyuyu.aria:compiler", version.ref = "ariaCompil
 aria-core = { module = "me.laoyuyu.aria:core", version.ref = "ariaCoreVersion" }
 arthenica-smart-exception-java = { module = "com.arthenica:smart-exception-java", version.ref = "smartExceptionJavaVersion" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
+converter-scalars = { module = "com.squareup.retrofit2:converter-scalars", version.ref = "retrofit" }
 design = { module = "com.android.support:design", version.ref = "design" }
 eventbus = { module = "org.greenrobot:eventbus", version.ref = "eventbus" }
 ffmpeg-kit-full = { module = "com.arthenica:ffmpeg-kit-full", version.ref = "ffmpegKitFull" }
@@ -46,6 +48,7 @@ github-glide = { module = "com.github.bumptech.glide:glide", version.ref = "glid
 google-gson = { module = "com.google.code.gson:gson", version.ref = "gsonVersion" }
 hutool-crypto = { module = "cn.hutool:hutool-crypto", version.ref = "hutoolCrypto" }
 jetbrains-kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

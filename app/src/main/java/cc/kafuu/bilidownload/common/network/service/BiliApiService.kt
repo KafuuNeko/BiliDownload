@@ -22,7 +22,6 @@ import retrofit2.http.Url
 
 
 interface BiliApiService {
-
     @GET("x/web-interface/nav")
     fun requestWbiInterfaceNav(): Call<BiliRespond<BiliWbiData>>
 
