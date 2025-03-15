@@ -116,4 +116,13 @@
     <string name="clear_data_message">Warning! This operation will clear all completed download records, and it cannot be undone. Please proceed with caution!</string>
     <string name="text_clear_data">Clear data</string>
     <string name="tv_clearing_data">Data cleaning…</string>
+    <string name="tv_about_text">About Us</string>
+    <string name="tv_about_author_text">Author</string>
+    <string name="about_app_description">BiliDownload is an application that supports downloading all videos from Bilibili (user-uploaded videos, anime, TV series, movies). It supports extracting audio (aac) from video files and converting video container formats (flv, mp4, mkv, wmv).</string>
+    <string name="contributors_title">Contributors</string>
+    <string name="contributor_contributions">Contributions: %d</string>
+    <string name="text_author_name">KafuuNeko</string>
+    <string name="text_copyright_info">© 2023 BiliDownload. All rights reserved. Licensed under GNU GPL v3.0</string>
+    <string name="text_user_agreement">User Agreement</string>
+    <string name="text_privacy_policy">Privacy Policy</string>
 </resources>

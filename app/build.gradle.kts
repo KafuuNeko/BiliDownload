@@ -99,6 +99,7 @@ dependencies {
     // room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.swiperefreshlayout)
     annotationProcessor(libs.androidx.room.room.compiler3)
     ksp(libs.androidx.room.compiler)
 
@@ -131,6 +132,9 @@ dependencies {
 
     //Event bus
     implementation(libs.eventbus)
+
+    //CircleImageView
+    implementation(libs.circle.image.view)
 
     implementation(libs.arthenica.smart.exception.java)
 

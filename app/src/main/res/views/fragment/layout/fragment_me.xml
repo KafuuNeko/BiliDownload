@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
 
@@ -40,7 +39,6 @@
                 app:onClick="@{()-> viewModel.jumpLoginOrAccount()}"
                 app:profile="@{AccountManager.INSTANCE.accountLiveData.profile}"
                 app:sign="@{AccountManager.INSTANCE.accountLiveData.sign}" />
-
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -64,66 +62,12 @@
                         android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
                         android:minHeight="48dp"
-                        android:onClick="@{()->viewModel.jumpSourceRepository()}"
+                        android:onClick="@{()->viewModel.clearData()}"
                         android:paddingHorizontal="16dp"
-                        android:text="@string/text_source_repository"
-                        android:textColor="@color/general_text_color"
-                        android:textSize="14sp"
-                        app:drawableEndCompat="@drawable/ic_arrow_right" />
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="0.5dp"
-                        android:background="@color/view_split_color" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@color/common_transparent"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:minHeight="48dp"
-                        android:gravity="center_vertical"
-                        android:paddingHorizontal="16dp">
-
-                        <androidx.appcompat.widget.AppCompatTextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/tv_about_version_text"
-                            android:textColor="@color/general_text_color"
-                            android:textSize="14sp" />
-
-                        <androidx.appcompat.widget.AppCompatTextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@{CommonLibs.INSTANCE.getVersionName()}"
-                            android:textColor="@color/primary_color"
-                            android:textSize="14sp"
-                            android:textStyle="bold"
-                            tools:text="1.0.0" />
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="0.5dp"
-                        android:background="@color/view_split_color" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@color/common_transparent"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:minHeight="48dp"
-                        android:onClick="@{()->viewModel.jumpOpenSourceLicenses()}"
-                        android:paddingHorizontal="16dp"
-                        android:text="@string/tv_about_license_text"
-                        android:textColor="@color/general_text_color"
-                        android:textSize="14sp"
+                        android:text="@{viewModel.clearingDataLiveData?@string/tv_clearing_data:@string/text_clear_data}"
+                        android:textColor="@color/common_red"
+                        android:textSize="@dimen/size_text_common_size"
+                        bindEnable="@{!viewModel.clearingDataLiveData}"
                         app:drawableEndCompat="@drawable/ic_arrow_right" />
 
                     <View
@@ -140,67 +84,13 @@
                         android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
                         android:minHeight="48dp"
-                        android:onClick="@{()->viewModel.jumpFeedback()}"
+                        android:onClick="@{()->viewModel.jumpAbout()}"
                         android:paddingHorizontal="16dp"
-                        android:text="@string/text_feedback"
+                        android:text="@string/tv_about_text"
                         android:textColor="@color/general_text_color"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/size_text_common_size"
                         app:drawableEndCompat="@drawable/ic_arrow_right" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="12dp"
-                android:layout_marginTop="12dp"
-                android:background="@color/general_item_background_color"
-                app:cardCornerRadius="@dimen/card_item_corner_radius"
-                app:cardElevation="@dimen/card_item_elevation">
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@color/common_transparent"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:gravity="center_vertical"
-                    android:minHeight="48dp"
-                    android:onClick="@{()->viewModel.jumpGooglePlay()}"
-                    android:paddingHorizontal="16dp"
-                    android:text="@string/tv_grade_text"
-                    android:textColor="@color/general_text_color"
-                    android:textSize="@dimen/size_text_common_size"
-                    app:drawableEndCompat="@drawable/ic_arrow_right" />
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                bindVisible="@{AccountManager.INSTANCE.accountLiveData != null}"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="12dp"
-                android:layout_marginTop="16dp"
-                android:background="@color/general_item_background_color"
-                app:cardCornerRadius="@dimen/card_item_corner_radius"
-                app:cardElevation="@dimen/card_item_elevation">
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@color/common_transparent"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:gravity="center_vertical"
-                    android:minHeight="40dp"
-                    android:onClick="@{()->viewModel.clearData()}"
-                    android:padding="10dp"
-                    android:text="@{viewModel.clearingDataLiveData?@string/tv_clearing_data:@string/tv_clear_data}"
-                    android:textColor="@color/common_red"
-                    android:textSize="@dimen/size_text_common_size"
-                    bindEnable="@{!viewModel.clearingDataLiveData}"
-                    app:drawableEndCompat="@drawable/ic_arrow_right" />
             </androidx.cardview.widget.CardView>
 
             <androidx.appcompat.widget.AppCompatTextView
@@ -214,7 +104,7 @@
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
                 android:gravity="center"
-                android:minHeight="36dp"
+                android:minHeight="48dp"
                 android:onClick="@{()-> viewModel.tryLogout()}"
                 android:text="@string/text_logout"
                 android:textColor="@color/common_white"

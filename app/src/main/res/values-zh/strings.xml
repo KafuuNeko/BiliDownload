@@ -116,4 +116,13 @@
     <string name="clear_data_message">警告！此操作将清除所有已完成的下载记录，且无法撤销。请谨慎操作！</string>
     <string name="text_clear_data">清除数据</string>
     <string name="tv_clearing_data">数据清理中…</string>
+    <string name="tv_about_text">关于</string>
+    <string name="tv_about_author_text">作者名称</string>
+    <string name="about_app_description">BiliDownload是一个支持下载bilibili所有视频（用户上传的视频、番剧、电视剧、电影）的应用程序。它支持提取视频文件音频（aac）和转换视频封装格式（flv、mp4、mkv、wmv）。</string>
+    <string name="contributors_title">贡献者</string>
+    <string name="contributor_contributions">贡献: %d</string>
+    <string name="text_author_name">KafuuNeko</string>
+    <string name="text_copyright_info">© 2023 BiliDownload. 保留所有权利。基于GNU GPL v3.0许可</string>
+    <string name="text_user_agreement">用户协议</string>
+    <string name="text_privacy_policy">隐私政策</string>
 </resources>
