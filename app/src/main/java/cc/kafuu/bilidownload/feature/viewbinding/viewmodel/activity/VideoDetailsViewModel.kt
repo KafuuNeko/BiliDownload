@@ -8,6 +8,7 @@ import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.core.viewbinding.CoreViewModel
 import cc.kafuu.bilidownload.common.ext.liveData
+import cc.kafuu.bilidownload.common.manager.AccountManager
 import cc.kafuu.bilidownload.common.manager.DownloadManager
 import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.common.model.ResultWrapper
@@ -333,6 +334,10 @@ class VideoDetailsViewModel : CoreViewModel() {
     }
 
     fun onClickUp() {
+        if (AccountManager.accountLiveData.value == null) {
+            popMessage(ToastMessageAction(CommonLibs.getString(R.string.please_login_to_your_account_first)))
+            return
+        }
         val mid = mBiliUpDataLiveData.value?.mid ?: return
         startActivity(
             PersonalDetailsActivity::class.java,

@@ -116,4 +116,5 @@
     <string name="clear_data_message">Warning! This operation will clear all completed download records, and it cannot be undone. Please proceed with caution!</string>
     <string name="text_clear_data">Clear data</string>
     <string name="tv_clearing_data">Data cleaning…</string>
+    <string name="please_login_to_your_account_first">Please login to your account first</string>
 </resources>

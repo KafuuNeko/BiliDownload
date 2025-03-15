@@ -116,4 +116,5 @@
     <string name="clear_data_message">警告！此操作将清除所有已完成的下载记录，且无法撤销。请谨慎操作！</string>
     <string name="text_clear_data">清除数据</string>
     <string name="tv_clearing_data">数据清理中…</string>
+    <string name="please_login_to_your_account_first">请先登录您的账户</string>
 </resources>
