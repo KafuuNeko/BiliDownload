@@ -146,6 +146,9 @@ dependencies {
     // jsoup
     implementation(libs.jsoup)
 
+    // kotpref
+    implementation(libs.kotpref)
+
     implementation(libs.arthenica.smart.exception.java)
 
     testImplementation(libs.junit)

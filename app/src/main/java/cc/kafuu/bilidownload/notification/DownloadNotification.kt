@@ -3,8 +3,8 @@ package cc.kafuu.bilidownload.notification
 import android.app.Notification
 import android.content.Context
 import cc.kafuu.bilidownload.R
-import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.CommonLibs
+import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 
 class DownloadNotification(context: Context) : NotificationHelper(context) {
 
@@ -13,8 +13,6 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
 
     override fun getChannelId() = "download_channel"
     override fun getChannelName() = CommonLibs.getString(R.string.notification_bvd_downloading)
-
-    fun getChannelNotificationId(): Int = getFixedNotificationId(getChannelId())
 
     fun getForegroundNotification(): Notification = getNotificationBuild(
         R.drawable.ic_downloading,

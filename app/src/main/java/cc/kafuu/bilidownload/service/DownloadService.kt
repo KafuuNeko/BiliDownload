@@ -11,6 +11,7 @@ import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.constant.DownloadResourceType
 import cc.kafuu.bilidownload.common.manager.DownloadManager
+import cc.kafuu.bilidownload.common.model.AppModel
 import cc.kafuu.bilidownload.common.model.DownloadStatus
 import cc.kafuu.bilidownload.common.model.TaskStatus
 import cc.kafuu.bilidownload.common.model.event.DownloadRequestFailedEvent
@@ -93,7 +94,7 @@ class DownloadService : Service() {
 
         EventBus.getDefault().register(this)
         startForeground(
-            mDownloadNotification.getChannelNotificationId(),
+            AppModel.FIXED_NOTIFICATION_ID,
             mDownloadNotification.getForegroundNotification()
         )
     }
