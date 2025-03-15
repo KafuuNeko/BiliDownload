@@ -8,6 +8,7 @@
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
 /.idea/deploymentTargetDropDown.xml
+/.idea/deploymentTargetSelector.xml
 /.settings/org.eclipse.buildship.core.prefs
 .DS_Store
 /build
@@ -16,3 +17,4 @@
 .cxx
 local.properties
 app/release/
+/.kotlin
