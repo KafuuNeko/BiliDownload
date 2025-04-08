@@ -8,13 +8,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import cc.kafuu.bilidownload.common.core.compose.theme.AppTheme
-import kotlinx.coroutines.launch
 
-abstract class CoreComponentActivity : ComponentActivity() {
+abstract class CoreCompActivity : ComponentActivity() {
     protected open fun isEnableEdgeToEdge(): Boolean = true
 
     @Composable
@@ -34,15 +30,6 @@ abstract class CoreComponentActivity : ComponentActivity() {
 
     private fun getContent(): @Composable () -> Unit = {
         Surface(modifier = Modifier.fillMaxSize()) { ViewContent() }
-    }
-}
-
-inline fun <I, S, E> CoreComponentActivity.attachEventListener(
-    viewModel: CoreComponentViewModel<I, S, E>,
-    crossinline onSingleEvent: (event: E) -> Unit
-) = lifecycleScope.launch {
-    repeatOnLifecycle(Lifecycle.State.STARTED) {
-        viewModel.singleEventFlow.collect { it?.run { onSingleEvent(this) } }
     }
 }
 
