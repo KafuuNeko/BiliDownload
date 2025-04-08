@@ -15,66 +15,87 @@ import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.findAnnotation
-import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.memberFunctions
-import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.jvm.isAccessible
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class UiIntentObserver(val cla: KClass<*>)
 
-abstract class CoreCompViewModel<I, S>(initStatus: S) : ViewModel() {
+abstract class CoreCompViewModel<I : Any, S>(initStatus: S) : ViewModel() {
     // Ui State (Model -> View)
-    protected val mUiStateFlow = MutableStateFlow<S>(initStatus)
+    protected val mUiStateFlow = MutableStateFlow(initStatus)
     val uiStateFlow = mUiStateFlow.asStateFlow()
 
     // Ui Intent (View -> Model)
-    private val mUiIntentFlow = MutableSharedFlow<I>()
+    private val mUiIntentFlow = MutableSharedFlow<I>(extraBufferCapacity = 64)
 
-    // 所有UI Intent观察者
-    private val mUiIntentObserverList by lazy {
-        this::class.memberFunctions.mapNotNull {
-            val annotation = it.findAnnotation<UiIntentObserver>() ?: return@mapNotNull null
-            it.isAccessible = true
-            annotation.cla.starProjectedType to it
-        }
-    }
-
-    // UiIntent于其观察者函数映射表
+    // UiIntent 于其观察者函数映射缓存表
     private val mUiIntentObserverMap: MutableMap<KClass<*>, List<KFunction<*>>> = mutableMapOf()
 
+    /**
+     * 此构造函数将扫描所有UiIntent观察者并缓存后启动UiIntent收集
+     */
     init {
+        doCacheUiIntentObservers()
         viewModelScope.launch { mUiIntentFlow.collect { onReceivedUiIntent(it) } }
     }
 
-    fun emit(uiIntent: I) = viewModelScope.launch { mUiIntentFlow.emit(uiIntent) }
+    /**
+     * 扫描并缓存所有被UiIntentObserver注解的成员函数并存储
+     */
+    private fun doCacheUiIntentObservers() {
+        val allFunctions = this::class.memberFunctions
+        val observerMap: MutableMap<KClass<*>, MutableList<KFunction<*>>> = mutableMapOf()
 
-    private fun onReceivedUiIntent(uiIntent: I) {
-        val clz = uiIntent?.let { it::class } ?: return
-        if (!mUiIntentObserverMap.contains(clz)) {
-            val targetClassType = clz.starProjectedType
-            mUiIntentObserverMap[clz] = mUiIntentObserverList.filter {
-                it.first.isSubtypeOf(targetClassType)
-            }.map { it.second }
+        for (func in allFunctions) {
+            val annotation = func.findAnnotation<UiIntentObserver>() ?: continue
+            func.isAccessible = true
+            observerMap.getOrPut(annotation.cla) { mutableListOf() }.add(func)
         }
-        mUiIntentObserverMap[clz]?.forEach {
-            when (val size = it.parameters.size) {
-                1 -> it.call(this)
-                2 -> it.call(this, uiIntent)
+
+        mUiIntentObserverMap.putAll(observerMap)
+    }
+
+    /**
+     * 发送一个UI意图
+     */
+    fun emit(uiIntent: I) {
+        mUiIntentFlow.tryEmit(uiIntent)
+    }
+
+    /**
+     * 接收到ui意图并处理
+     */
+    private fun onReceivedUiIntent(uiIntent: I) {
+        val clazz = uiIntent::class
+        val observers = mUiIntentObserverMap[clazz] ?: return
+        for (func in observers) {
+            when (val size = func.parameters.size) {
+                1 -> func.call(this)
+                2 -> func.call(this, uiIntent)
                 else -> throw IllegalArgumentException("Unsupported number of parameters: $size")
             }
         }
     }
 
+    /**
+     * 将Flow转换成StateFlow，并默认在viewModelScope中启动收集
+     */
     protected fun <T> Flow<T>.stateInThis(): StateFlow<T?> {
-        return stateIn(viewModelScope, SharingStarted.Lazily, null)
+        return this.stateIn(viewModelScope, SharingStarted.Lazily, null)
     }
 
-    protected suspend inline fun <reified T> awaitUiStateOfType(): T {
+    /**
+     * 等待uiState变更为指定状态类型后返回
+     */
+    protected suspend inline fun <reified T : S> awaitUiStateOfType(): T {
         return mUiStateFlow.filterIsInstance<T>().first()
     }
 
+    /**
+     * 将某个UiState设置为当前状态
+     */
     protected fun S.setup() {
         mUiStateFlow.value = this
     }
