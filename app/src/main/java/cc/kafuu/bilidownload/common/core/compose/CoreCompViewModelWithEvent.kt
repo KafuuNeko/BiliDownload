@@ -8,7 +8,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
-abstract class CoreViewModelWithEvent<I, S, E>(initStatus: S) :
+abstract class CoreViewModelWithEvent<I : Any, S, E>(initStatus: S) :
     CoreCompViewModel<I, S>(initStatus) {
     // Single Event (Model -> View)
     private val mSingleEventChannel = Channel<E>(Channel.BUFFERED)
@@ -21,7 +21,7 @@ abstract class CoreViewModelWithEvent<I, S, E>(initStatus: S) :
     }
 }
 
-inline fun <I, S, E> CoreCompActivity.attachEventListener(
+inline fun <I : Any, S, E> CoreCompActivity.attachEventListener(
     viewModel: CoreViewModelWithEvent<I, S, E>,
     crossinline onSingleEvent: (event: E) -> Unit
 ) = lifecycleScope.launch {

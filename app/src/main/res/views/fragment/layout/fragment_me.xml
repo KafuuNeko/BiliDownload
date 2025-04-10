@@ -83,8 +83,8 @@
                         android:clickable="true"
                         android:focusable="true"
                         android:foreground="?attr/selectableItemBackground"
-                        android:minHeight="48dp"
                         android:gravity="center_vertical"
+                        android:minHeight="48dp"
                         android:paddingHorizontal="16dp">
 
                         <androidx.appcompat.widget.AppCompatTextView
@@ -185,6 +185,7 @@
                 app:cardElevation="@dimen/card_item_elevation">
 
                 <androidx.appcompat.widget.AppCompatTextView
+                    bindEnable="@{!viewModel.clearingDataLiveData}"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@color/common_transparent"
@@ -192,13 +193,12 @@
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground"
                     android:gravity="center_vertical"
-                    android:minHeight="40dp"
+                    android:minHeight="48dp"
                     android:onClick="@{()->viewModel.clearData()}"
-                    android:padding="10dp"
+                    android:paddingHorizontal="16dp"
                     android:text="@{viewModel.clearingDataLiveData?@string/tv_clearing_data:@string/tv_clear_data}"
                     android:textColor="@color/common_red"
                     android:textSize="@dimen/size_text_common_size"
-                    bindEnable="@{!viewModel.clearingDataLiveData}"
                     app:drawableEndCompat="@drawable/ic_arrow_right" />
             </androidx.cardview.widget.CardView>
 
