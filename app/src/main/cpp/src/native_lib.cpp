@@ -18,8 +18,7 @@ Java_cc_kafuu_bilidownload_common_jni_NativeLib_generateQrCode(
     auto boolArray = CreateJBooleanArray(
             env, qrcode.matrix.cbegin(), qrcode.matrix.cend()
     );
-    if (boolArray == nullptr) return nullptr;
-    jobject size_object = CreateJavaInteger(env, (jint) qrcode.size);
-    jobject result_pair = CreateKotlinPair(env, boolArray, size_object);
-    return result_pair;
+    auto size_object = CreateJavaInteger(env, (jint) qrcode.size);
+    if (!boolArray || !size_object) return nullptr;
+    return CreateKotlinPair(env, boolArray.get(), size_object.get()).release();
 }
