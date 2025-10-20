@@ -23,15 +23,15 @@ data class BiliPlayStreamDash(
     val duration: Int,
     @SerializedName("minBufferTime")
     val minBufferTime: Double,
-    val video: List<BiliPlayStreamResource>,
-    val audio: List<BiliPlayStreamResource>,
+    val video: List<BiliPlayStreamResource>?,
+    val audio: List<BiliPlayStreamResource>?,
     @SerializedName("support_formats")
     val supportFormats: List<BiliPlayStreamSupportFormat>,
     val dolby: BiliPlayDolby?,
     val flac: BiliPlayFlac?
 ) {
     fun getAllAudio() = mutableListOf<BiliPlayStreamResource>().apply {
-        addAll(audio)
+        audio?.let { addAll(it) }
         dolby?.audio?.let { addAll(it) }
         flac?.audio?.let { add(it) }
     }

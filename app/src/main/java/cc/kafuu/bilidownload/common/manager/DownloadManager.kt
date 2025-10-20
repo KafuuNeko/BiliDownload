@@ -229,7 +229,7 @@ object DownloadManager {
         task: DownloadTaskEntity,
         dash: BiliPlayStreamDash
     ): List<String> {
-        val resources = dash.video + dash.getAllAudio()
+        val resources = (dash.video ?: emptyList()) + dash.getAllAudio()
         return DownloadRepository.queryDashList(task).mapNotNull { dashEntity ->
             resources.find {
                 it.id == dashEntity.dashId && it.codecId == dashEntity.codecId

@@ -232,11 +232,11 @@ class VideoDetailsViewModel : CoreViewModel() {
             val dash = dashList[index]
             // 验证当前视频dash是否存在与用户首次选择一样的流
             val videoStreamVerify = defaultVideoStream?.let { stream ->
-                dash.video.find { it.id == stream.id && it.codecId == stream.codecId } != null
+                dash.video?.find { it.id == stream.id && it.codecId == stream.codecId } != null
             } ?: true
             // 验证当前音频dash是否存在与用户首次选择一样的流
             val audioStreamVerify = defaultAudioStream?.let { stream ->
-                dash.audio.find { it.id == stream.id && it.codecId == stream.codecId } != null
+                dash.audio?.find { it.id == stream.id && it.codecId == stream.codecId } != null
             } ?: true
             // 如果当前视频dash存在用户首次选择的视频和音频流，直接下载
             if (videoStreamVerify && audioStreamVerify) {
