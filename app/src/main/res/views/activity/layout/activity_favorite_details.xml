@@ -20,7 +20,9 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:background="@color/general_window_background_color"
+        android:fitsSystemWindows="true">
 
         <include
             android:id="@+id/include_title"
