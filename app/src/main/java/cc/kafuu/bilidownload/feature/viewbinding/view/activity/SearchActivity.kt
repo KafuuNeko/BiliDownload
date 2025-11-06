@@ -4,12 +4,14 @@ import android.text.TextUtils
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
-import cc.kafuu.bilidownload.common.core.viewbinding.CoreActivity
-import cc.kafuu.bilidownload.databinding.ActivitySearchBinding
+import cc.kafuu.bilidownload.common.CommonLibs.requireContext
 import cc.kafuu.bilidownload.common.constant.SearchType
+import cc.kafuu.bilidownload.common.core.viewbinding.CoreActivity
 import cc.kafuu.bilidownload.common.utils.bindOnEditorAction
+import cc.kafuu.bilidownload.databinding.ActivitySearchBinding
 import cc.kafuu.bilidownload.feature.viewbinding.view.fragment.SearchListFragment
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity.SearchViewModel
 
@@ -22,6 +24,7 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
 
     override fun initViews() {
         setImmersionStatusBar()
+        mViewDataBinding.initSearchContent()
         initListener()
     }
 
@@ -36,6 +39,34 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
         }
     }
 
+    private fun ActivitySearchBinding.initSearchContent() {
+        val adapter = ArrayAdapter<String>(requireContext(), R.layout.dropdown_item)
+        etSearchContent.setAdapter(adapter)
+        etSearchContent.threshold = 1
+        mViewModel.searchRecordLiveData.observe(this@SearchActivity) { list ->
+            adapter.clear()
+            adapter.addAll(list.map { it.keyword })
+            adapter.notifyDataSetChanged()
+        }
+        etSearchContent.setOnItemClickListener { parent, view, position, id ->
+            val keyword = parent.getItemAtPosition(position) as String
+            etSearchContent.setText(keyword)
+            onStartSearch()
+        }
+        etSearchContent.setOnFocusChangeListener { v, hasFocus ->
+            if (hasFocus) {
+                mViewDataBinding.etSearchContent.showDropDown()
+            }
+        }
+        etSearchContent.setOnClickListener {
+            if (mViewDataBinding.etSearchContent.isPopupShowing) {
+                mViewDataBinding.etSearchContent.showDropDown()
+            } else {
+                mViewDataBinding.etSearchContent.dismissDropDown()
+            }
+        }
+    }
+
     private fun initListener() {
         mViewModel.searchRequestLiveData.observe(this) {
             if (TextUtils.isEmpty(it)) return@observe
@@ -44,10 +75,18 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
         }
         mViewDataBinding.spSearchType.onItemSelectedListener = this
         mViewDataBinding.tvSearch.setOnClickListener {
-            mViewModel.onSearch(mViewDataBinding.etSearchContent.text.toString())
+            onStartSearch()
         }
         bindOnEditorAction(mViewDataBinding.etSearchContent) {
-            mViewModel.onSearch(mViewDataBinding.etSearchContent.text.toString())
+            onStartSearch()
+        }
+    }
+
+    private fun onStartSearch() {
+        mViewModel.onSearch(mViewDataBinding.etSearchContent.text.toString(), getSearchType())
+        mViewDataBinding.apply {
+            etSearchContent.clearFocus()
+            etSearchContent.post { etSearchContent.dismissDropDown() }
         }
     }
 

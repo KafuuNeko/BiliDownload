@@ -21,6 +21,9 @@
     <color name="main_tab_text_active_color">#333333</color>
     <color name="main_tab_text_passive_color">#B7B7C9</color>
 
+    <color name="popup_bg_color">#FFFFFFFF</color>
+    <color name="popup_text_color">#FF212121</color>
+
     <color name="view_split_color">#809F9F9F</color>
 
     <color name="general_text_color">#707070</color>

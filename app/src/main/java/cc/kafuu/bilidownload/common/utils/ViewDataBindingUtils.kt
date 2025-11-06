@@ -28,6 +28,7 @@ fun bindDataList(recyclerView: RecyclerView, data: List<Any>?) {
     (recyclerView.adapter as? CoreRVAdapter<*>)?.setDataList(data)
 }
 
+
 @BindingAdapter(
     value = ["bindImageUrl", "bindPlaceholder", "bindTransformation", "defaultDrawable"],
     requireAll = false

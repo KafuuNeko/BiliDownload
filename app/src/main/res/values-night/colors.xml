@@ -3,4 +3,6 @@
     <color name="general_text_color">#B6B6B6</color>
     <color name="general_window_background_color">#343434</color>
     <color name="general_item_background_color">#4D4D4D</color>
+    <color name="popup_bg_color">#FF2C2C2C</color>
+    <color name="popup_text_color">#FFF3F3F3</color>
 </resources>
