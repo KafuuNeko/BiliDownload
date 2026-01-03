@@ -10,10 +10,12 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs.requireContext
 import cc.kafuu.bilidownload.common.constant.SearchType
 import cc.kafuu.bilidownload.common.core.viewbinding.CoreActivity
+import cc.kafuu.bilidownload.common.utils.NetworkUtils
 import cc.kafuu.bilidownload.common.utils.bindOnEditorAction
 import cc.kafuu.bilidownload.databinding.ActivitySearchBinding
 import cc.kafuu.bilidownload.feature.viewbinding.view.fragment.SearchListFragment
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity.SearchViewModel
+import java.util.regex.Pattern
 
 
 class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
@@ -36,6 +38,24 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
                 this,
                 InputMethodManager.SHOW_IMPLICIT
             )
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 检查搜索框内容是否为可跳转的地址，如果是则全选并展开键盘
+        val searchText = mViewDataBinding.etSearchContent.text.toString()
+        if (!TextUtils.isEmpty(searchText) && isJumpableAddress(searchText)) {
+            mViewDataBinding.etSearchContent.apply {
+                requestFocus()
+                selectAll()
+                post {
+                    (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).showSoftInput(
+                        this,
+                        InputMethodManager.SHOW_IMPLICIT
+                    )
+                }
+            }
         }
     }
 
@@ -110,5 +130,19 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
         1 -> SearchType.MEDIA_BANGUMI
         2 -> SearchType.MEDIA_FT
         else -> throw IllegalArgumentException("Unknown search type: $mViewDataBinding")
+    }
+
+    /**
+     * 检查搜索内容是否为可跳转到详情页的地址
+     * 包括：包含URL或包含视频ID（BV、AV、EP、SS）
+     */
+    private fun isJumpableAddress(text: String): Boolean {
+        // 检查是否包含URL
+        if (NetworkUtils.containsUrl(text)) {
+            return true
+        }
+        // 检查是否包含视频ID（BV、AV、EP、SS）
+        val matcher = Pattern.compile("(BV.{10})|((av|ep|ss|AV|EP|SS)\\d*)").matcher(text)
+        return matcher.find()
     }
 }
