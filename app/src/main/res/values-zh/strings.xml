@@ -124,4 +124,9 @@
     <string name="qr_request_failed_message">请求失败，请点击图片刷新二维码</string>
     <string name="qr_waiting_click_link">或者点击此处</string>
     <string name="use_account_password_login_hint">使用账号或密码登录</string>
+    <string name="text_save_cover">保存封面</string>
+    <string name="save_cover_confirm_message">是否保存封面图片？</string>
+    <string name="save_cover_success_message">封面已成功保存</string>
+    <string name="save_cover_failed_message">保存封面失败</string>
+    <string name="save_cover_downloading_message">正在下载封面…</string>
 </resources>

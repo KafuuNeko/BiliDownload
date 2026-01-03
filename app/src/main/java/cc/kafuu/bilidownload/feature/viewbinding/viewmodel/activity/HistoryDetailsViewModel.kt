@@ -3,9 +3,11 @@ package cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity
 import androidx.lifecycle.MutableLiveData
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.core.viewbinding.CoreViewModel
+import cc.kafuu.bilidownload.common.ext.limit
 import cc.kafuu.bilidownload.common.ext.liveData
 import cc.kafuu.bilidownload.common.model.DownloadStatus
 import cc.kafuu.bilidownload.common.model.LoadingStatus
+import cc.kafuu.bilidownload.common.model.action.ViewAction
 import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
@@ -16,6 +18,17 @@ import com.arialyy.aria.core.Aria
 import kotlinx.coroutines.runBlocking
 
 class HistoryDetailsViewModel : CoreViewModel() {
+    companion object {
+        class SaveCoverAction(
+            val coverUrl: String,
+            val fileName: String
+        ) : ViewAction()
+        
+        class ShowSaveCoverConfirmAction(
+            val coverUrl: String,
+            val bvid: String
+        ) : ViewAction()
+    }
     // 下载任务信息，包含下载任务实体以及此任务对应的视频和片段的标题、描述、bvid、cid
     private val mDownloadDetailsLiveData = MutableLiveData<DownloadTaskWithVideoDetails?>()
     val downloadDetailsLiveData = mDownloadDetailsLiveData.liveData()
@@ -121,5 +134,41 @@ class HistoryDetailsViewModel : CoreViewModel() {
             LocalResourceActivity::class.java,
             LocalResourceActivity.buildIntent(data)
         )
+    }
+
+    /**
+     * 封面图片点击事件
+     */
+    fun onCoverClick() {
+        val details = mDownloadDetailsLiveData.value ?: return
+        val coverUrl = details.cover
+        val bvid = details.downloadTask.biliBvid
+        
+        sendViewAction(ShowSaveCoverConfirmAction(coverUrl, bvid))
+    }
+    
+    /**
+     * 保存封面图片
+     */
+    private fun onSaveCover(coverUrl: String, bvid: String) {
+        // 从URL中提取扩展名，默认为jpg
+        val extension = when {
+            coverUrl.contains(".jpg", ignoreCase = true) || coverUrl.contains(".jpeg", ignoreCase = true) -> ".jpg"
+            coverUrl.contains(".png", ignoreCase = true) -> ".png"
+            coverUrl.contains(".webp", ignoreCase = true) -> ".webp"
+            coverUrl.contains(".gif", ignoreCase = true) -> ".gif"
+            else -> ".jpg"
+        }
+        
+        // 使用 bv 号作为默认文件名
+        val fileName = "${bvid}$extension"
+        sendViewAction(SaveCoverAction(coverUrl, fileName))
+    }
+    
+    /**
+     * 确认保存封面（由 Activity 调用）
+     */
+    fun confirmSaveCover(coverUrl: String, bvid: String) {
+        onSaveCover(coverUrl, bvid)
     }
 }

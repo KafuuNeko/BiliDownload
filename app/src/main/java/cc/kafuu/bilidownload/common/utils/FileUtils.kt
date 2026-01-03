@@ -5,6 +5,12 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.FileProvider
+import cc.kafuu.bilidownload.common.manager.AccountManager
+import cc.kafuu.bilidownload.common.network.NetworkConfig
+import cc.kafuu.bilidownload.common.network.manager.NetworkManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.Request
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
@@ -97,6 +103,41 @@ object FileUtils {
         var length: Int
         while (inputStream.read(buffer).also { length = it } > 0) {
             outputStream.write(buffer, 0, length)
+        }
+    }
+
+    /**
+     * 从URL下载图片到临时文件
+     *
+     * @param url 图片URL
+     * @param tempFile 临时文件
+     * @return 成功返回true，失败返回false
+     */
+    suspend fun downloadImageToFile(url: String, tempFile: File): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val request = Request.Builder().apply {
+                url(url)
+                get()
+                NetworkConfig.GENERAL_HEADERS.forEach { (key, value) -> addHeader(key, value) }
+                AccountManager.cookiesLiveData.value?.let { addHeader("Cookie", it) }
+            }.build()
+
+            val response = NetworkManager.okHttpClient.newCall(request).execute()
+            if (!response.isSuccessful) {
+                return@withContext false
+            }
+
+            response.body()?.let { body ->
+                tempFile.outputStream().use { outputStream ->
+                    body.byteStream().use { inputStream ->
+                        copyStream(inputStream, outputStream)
+                    }
+                }
+                true
+            } ?: false
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
         }
     }
 }

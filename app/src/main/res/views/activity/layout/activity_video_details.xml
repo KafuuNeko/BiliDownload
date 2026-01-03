@@ -52,6 +52,7 @@
                 android:layout_marginTop="10dp"
                 app:cover="@{viewModel.biliResourceModelLiveData.cover}"
                 app:createTime="@{viewModel.biliResourceModelLiveData.pubFormatterDate}"
+                app:onCoverClick="@{() -> viewModel.onCoverClick()}"
                 app:title="@{viewModel.biliResourceModelLiveData.title}" />
 
             <androidx.core.widget.NestedScrollView

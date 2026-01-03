@@ -7,11 +7,13 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.core.viewbinding.CoreViewModel
+import cc.kafuu.bilidownload.common.ext.limit
 import cc.kafuu.bilidownload.common.ext.liveData
 import cc.kafuu.bilidownload.common.manager.AccountManager
 import cc.kafuu.bilidownload.common.manager.DownloadManager
 import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.common.model.ResultWrapper
+import cc.kafuu.bilidownload.common.model.action.ViewAction
 import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
 import cc.kafuu.bilidownload.common.model.bili.BiliDashModel
 import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
@@ -33,6 +35,17 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
 class VideoDetailsViewModel : CoreViewModel() {
+    companion object {
+        class SaveCoverAction(
+            val coverUrl: String,
+            val fileName: String
+        ) : ViewAction()
+        
+        class ShowSaveCoverConfirmAction(
+            val coverUrl: String,
+            val bvid: String?
+        ) : ViewAction()
+    }
     private val mLoadingStatusLiveData = MutableLiveData(LoadingStatus.waitStatus())
     val loadingStatusLiveData = mLoadingStatusLiveData.liveData()
 
@@ -343,5 +356,53 @@ class VideoDetailsViewModel : CoreViewModel() {
             PersonalDetailsActivity::class.java,
             PersonalDetailsActivity.buildIntent(mid)
         )
+    }
+
+    /**
+     * 封面图片点击事件
+     */
+    fun onCoverClick() {
+        val resource = mBiliResourceModelLiveData.value ?: return
+        val coverUrl = resource.cover
+        
+        // 获取 bvid
+        val bvid = when (resource) {
+            is BiliVideoModel -> resource.bvid
+            else -> null
+        }
+        
+        sendViewAction(ShowSaveCoverConfirmAction(coverUrl, bvid))
+    }
+    
+    /**
+     * 保存封面图片
+     */
+    private fun onSaveCover(coverUrl: String, bvid: String?) {
+        // 从URL中提取扩展名，默认为jpg
+        val extension = when {
+            coverUrl.contains(".jpg", ignoreCase = true) || coverUrl.contains(".jpeg", ignoreCase = true) -> ".jpg"
+            coverUrl.contains(".png", ignoreCase = true) -> ".png"
+            coverUrl.contains(".webp", ignoreCase = true) -> ".webp"
+            coverUrl.contains(".gif", ignoreCase = true) -> ".gif"
+            else -> ".jpg"
+        }
+        
+        // 使用 bv 号作为默认文件名
+        val fileName = if (bvid != null) {
+            "${bvid}$extension"
+        } else {
+            // 如果没有 bvid，使用标题
+            val resource = mBiliResourceModelLiveData.value ?: return
+            "${resource.title.limit(100)}$extension"
+        }
+        
+        sendViewAction(SaveCoverAction(coverUrl, fileName))
+    }
+    
+    /**
+     * 确认保存封面（由 Activity 调用）
+     */
+    fun confirmSaveCover(coverUrl: String, bvid: String?) {
+        onSaveCover(coverUrl, bvid)
     }
 }

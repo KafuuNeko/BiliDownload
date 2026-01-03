@@ -124,4 +124,9 @@
     <string name="qr_request_failed_message">Request failed. Please click the image to refresh the QR code</string>
     <string name="qr_waiting_click_link">Or click here</string>
     <string name="use_account_password_login_hint">Sign in with username and password</string>
+    <string name="text_save_cover">Save Cover</string>
+    <string name="save_cover_confirm_message">Save the cover image?</string>
+    <string name="save_cover_success_message">Cover saved successfully</string>
+    <string name="save_cover_failed_message">Failed to save cover</string>
+    <string name="save_cover_downloading_message">Downloading cover…</string>
 </resources>
