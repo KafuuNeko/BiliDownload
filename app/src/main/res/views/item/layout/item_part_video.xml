@@ -57,15 +57,36 @@
                 tools:text="00:03:43" />
 
             <ImageView
-                bindVisible="@{viewModel.loadingVideoPartLiveData != data &amp;&amp; !viewModel.multipleSelectModeLiveData}"
+                android:id="@+id/iv_danmaku"
+                bindVisible="@{viewModel.loadingVideoPartLiveData != data &amp;&amp; viewModel.downloadingDanmakuPartLiveData != data &amp;&amp; !viewModel.multipleSelectModeLiveData}"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:layout_marginHorizontal="10dp"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="5dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="下载弹幕"
+                android:onClick="@{()->viewModel.onDownloadDanmaku(data)}"
+                android:padding="2dp"
+                android:src="@drawable/ic_danmaku" />
+
+            <ProgressBar
+                style="?android:attr/progressBarStyleSmall"
+                bindVisible="@{viewModel.downloadingDanmakuPartLiveData == data}"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="5dp"
+                tools:visibility="gone" />
+
+            <ImageView
+                bindVisible="@{viewModel.loadingVideoPartLiveData != data &amp;&amp; viewModel.downloadingDanmakuPartLiveData != data &amp;&amp; !viewModel.multipleSelectModeLiveData}"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="10dp"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_arrow_right" />
 
             <ImageView
-                bindVisible="@{viewModel.loadingVideoPartLiveData != data &amp;&amp; viewModel.multipleSelectModeLiveData}"
+                bindVisible="@{viewModel.loadingVideoPartLiveData != data &amp;&amp; viewModel.downloadingDanmakuPartLiveData != data &amp;&amp; viewModel.multipleSelectModeLiveData}"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_marginHorizontal="10dp"

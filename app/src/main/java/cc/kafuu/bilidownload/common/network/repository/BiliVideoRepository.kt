@@ -1,14 +1,28 @@
 package cc.kafuu.bilidownload.common.network.repository
 
+import android.util.Log
+import cc.kafuu.bilidownload.R
+import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.network.IServerCallback
+import cc.kafuu.bilidownload.common.network.model.BiliXmlDanmaku
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
 import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.network.service.BiliApiService
+import cc.kafuu.bilidownload.common.network.service.BiliOriginalContentService
+import cc.kafuu.bilidownload.common.utils.NetworkUtils
+import okhttp3.ResponseBody
+import retrofit2.Call
+import retrofit2.Response
 
-class BiliVideoRepository(private val biliApiService: BiliApiService) : BiliRepository() {
+class BiliVideoRepository(
+    private val biliApiService: BiliApiService,
+    private val biliOriginalContentService: BiliOriginalContentService
+) : BiliRepository() {
     companion object {
+        private const val TAG = "BiliVideoRepository"
+
         val FNVAL_FLAGS = listOf(
 //            1,    // MP4 格式，仅 H.264 编码（与 FLV、DASH 格式互斥）
             16,     // DASH 格式	，与 MP4、FLV 格式互斥
@@ -79,4 +93,43 @@ class BiliVideoRepository(private val biliApiService: BiliApiService) : BiliRepo
     ) = biliApiService
         .requestSeasonDetail(null, epId)
         .execute(onFailure) { _, data -> data }
+
+    /**
+     * 请求视频弹幕数据
+     * @param cid 视频的cid
+     * @param callback 回调函数，返回解析后的弹幕列表
+     */
+    fun requestDanmakuXmlData(
+        cid: Long,
+        callback: IServerCallback<List<BiliXmlDanmaku>>
+    ) {
+        biliOriginalContentService.requestDanmakuXml(cid)
+            .enqueue(object : retrofit2.Callback<ResponseBody> {
+                override fun onResponse(
+                    p0: Call<ResponseBody?>,
+                    p1: Response<ResponseBody?>
+                ) {
+                    val list = try {
+                        val body = p1.body()?.let { NetworkUtils.decompressDeflate(it) } ?: run {
+                            callback.onFailure(p1.code(), 0, CommonLibs.getString(R.string.error_unable_to_retrieve_content))
+                            return
+                        }
+                        BiliXmlDanmaku.parseFromXml(body)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        callback.onFailure(0, 0, e.message ?: CommonLibs.getString(R.string.error_unknown))
+                        null
+                    }
+                    Log.d(TAG, "requestDanmaku: $list")
+                    list?.run {
+                        callback.onSuccess(p1.code(), 0, "", this)
+                    }
+                }
+
+                override fun onFailure(p0: Call<ResponseBody?>, p1: Throwable) {
+                    p1.printStackTrace()
+                    callback.onFailure(0, 0, p1.message ?: CommonLibs.getString(R.string.error_unknown))
+                }
+            })
+    }
 }

@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity
 
+import android.net.Uri
 import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
@@ -23,10 +24,12 @@ import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoPartModel
 import cc.kafuu.bilidownload.common.network.IServerCallback
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
+import cc.kafuu.bilidownload.common.network.model.BiliXmlDanmaku
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
 import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
+import cc.kafuu.bilidownload.common.utils.DanmakuExportUtils
 import cc.kafuu.bilidownload.common.utils.TimeUtils
 import cc.kafuu.bilidownload.feature.viewbinding.view.activity.PersonalDetailsActivity
 import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.BiliPartDialog
@@ -40,12 +43,15 @@ class VideoDetailsViewModel : CoreViewModel() {
             val coverUrl: String,
             val fileName: String
         ) : ViewAction()
-        
+
         class ShowSaveCoverConfirmAction(
             val coverUrl: String,
             val bvid: String?
         ) : ViewAction()
+
+        class ExportDanmakuAction(val danmakuList: List<BiliXmlDanmaku>) : ViewAction()
     }
+
     private val mLoadingStatusLiveData = MutableLiveData(LoadingStatus.waitStatus())
     val loadingStatusLiveData = mLoadingStatusLiveData.liveData()
 
@@ -77,6 +83,10 @@ class VideoDetailsViewModel : CoreViewModel() {
     // 最近被改变状态的列表索引
     private val mLatestChangeIndexLiveData = MutableLiveData(-1)
     val latestChangeIndexLiveData = mLatestChangeIndexLiveData.liveData()
+
+    // 正在下载弹幕的片段
+    private val mDownloadingDanmakuPartLiveData = MutableLiveData<BiliVideoPartModel?>()
+    val downloadingDanmakuPartLiveData = mDownloadingDanmakuPartLiveData.liveData()
 
     fun initData(media: BiliMediaModel) {
         mLoadingStatusLiveData.value = LoadingStatus.loadingStatus()
@@ -359,18 +369,148 @@ class VideoDetailsViewModel : CoreViewModel() {
     }
 
     /**
+     * 下载弹幕
+     * @param part 视频片段
+     */
+    fun onDownloadDanmaku(part: BiliVideoPartModel) {
+        if (mDownloadingDanmakuPartLiveData.value != null) {
+            popMessage(ToastMessageAction(CommonLibs.getString(R.string.danmaku_downloading_message)))
+            return
+        }
+
+        viewModelScope.launch {
+            mDownloadingDanmakuPartLiveData.value = part
+
+            try {
+                // 请求弹幕数据
+                when (val result = requestDanmakuData(part)) {
+                    is ResultWrapper.Error -> {
+                        popMessage(ToastMessageAction(result.error, Toast.LENGTH_SHORT))
+                    }
+
+                    is ResultWrapper.Success -> {
+                        exportDanmakuToCsv(part, result.value)
+                    }
+                }
+            } finally {
+                mDownloadingDanmakuPartLiveData.value = null
+            }
+        }
+    }
+
+    /**
+     * 请求弹幕数据
+     */
+    private suspend fun requestDanmakuData(part: BiliVideoPartModel) =
+        suspendCancellableCoroutine { co ->
+            val callback = object : IServerCallback<List<BiliXmlDanmaku>> {
+                override fun onSuccess(
+                    httpCode: Int,
+                    code: Int,
+                    message: String,
+                    data: List<BiliXmlDanmaku>
+                ) {
+                    runCatching {
+                        co.resume(ResultWrapper.Success(data))
+                    }
+                }
+
+                override fun onFailure(httpCode: Int, code: Int, message: String) {
+                    runCatching {
+                        co.resume(
+                            ResultWrapper.Error(
+                                CommonLibs.getString(
+                                    R.string.danmaku_fetch_failed_message,
+                                    message
+                                )
+                            )
+                        )
+                    }
+                }
+            }
+
+            NetworkManager.biliVideoRepository.requestDanmakuXmlData(part.cid, callback)
+        }
+
+    /**
+     * 导出弹幕到CSV文件
+     */
+    private fun exportDanmakuToCsv(part: BiliVideoPartModel, danmakuList: List<BiliXmlDanmaku>) {
+        if (danmakuList.isEmpty()) {
+            popMessage(
+                ToastMessageAction(
+                    CommonLibs.getString(R.string.danmaku_no_danmaku_message),
+                    Toast.LENGTH_SHORT
+                )
+            )
+            return
+        }
+        try {
+            // 发送ViewAction到Activity，让用户选择保存路径
+            sendViewAction(ExportDanmakuAction(danmakuList))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            popMessage(
+                ToastMessageAction(
+                    CommonLibs.getString(
+                        R.string.danmaku_export_exception_message,
+                        e.message ?: ""
+                    ), Toast.LENGTH_SHORT
+                )
+            )
+        }
+    }
+
+    /**
+     * 将弹幕导出到用户选择的URI
+     */
+    fun exportDanmakuToUri(uri: Uri, danmakuList: List<BiliXmlDanmaku>) {
+        viewModelScope.launch {
+            try {
+                val context = CommonLibs.requireContext()
+                val success = context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    DanmakuExportUtils.exportToCsv(danmakuList, outputStream)
+                } ?: false
+
+                if (success) {
+                    popMessage(
+                        ToastMessageAction(
+                            CommonLibs.getString(R.string.danmaku_export_success_message),
+                            Toast.LENGTH_SHORT
+                        )
+                    )
+                } else {
+                    popMessage(
+                        ToastMessageAction(
+                            CommonLibs.getString(R.string.danmaku_export_failed_message),
+                            Toast.LENGTH_SHORT
+                        )
+                    )
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                popMessage(
+                    ToastMessageAction(
+                        CommonLibs.getString(
+                            R.string.danmaku_export_exception_message,
+                            e.message ?: ""
+                        ), Toast.LENGTH_SHORT
+                    )
+                )
+            }
+        }
+    }
+
+    /**
      * 封面图片点击事件
      */
     fun onCoverClick() {
         val resource = mBiliResourceModelLiveData.value ?: return
         val coverUrl = resource.cover
-        
-        // 获取 bvid
         val bvid = when (resource) {
             is BiliVideoModel -> resource.bvid
             else -> null
         }
-        
         sendViewAction(ShowSaveCoverConfirmAction(coverUrl, bvid))
     }
     
@@ -380,13 +520,17 @@ class VideoDetailsViewModel : CoreViewModel() {
     private fun onSaveCover(coverUrl: String, bvid: String?) {
         // 从URL中提取扩展名，默认为jpg
         val extension = when {
-            coverUrl.contains(".jpg", ignoreCase = true) || coverUrl.contains(".jpeg", ignoreCase = true) -> ".jpg"
+            coverUrl.contains(".jpg", ignoreCase = true) || coverUrl.contains(
+                ".jpeg",
+                ignoreCase = true
+            ) -> ".jpg"
+
             coverUrl.contains(".png", ignoreCase = true) -> ".png"
             coverUrl.contains(".webp", ignoreCase = true) -> ".webp"
             coverUrl.contains(".gif", ignoreCase = true) -> ".gif"
             else -> ".jpg"
         }
-        
+
         // 使用 bv 号作为默认文件名
         val fileName = if (bvid != null) {
             "${bvid}$extension"
@@ -395,10 +539,10 @@ class VideoDetailsViewModel : CoreViewModel() {
             val resource = mBiliResourceModelLiveData.value ?: return
             "${resource.title.limit(100)}$extension"
         }
-        
+
         sendViewAction(SaveCoverAction(coverUrl, fileName))
     }
-    
+
     /**
      * 确认保存封面（由 Activity 调用）
      */

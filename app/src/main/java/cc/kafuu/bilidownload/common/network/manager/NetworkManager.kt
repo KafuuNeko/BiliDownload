@@ -38,7 +38,9 @@ object NetworkManager {
     }
 
     val okHttpClient: OkHttpClient by lazy {
-        OkHttpClient.Builder().addInterceptor(biliInterceptor).build()
+        OkHttpClient.Builder()
+            .addInterceptor(biliInterceptor)
+            .build()
     }
 
     private fun <T> createService(
@@ -57,7 +59,7 @@ object NetworkManager {
 
     val biliRiskControlResponse = BiliRiskControlRepository(biliService, biliOriginalContentService)
 
-    val biliVideoRepository by lazy { BiliVideoRepository(biliService) }
+    val biliVideoRepository by lazy { BiliVideoRepository(biliService, biliOriginalContentService) }
 
     val biliAccountRepository by lazy { BiliAccountRepository(biliService, biliPassportService) }
 

@@ -6,7 +6,10 @@ import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.ResponseBody
+import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.util.zip.Inflater
 
 
 object NetworkUtils {
@@ -52,4 +55,31 @@ object NetworkUtils {
             callback.onSuccess(response.code(), 0, "success", location)
         }
     })
+
+    fun decompressDeflate(body: ResponseBody): String {
+        val compressed = body.bytes()
+
+        val inflater = Inflater(/* nowrap = */ false) // false = zlib header 包含
+        inflater.setInput(compressed)
+
+        val output = ByteArrayOutputStream()
+        val buffer = ByteArray(1024)
+        while (!inflater.finished()) {
+            val count = try {
+                inflater.inflate(buffer)
+            } catch (e: Exception) {
+                // 如果第一次失败，尝试 nowrap = true
+                val inf2 = Inflater(true)
+                inf2.setInput(compressed)
+                while (!inf2.finished()) {
+                    output.write(buffer, 0, inf2.inflate(buffer))
+                }
+                return output.toString("UTF-8")
+            }
+            output.write(buffer, 0, count)
+        }
+
+        return output.toString("UTF-8")
+    }
+
 }
