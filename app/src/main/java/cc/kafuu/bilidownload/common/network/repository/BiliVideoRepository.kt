@@ -4,6 +4,8 @@ import android.util.Log
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.network.IServerCallback
+import cc.kafuu.bilidownload.common.network.model.BiliDanmakuProtoParser
+import cc.kafuu.bilidownload.common.network.model.BiliHistoryDanmakuIndex
 import cc.kafuu.bilidownload.common.network.model.BiliXmlDanmaku
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
@@ -15,6 +17,7 @@ import cc.kafuu.bilidownload.common.utils.NetworkUtils
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Response
+import com.google.gson.JsonParser
 
 class BiliVideoRepository(
     private val biliApiService: BiliApiService,
@@ -131,5 +134,167 @@ class BiliVideoRepository(
                     callback.onFailure(0, 0, p1.message ?: CommonLibs.getString(R.string.error_unknown))
                 }
             })
+    }
+
+    /**
+     * 请求历史弹幕索引（需要登录）
+     * @param cid 视频的cid
+     * @param month 月份，格式：2024-01
+     * @param callback 回调函数，返回日期列表
+     */
+    fun requestHistoryDanmakuIndex(
+        cid: Long,
+        month: String,
+        callback: IServerCallback<BiliHistoryDanmakuIndex>
+    ) {
+        biliOriginalContentService.requestHistoryIndex(oid = cid, month = month)
+            .enqueue(object : retrofit2.Callback<ResponseBody> {
+                override fun onResponse(
+                    p0: Call<ResponseBody?>,
+                    p1: Response<ResponseBody?>
+                ) {
+                    try {
+                        val body = p1.body()?.string() ?: run {
+                            callback.onFailure(
+                                p1.code(),
+                                0,
+                                CommonLibs.getString(R.string.error_unable_to_retrieve_content)
+                            )
+                            return
+                        }
+
+                        val json = JsonParser.parseString(body).asJsonObject
+                        val indexData = BiliHistoryDanmakuIndex.fromJson(json)
+
+                        if (indexData.isSuccess()) {
+                            callback.onSuccess(p1.code(), 0, "", indexData)
+                        } else {
+                            callback.onFailure(p1.code(), indexData.code, indexData.message)
+                        }
+
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        callback.onFailure(0, 0, e.message ?: CommonLibs.getString(R.string.error_unknown))
+                    }
+                }
+
+                override fun onFailure(p0: Call<ResponseBody?>, p1: Throwable) {
+                    p1.printStackTrace()
+                    callback.onFailure(0, 0, p1.message ?: CommonLibs.getString(R.string.error_unknown))
+                }
+            })
+    }
+
+    /**
+     * 请求分段弹幕（需要登录）
+     * @param cid 视频的cid
+     * @param segmentIndex 分段索引，从1开始
+     * @param callback 回调函数，返回解析后的弹幕列表
+     */
+    fun requestSegmentDanmaku(
+        cid: Long,
+        segmentIndex: Int,
+        callback: IServerCallback<List<BiliXmlDanmaku>>
+    ) {
+        biliOriginalContentService.requestSegmentDanmaku(oid = cid, segmentIndex = segmentIndex)
+            .enqueue(object : retrofit2.Callback<ResponseBody> {
+                override fun onResponse(
+                    p0: Call<ResponseBody?>,
+                    p1: Response<ResponseBody?>
+                ) {
+                    try {
+                        val body = p1.body()?.bytes() ?: run {
+                            callback.onFailure(
+                                p1.code(),
+                                0,
+                                CommonLibs.getString(R.string.error_unable_to_retrieve_content)
+                            )
+                            return
+                        }
+
+                        // 使用protobuf解析器解析弹幕数据
+                        val danmakuList = BiliDanmakuProtoParser.parseFromProto(body)
+
+                        Log.d(TAG, "requestSegmentDanmaku: segment=$segmentIndex, count=${danmakuList.size}")
+
+                        callback.onSuccess(p1.code(), 0, "", danmakuList)
+
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        callback.onFailure(0, 0, e.message ?: CommonLibs.getString(R.string.error_unknown))
+                    }
+                }
+
+                override fun onFailure(p0: Call<ResponseBody?>, p1: Throwable) {
+                    p1.printStackTrace()
+                    callback.onFailure(0, 0, p1.message ?: CommonLibs.getString(R.string.error_unknown))
+                }
+            })
+    }
+
+    /**
+     * 请求全量弹幕（需要登录）
+     * 自动分段获取所有弹幕并合并
+     * @param cid 视频的cid
+     * @param callback 回调函数，返回解析后的弹幕列表
+     */
+    fun requestFullDanmaku(
+        cid: Long,
+        callback: IServerCallback<List<BiliXmlDanmaku>>
+    ) {
+        // 首先尝试获取第一个分段
+        requestSegmentDanmaku(cid, 1, object : IServerCallback<List<BiliXmlDanmaku>> {
+            override fun onSuccess(
+                httpCode: Int,
+                code: Int,
+                message: String,
+                data: List<BiliXmlDanmaku>
+            ) {
+                // 第一个分段有数据，继续获取后续分段
+                val allDanmaku = mutableListOf<BiliXmlDanmaku>()
+                allDanmaku.addAll(data)
+
+                // 继续获取更多分段（最多尝试10个分段）
+                var currentSegment = 2
+                val maxSegments = 10
+
+                fun fetchNextSegment() {
+                    if (currentSegment > maxSegments) {
+                        callback.onSuccess(httpCode, 0, "", allDanmaku)
+                        return
+                    }
+
+                    requestSegmentDanmaku(cid, currentSegment, object : IServerCallback<List<BiliXmlDanmaku>> {
+                        override fun onSuccess(
+                            httpCode: Int,
+                            code: Int,
+                            message: String,
+                            data: List<BiliXmlDanmaku>
+                        ) {
+                            if (data.isNotEmpty()) {
+                                allDanmaku.addAll(data)
+                                currentSegment++
+                                fetchNextSegment()
+                            } else {
+                                // 没有更多数据了
+                                callback.onSuccess(httpCode, 0, "", allDanmaku)
+                            }
+                        }
+
+                        override fun onFailure(httpCode: Int, code: Int, message: String) {
+                            // 获取失败，但已经有部分数据了，返回已有数据
+                            Log.w(TAG, "Failed to fetch segment $currentSegment, returning ${allDanmaku.size} danmaku")
+                            callback.onSuccess(httpCode, 0, "", allDanmaku)
+                        }
+                    })
+                }
+
+                fetchNextSegment()
+            }
+
+            override fun onFailure(httpCode: Int, code: Int, message: String) {
+                callback.onFailure(httpCode, code, message)
+            }
+        })
     }
 }

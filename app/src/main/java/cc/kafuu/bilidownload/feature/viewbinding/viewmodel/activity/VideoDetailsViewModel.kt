@@ -400,9 +400,13 @@ class VideoDetailsViewModel : CoreViewModel() {
 
     /**
      * 请求弹幕数据
+     * 根据登录状态自动选择合适的API：
+     * - 未登录：使用实时弹幕API（最多600条）
+     * - 已登录：使用分段弹幕API（获取更多弹幕）
      */
     private suspend fun requestDanmakuData(part: BiliVideoPartModel) =
         suspendCancellableCoroutine { co ->
+            val isLoggedIn = AccountManager.accountLiveData.value != null
             val callback = object : IServerCallback<List<BiliXmlDanmaku>> {
                 override fun onSuccess(
                     httpCode: Int,
@@ -429,7 +433,14 @@ class VideoDetailsViewModel : CoreViewModel() {
                 }
             }
 
-            NetworkManager.biliVideoRepository.requestDanmakuXmlData(part.cid, callback)
+            // 根据登录状态选择不同的API
+            if (isLoggedIn) {
+                // 已登录：使用全量弹幕下载
+                NetworkManager.biliVideoRepository.requestFullDanmaku(part.cid, callback)
+            } else {
+                // 未登录：使用实时弹幕API（最多600条）
+                NetworkManager.biliVideoRepository.requestDanmakuXmlData(part.cid, callback)
+            }
         }
 
     /**
