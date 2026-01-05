@@ -56,6 +56,29 @@
                 android:textSize="@dimen/size_text_card_content"
                 tools:text="00:03:43" />
 
+            <!-- 字幕下载按钮 -->
+            <ImageView
+                android:id="@+id/iv_subtitle"
+                bindVisible="@{viewModel.subtitleListLiveData != null &amp;&amp; viewModel.subtitleListLiveData.size() > 0 &amp;&amp; viewModel.loadingVideoPartLiveData != data &amp;&amp; viewModel.downloadingSubtitlePartLiveData != data &amp;&amp; !viewModel.multipleSelectModeLiveData}"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="5dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/download_subtitle"
+                android:onClick="@{()->viewModel.onDownloadSubtitle(data)}"
+                android:padding="2dp"
+                android:src="@drawable/ic_subtitle"
+                tools:src="@drawable/ic_danmaku" />
+
+            <ProgressBar
+                style="?android:attr/progressBarStyleSmall"
+                bindVisible="@{viewModel.downloadingSubtitlePartLiveData == data}"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="5dp"
+                tools:visibility="gone" />
+
             <ImageView
                 android:id="@+id/iv_danmaku"
                 bindVisible="@{viewModel.loadingVideoPartLiveData != data &amp;&amp; viewModel.downloadingDanmakuPartLiveData != data &amp;&amp; !viewModel.multipleSelectModeLiveData}"
@@ -64,7 +87,7 @@
                 android:layout_marginStart="5dp"
                 android:layout_marginEnd="5dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="下载弹幕"
+                android:contentDescription="@string/download_danmaku"
                 android:onClick="@{()->viewModel.onDownloadDanmaku(data)}"
                 android:padding="2dp"
                 android:src="@drawable/ic_danmaku" />

@@ -54,8 +54,13 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
     // 临时保存弹幕数据，用于在用户选择文件后导出
     private var mPendingDanmakuList: List<BiliXmlDanmaku>? = null
 
+    // 临时保存字幕数据，用于在用户选择文件后导出
+    private var mPendingSubtitleJson: String? = null
+    private var mPendingSubtitleLanguage: String? = null
+
     private lateinit var mSaveCoverLauncher: ActivityResultLauncher<Intent>
     private lateinit var mSaveDanmakuLauncher: ActivityResultLauncher<Intent>
+    private lateinit var mSaveSubtitleLauncher: ActivityResultLauncher<Intent>
 
     private var mPendingCoverUrl: String? = null
     private var mPendingFileName: String? = null
@@ -64,6 +69,7 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
         super.onCreate(savedInstanceState)
         initSaveCoverLauncher()
         initSaveDanmakuLauncher()
+        initSaveSubtitleLauncher()
     }
 
     override fun initViews() {
@@ -106,6 +112,25 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
                 }
                 // 清理临时数据
                 mPendingDanmakuList = null
+            }
+        }
+    }
+
+    private fun initSaveSubtitleLauncher() {
+        val contracts = ActivityResultContracts.StartActivityForResult()
+        mSaveSubtitleLauncher = registerForActivityResult(contracts) {
+            if (it.resultCode == RESULT_OK && it.data != null) {
+                val uri = it.data?.data ?: return@registerForActivityResult
+                val subtitleJson = mPendingSubtitleJson
+                val language = mPendingSubtitleLanguage
+                if (subtitleJson != null && language != null) {
+                    lifecycleScope.launch {
+                        mViewModel.exportSubtitleToUri(uri, subtitleJson, language)
+                    }
+                }
+                // 清理临时数据
+                mPendingSubtitleJson = null
+                mPendingSubtitleLanguage = null
             }
         }
     }
@@ -159,6 +184,7 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
 
     override fun onViewAction(action: ViewAction) = when (action) {
         is VideoDetailsViewModel.Companion.ExportDanmakuAction -> onExportDanmaku(action)
+        is VideoDetailsViewModel.Companion.ExportSubtitleAction -> onExportSubtitle(action)
         is VideoDetailsViewModel.Companion.SaveCoverAction -> onSaveCover(action)
         is VideoDetailsViewModel.Companion.ShowSaveCoverConfirmAction -> onShowSaveCoverConfirm(
             action
@@ -178,6 +204,24 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
         }
         // 启动文件选择
         mSaveDanmakuLauncher.launch(intent)
+    }
+
+    private fun onExportSubtitle(action: VideoDetailsViewModel.Companion.ExportSubtitleAction) {
+        // 保存字幕数据
+        mPendingSubtitleJson = action.subtitleJson
+        mPendingSubtitleLanguage = action.language
+
+        // 生成字幕文件名
+        val fileName = "${System.currentTimeMillis()}_${action.language}.srt"
+
+        // 创建文件选择Intent
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "text/plain" // 或 "application/x-subrip"
+            putExtra(Intent.EXTRA_TITLE, fileName)
+        }
+        // 启动文件选择
+        mSaveSubtitleLauncher.launch(intent)
     }
 
     private fun onShowSaveCoverConfirm(action: VideoDetailsViewModel.Companion.ShowSaveCoverConfirmAction) {

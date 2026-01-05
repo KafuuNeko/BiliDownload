@@ -5,6 +5,7 @@ import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.http.Url
 
 
 interface BiliOriginalContentService {
@@ -38,5 +39,13 @@ interface BiliOriginalContentService {
         @Query("oid") oid: Long,
         @Query("segment_index") segmentIndex: Int
     ): Call<ResponseBody>
+
+    /**
+     * 获取字幕JSON文件
+     * 使用动态URL，因为字幕URL包含认证参数
+     * @param fullUrl 完整的字幕JSON文件URL
+     */
+    @GET
+    fun requestSubtitleJson(@Url fullUrl: String): Call<ResponseBody>
 
 }

@@ -29,7 +29,9 @@ import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
 import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
+import cc.kafuu.bilidownload.common.network.model.BiliVideoSubtitleItem
 import cc.kafuu.bilidownload.common.utils.DanmakuExportUtils
+import cc.kafuu.bilidownload.common.utils.SubtitleExportUtils
 import cc.kafuu.bilidownload.common.utils.TimeUtils
 import cc.kafuu.bilidownload.feature.viewbinding.view.activity.PersonalDetailsActivity
 import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.BiliPartDialog
@@ -50,6 +52,8 @@ class VideoDetailsViewModel : CoreViewModel() {
         ) : ViewAction()
 
         class ExportDanmakuAction(val danmakuList: List<BiliXmlDanmaku>) : ViewAction()
+
+        class ExportSubtitleAction(val subtitleJson: String, val language: String) : ViewAction()
     }
 
     private val mLoadingStatusLiveData = MutableLiveData(LoadingStatus.waitStatus())
@@ -87,6 +91,14 @@ class VideoDetailsViewModel : CoreViewModel() {
     // 正在下载弹幕的片段
     private val mDownloadingDanmakuPartLiveData = MutableLiveData<BiliVideoPartModel?>()
     val downloadingDanmakuPartLiveData = mDownloadingDanmakuPartLiveData.liveData()
+
+    // 正在下载字幕的片段
+    private val mDownloadingSubtitlePartLiveData = MutableLiveData<BiliVideoPartModel?>()
+    val downloadingSubtitlePartLiveData = mDownloadingSubtitlePartLiveData.liveData()
+
+    // 当前视频的字幕列表（从BiliVideoData获取）
+    private val mSubtitleListLiveData = MutableLiveData<List<BiliVideoSubtitleItem>>()
+    val subtitleListLiveData = mSubtitleListLiveData.liveData()
 
     fun initData(media: BiliMediaModel) {
         mLoadingStatusLiveData.value = LoadingStatus.loadingStatus()
@@ -140,6 +152,8 @@ class VideoDetailsViewModel : CoreViewModel() {
                     )
                 })
                 mBiliUpDataLiveData.value = BiliUpData.from(data.owner)
+                // 保存字幕列表
+                mSubtitleListLiveData.value = data.subtitle.list
                 mLoadingStatusLiveData.value = LoadingStatus.doneStatus()
             }
 
@@ -559,5 +573,158 @@ class VideoDetailsViewModel : CoreViewModel() {
      */
     fun confirmSaveCover(coverUrl: String, bvid: String?) {
         onSaveCover(coverUrl, bvid)
+    }
+
+    /**
+     * 下载字幕
+     * @param part 视频片段
+     * @param subtitleItem 要下载的字幕项（为null时选择第一个可用字幕）
+     */
+    fun onDownloadSubtitle(part: BiliVideoPartModel) {
+        val subtitleItem: BiliVideoSubtitleItem? = null
+        val subtitleList = mSubtitleListLiveData.value
+
+        if (subtitleList.isNullOrEmpty()) {
+            popMessage(
+                ToastMessageAction(
+                    CommonLibs.getString(R.string.subtitle_no_subtitle_message),
+                    Toast.LENGTH_SHORT
+                )
+            )
+            return
+        }
+
+        // 如果没有指定字幕，使用第一个可用字幕
+        val targetSubtitle = subtitleItem ?: subtitleList.firstOrNull()
+
+        if (targetSubtitle == null) {
+            popMessage(
+                ToastMessageAction(
+                    CommonLibs.getString(R.string.subtitle_no_available_subtitle_message),
+                    Toast.LENGTH_SHORT
+                )
+            )
+            return
+        }
+
+        // 检查是否正在下载
+        if (mDownloadingSubtitlePartLiveData.value != null) {
+            popMessage(ToastMessageAction(CommonLibs.getString(R.string.subtitle_downloading_message)))
+            return
+        }
+
+        viewModelScope.launch {
+            mDownloadingSubtitlePartLiveData.value = part
+
+            try {
+                // 请求字幕JSON数据
+                when (val result = requestSubtitleData(targetSubtitle.subtitleUrl)) {
+                    is ResultWrapper.Error -> {
+                        popMessage(ToastMessageAction(result.error, Toast.LENGTH_SHORT))
+                    }
+
+                    is ResultWrapper.Success -> {
+                        exportSubtitle(result.value, targetSubtitle.lanDoc)
+                    }
+                }
+            } finally {
+                mDownloadingSubtitlePartLiveData.value = null
+            }
+        }
+    }
+
+    /**
+     * 请求字幕JSON数据
+     */
+    private suspend fun requestSubtitleData(subtitleUrl: String) =
+        suspendCancellableCoroutine { co ->
+            val callback = object : IServerCallback<String> {
+                override fun onSuccess(
+                    httpCode: Int,
+                    code: Int,
+                    message: String,
+                    data: String
+                ) {
+                    runCatching {
+                        co.resume(ResultWrapper.Success(data))
+                    }
+                }
+
+                override fun onFailure(httpCode: Int, code: Int, message: String) {
+                    runCatching {
+                        co.resume(
+                            ResultWrapper.Error(
+                                CommonLibs.getString(
+                                    R.string.subtitle_fetch_failed_message,
+                                    message
+                                )
+                            )
+                        )
+                    }
+                }
+            }
+
+            NetworkManager.biliVideoRepository.requestSubtitleJson(subtitleUrl, callback)
+        }
+
+    /**
+     * 导出字幕到SRT文件
+     */
+    private fun exportSubtitle(subtitleJson: String, language: String) {
+        try {
+            // 发送ViewAction到Activity，让用户选择保存路径
+            sendViewAction(ExportSubtitleAction(subtitleJson, language))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            popMessage(
+                ToastMessageAction(
+                    CommonLibs.getString(
+                        R.string.subtitle_export_exception_message,
+                        e.message ?: ""
+                    ), Toast.LENGTH_SHORT
+                )
+            )
+        }
+    }
+
+    /**
+     * 将字幕导出到用户选择的URI
+     */
+    fun exportSubtitleToUri(uri: Uri, subtitleJson: String, language: String) {
+        viewModelScope.launch {
+            try {
+                val context = CommonLibs.requireContext()
+                val success = context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    // 导出为SRT格式
+                    SubtitleExportUtils.exportJsonToSrt(subtitleJson, outputStream)
+                } ?: false
+
+                if (success) {
+                    popMessage(
+                        ToastMessageAction(
+                            CommonLibs.getString(R.string.subtitle_export_success_message),
+                            Toast.LENGTH_SHORT
+                        )
+                    )
+                } else {
+                    popMessage(
+                        ToastMessageAction(
+                            CommonLibs.getString(R.string.subtitle_export_failed_message),
+                            Toast.LENGTH_SHORT
+                        )
+                    )
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                popMessage(
+                    ToastMessageAction(
+                        CommonLibs.getString(
+                            R.string.subtitle_export_exception_message,
+                            e.message ?: ""
+                        ), Toast.LENGTH_SHORT
+                    )
+                )
+            }
+        }
     }
 }

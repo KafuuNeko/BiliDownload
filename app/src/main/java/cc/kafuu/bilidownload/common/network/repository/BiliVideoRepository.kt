@@ -233,6 +233,54 @@ class BiliVideoRepository(
     }
 
     /**
+     * 请求字幕JSON文件
+     * @param subtitleUrl 字幕URL（可能是协议相对URL，如 //aisubtitle.hdslb.com/...）
+     * @param callback 回调函数，返回字幕JSON字符串
+     */
+    fun requestSubtitleJson(
+        subtitleUrl: String,
+        callback: IServerCallback<String>
+    ) {
+        // 处理协议相对URL
+        val fullUrl = if (subtitleUrl.startsWith("//")) {
+            "https:$subtitleUrl"
+        } else {
+            subtitleUrl
+        }
+
+        biliOriginalContentService.requestSubtitleJson(fullUrl)
+            .enqueue(object : retrofit2.Callback<ResponseBody> {
+                override fun onResponse(
+                    p0: Call<ResponseBody?>,
+                    p1: Response<ResponseBody?>
+                ) {
+                    val jsonString = try {
+                        p1.body()?.string() ?: run {
+                            callback.onFailure(
+                                p1.code(),
+                                0,
+                                CommonLibs.getString(R.string.error_unable_to_retrieve_content)
+                            )
+                            return
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        callback.onFailure(0, 0, e.message ?: CommonLibs.getString(R.string.error_unknown))
+                        return
+                    }
+
+                    Log.d(TAG, "requestSubtitleJson: url=$fullUrl, length=${jsonString.length}")
+                    callback.onSuccess(p1.code(), 0, "", jsonString)
+                }
+
+                override fun onFailure(p0: Call<ResponseBody?>, p1: Throwable) {
+                    p1.printStackTrace()
+                    callback.onFailure(0, 0, p1.message ?: CommonLibs.getString(R.string.error_unknown))
+                }
+            })
+    }
+
+    /**
      * 请求全量弹幕（需要登录）
      * 自动分段获取所有弹幕并合并
      * @param cid 视频的cid
