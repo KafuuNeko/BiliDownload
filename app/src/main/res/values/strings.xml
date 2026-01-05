@@ -159,4 +159,8 @@
     <string name="danmaku_type_precise">Precise Positioning</string>
     <string name="danmaku_type_advanced">Advanced Danmaku</string>
     <string name="danmaku_type_unknown">Unknown Type</string>
+    <string name="text_view_history">View History</string>
+    <string name="view_history_title">View History</string>
+    <string name="view_history_empty">No history yet</string>
+    <string name="content_description_delete">Delete</string>
 </resources>

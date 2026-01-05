@@ -11,6 +11,7 @@ import cc.kafuu.bilidownload.common.model.TaskStatus
 import cc.kafuu.bilidownload.common.network.NetworkConfig
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
 import cc.kafuu.bilidownload.feature.compose.activity.QrLoginActivity
+import cc.kafuu.bilidownload.feature.compose.activity.ViewHistoryActivity
 import cc.kafuu.bilidownload.feature.viewbinding.view.activity.PersonalDetailsActivity
 import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.ConfirmDialog
 import kotlinx.coroutines.launch
@@ -44,6 +45,10 @@ class MeViewModel : CoreViewModel() {
 
     fun jumpGooglePlay() {
         CommonLibs.jumpToUrl(NetworkConfig.GOOGLE_PLAY_URL)
+    }
+
+    fun jumpViewHistory() {
+        startActivity(ViewHistoryActivity::class.java)
     }
 
     fun clearData() {

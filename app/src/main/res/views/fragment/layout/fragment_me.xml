@@ -158,21 +158,48 @@
                 app:cardCornerRadius="@dimen/card_item_corner_radius"
                 app:cardElevation="@dimen/card_item_elevation">
 
-                <androidx.appcompat.widget.AppCompatTextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@color/common_transparent"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:gravity="center_vertical"
-                    android:minHeight="48dp"
-                    android:onClick="@{()->viewModel.jumpGooglePlay()}"
-                    android:paddingHorizontal="16dp"
-                    android:text="@string/tv_grade_text"
-                    android:textColor="@color/general_text_color"
-                    android:textSize="@dimen/size_text_common_size"
-                    app:drawableEndCompat="@drawable/ic_arrow_right" />
+                    android:orientation="vertical">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@color/common_transparent"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:minHeight="48dp"
+                        android:onClick="@{()->viewModel.jumpViewHistory()}"
+                        android:paddingHorizontal="16dp"
+                        android:text="@string/text_view_history"
+                        android:textColor="@color/general_text_color"
+                        android:textSize="14sp"
+                        app:drawableEndCompat="@drawable/ic_arrow_right" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0.5dp"
+                        android:background="@color/view_split_color" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@color/common_transparent"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:minHeight="48dp"
+                        android:onClick="@{()->viewModel.jumpGooglePlay()}"
+                        android:paddingHorizontal="16dp"
+                        android:text="@string/tv_grade_text"
+                        android:textColor="@color/general_text_color"
+                        android:textSize="@dimen/size_text_common_size"
+                        app:drawableEndCompat="@drawable/ic_arrow_right" />
+                </LinearLayout>
             </androidx.cardview.widget.CardView>
 
             <androidx.cardview.widget.CardView

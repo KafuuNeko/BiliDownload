@@ -29,6 +29,7 @@ import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
 import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
+import cc.kafuu.bilidownload.common.room.repository.ViewHistoryRepository
 import cc.kafuu.bilidownload.common.utils.DanmakuExportUtils
 import cc.kafuu.bilidownload.common.utils.TimeUtils
 import cc.kafuu.bilidownload.feature.viewbinding.view.activity.PersonalDetailsActivity
@@ -38,6 +39,8 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
 class VideoDetailsViewModel : CoreViewModel() {
+    private val viewHistoryRepository by lazy { ViewHistoryRepository(CommonLibs.requireContext()) }
+
     companion object {
         class SaveCoverAction(
             val coverUrl: String,
@@ -92,6 +95,17 @@ class VideoDetailsViewModel : CoreViewModel() {
         mLoadingStatusLiveData.value = LoadingStatus.loadingStatus()
         mBiliResourceModelLiveData.value = media
 
+        // 记录到历史记录
+        // 番剧使用 mediaId 作为唯一标识，使用固定的 author 名称
+        viewModelScope.launch {
+            viewHistoryRepository.addViewHistory(
+                bvid = "media_${media.mediaId}",
+                title = media.title,
+                cover = media.cover,
+                author = "番剧合集"
+            )
+        }
+
         val callback = object : IServerCallback<BiliSeasonData> {
             override fun onSuccess(
                 httpCode: Int,
@@ -129,6 +143,17 @@ class VideoDetailsViewModel : CoreViewModel() {
     fun initData(video: BiliVideoModel) {
         mLoadingStatusLiveData.value = LoadingStatus.loadingStatus()
         mBiliResourceModelLiveData.value = video
+
+        // 记录到历史记录
+        viewModelScope.launch {
+            viewHistoryRepository.addViewHistory(
+                bvid = video.bvid,
+                title = video.title,
+                cover = video.cover,
+                author = video.author
+            )
+        }
+
         val callback = object : IServerCallback<BiliVideoData> {
             override fun onSuccess(httpCode: Int, code: Int, message: String, data: BiliVideoData) {
                 mBiliVideoPageListLiveData.postValue(data.pages.map {

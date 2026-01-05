@@ -12,12 +12,14 @@ import cc.kafuu.bilidownload.common.room.dao.DownloadDashDao
 import cc.kafuu.bilidownload.common.room.dao.DownloadResourceDao
 import cc.kafuu.bilidownload.common.room.dao.DownloadTaskDao
 import cc.kafuu.bilidownload.common.room.dao.SearchRecordDao
+import cc.kafuu.bilidownload.common.room.dao.ViewHistoryDao
 import cc.kafuu.bilidownload.common.room.entity.BiliVideoMainEntity
 import cc.kafuu.bilidownload.common.room.entity.BiliVideoPartEntity
 import cc.kafuu.bilidownload.common.room.entity.DownloadDashEntity
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.room.entity.SearchRecordEntity
+import cc.kafuu.bilidownload.common.room.entity.ViewHistoryEntity
 
 @Database(
     entities =
@@ -27,13 +29,15 @@ import cc.kafuu.bilidownload.common.room.entity.SearchRecordEntity
             DownloadTaskEntity::class,
             DownloadResourceEntity::class,
             DownloadDashEntity::class,
-            SearchRecordEntity::class
+            SearchRecordEntity::class,
+            ViewHistoryEntity::class
         ],
     exportSchema = true,
-    version = 3,
+    version = 4,
     autoMigrations = [
         AutoMigration(from = 1, to = 2, spec = AutoMigrationSpecVersion1To2::class),
-        AutoMigration(from = 2, to = 3)
+        AutoMigration(from = 2, to = 3),
+        AutoMigration(from = 3, to = 4)
     ]
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -57,6 +61,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun biliVideoDao(): BiliVideoDao
     abstract fun downloadDashDao(): DownloadDashDao
     abstract fun searchRecordDao(): SearchRecordDao
+    abstract fun viewHistoryDao(): ViewHistoryDao
 }
 
 
