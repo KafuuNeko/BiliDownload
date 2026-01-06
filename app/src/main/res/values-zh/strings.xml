@@ -159,4 +159,6 @@
     <string name="danmaku_type_precise">精准定位</string>
     <string name="danmaku_type_advanced">高级弹幕</string>
     <string name="danmaku_type_unknown">未知类型</string>
+    <string name="text_download_danmaku">下载弹幕</string>
+    <string name="download_danmaku_confirm_message">是否下载弹幕到CSV文件？</string>
 </resources>

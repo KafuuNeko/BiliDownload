@@ -49,6 +49,10 @@ class VideoDetailsViewModel : CoreViewModel() {
             val bvid: String?
         ) : ViewAction()
 
+        class ShowDownloadDanmakuConfirmAction(
+            val part: BiliVideoPartModel
+        ) : ViewAction()
+
         class ExportDanmakuAction(val danmakuList: List<BiliXmlDanmaku>) : ViewAction()
     }
 
@@ -377,7 +381,15 @@ class VideoDetailsViewModel : CoreViewModel() {
             popMessage(ToastMessageAction(CommonLibs.getString(R.string.danmaku_downloading_message)))
             return
         }
+        // 发送确认对话框 ViewAction
+        sendViewAction(ShowDownloadDanmakuConfirmAction(part))
+    }
 
+    /**
+     * 确认下载弹幕（由 Activity 调用）
+     * @param part 视频片段
+     */
+    fun confirmDownloadDanmaku(part: BiliVideoPartModel) {
         viewModelScope.launch {
             mDownloadingDanmakuPartLiveData.value = part
 

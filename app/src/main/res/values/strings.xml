@@ -159,4 +159,6 @@
     <string name="danmaku_type_precise">Precise Positioning</string>
     <string name="danmaku_type_advanced">Advanced Danmaku</string>
     <string name="danmaku_type_unknown">Unknown Type</string>
+    <string name="text_download_danmaku">Download Danmaku</string>
+    <string name="download_danmaku_confirm_message">Do you want to download danmaku to CSV file?</string>
 </resources>

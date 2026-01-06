@@ -158,11 +158,21 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
     }
 
     override fun onViewAction(action: ViewAction) = when (action) {
-        is VideoDetailsViewModel.Companion.ExportDanmakuAction -> onExportDanmaku(action)
-        is VideoDetailsViewModel.Companion.SaveCoverAction -> onSaveCover(action)
-        is VideoDetailsViewModel.Companion.ShowSaveCoverConfirmAction -> onShowSaveCoverConfirm(
-            action
-        )
+        is VideoDetailsViewModel.Companion.ExportDanmakuAction -> {
+            onExportDanmaku(action)
+        }
+
+        is VideoDetailsViewModel.Companion.SaveCoverAction -> {
+            onSaveCover(action)
+        }
+
+        is VideoDetailsViewModel.Companion.ShowSaveCoverConfirmAction -> {
+            onShowSaveCoverConfirm(action)
+        }
+
+        is VideoDetailsViewModel.Companion.ShowDownloadDanmakuConfirmAction -> {
+            onShowDownloadDanmakuConfirm(action)
+        }
 
         else -> super.onViewAction(action)
     }
@@ -190,6 +200,22 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
             ).showAndWaitResult(this@VideoDetailsActivity)
             if (result is ResultWrapper.Success && result.value) {
                 mViewModel.confirmSaveCover(action.coverUrl, action.bvid)
+            }
+        }
+    }
+
+    private fun onShowDownloadDanmakuConfirm(
+        action: VideoDetailsViewModel.Companion.ShowDownloadDanmakuConfirmAction
+    ) {
+        lifecycleScope.launch {
+            val result = ConfirmDialog.buildDialog(
+                CommonLibs.getString(R.string.text_download_danmaku),
+                CommonLibs.getString(R.string.download_danmaku_confirm_message),
+                CommonLibs.getString(R.string.text_cancel),
+                CommonLibs.getString(R.string.text_confirm)
+            ).showAndWaitResult(this@VideoDetailsActivity)
+            if (result is ResultWrapper.Success && result.value) {
+                mViewModel.confirmDownloadDanmaku(action.part)
             }
         }
     }
