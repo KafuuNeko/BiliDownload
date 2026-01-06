@@ -258,6 +258,6 @@ object DownloadManager {
         mTaskEntityMap[groupId] = task
         mCoroutineScope.launch { DownloadRepository.update(task) }
 
-        Log.d(TAG, "Task [G${task.groupId}] start download")
+        Log.d(TAG, "Task [G${task.groupId}] start download, resourcesUrls: $resourceUrls")
     }
 }

@@ -10,6 +10,7 @@ import cc.kafuu.bilidownload.common.manager.AccountManager
 import cc.kafuu.bilidownload.common.model.TaskStatus
 import cc.kafuu.bilidownload.common.network.NetworkConfig
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
+import cc.kafuu.bilidownload.feature.compose.activity.DownloadSourceActivity
 import cc.kafuu.bilidownload.feature.compose.activity.QrLoginActivity
 import cc.kafuu.bilidownload.feature.viewbinding.view.activity.PersonalDetailsActivity
 import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.ConfirmDialog
@@ -32,6 +33,10 @@ class MeViewModel : CoreViewModel() {
 
     fun jumpSourceRepository() {
         CommonLibs.jumpToUrl(NetworkConfig.SOURCE_REPOSITORY_URL)
+    }
+
+    fun jumpDownloadSourceSettings() {
+        startActivity(DownloadSourceActivity::class.java)
     }
 
     fun jumpOpenSourceLicenses() {

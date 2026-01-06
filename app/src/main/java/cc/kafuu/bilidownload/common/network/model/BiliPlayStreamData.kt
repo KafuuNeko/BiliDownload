@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload.common.network.model
 
+import cc.kafuu.bilidownload.common.manager.DownloadSourceConfig
 import com.google.gson.annotations.SerializedName
 import java.io.Serializable
 
@@ -61,11 +62,8 @@ data class BiliPlayStreamResource(
     val codecId: Long
 ) : Serializable {
     fun getStreamUrl(): String {
-        baseUrl?.let { return it }
-        if (!backupUrl.isNullOrEmpty()) {
-            return backupUrl[0]
-        }
-        throw IllegalArgumentException("No stream url")
+        val selectedUrl = DownloadSourceConfig.selectDownloadUrl(baseUrl, backupUrl)
+        return selectedUrl ?: throw IllegalArgumentException("No stream url")
     }
 }
 

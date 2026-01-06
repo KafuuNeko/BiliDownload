@@ -161,4 +161,6 @@
     <string name="danmaku_type_unknown">未知类型</string>
     <string name="text_download_danmaku">下载弹幕</string>
     <string name="download_danmaku_confirm_message">是否下载弹幕到CSV文件？</string>
+    <string name="download_source_settings">下载源设置</string>
+    <string name="download_source_description">选择下载CDN源，海外用户可使用 Akamai CDN（需代理）或国内云CDN。推荐使用 bilivideo.com 结尾的节点，连接质量更佳。</string>
 </resources>
