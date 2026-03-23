@@ -161,4 +161,6 @@
     <string name="danmaku_type_unknown">未知类型</string>
     <string name="text_download_danmaku">下载弹幕</string>
     <string name="download_danmaku_confirm_message">是否下载弹幕到CSV文件？</string>
+    <string name="text_play">播放</string>
+    <string name="speed_indicator">▶▶ %1$.1fx</string>
 </resources>

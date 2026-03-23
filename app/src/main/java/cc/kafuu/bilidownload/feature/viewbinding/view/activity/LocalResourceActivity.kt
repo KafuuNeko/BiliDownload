@@ -14,6 +14,7 @@ import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
 import cc.kafuu.bilidownload.common.utils.FileUtils
 import cc.kafuu.bilidownload.databinding.ActivityLocalResourceBinding
+import cc.kafuu.bilidownload.feature.compose.activity.MediaPlayerActivity
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity.LocalResourceVideModel
 import kotlinx.coroutines.launch
 
@@ -86,6 +87,7 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
     override fun onViewAction(action: ViewAction) = when (action) {
         is LocalResourceVideModel.Companion.ShareResourceAction -> onShareResource(action)
         is LocalResourceVideModel.Companion.ExportResourceAction -> onExportResource(action)
+        is LocalResourceVideModel.Companion.PlayResourceAction -> onPlayResource(action)
         else -> super.onViewAction(action)
     }
 
@@ -95,5 +97,11 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
 
     private fun onShareResource(action: LocalResourceVideModel.Companion.ShareResourceAction) {
         FileUtils.tryShareFile(this, action.title, action.file, action.mimetype)
+    }
+
+    private fun onPlayResource(action: LocalResourceVideModel.Companion.PlayResourceAction) {
+        val intent = MediaPlayerActivity.buildIntent(action.filePath, action.title)
+        intent.setClass(this, MediaPlayerActivity::class.java)
+        startActivity(intent)
     }
 }

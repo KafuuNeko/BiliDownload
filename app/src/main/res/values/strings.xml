@@ -161,4 +161,6 @@
     <string name="danmaku_type_unknown">Unknown Type</string>
     <string name="text_download_danmaku">Download Danmaku</string>
     <string name="download_danmaku_confirm_message">Do you want to download danmaku to CSV file?</string>
+    <string name="text_play">Play</string>
+    <string name="speed_indicator">▶▶ %1$.1fx</string>
 </resources>

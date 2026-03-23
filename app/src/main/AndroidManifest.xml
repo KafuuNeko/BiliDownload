@@ -78,6 +78,12 @@
             android:configChanges="orientation|screenSize"
             android:exported="false" />
 
+        <activity
+            android:name=".feature.compose.activity.MediaPlayerActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:exported="false"
+            android:theme="@style/Theme.BiliDownload" />
+
         <service
             android:name=".service.DownloadService"
             android:foregroundServiceType="dataSync" />

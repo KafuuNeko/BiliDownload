@@ -153,6 +153,11 @@ dependencies {
     // kotpref
     implementation(libs.kotpref)
 
+    // Media3 ExoPlayer
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.ui)
+    implementation(libs.media3.session)
+
     implementation(libs.arthenica.smart.exception.java)
 
     testImplementation(libs.junit)

@@ -41,6 +41,11 @@ class LocalResourceVideModel : CoreViewModel() {
             val name: String,
             val mimetype: String
         ) : ViewAction()
+
+        class PlayResourceAction(
+            val filePath: String,
+            val title: String
+        ) : ViewAction()
     }
 
     // 此页面加载状态，loading状态将显示加载动画（默认开启）
@@ -126,6 +131,20 @@ class LocalResourceVideModel : CoreViewModel() {
                 taskDetail.title,
                 File(resource.file),
                 resource.mimeType
+            )
+        )
+    }
+
+    /**
+     * @brief 尝试播放此资源
+     */
+    fun tryPlayResource() {
+        val taskDetail = mTaskDetailLiveData.value ?: return
+        val resource = mResourceLiveData.value ?: return
+        sendViewAction(
+            PlayResourceAction(
+                filePath = resource.file,
+                title = "${taskDetail.title} - ${resource.name}"
             )
         )
     }
