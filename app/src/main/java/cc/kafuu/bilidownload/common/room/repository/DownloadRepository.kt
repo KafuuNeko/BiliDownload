@@ -198,4 +198,8 @@ object DownloadRepository {
     suspend fun getDownloadTaskByTaskId(id: Long) = run {
         mDownloadTaskDao.getDownloadTaskByTaskId(id)
     }
+
+    suspend fun queryResourcesForExport(taskId: Long) = run {
+        mDownloadResourceDao.queryResourcesByTaskId(taskId)
+    }
 }

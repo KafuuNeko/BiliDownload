@@ -40,7 +40,21 @@
             android:clickable="true"
             android:focusable="true"
             android:foreground="?attr/selectableItemBackground"
-            android:onClick="@{()->viewModel.entryHistoryDetails(data)}">
+            android:onClick="@{()->viewModel.entryHistoryDetails(data)}"
+            android:onLongClick="@{(v)->viewModel.onItemLongClick(data)}">
+
+            <CheckBox
+                android:id="@+id/cb_select"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:clickable="false"
+                android:focusable="false"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:visibility="visible" />
 
             <ImageView
                 android:id="@+id/iv_video_cover"
@@ -50,7 +64,7 @@
                 android:layout_width="80dp"
                 android:layout_height="80dp"
                 android:contentDescription="@string/iv_video_cover_content_description"
-                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/cb_select"
                 app:layout_constraintTop_toTopOf="parent"
                 tools:src="@drawable/ic_2233" />
 

@@ -163,4 +163,13 @@
     <string name="download_danmaku_confirm_message">是否下载弹幕到CSV文件？</string>
     <string name="text_play">播放</string>
     <string name="speed_indicator">▶▶ %1$.1fx</string>
+    <string name="multi_select_count">已选择 %d 项</string>
+    <string name="batch_delete_confirm_message">确定删除所选的 %d 个下载记录吗？点击删除后将立即删除记录和对应的数据，操作不可撤销。</string>
+    <string name="batch_export_progress_title">导出中…</string>
+    <string name="batch_export_progress_message">正在导出 %1$d / %2$d</string>
+    <string name="batch_export_success_message">成功导出 %d 个资源</string>
+    <string name="batch_export_failed_message">导出失败：%s</string>
+    <string name="batch_export_no_resource_message">所选项目中未找到可导出的资源</string>
+    <string name="text_select_all">全选</string>
+    <string name="text_share">分享</string>
 </resources>

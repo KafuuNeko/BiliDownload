@@ -163,4 +163,13 @@
     <string name="download_danmaku_confirm_message">Do you want to download danmaku to CSV file?</string>
     <string name="text_play">Play</string>
     <string name="speed_indicator">▶▶ %1$.1fx</string>
+    <string name="multi_select_count">Selected %d</string>
+    <string name="batch_delete_confirm_message">Are you sure to delete the selected %d download records? This will immediately remove the records and corresponding data, and this action cannot be undone.</string>
+    <string name="batch_export_progress_title">Exporting…</string>
+    <string name="batch_export_progress_message">Exporting %1$d / %2$d</string>
+    <string name="batch_export_success_message">Successfully exported %d resources</string>
+    <string name="batch_export_failed_message">Export failed: %s</string>
+    <string name="batch_export_no_resource_message">No exportable resources found for the selected items</string>
+    <string name="text_select_all">Select All</string>
+    <string name="text_share">Share</string>
 </resources>

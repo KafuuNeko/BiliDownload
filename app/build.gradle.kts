@@ -102,6 +102,7 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.material)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.documentfile)
     implementation(libs.design)
 
     implementation(libs.androidx.activity.compose)
