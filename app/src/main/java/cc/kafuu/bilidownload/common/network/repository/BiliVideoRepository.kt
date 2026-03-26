@@ -11,13 +11,18 @@ import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
 import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
+import cc.kafuu.bilidownload.common.network.model.BiliSubtitleListContainer
+import cc.kafuu.bilidownload.common.network.model.BccSubtitle
 import cc.kafuu.bilidownload.common.network.service.BiliApiService
+import com.google.gson.Gson
 import cc.kafuu.bilidownload.common.network.service.BiliOriginalContentService
 import cc.kafuu.bilidownload.common.utils.NetworkUtils
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Response
 import com.google.gson.JsonParser
+import cc.kafuu.bilidownload.common.network.NetworkConfig
+import cc.kafuu.bilidownload.common.network.manager.WbiManager
 
 class BiliVideoRepository(
     private val biliApiService: BiliApiService,
@@ -296,5 +301,91 @@ class BiliVideoRepository(
                 callback.onFailure(httpCode, code, message)
             }
         })
+    }
+
+    /**
+     * 请求字幕列表
+     */
+    fun requestSubtitleList(
+        cid: Long,
+        bvid: String,
+        callback: IServerCallback<BiliSubtitleListContainer>
+    ) {
+        val params = linkedMapOf<String, Any>(
+            "bvid" to bvid,
+            "cid" to cid
+        )
+        WbiManager.asyncGenerateSignature(params, object : IServerCallback<String> {
+            override fun onSuccess(httpCode: Int, code: Int, message: String, data: String) {
+                val fullUrl = NetworkConfig.buildFullUrl("/x/player/wbi/v2", data)
+                biliOriginalContentService.requestSubtitleList(fullUrl)
+                    .enqueue(object : retrofit2.Callback<ResponseBody> {
+                        override fun onResponse(
+                            p0: Call<ResponseBody?>,
+                            p1: Response<ResponseBody?>
+                        ) {
+                            try {
+                                val bodyString = p1.body()?.string() ?: run {
+                                    callback.onFailure(p1.code(), 0, CommonLibs.getString(R.string.error_unable_to_retrieve_content))
+                                    return
+                                }
+                                val container = Gson().fromJson(bodyString, BiliSubtitleListContainer::class.java)
+                                if (container.isSuccess()) {
+                                    callback.onSuccess(p1.code(), container.code, container.message, container)
+                                } else {
+                                    callback.onFailure(p1.code(), container.code, container.message)
+                                }
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                                callback.onFailure(0, 0, e.message ?: CommonLibs.getString(R.string.error_unknown))
+                            }
+                        }
+
+                        override fun onFailure(p0: Call<ResponseBody?>, p1: Throwable) {
+                            p1.printStackTrace()
+                            callback.onFailure(0, 0, p1.message ?: CommonLibs.getString(R.string.error_unknown))
+                        }
+                    })
+            }
+
+            override fun onFailure(httpCode: Int, code: Int, message: String) {
+                callback.onFailure(httpCode, code, message)
+            }
+        })
+    }
+
+    /**
+     * 请求具体字幕文件数据，并解析为BccSubtitle
+     */
+    fun requestSubtitleData(
+        url: String,
+        callback: IServerCallback<BccSubtitle>
+    ) {
+        // url可能是 //aisubtitle.hdslb.com/...
+        val fullUrl = if (url.startsWith("//")) "https:$url" else url
+        biliOriginalContentService.requestSubtitleData(fullUrl)
+            .enqueue(object : retrofit2.Callback<ResponseBody> {
+                override fun onResponse(
+                    p0: Call<ResponseBody?>,
+                    p1: Response<ResponseBody?>
+                ) {
+                    try {
+                        val bodyString = p1.body()?.string() ?: run {
+                            callback.onFailure(p1.code(), 0, CommonLibs.getString(R.string.error_unable_to_retrieve_content))
+                            return
+                        }
+                        val bccSubtitle = Gson().fromJson(bodyString, BccSubtitle::class.java)
+                        callback.onSuccess(p1.code(), 0, "", bccSubtitle)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        callback.onFailure(0, 0, e.message ?: CommonLibs.getString(R.string.error_unknown))
+                    }
+                }
+
+                override fun onFailure(p0: Call<ResponseBody?>, p1: Throwable) {
+                    p1.printStackTrace()
+                    callback.onFailure(0, 0, p1.message ?: CommonLibs.getString(R.string.error_unknown))
+                }
+            })
     }
 }

@@ -29,7 +29,10 @@ import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
 import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
+import cc.kafuu.bilidownload.common.network.model.BiliSubtitleListContainer
+import cc.kafuu.bilidownload.common.network.model.BccSubtitle
 import cc.kafuu.bilidownload.common.utils.DanmakuExportUtils
+import cc.kafuu.bilidownload.common.utils.SubtitleExportUtils
 import cc.kafuu.bilidownload.common.utils.TimeUtils
 import cc.kafuu.bilidownload.feature.viewbinding.view.activity.PersonalDetailsActivity
 import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.BiliPartDialog
@@ -53,7 +56,13 @@ class VideoDetailsViewModel : CoreViewModel() {
             val part: BiliVideoPartModel
         ) : ViewAction()
 
+        class ShowDownloadSubtitleConfirmAction(
+            val part: BiliVideoPartModel
+        ) : ViewAction()
+
         class ExportDanmakuAction(val danmakuList: List<BiliXmlDanmaku>) : ViewAction()
+
+        class ExportSubtitleAction(val bccSubtitle: BccSubtitle) : ViewAction()
     }
 
     private val mLoadingStatusLiveData = MutableLiveData(LoadingStatus.waitStatus())
@@ -91,6 +100,10 @@ class VideoDetailsViewModel : CoreViewModel() {
     // 正在下载弹幕的片段
     private val mDownloadingDanmakuPartLiveData = MutableLiveData<BiliVideoPartModel?>()
     val downloadingDanmakuPartLiveData = mDownloadingDanmakuPartLiveData.liveData()
+
+    // 正在下载字幕的片段
+    private val mDownloadingSubtitlePartLiveData = MutableLiveData<BiliVideoPartModel?>()
+    val downloadingSubtitlePartLiveData = mDownloadingSubtitlePartLiveData.liveData()
 
     fun initData(media: BiliMediaModel) {
         mLoadingStatusLiveData.value = LoadingStatus.loadingStatus()
@@ -377,6 +390,10 @@ class VideoDetailsViewModel : CoreViewModel() {
      * @param part 视频片段
      */
     fun onDownloadDanmaku(part: BiliVideoPartModel) {
+        if (AccountManager.accountLiveData.value == null) {
+            popMessage(ToastMessageAction(CommonLibs.getString(R.string.please_login_to_your_account_first)))
+            return
+        }
         if (mDownloadingDanmakuPartLiveData.value != null) {
             popMessage(ToastMessageAction(CommonLibs.getString(R.string.danmaku_downloading_message)))
             return
@@ -516,6 +533,148 @@ class VideoDetailsViewModel : CoreViewModel() {
                     ToastMessageAction(
                         CommonLibs.getString(
                             R.string.danmaku_export_exception_message,
+                            e.message ?: ""
+                        ), Toast.LENGTH_SHORT
+                    )
+                )
+            }
+        }
+    }
+
+    /**
+     * 下载字幕
+     * @param part 视频片段
+     */
+    fun onDownloadSubtitle(part: BiliVideoPartModel) {
+        if (AccountManager.accountLiveData.value == null) {
+            popMessage(ToastMessageAction(CommonLibs.getString(R.string.please_login_to_your_account_first)))
+            return
+        }
+        if (mDownloadingSubtitlePartLiveData.value != null) {
+            popMessage(ToastMessageAction(CommonLibs.getString(R.string.subtitle_downloading_message)))
+            return
+        }
+        sendViewAction(ShowDownloadSubtitleConfirmAction(part))
+    }
+
+    /**
+     * 确认下载字幕（由 Activity 调用）
+     */
+    fun confirmDownloadSubtitle(part: BiliVideoPartModel) {
+        viewModelScope.launch {
+            mDownloadingSubtitlePartLiveData.value = part
+            try {
+                // 1. 请求字幕列表
+                val container = requestSubtitleList(part)
+                if (container is ResultWrapper.Error) {
+                    popMessage(ToastMessageAction(container.error, Toast.LENGTH_SHORT))
+                    return@launch
+                }
+
+                val listData = (container as ResultWrapper.Success).value
+                val subtitles = listData.data?.subtitle?.subtitles
+                if (subtitles.isNullOrEmpty()) {
+                    popMessage(ToastMessageAction(CommonLibs.getString(R.string.subtitle_no_subtitle_message), Toast.LENGTH_SHORT))
+                    return@launch
+                }
+                
+                // 优先选择中文(zh-CN)，其次选第一个
+                val targetSubtitle = subtitles.find { it.lan == "zh-CN" } ?: subtitles.first()
+                val subtitleUrl = targetSubtitle.subtitleUrl
+                
+                // 2. 请求BCC字幕数据
+                when (val result = requestBccSubtitleData(subtitleUrl)) {
+                    is ResultWrapper.Error -> {
+                        popMessage(ToastMessageAction(result.error, Toast.LENGTH_SHORT))
+                    }
+                    is ResultWrapper.Success -> {
+                        val bccSubtitle = result.value
+                        if (bccSubtitle.body.isNullOrEmpty()) {
+                            popMessage(ToastMessageAction(CommonLibs.getString(R.string.subtitle_no_subtitle_message), Toast.LENGTH_SHORT))
+                        } else {
+                            sendViewAction(ExportSubtitleAction(bccSubtitle))
+                        }
+                    }
+                }
+            } finally {
+                mDownloadingSubtitlePartLiveData.value = null
+            }
+        }
+    }
+
+    private suspend fun requestSubtitleList(part: BiliVideoPartModel) = suspendCancellableCoroutine { co ->
+        val callback = object : IServerCallback<BiliSubtitleListContainer> {
+            override fun onSuccess(
+                httpCode: Int,
+                code: Int,
+                message: String,
+                data: BiliSubtitleListContainer
+            ) {
+                runCatching { co.resume(ResultWrapper.Success(data)) }
+            }
+
+            override fun onFailure(httpCode: Int, code: Int, message: String) {
+                runCatching {
+                    co.resume(ResultWrapper.Error(CommonLibs.getString(R.string.subtitle_fetch_failed_message, message)))
+                }
+            }
+        }
+        NetworkManager.biliVideoRepository.requestSubtitleList(part.cid, part.bvid, callback)
+    }
+
+    private suspend fun requestBccSubtitleData(url: String) = suspendCancellableCoroutine { co ->
+        val callback = object : IServerCallback<BccSubtitle> {
+            override fun onSuccess(
+                httpCode: Int,
+                code: Int,
+                message: String,
+                data: BccSubtitle
+            ) {
+                runCatching { co.resume(ResultWrapper.Success(data)) }
+            }
+
+            override fun onFailure(httpCode: Int, code: Int, message: String) {
+                runCatching {
+                    co.resume(ResultWrapper.Error(CommonLibs.getString(R.string.subtitle_fetch_failed_message, message)))
+                }
+            }
+        }
+        NetworkManager.biliVideoRepository.requestSubtitleData(url, callback)
+    }
+
+    /**
+     * 将字幕导出到用户选择的URI
+     */
+    fun exportSubtitleToUri(uri: Uri, bccSubtitle: BccSubtitle) {
+        viewModelScope.launch {
+            try {
+                val context = CommonLibs.requireContext()
+                val success = context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    SubtitleExportUtils.exportToSrt(bccSubtitle, outputStream)
+                    true
+                } ?: false
+
+                if (success) {
+                    popMessage(
+                        ToastMessageAction(
+                            CommonLibs.getString(R.string.subtitle_export_success_message),
+                            Toast.LENGTH_SHORT
+                        )
+                    )
+                } else {
+                    popMessage(
+                        ToastMessageAction(
+                            CommonLibs.getString(R.string.subtitle_export_failed_message),
+                            Toast.LENGTH_SHORT
+                        )
+                    )
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                popMessage(
+                    ToastMessageAction(
+                        CommonLibs.getString(
+                            R.string.subtitle_export_exception_message,
                             e.message ?: ""
                         ), Toast.LENGTH_SHORT
                     )

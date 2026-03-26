@@ -132,10 +132,16 @@
     <string name="danmaku_downloading_message">Downloading danmaku, please wait…</string>
     <string name="danmaku_fetch_failed_message">Failed to fetch danmaku: %s</string>
     <string name="danmaku_no_danmaku_message">This video has no danmaku</string>
+    <string name="subtitle_downloading_message">Downloading subtitle, please wait…</string>
+    <string name="subtitle_fetch_failed_message">Failed to fetch subtitle: %s</string>
+    <string name="subtitle_no_subtitle_message">This video has no subtitle</string>
     <string name="video_unknown_title">Unknown Video</string>
     <string name="danmaku_export_exception_message">Danmaku export exception: %s</string>
     <string name="danmaku_export_success_message">Danmaku exported successfully</string>
     <string name="danmaku_export_failed_message">Failed to export danmaku</string>
+    <string name="subtitle_export_exception_message">Subtitle export exception: %s</string>
+    <string name="subtitle_export_success_message">Subtitle exported successfully</string>
+    <string name="subtitle_export_failed_message">Failed to export subtitle</string>
     <string name="csv_header_index">Index</string>
     <string name="csv_header_appear_time">Appear Time</string>
     <string name="csv_header_type">Type</string>
@@ -161,6 +167,8 @@
     <string name="danmaku_type_unknown">Unknown Type</string>
     <string name="text_download_danmaku">Download Danmaku</string>
     <string name="download_danmaku_confirm_message">Do you want to download danmaku to CSV file?</string>
+    <string name="text_download_subtitle">Download Subtitle</string>
+    <string name="download_subtitle_confirm_message">Do you want to download subtitle to SRT file?</string>
     <string name="text_play">Play</string>
     <string name="speed_indicator">▶▶ %1$.1fx</string>
     <string name="multi_select_count">Selected %d</string>

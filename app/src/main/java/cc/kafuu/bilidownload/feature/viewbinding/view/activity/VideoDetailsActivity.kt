@@ -22,6 +22,7 @@ import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoPartModel
 import cc.kafuu.bilidownload.common.network.model.BiliXmlDanmaku
+import cc.kafuu.bilidownload.common.network.model.BccSubtitle
 import cc.kafuu.bilidownload.common.utils.FileUtils
 import cc.kafuu.bilidownload.databinding.ActivityVideoDetailsBinding
 import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.ConfirmDialog
@@ -53,9 +54,12 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
 
     // 临时保存弹幕数据，用于在用户选择文件后导出
     private var mPendingDanmakuList: List<BiliXmlDanmaku>? = null
+    // 临时保存字幕数据，用于在用户选择文件后导出
+    private var mPendingBccSubtitle: BccSubtitle? = null
 
     private lateinit var mSaveCoverLauncher: ActivityResultLauncher<Intent>
     private lateinit var mSaveDanmakuLauncher: ActivityResultLauncher<Intent>
+    private lateinit var mSaveSubtitleLauncher: ActivityResultLauncher<Intent>
 
     private var mPendingCoverUrl: String? = null
     private var mPendingFileName: String? = null
@@ -64,6 +68,7 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
         super.onCreate(savedInstanceState)
         initSaveCoverLauncher()
         initSaveDanmakuLauncher()
+        initSaveSubtitleLauncher()
     }
 
     override fun initViews() {
@@ -106,6 +111,23 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
                 }
                 // 清理临时数据
                 mPendingDanmakuList = null
+            }
+        }
+    }
+
+    private fun initSaveSubtitleLauncher() {
+        val contracts = ActivityResultContracts.StartActivityForResult()
+        mSaveSubtitleLauncher = registerForActivityResult(contracts) {
+            if (it.resultCode == RESULT_OK && it.data != null) {
+                val uri = it.data?.data ?: return@registerForActivityResult
+                val bccSubtitle = mPendingBccSubtitle
+                if (bccSubtitle != null) {
+                    lifecycleScope.launch {
+                        mViewModel.exportSubtitleToUri(uri, bccSubtitle)
+                    }
+                }
+                // 清理临时数据
+                mPendingBccSubtitle = null
             }
         }
     }
@@ -174,6 +196,14 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
             onShowDownloadDanmakuConfirm(action)
         }
 
+        is VideoDetailsViewModel.Companion.ShowDownloadSubtitleConfirmAction -> {
+            onShowDownloadSubtitleConfirm(action)
+        }
+
+        is VideoDetailsViewModel.Companion.ExportSubtitleAction -> {
+            onExportSubtitle(action)
+        }
+
         else -> super.onViewAction(action)
     }
 
@@ -188,6 +218,20 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
         }
         // 启动文件选择
         mSaveDanmakuLauncher.launch(intent)
+    }
+
+    private fun onExportSubtitle(action: VideoDetailsViewModel.Companion.ExportSubtitleAction) {
+        // 保存字幕数据
+        mPendingBccSubtitle = action.bccSubtitle
+        // 创建文件选择Intent
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            // SRT subtitle mime type
+            type = "application/x-subrip"
+            putExtra(Intent.EXTRA_TITLE, "${System.currentTimeMillis()}.srt")
+        }
+        // 启动文件选择
+        mSaveSubtitleLauncher.launch(intent)
     }
 
     private fun onShowSaveCoverConfirm(action: VideoDetailsViewModel.Companion.ShowSaveCoverConfirmAction) {
@@ -216,6 +260,22 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
             ).showAndWaitResult(this@VideoDetailsActivity)
             if (result is ResultWrapper.Success && result.value) {
                 mViewModel.confirmDownloadDanmaku(action.part)
+            }
+        }
+    }
+
+    private fun onShowDownloadSubtitleConfirm(
+        action: VideoDetailsViewModel.Companion.ShowDownloadSubtitleConfirmAction
+    ) {
+        lifecycleScope.launch {
+            val result = ConfirmDialog.buildDialog(
+                CommonLibs.getString(R.string.text_download_subtitle),
+                CommonLibs.getString(R.string.download_subtitle_confirm_message),
+                CommonLibs.getString(R.string.text_cancel),
+                CommonLibs.getString(R.string.text_confirm)
+            ).showAndWaitResult(this@VideoDetailsActivity)
+            if (result is ResultWrapper.Success && result.value) {
+                mViewModel.confirmDownloadSubtitle(action.part)
             }
         }
     }

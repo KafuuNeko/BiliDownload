@@ -39,4 +39,19 @@ interface BiliOriginalContentService {
         @Query("segment_index") segmentIndex: Int
     ): Call<ResponseBody>
 
+    /**
+     * 获取视频字幕列表
+     */
+    @GET
+    fun requestSubtitleList(
+        @retrofit2.http.Url url: String
+    ): Call<ResponseBody>
+
+    /**
+     * 下载具体字幕文件 (BCC JSON格式)
+     */
+    @GET
+    fun requestSubtitleData(
+        @retrofit2.http.Url url: String
+    ): Call<ResponseBody>
 }
