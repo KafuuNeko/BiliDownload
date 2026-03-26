@@ -2,6 +2,7 @@
  支持下载bilibili所有视频(用户上传的视频、番剧、电视剧、电影)  
  支持提取视频文件音频(aac)  
  支持转换视频封装格式(flv、mp4、mkv、wmv)  
+ 支持下载视频弹幕、字幕
  
  [<img src="https://play.google.com/intl/en_us/badges/images/generic/en-play-badge.png" alt="Get it on Google Play" height="80">](https://play.google.com/store/apps/details?id=cc.kafuu.bilidownload) 
  [<img alt="Get it on F-Droid" src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" height="80">](https://f-droid.org/packages/cc.kafuu.bilidownload) or [Releases](https://github.com/KafuuNeko/BiliDownload/releases)
