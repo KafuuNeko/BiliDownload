@@ -180,4 +180,12 @@
     <string name="batch_export_no_resource_message">No exportable resources found for the selected items</string>
     <string name="text_select_all">Select All</string>
     <string name="text_share">Share</string>
+    <string name="text_settings">Settings</string>
+    <string name="settings_download_path">Download Path</string>
+    <string name="settings_download_path_internal">Internal Storage</string>
+    <string name="settings_download_path_internal_desc">App private directory (no extra permissions required)</string>
+    <string name="settings_download_path_external">External Storage</string>
+    <string name="settings_download_path_external_desc">Download/BVD directory</string>
+    <string name="settings_download_path_current">Current: %s</string>
+    <string name="settings_permission_denied">Storage permission denied, unable to switch to external directory</string>
 </resources>

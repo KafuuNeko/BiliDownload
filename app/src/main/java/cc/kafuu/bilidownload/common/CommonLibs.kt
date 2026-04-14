@@ -6,11 +6,13 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Environment
 import androidx.annotation.ArrayRes
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
+import cc.kafuu.bilidownload.common.model.AppModel
 import cc.kafuu.bilidownload.common.room.AppDatabase
 import java.io.File
 import androidx.core.net.toUri
@@ -58,7 +60,21 @@ object CommonLibs {
     fun requireDownloadCacheDir(entityId: Long) =
         requireExternalFilesDir("cache", "download/task-e$entityId")
 
-    fun requireResourcesDir() = requireExternalFilesDir("resources")
+    fun requireResourcesDir(): File {
+        return when (AppModel.downloadPathMode) {
+            AppModel.DOWNLOAD_PATH_EXTERNAL -> {
+                val downloadDir = Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOWNLOADS
+                )
+                File(downloadDir, "BVD").apply {
+                    if (!(exists() || mkdirs())) {
+                        throw IllegalStateException("Directory $this cannot be created")
+                    }
+                }
+            }
+            else -> requireExternalFilesDir("resources")
+        }
+    }
 
     fun requireConvertTemporaryDir() = requireExternalFilesDir("temporary", "convert")
 

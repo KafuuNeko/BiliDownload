@@ -180,4 +180,12 @@
     <string name="batch_export_no_resource_message">所选项目中未找到可导出的资源</string>
     <string name="text_select_all">全选</string>
     <string name="text_share">分享</string>
+    <string name="text_settings">设置</string>
+    <string name="settings_download_path">下载路径</string>
+    <string name="settings_download_path_internal">内部存储</string>
+    <string name="settings_download_path_internal_desc">应用私有目录（无需额外权限）</string>
+    <string name="settings_download_path_external">外部存储</string>
+    <string name="settings_download_path_external_desc">Download/BVD 目录</string>
+    <string name="settings_download_path_current">当前：%s</string>
+    <string name="settings_permission_denied">存储权限被拒绝，无法切换到外部目录</string>
 </resources>

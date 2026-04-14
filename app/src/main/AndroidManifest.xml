@@ -6,6 +6,9 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
 
     <application
         android:name=".BiliDownload"
@@ -83,6 +86,11 @@
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:exported="false"
             android:theme="@style/Theme.BiliDownload" />
+
+        <activity
+            android:name=".feature.compose.activity.SettingsActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="false" />
 
         <service
             android:name=".service.DownloadService"
