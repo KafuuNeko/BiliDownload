@@ -3,4 +3,7 @@
     <external-files-path
         name="resources"
         path="resources/" />
+    <external-path
+        name="downloads"
+        path="Download/BVD/" />
 </paths>

@@ -437,7 +437,7 @@
                     android:gravity="center"
                     android:minWidth="100dp"
                     android:minHeight="36dp"
-                    android:onClick="@{()->viewModel.tryShareResource()}"
+                    android:onClick="@{()->viewModel.tryOpenResource()}"
                     android:text="@string/text_open"
                     android:textColor="@color/common_white"
                     android:textSize="@dimen/size_text_button_size" />

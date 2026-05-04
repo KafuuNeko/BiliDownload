@@ -170,6 +170,9 @@
     <string name="text_download_subtitle">下载字幕</string>
     <string name="download_subtitle_confirm_message">是否下载字幕到SRT文件？</string>
     <string name="text_play">播放</string>
+    <string name="text_open_external_player">用其他播放器打开</string>
+    <string name="text_playback_speed">播放倍速</string>
+    <string name="no_external_player_message">未找到可用播放器</string>
     <string name="speed_indicator">▶▶ %1$.1fx</string>
     <string name="multi_select_count">已选择 %d 项</string>
     <string name="batch_delete_confirm_message">确定删除所选的 %d 个下载记录吗？点击删除后将立即删除记录和对应的数据，操作不可撤销。</string>

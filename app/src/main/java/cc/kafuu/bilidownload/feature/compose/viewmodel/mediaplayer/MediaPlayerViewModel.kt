@@ -22,6 +22,7 @@ class MediaPlayerViewModel :
     private var mPlayer: ExoPlayer? = null
     private var mProgressJob: Job? = null
     private var mAutoHideJob: Job? = null
+    private var mSelectedPlaybackSpeed = 1.0f
 
     private fun createPlayerListener() = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
@@ -70,6 +71,7 @@ class MediaPlayerViewModel :
         MediaPlayerUiState.Playing(
             title = intent.title,
             filePath = intent.filePath,
+            mimeType = intent.mimeType,
             player = player,
         ).setup()
 
@@ -79,6 +81,19 @@ class MediaPlayerViewModel :
         player.prepare()
         player.playWhenReady = true
 
+        scheduleAutoHide()
+    }
+
+    @UiIntentObserver(MediaPlayerUiIntent.SetPlaybackSpeed::class)
+    fun onSetPlaybackSpeed(intent: MediaPlayerUiIntent.SetPlaybackSpeed) {
+        val speed = intent.speed
+        mSelectedPlaybackSpeed = speed
+        mPlayer?.setPlaybackSpeed(speed)
+        getOrNull<MediaPlayerUiState.Playing>()?.copy(
+            playbackSpeed = speed,
+            selectedPlaybackSpeed = speed,
+            isLongPressing = false
+        )?.setup()
         scheduleAutoHide()
     }
 
@@ -133,12 +148,14 @@ class MediaPlayerViewModel :
 
     @UiIntentObserver(MediaPlayerUiIntent.LongPressEnd::class)
     fun onLongPressEnd() {
-        val speed = 1.0f
+        val state = getOrNull<MediaPlayerUiState.Playing>() ?: return
+        if (!state.isLongPressing) return
+        val speed = mSelectedPlaybackSpeed
         mPlayer?.setPlaybackSpeed(speed)
-        getOrNull<MediaPlayerUiState.Playing>()?.copy(
+        state.copy(
             isLongPressing = false,
             playbackSpeed = speed
-        )?.setup()
+        ).setup()
     }
 
     @UiIntentObserver(MediaPlayerUiIntent.ToggleControls::class)
@@ -155,6 +172,17 @@ class MediaPlayerViewModel :
         val newFullScreen = !state.isFullScreen
         state.copy(isFullScreen = newFullScreen).setup()
         MediaPlayerUiEvent.SetFullScreen(newFullScreen).send()
+        scheduleAutoHide()
+    }
+
+    @UiIntentObserver(MediaPlayerUiIntent.OpenWithOtherPlayer::class)
+    fun onOpenWithOtherPlayer() = viewModelScope.launch {
+        val state = getOrNull<MediaPlayerUiState.Playing>() ?: return@launch
+        MediaPlayerUiEvent.OpenWithOtherPlayer(
+            filePath = state.filePath,
+            title = state.title,
+            mimeType = state.mimeType
+        ).send()
         scheduleAutoHide()
     }
 

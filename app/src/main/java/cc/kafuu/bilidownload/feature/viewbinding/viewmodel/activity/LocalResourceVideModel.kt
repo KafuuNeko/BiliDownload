@@ -32,7 +32,7 @@ class LocalResourceVideModel : CoreViewModel() {
     companion object {
         private const val TAG = "LocalResourceVideModel"
 
-        class ShareResourceAction(
+        class OpenResourceAction(
             val title: String, val file: File, val mimetype: String
         ) : ViewAction()
 
@@ -44,7 +44,8 @@ class LocalResourceVideModel : CoreViewModel() {
 
         class PlayResourceAction(
             val filePath: String,
-            val title: String
+            val title: String,
+            val mimetype: String
         ) : ViewAction()
     }
 
@@ -121,13 +122,13 @@ class LocalResourceVideModel : CoreViewModel() {
     }
 
     /**
-     * @brief 尝试询问用户如何分享此资源
+     * @brief 尝试询问用户使用其他应用打开此资源
      */
-    fun tryShareResource() {
+    fun tryOpenResource() {
         val taskDetail = mTaskDetailLiveData.value ?: return
         val resource = mResourceLiveData.value ?: return
         sendViewAction(
-            ShareResourceAction(
+            OpenResourceAction(
                 taskDetail.title,
                 File(resource.file),
                 resource.mimeType
@@ -144,7 +145,8 @@ class LocalResourceVideModel : CoreViewModel() {
         sendViewAction(
             PlayResourceAction(
                 filePath = resource.file,
-                title = "${taskDetail.title} - ${resource.name}"
+                title = "${taskDetail.title} - ${resource.name}",
+                mimetype = resource.mimeType
             )
         )
     }

@@ -8,11 +8,13 @@ sealed class MediaPlayerUiState {
     data class Playing(
         val title: String,
         val filePath: String,
+        val mimeType: String,
         val player: ExoPlayer,
         val isPlaying: Boolean = false,
         val currentPosition: Long = 0L,
         val duration: Long = 0L,
         val playbackSpeed: Float = 1.0f,
+        val selectedPlaybackSpeed: Float = 1.0f,
         val isLongPressing: Boolean = false,
         val isSeekBarDragging: Boolean = false,
         val showControls: Boolean = true,

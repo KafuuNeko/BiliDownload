@@ -20,15 +20,19 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -267,7 +271,7 @@ private fun BottomControls(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // 播放按钮、时间、全屏按钮
+        // 播放按钮、时间、倍速、外部播放器、全屏按钮
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -275,7 +279,10 @@ private fun BottomControls(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
                 IconButton(
                     onClick = { onIntent(MediaPlayerUiIntent.TogglePlayPause) },
                     modifier = Modifier.size(40.dp)
@@ -294,26 +301,103 @@ private fun BottomControls(
                 Text(
                     text = "${formatTime(state.currentPosition)} / ${formatTime(state.duration)}",
                     color = Color.White,
-                    fontSize = 13.sp
+                    fontSize = 13.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
                 )
             }
 
-            // 全屏切换按钮
-            IconButton(
-                onClick = { onIntent(MediaPlayerUiIntent.ToggleFullScreen) },
-                modifier = Modifier.size(40.dp)
-            ) {
-                Icon(
-                    painter = painterResource(
-                        if (state.isFullScreen) R.drawable.ic_media_fullscreen_exit
-                        else R.drawable.ic_media_fullscreen
-                    ),
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                SpeedControl(state, onIntent)
+
+                // 用其他播放器打开
+                IconButton(
+                    onClick = { onIntent(MediaPlayerUiIntent.OpenWithOtherPlayer) },
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_open_external),
+                        contentDescription = stringResource(R.string.text_open_external_player),
+                        tint = Color.White,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                // 全屏切换按钮
+                IconButton(
+                    onClick = { onIntent(MediaPlayerUiIntent.ToggleFullScreen) },
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            if (state.isFullScreen) R.drawable.ic_media_fullscreen_exit
+                            else R.drawable.ic_media_fullscreen
+                        ),
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SpeedControl(
+    state: MediaPlayerUiState.Playing,
+    onIntent: (MediaPlayerUiIntent) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val speedOptions = listOf(1.0f, 2.0f, 4.0f, 8.0f, 16.0f)
+
+    Box {
+        TextButton(
+            onClick = { expanded = true },
+            modifier = Modifier.size(width = 52.dp, height = 40.dp)
+        ) {
+            Text(
+                text = formatSpeed(state.selectedPlaybackSpeed),
+                color = Color.White,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.background(Color.Black.copy(alpha = 0.9f))
+        ) {
+            speedOptions.forEach { speed ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = formatSpeed(speed),
+                            color = if (speed == state.selectedPlaybackSpeed) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                Color.White
+                            }
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        onIntent(MediaPlayerUiIntent.SetPlaybackSpeed(speed))
+                    }
                 )
             }
         }
+    }
+}
+
+private fun formatSpeed(speed: Float): String {
+    return if (speed % 1.0f == 0f) {
+        "${speed.toInt()}x"
+    } else {
+        "${String.format("%.1f", speed)}x"
     }
 }
 

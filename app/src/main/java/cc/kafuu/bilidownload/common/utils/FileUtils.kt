@@ -1,5 +1,7 @@
 package cc.kafuu.bilidownload.common.utils
 
+import android.content.ActivityNotFoundException
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -54,6 +56,46 @@ object FileUtils {
         context.startActivity(
             Intent.createChooser(intent, title)
         )
+    }
+
+    /**
+     * 尝试使用其他应用打开文件
+     *
+     * @param context 上下文对象
+     * @param title 应用选择器标题
+     * @param file 要打开的文件
+     * @param mimetype 文件的MIME类型
+     * @return 是否成功启动系统应用选择器
+     */
+    fun tryOpenFileWithOtherApp(
+        context: Context,
+        title: String,
+        file: File,
+        mimetype: String
+    ): Boolean {
+        if (!file.exists()) return false
+        return try {
+            val uri: Uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
+
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, mimetype)
+                clipData = ClipData.newUri(context.contentResolver, file.name, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+
+            context.startActivity(Intent.createChooser(intent, title))
+            true
+        } catch (_: ActivityNotFoundException) {
+            false
+        } catch (_: IllegalArgumentException) {
+            false
+        } catch (_: SecurityException) {
+            false
+        }
     }
 
     /**

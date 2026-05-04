@@ -3,6 +3,7 @@ package cc.kafuu.bilidownload.feature.viewbinding.view.activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.KeyEvent
+import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
@@ -85,7 +86,7 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
     }
 
     override fun onViewAction(action: ViewAction) = when (action) {
-        is LocalResourceVideModel.Companion.ShareResourceAction -> onShareResource(action)
+        is LocalResourceVideModel.Companion.OpenResourceAction -> onOpenResource(action)
         is LocalResourceVideModel.Companion.ExportResourceAction -> onExportResource(action)
         is LocalResourceVideModel.Companion.PlayResourceAction -> onPlayResource(action)
         else -> super.onViewAction(action)
@@ -95,12 +96,15 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
         FileUtils.tryExportFile(action.file, action.name, action.mimetype, mCreateDocumentLauncher)
     }
 
-    private fun onShareResource(action: LocalResourceVideModel.Companion.ShareResourceAction) {
-        FileUtils.tryShareFile(this, action.title, action.file, action.mimetype)
+    private fun onOpenResource(action: LocalResourceVideModel.Companion.OpenResourceAction) {
+        val opened = FileUtils.tryOpenFileWithOtherApp(this, action.title, action.file, action.mimetype)
+        if (!opened) {
+            Toast.makeText(this, R.string.no_external_player_message, Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun onPlayResource(action: LocalResourceVideModel.Companion.PlayResourceAction) {
-        val intent = MediaPlayerActivity.buildIntent(action.filePath, action.title)
+        val intent = MediaPlayerActivity.buildIntent(action.filePath, action.title, action.mimetype)
         intent.setClass(this, MediaPlayerActivity::class.java)
         startActivity(intent)
     }
