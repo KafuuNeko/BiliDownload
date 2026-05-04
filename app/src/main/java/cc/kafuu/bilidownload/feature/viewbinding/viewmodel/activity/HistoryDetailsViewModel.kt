@@ -3,8 +3,8 @@ package cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity
 import androidx.lifecycle.MutableLiveData
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.core.viewbinding.CoreViewModel
-import cc.kafuu.bilidownload.common.ext.limit
 import cc.kafuu.bilidownload.common.ext.liveData
+import cc.kafuu.bilidownload.common.manager.DownloadManager
 import cc.kafuu.bilidownload.common.model.DownloadStatus
 import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.common.model.action.ViewAction
@@ -12,9 +12,8 @@ import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
 import cc.kafuu.bilidownload.common.utils.FileUtils
-import cc.kafuu.bilidownload.service.DownloadService
 import cc.kafuu.bilidownload.feature.viewbinding.view.activity.LocalResourceActivity
-import com.arialyy.aria.core.Aria
+import cc.kafuu.bilidownload.service.DownloadService
 import kotlinx.coroutines.runBlocking
 
 class HistoryDetailsViewModel : CoreViewModel() {
@@ -71,12 +70,15 @@ class HistoryDetailsViewModel : CoreViewModel() {
      */
     fun updateDownloadStatus() {
         val downloadId = mDownloadDetailsLiveData.value?.downloadTask?.groupId ?: return
-        Aria.download(this).getGroupEntity(downloadId)?.let {
-            val process =
+        DownloadManager.getSnapshot(downloadId)?.let {
+            val process = if (it.fileSize > 0) {
                 "${FileUtils.formatFileSize(it.currentProgress)}/${FileUtils.formatFileSize(it.fileSize)}"
+            } else {
+                FileUtils.formatFileSize(it.currentProgress)
+            }
             mDownloadPercentLiveData.postValue(it.percent)
             mDownloadProgressLiveData.postValue(process)
-            val status = DownloadStatus.fromCode(it.state)
+            val status = it.status
             if (status == DownloadStatus.CANCELLED) {
                 finishActivity()
             }
@@ -96,7 +98,7 @@ class HistoryDetailsViewModel : CoreViewModel() {
      */
     fun cancelDownloadTask() {
         val downloadId = mDownloadDetailsLiveData.value?.downloadTask?.groupId ?: return
-        Aria.download(this).loadGroup(downloadId)?.ignoreCheckPermissions()?.cancel(true)
+        DownloadManager.cancelDownload(downloadId)
     }
 
     /**
@@ -113,10 +115,10 @@ class HistoryDetailsViewModel : CoreViewModel() {
      */
     fun deleteDownloadTask() {
         val entity = mDownloadDetailsLiveData.value?.downloadTask ?: return
-        runBlocking { DownloadRepository.deleteDownloadTask(entity.id) }
         entity.groupId?.let {
-            Aria.download(this).loadGroup(it).ignoreCheckPermissions().cancel(true)
+            DownloadManager.cancelDownload(it)
         }
+        runBlocking { DownloadRepository.deleteDownloadTask(entity.id) }
         finishActivity()
     }
 
@@ -124,9 +126,13 @@ class HistoryDetailsViewModel : CoreViewModel() {
      * 暂停或者继续下载任务
      */
     fun pauseOrContinue() {
-        val taskId = mDownloadDetailsLiveData.value?.downloadTask?.groupId ?: return
-        val taskGroup = Aria.download(this).loadGroup(taskId).ignoreCheckPermissions()
-        if (downloadIsStoppedLiveData.value == true) taskGroup.resume() else taskGroup.stop()
+        val task = mDownloadDetailsLiveData.value?.downloadTask ?: return
+        val groupId = task.groupId ?: return
+        if (downloadIsStoppedLiveData.value == true) {
+            DownloadService.startDownload(CommonLibs.requireContext(), task.id)
+        } else {
+            DownloadManager.stopDownload(groupId)
+        }
     }
 
     fun entryResource(data: DownloadResourceEntity) {

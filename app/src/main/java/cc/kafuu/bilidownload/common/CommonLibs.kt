@@ -51,7 +51,7 @@ object CommonLibs {
             ?: throw IllegalStateException("$type directory is null")
 
         return File(root, relativePath).apply {
-            if (!(exists() || mkdirs())) {
+            if (!isDirectory && !mkdirs() && !isDirectory) {
                 throw IllegalStateException("Directory $this cannot be created")
             }
         }

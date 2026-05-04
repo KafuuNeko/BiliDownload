@@ -129,10 +129,6 @@ dependencies {
     implementation(libs.converter.gson)
     implementation(libs.converter.scalars)
 
-    //Aria
-    implementation(libs.aria.core)
-    kapt(libs.aria.compiler)
-
     //hutool crypto
     implementation(libs.hutool.crypto)
 

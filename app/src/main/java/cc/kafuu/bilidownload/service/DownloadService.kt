@@ -10,6 +10,7 @@ import android.util.Log
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.constant.DownloadResourceType
+import cc.kafuu.bilidownload.common.download.DownloadGroupSnapshot
 import cc.kafuu.bilidownload.common.manager.DownloadManager
 import cc.kafuu.bilidownload.common.model.AppModel
 import cc.kafuu.bilidownload.common.model.DownloadStatus
@@ -24,8 +25,6 @@ import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
 import cc.kafuu.bilidownload.common.utils.FFMpegUtils
 import cc.kafuu.bilidownload.common.utils.MimeTypeUtils
 import cc.kafuu.bilidownload.notification.DownloadNotification
-import com.arialyy.aria.core.Aria
-import com.arialyy.aria.core.task.DownloadGroupTask
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -88,8 +87,6 @@ class DownloadService : Service() {
 
     @SuppressLint("ForegroundServiceType")
     override fun onCreate() {
-        Aria.download(this).register()
-
         mDownloadNotification = DownloadNotification(this)
 
         EventBus.getDefault().register(this)
@@ -101,7 +98,6 @@ class DownloadService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        Aria.download(this).unRegister()
         EventBus.getDefault().unregister(this)
         mServiceScope.cancel()
     }
@@ -140,6 +136,11 @@ class DownloadService : Service() {
             DownloadRepository.deleteDownloadTaskMixedResource(taskId)
             // 重新走任务下载完成流程
             onDownloadCompleted(taskEntity, true)
+            return
+        }
+
+        if (taskEntity.groupId?.let { DownloadManager.containsTaskGroup(it) } == true) {
+            mRunningTaskCount--
             return
         }
 
@@ -194,7 +195,7 @@ class DownloadService : Service() {
     fun onDownloadStatusChangeEvent(event: DownloadStatusChangeEvent) {
         Log.d(
             TAG,
-            "Task [G${event.group.entity.id}, T${event.task.id}] status change, status: ${event.status}"
+            "Task [G${event.group.id}, T${event.task.id}] status change, status: ${event.status}"
         )
         mServiceScope.launch {
             when (event.status) {
@@ -205,6 +206,7 @@ class DownloadService : Service() {
                 DownloadStatus.FAILURE -> onDownloadFailed(event.task, event.group)
                 DownloadStatus.EXECUTING -> onDownloadExecuting(event.task, event.group)
                 DownloadStatus.CANCELLED -> onDownloadCancelled(event.task, event.group)
+                DownloadStatus.STOPPED -> onDownloadStopped(event.task, event.group)
                 else -> Unit
             }
             // 是终止态
@@ -220,7 +222,7 @@ class DownloadService : Service() {
      * 下载失败
      * from [onDownloadStatusChangeEvent]
      * */
-    private suspend fun onDownloadFailed(task: DownloadTaskEntity, group: DownloadGroupTask) {
+    private suspend fun onDownloadFailed(task: DownloadTaskEntity, group: DownloadGroupSnapshot) {
         DownloadRepository.update(task.apply {
             status = TaskStatus.DOWNLOAD_FAILED.code
         })
@@ -295,10 +297,10 @@ class DownloadService : Service() {
     /**
      * 下载任务执行中...
      * from [onDownloadStatusChangeEvent]*/
-    private suspend fun onDownloadExecuting(task: DownloadTaskEntity, group: DownloadGroupTask) {
+    private suspend fun onDownloadExecuting(task: DownloadTaskEntity, group: DownloadGroupSnapshot) {
         Log.d(
             TAG,
-            "Task [G${group.entity.id}, T${task.id}] status change, percent: ${group.percent}%"
+            "Task [G${group.id}, T${task.id}] status change, percent: ${group.percent}%"
         )
         if (task.status != TaskStatus.DOWNLOADING.code) {
             DownloadRepository.update(task.apply {
@@ -311,9 +313,17 @@ class DownloadService : Service() {
     /**
      * 下载任务被取消
      * from [onDownloadStatusChangeEvent] */
-    private suspend fun onDownloadCancelled(task: DownloadTaskEntity, group: DownloadGroupTask) {
+    private suspend fun onDownloadCancelled(task: DownloadTaskEntity, group: DownloadGroupSnapshot) {
         DownloadRepository.deleteDownloadTask(task.id)
         mDownloadNotification.notificationDownloadCancel(task)
+    }
+
+    /**
+     * 下载任务被暂停
+     * from [onDownloadStatusChangeEvent] */
+    private fun onDownloadStopped(task: DownloadTaskEntity, group: DownloadGroupSnapshot) {
+        mDownloadNotification.updateDownloadProgress(task, null)
+        mRunningTaskCount--
     }
 
     /**

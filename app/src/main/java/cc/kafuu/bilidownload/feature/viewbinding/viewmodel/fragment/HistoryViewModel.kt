@@ -8,6 +8,7 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.constant.DownloadResourceType
 import cc.kafuu.bilidownload.common.ext.liveData
+import cc.kafuu.bilidownload.common.manager.DownloadManager
 import cc.kafuu.bilidownload.common.model.TaskStatus
 import cc.kafuu.bilidownload.common.model.action.ViewAction
 import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
@@ -16,7 +17,6 @@ import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
 import cc.kafuu.bilidownload.feature.viewbinding.view.activity.HistoryDetailsActivity
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.common.RVViewModel
-import com.arialyy.aria.core.Aria
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -67,7 +67,7 @@ class HistoryViewModel : RVViewModel() {
 
     fun getStatusText(task: DownloadTaskWithVideoDetails): String {
         val percent = task.downloadTask.groupId?.let {
-            Aria.download(this).loadGroup(it).percent
+            DownloadManager.getSnapshot(it)?.percent
         }
         return "${percent ?: 0}%"
     }
@@ -126,12 +126,11 @@ class HistoryViewModel : RVViewModel() {
         val selectedIds = mSelectedIdsLiveData.value ?: return
         withContext(Dispatchers.IO) {
             for (taskId in selectedIds) {
-                DownloadRepository.deleteDownloadTask(taskId)
                 latestDownloadTaskLiveData.value?.find { it.downloadTask.id == taskId }
                     ?.downloadTask?.groupId?.let { groupId ->
-                        Aria.download(this@HistoryViewModel).loadGroup(groupId)
-                            ?.ignoreCheckPermissions()?.cancel(true)
+                        DownloadManager.cancelDownload(groupId)
                     }
+                DownloadRepository.deleteDownloadTask(taskId)
             }
         }
         exitMultiSelectMode()

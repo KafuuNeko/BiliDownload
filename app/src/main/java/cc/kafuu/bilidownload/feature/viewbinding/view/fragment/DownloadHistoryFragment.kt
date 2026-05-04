@@ -17,15 +17,16 @@ import cc.kafuu.bilidownload.common.core.viewbinding.CoreFragmentBuilder
 import cc.kafuu.bilidownload.common.ext.getSerializableByClass
 import cc.kafuu.bilidownload.common.model.TaskStatus
 import cc.kafuu.bilidownload.common.model.action.ViewAction
+import cc.kafuu.bilidownload.common.model.event.DownloadStatusChangeEvent
 import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
 import cc.kafuu.bilidownload.common.utils.DebounceQueue
 import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.ConfirmDialog
 import cc.kafuu.bilidownload.feature.viewbinding.view.fragment.common.RVFragment
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.fragment.HistoryViewModel
-import com.arialyy.annotations.DownloadGroup
-import com.arialyy.aria.core.Aria
-import com.arialyy.aria.core.task.DownloadGroupTask
 import kotlinx.coroutines.launch
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 
 class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::class.java) {
     companion object {
@@ -76,12 +77,12 @@ class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::c
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Aria.download(this).register()
+        EventBus.getDefault().register(this)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Aria.download(this).unRegister()
+        EventBus.getDefault().unregister(this)
     }
 
     override fun initViews() {
@@ -152,13 +153,13 @@ class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::c
 
     override fun getRVAdapter() = mAdapter
 
-    @DownloadGroup.onTaskRunning
-    fun handleTaskRunning(task: DownloadGroupTask) {
+    @Subscribe(threadMode = ThreadMode.POSTING)
+    fun handleTaskRunning(event: DownloadStatusChangeEvent) {
         val changeIndex = mViewModel.latestDownloadTaskLiveData.value?.indexOfFirst {
-            it.downloadTask.groupId == task.entity.id
+            it.downloadTask.groupId == event.group.id
         }
         if (changeIndex == null || changeIndex == -1) return
-        mAdapter.notifyItemChanged(changeIndex)
+        lifecycleScope.launch { mAdapter.notifyItemChanged(changeIndex) }
     }
 
     private fun startActionMode() {

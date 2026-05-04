@@ -1,11 +1,14 @@
 package cc.kafuu.bilidownload.common.model.event
 
 import cc.kafuu.bilidownload.common.model.DownloadStatus
+import cc.kafuu.bilidownload.common.download.DownloadGroupSnapshot
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
-import com.arialyy.aria.core.task.DownloadGroupTask
 
+/**
+ * 下载执行器向业务层发布的状态事件
+ */
 class DownloadStatusChangeEvent(
     task: DownloadTaskEntity,
-    val group: DownloadGroupTask,
+    val group: DownloadGroupSnapshot,
     val status: DownloadStatus
 ): DownloadTaskEvent(task)

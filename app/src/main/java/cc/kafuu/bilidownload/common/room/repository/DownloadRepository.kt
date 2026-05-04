@@ -112,6 +112,9 @@ object DownloadRepository {
         queryResourcesByTaskId(taskId).forEach {
             File(it.file).delete()
         }
+        mDownloadDashDao.queryDashListByTaskEntityId(taskId).forEach {
+            it.getOutputFile().delete()
+        }
         mDownloadTaskDao.deleteTaskByTaskId(taskId)
         mDownloadDashDao.deleteTaskByTaskId(taskId)
         mDownloadResourceDao.deleteTaskByTaskId(taskId)
