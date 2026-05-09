@@ -33,4 +33,9 @@ class ManuscriptFragment : BiliRVFragment<ManuscriptViewModel>(ManuscriptViewMod
         mViewModel.loadData(LoadingStatus.loadingStatus(true), loadMore = false)
     }
 
+    fun search(keyword: String?) {
+        resetScrollPosition(false)
+        mViewModel.search(keyword)
+    }
+
 }

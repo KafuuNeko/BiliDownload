@@ -23,8 +23,16 @@ class ManuscriptViewModel : BiliRVViewModel() {
     // 最近一次加载的页码
     private var mLatestPage = 0
 
+    // 当前稿件搜索关键词
+    private var mKeyword: String? = null
+
     fun initData(mid: Long) {
         mMid = mid
+    }
+
+    fun search(keyword: String?) {
+        mKeyword = keyword?.trim()?.takeIf { it.isNotEmpty() }
+        loadData(LoadingStatus.loadingStatus(true), loadMore = false)
     }
 
     override fun onRefreshData(onSucceeded: (() -> Unit)?, onFailed: (() -> Unit)?) {
@@ -72,6 +80,7 @@ class ManuscriptViewModel : BiliRVViewModel() {
         }.also {
             mBiliSearchRepository.requestSearchManuscript(
                 mid = mMid,
+                keyword = mKeyword,
                 ps = FavoriteDetailsViewModel.PAGE_SIZE, pn = mLatestPage + 1,
                 callback = it
             )

@@ -22,8 +22,21 @@
             layout="@layout/include_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:paddingEnd="48dp"
             app:title="@{viewModel.biliAccountLiveData == null ? @string/default_remind_loading : viewModel.biliAccountLiveData.nickname}"
             app:viewModel="@{viewModel}" />
+
+        <ImageView
+            android:id="@+id/iv_manuscript_search"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:contentDescription="@string/iv_manuscript_search_content_description"
+            android:padding="8dp"
+            android:src="@drawable/ic_search"
+            app:layout_constraintBottom_toBottomOf="@+id/include_title"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/include_title" />
 
         <androidx.cardview.widget.CardView
             android:id="@+id/card_account"
@@ -48,6 +61,60 @@
         </androidx.cardview.widget.CardView>
 
         <androidx.cardview.widget.CardView
+            android:id="@+id/card_manuscript_search"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"
+            app:cardCornerRadius="@dimen/card_item_corner_radius"
+            app:cardElevation="@dimen/card_item_elevation"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/card_account">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:background="@color/general_window_background_color"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp">
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/et_manuscript_search_content"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@color/common_transparent"
+                    android:drawableStart="@drawable/ic_search"
+                    android:hint="@string/et_manuscript_search_hint"
+                    android:imeOptions="actionSearch"
+                    android:inputType="text|textNoSuggestions"
+                    android:singleLine="true"
+                    android:textColor="@color/general_text_color"
+                    android:textSize="@dimen/size_text_common_size" />
+
+                <ImageView
+                    android:id="@+id/iv_clear_manuscript_search"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/iv_clear_manuscript_search_content_description"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_close" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_manuscript_search"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:text="@string/tv_search_text"
+                    android:textColor="@color/primary_color"
+                    android:textSize="@dimen/size_text_button_size" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
             android:id="@+id/card_tabs"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -55,9 +122,10 @@
             android:layout_marginTop="12dp"
             app:cardCornerRadius="@dimen/card_item_corner_radius"
             app:cardElevation="@dimen/card_item_elevation"
+            app:layout_goneMarginTop="12dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/card_account">
+            app:layout_constraintTop_toBottomOf="@+id/card_manuscript_search">
 
             <com.google.android.material.tabs.TabLayout
                 android:id="@+id/tl_page_selector"
