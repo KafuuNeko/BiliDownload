@@ -194,4 +194,6 @@
     <string name="settings_download_path_external_desc">Download/BVD directory</string>
     <string name="settings_download_path_current">Current: %s</string>
     <string name="settings_permission_denied">Storage permission denied, unable to switch to external directory</string>
+    <string name="settings_delete_source_files_after_merge">Delete Source Files After Merge</string>
+    <string name="settings_delete_source_files_after_merge_desc">Automatically delete the separate audio and video files after a successful merge</string>
 </resources>

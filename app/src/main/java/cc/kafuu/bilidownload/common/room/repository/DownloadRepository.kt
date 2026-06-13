@@ -133,6 +133,20 @@ object DownloadRepository {
     }
 
     /**
+     * 删除某个任务的音频和视频源文件及其资源记录
+     */
+    suspend fun deleteDownloadTaskSourceResources(taskId: Long) {
+        listOf(DownloadResourceType.VIDEO, DownloadResourceType.AUDIO).forEach { type ->
+            mDownloadResourceDao.queryResourceByTaskIdAndResourceType(taskId, type).forEach {
+                val file = File(it.file)
+                if (!file.exists() || file.delete()) {
+                    mDownloadResourceDao.deleteById(it.id)
+                }
+            }
+        }
+    }
+
+    /**
      * @brief 查询下载任务详情集LiveData，返回的信息包含此任务信息以及视频等相关信息
      */
     fun queryDownloadTasksDetailsLiveData(status: List<TaskStatus>) = run {

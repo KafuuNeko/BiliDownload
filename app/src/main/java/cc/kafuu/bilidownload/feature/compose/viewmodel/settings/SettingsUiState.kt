@@ -6,5 +6,6 @@ sealed class SettingsUiState {
     data class Normal(
         val downloadPathMode: Int,
         val currentPathDisplay: String,
+        val deleteSourceFilesAfterMerge: Boolean,
     ) : SettingsUiState()
 }

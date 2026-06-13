@@ -24,6 +24,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -92,6 +93,63 @@ private fun SettingsContent(
             DownloadPathCard(state, onIntent)
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            MergeSettingsCard(state, onIntent)
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+private fun MergeSettingsCard(
+    state: SettingsUiState.Normal,
+    onIntent: (SettingsUiIntent) -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    onIntent(
+                        SettingsUiIntent.SetDeleteSourceFilesAfterMerge(
+                            !state.deleteSourceFilesAfterMerge
+                        )
+                    )
+                }
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.settings_delete_source_files_after_merge),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = stringResource(
+                        R.string.settings_delete_source_files_after_merge_desc
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Switch(
+                checked = state.deleteSourceFilesAfterMerge,
+                onCheckedChange = {
+                    onIntent(SettingsUiIntent.SetDeleteSourceFilesAfterMerge(it))
+                }
+            )
         }
     }
 }

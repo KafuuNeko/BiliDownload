@@ -361,6 +361,9 @@ class DownloadService : Service() {
             ).run {
                 DownloadRepository.updateOrInsertResource(this)
             }
+            if (AppModel.deleteSourceFilesAfterMerge) {
+                DownloadRepository.deleteDownloadTaskSourceResources(task.id)
+            }
         } else {
             // 如果合成失败则清理合成输出资源
             DownloadRepository.deleteResourceById(resourceEntity.id)

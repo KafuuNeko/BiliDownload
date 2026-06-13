@@ -194,4 +194,6 @@
     <string name="settings_download_path_external_desc">Download/BVD 目录</string>
     <string name="settings_download_path_current">当前：%s</string>
     <string name="settings_permission_denied">存储权限被拒绝，无法切换到外部目录</string>
+    <string name="settings_delete_source_files_after_merge">合成后删除源文件</string>
+    <string name="settings_delete_source_files_after_merge_desc">视频合成成功后自动删除单独的音频和视频文件</string>
 </resources>

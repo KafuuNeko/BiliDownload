@@ -10,4 +10,5 @@ object AppModel : KotprefModel() {
 
     var latestNotificationId by intPref(100000)
     var downloadPathMode by intPref(DOWNLOAD_PATH_INTERNAL)
+    var deleteSourceFilesAfterMerge by booleanPref(false)
 }

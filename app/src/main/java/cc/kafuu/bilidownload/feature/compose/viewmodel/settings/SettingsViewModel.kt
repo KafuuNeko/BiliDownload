@@ -33,6 +33,14 @@ class SettingsViewModel :
         applyDownloadPathMode(intent.mode)
     }
 
+    @UiIntentObserver(SettingsUiIntent.SetDeleteSourceFilesAfterMerge::class)
+    fun onSetDeleteSourceFilesAfterMerge(
+        intent: SettingsUiIntent.SetDeleteSourceFilesAfterMerge
+    ) {
+        AppModel.deleteSourceFilesAfterMerge = intent.enabled
+        refreshState()
+    }
+
     @UiIntentObserver(SettingsUiIntent.GoBack::class)
     fun onGoBack() = viewModelScope.launch {
         SettingsUiEvent.Finish.send()
@@ -65,6 +73,7 @@ class SettingsViewModel :
         SettingsUiState.Normal(
             downloadPathMode = mode,
             currentPathDisplay = path,
+            deleteSourceFilesAfterMerge = AppModel.deleteSourceFilesAfterMerge,
         ).setup()
     }
 
