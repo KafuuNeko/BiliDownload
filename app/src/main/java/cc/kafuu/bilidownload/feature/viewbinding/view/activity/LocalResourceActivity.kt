@@ -14,8 +14,10 @@ import cc.kafuu.bilidownload.common.model.action.ViewAction
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
 import cc.kafuu.bilidownload.common.utils.FileUtils
+import cc.kafuu.bilidownload.common.utils.MimeTypeUtils
 import cc.kafuu.bilidownload.databinding.ActivityLocalResourceBinding
 import cc.kafuu.bilidownload.feature.compose.activity.MediaPlayerActivity
+import cc.kafuu.bilidownload.feature.compose.activity.MusicPlayerActivity
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity.LocalResourceVideModel
 import kotlinx.coroutines.launch
 
@@ -104,8 +106,15 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
     }
 
     private fun onPlayResource(action: LocalResourceVideModel.Companion.PlayResourceAction) {
-        val intent = MediaPlayerActivity.buildIntent(action.filePath, action.title, action.mimetype)
-        intent.setClass(this, MediaPlayerActivity::class.java)
+        val intent = if (MimeTypeUtils.isAudioMimeType(action.mimetype)) {
+            MusicPlayerActivity.buildIntent(action.filePath, action.title, action.mimetype).apply {
+                setClass(this@LocalResourceActivity, MusicPlayerActivity::class.java)
+            }
+        } else {
+            MediaPlayerActivity.buildIntent(action.filePath, action.title, action.mimetype).apply {
+                setClass(this@LocalResourceActivity, MediaPlayerActivity::class.java)
+            }
+        }
         startActivity(intent)
     }
 }

@@ -48,4 +48,12 @@ object MimeTypeUtils {
     fun getExtensionFromMimeType(mimeType: String): String? {
         return mimeTypeToExtensionMap[mimeType.lowercase()]
     }
+
+    fun isAudioMimeType(mimeType: String): Boolean {
+        return mimeType.lowercase().startsWith("audio/")
+    }
+
+    fun isVideoMimeType(mimeType: String): Boolean {
+        return mimeType.lowercase().startsWith("video/")
+    }
 }

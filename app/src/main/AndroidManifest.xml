@@ -88,6 +88,12 @@
             android:theme="@style/Theme.BiliDownload" />
 
         <activity
+            android:name=".feature.compose.activity.MusicPlayerActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:exported="false"
+            android:theme="@style/Theme.BiliDownload" />
+
+        <activity
             android:name=".feature.compose.activity.SettingsActivity"
             android:configChanges="orientation|screenSize"
             android:exported="false" />
