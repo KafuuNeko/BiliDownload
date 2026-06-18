@@ -60,6 +60,10 @@ data class BiliPlayStreamResource(
     @SerializedName("codecid")
     val codecId: Long
 ) : Serializable {
+    fun getStreamUrls(): List<String> {
+        return (listOfNotNull(baseUrl) + backupUrl.orEmpty()).distinct()
+    }
+
     fun getStreamUrl(): String {
         baseUrl?.let { return it }
         if (!backupUrl.isNullOrEmpty()) {

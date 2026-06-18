@@ -207,6 +207,17 @@
     <string name="settings_download_path_external_desc">Download/BVD 目录</string>
     <string name="settings_download_path_current">当前：%s</string>
     <string name="settings_permission_denied">存储权限被拒绝，无法切换到外部目录</string>
+    <string name="settings_download_source">下载源</string>
+    <string name="settings_download_source_default">默认</string>
+    <string name="settings_download_source_default_desc">使用哔哩哔哩返回的默认下载地址</string>
+    <string name="settings_download_source_auto_probe">自动探测</string>
+    <string name="settings_download_source_auto_probe_desc">下载前测试可用地址，并选择响应更快的源</string>
+    <string name="settings_download_source_custom_host">自定义 Host</string>
+    <string name="settings_download_source_custom_host_desc">将下载地址域名替换为指定 Host</string>
+    <string name="settings_download_source_custom_host_label">Host</string>
+    <string name="settings_download_source_custom_host_hint">upos-sz-mirrorali.bilivideo.com</string>
+    <string name="settings_download_source_preset_hosts">可用 Host</string>
+    <string name="settings_download_source_preset_host_desc">使用此 Host</string>
     <string name="settings_delete_source_files_after_merge">合成后删除源文件</string>
     <string name="settings_delete_source_files_after_merge_desc">视频合成成功后自动删除单独的音频和视频文件</string>
 </resources>

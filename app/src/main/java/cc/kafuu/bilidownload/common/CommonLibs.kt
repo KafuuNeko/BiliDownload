@@ -13,6 +13,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import cc.kafuu.bilidownload.common.model.AppModel
+import cc.kafuu.bilidownload.common.model.DownloadPathMode
 import cc.kafuu.bilidownload.common.room.AppDatabase
 import java.io.File
 import androidx.core.net.toUri
@@ -62,7 +63,7 @@ object CommonLibs {
 
     fun requireResourcesDir(): File {
         return when (AppModel.downloadPathMode) {
-            AppModel.DOWNLOAD_PATH_EXTERNAL -> {
+            DownloadPathMode.EXTERNAL -> {
                 val downloadDir = Environment.getExternalStoragePublicDirectory(
                     Environment.DIRECTORY_DOWNLOADS
                 )

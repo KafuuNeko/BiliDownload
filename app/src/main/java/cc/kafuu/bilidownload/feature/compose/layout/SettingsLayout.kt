@@ -24,10 +24,14 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,7 +42,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cc.kafuu.bilidownload.R
-import cc.kafuu.bilidownload.common.model.AppModel
+import cc.kafuu.bilidownload.common.model.DownloadPathMode
+import cc.kafuu.bilidownload.common.model.DownloadSourceMode
+import cc.kafuu.bilidownload.common.model.DownloadSourcePreset
 import cc.kafuu.bilidownload.feature.compose.viewmodel.settings.SettingsUiIntent
 import cc.kafuu.bilidownload.feature.compose.viewmodel.settings.SettingsUiState
 import cc.kafuu.bilidownload.feature.compose.views.AppTopBar
@@ -91,6 +97,10 @@ private fun SettingsContent(
 
             // 下载路径设置卡片
             DownloadPathCard(state, onIntent)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            DownloadSourceCard(state, onIntent)
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -183,11 +193,11 @@ private fun DownloadPathCard(
             )
 
             // 内部存储选项
-            DownloadPathOption(
+            SettingsRadioOption(
                 title = stringResource(R.string.settings_download_path_internal),
                 description = stringResource(R.string.settings_download_path_internal_desc),
-                isSelected = state.downloadPathMode == AppModel.DOWNLOAD_PATH_INTERNAL,
-                onClick = { onIntent(SettingsUiIntent.SetDownloadPathMode(AppModel.DOWNLOAD_PATH_INTERNAL)) }
+                isSelected = state.downloadPathMode == DownloadPathMode.INTERNAL,
+                onClick = { onIntent(SettingsUiIntent.SetDownloadPathMode(DownloadPathMode.INTERNAL)) }
             )
 
             HorizontalDivider(
@@ -197,11 +207,11 @@ private fun DownloadPathCard(
             )
 
             // 外部存储选项
-            DownloadPathOption(
+            SettingsRadioOption(
                 title = stringResource(R.string.settings_download_path_external),
                 description = stringResource(R.string.settings_download_path_external_desc),
-                isSelected = state.downloadPathMode == AppModel.DOWNLOAD_PATH_EXTERNAL,
-                onClick = { onIntent(SettingsUiIntent.SetDownloadPathMode(AppModel.DOWNLOAD_PATH_EXTERNAL)) }
+                isSelected = state.downloadPathMode == DownloadPathMode.EXTERNAL,
+                onClick = { onIntent(SettingsUiIntent.SetDownloadPathMode(DownloadPathMode.EXTERNAL)) }
             )
 
             HorizontalDivider(
@@ -223,7 +233,161 @@ private fun DownloadPathCard(
 }
 
 @Composable
-private fun DownloadPathOption(
+private fun DownloadSourceCard(
+    state: SettingsUiState.Normal,
+    onIntent: (SettingsUiIntent) -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = stringResource(R.string.settings_download_source),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
+            )
+
+            HorizontalDivider(
+                color = colorResource(R.color.view_split_color),
+                thickness = 0.5.dp
+            )
+
+            SettingsRadioOption(
+                title = stringResource(R.string.settings_download_source_default),
+                description = stringResource(R.string.settings_download_source_default_desc),
+                isSelected = state.downloadSourceMode == DownloadSourceMode.DEFAULT,
+                onClick = {
+                    onIntent(
+                        SettingsUiIntent.SetDownloadSourceMode(
+                            DownloadSourceMode.DEFAULT
+                        )
+                    )
+                }
+            )
+
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                color = colorResource(R.color.view_split_color),
+                thickness = 0.5.dp
+            )
+
+            SettingsRadioOption(
+                title = stringResource(R.string.settings_download_source_auto_probe),
+                description = stringResource(R.string.settings_download_source_auto_probe_desc),
+                isSelected = state.downloadSourceMode == DownloadSourceMode.AUTO_PROBE,
+                onClick = {
+                    onIntent(
+                        SettingsUiIntent.SetDownloadSourceMode(
+                            DownloadSourceMode.AUTO_PROBE
+                        )
+                    )
+                }
+            )
+
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                color = colorResource(R.color.view_split_color),
+                thickness = 0.5.dp
+            )
+
+            SettingsRadioOption(
+                title = stringResource(R.string.settings_download_source_custom_host),
+                description = stringResource(R.string.settings_download_source_custom_host_desc),
+                isSelected = state.downloadSourceMode == DownloadSourceMode.CUSTOM_HOST,
+                onClick = {
+                    onIntent(
+                        SettingsUiIntent.SetDownloadSourceMode(
+                            DownloadSourceMode.CUSTOM_HOST
+                        )
+                    )
+                }
+            )
+
+            if (state.downloadSourceMode == DownloadSourceMode.CUSTOM_HOST) {
+                var isPresetHostExpanded by remember { mutableStateOf(false) }
+
+                OutlinedTextField(
+                    value = state.downloadSourceCustomHost,
+                    onValueChange = {
+                        onIntent(SettingsUiIntent.SetDownloadSourceCustomHost(it))
+                    },
+                    singleLine = true,
+                    label = {
+                        Text(
+                            text = stringResource(
+                                R.string.settings_download_source_custom_host_label
+                            )
+                        )
+                    },
+                    placeholder = {
+                        Text(
+                            text = stringResource(
+                                R.string.settings_download_source_custom_host_hint
+                            )
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { isPresetHostExpanded = !isPresetHostExpanded }
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings_download_source_preset_hosts),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = if (isPresetHostExpanded) "-" else "+",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+
+                if (isPresetHostExpanded) {
+                    DownloadSourcePreset.entries.forEachIndexed { index, preset ->
+                        val host = preset.host
+                        SettingsRadioOption(
+                            title = host,
+                            description = stringResource(
+                                R.string.settings_download_source_preset_host_desc
+                            ),
+                            isSelected = state.downloadSourceCustomHost == host,
+                            onClick = {
+                                onIntent(SettingsUiIntent.SetDownloadSourceCustomHost(host))
+                            }
+                        )
+
+                        if (index != DownloadSourcePreset.entries.lastIndex) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                color = colorResource(R.color.view_split_color),
+                                thickness = 0.5.dp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsRadioOption(
     title: String,
     description: String,
     isSelected: Boolean,

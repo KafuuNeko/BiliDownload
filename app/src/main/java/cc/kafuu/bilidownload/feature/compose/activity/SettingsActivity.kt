@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.core.compose.CoreCompActivity
+import cc.kafuu.bilidownload.common.model.DownloadPathMode
 import cc.kafuu.bilidownload.feature.compose.layout.SettingsLayout
 import cc.kafuu.bilidownload.feature.compose.viewmodel.settings.SettingsUiEvent
 import cc.kafuu.bilidownload.feature.compose.viewmodel.settings.SettingsUiIntent
@@ -23,17 +24,18 @@ class SettingsActivity : CoreCompActivity() {
 
     private val mViewModel by viewModels<SettingsViewModel>()
 
-    private var mPendingMode: Int = -1
+    private var mPendingMode: DownloadPathMode? = null
 
     private val mPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
+        val pendingMode = mPendingMode ?: return@registerForActivityResult
         if (granted) {
-            mViewModel.onPermissionGranted(mPendingMode)
+            mViewModel.onPermissionGranted(pendingMode)
         } else {
             mViewModel.onPermissionDenied()
         }
-        mPendingMode = -1
+        mPendingMode = null
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,7 +70,7 @@ class SettingsActivity : CoreCompActivity() {
         }
     }
 
-    private fun onRequestStoragePermission(mode: Int) {
+    private fun onRequestStoragePermission(mode: DownloadPathMode) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             // Android 10+ 不需要额外权限
             mViewModel.onPermissionGranted(mode)

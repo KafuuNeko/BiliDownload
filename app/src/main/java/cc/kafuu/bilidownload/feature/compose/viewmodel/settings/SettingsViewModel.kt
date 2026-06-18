@@ -7,6 +7,7 @@ import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.core.compose.CoreCompViewModelWithEvent
 import cc.kafuu.bilidownload.common.core.compose.UiIntentObserver
 import cc.kafuu.bilidownload.common.model.AppModel
+import cc.kafuu.bilidownload.common.model.DownloadPathMode
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -23,7 +24,7 @@ class SettingsViewModel :
 
     @UiIntentObserver(SettingsUiIntent.SetDownloadPathMode::class)
     fun onSetDownloadPathMode(intent: SettingsUiIntent.SetDownloadPathMode) {
-        if (intent.mode == AppModel.DOWNLOAD_PATH_EXTERNAL && needsStoragePermission()) {
+        if (intent.mode == DownloadPathMode.EXTERNAL && needsStoragePermission()) {
             // 需要先请求权限
             viewModelScope.launch {
                 SettingsUiEvent.RequestPermission(intent.mode).send()
@@ -41,6 +42,18 @@ class SettingsViewModel :
         refreshState()
     }
 
+    @UiIntentObserver(SettingsUiIntent.SetDownloadSourceMode::class)
+    fun onSetDownloadSourceMode(intent: SettingsUiIntent.SetDownloadSourceMode) {
+        AppModel.downloadSourceMode = intent.mode
+        refreshState()
+    }
+
+    @UiIntentObserver(SettingsUiIntent.SetDownloadSourceCustomHost::class)
+    fun onSetDownloadSourceCustomHost(intent: SettingsUiIntent.SetDownloadSourceCustomHost) {
+        AppModel.downloadSourceCustomHost = intent.host.trim()
+        refreshState()
+    }
+
     @UiIntentObserver(SettingsUiIntent.GoBack::class)
     fun onGoBack() = viewModelScope.launch {
         SettingsUiEvent.Finish.send()
@@ -49,7 +62,7 @@ class SettingsViewModel :
     /**
      * 权限授予后由 Activity 调用
      */
-    fun onPermissionGranted(mode: Int) {
+    fun onPermissionGranted(mode: DownloadPathMode) {
         applyDownloadPathMode(mode)
     }
 
@@ -62,7 +75,7 @@ class SettingsViewModel :
         }
     }
 
-    private fun applyDownloadPathMode(mode: Int) {
+    private fun applyDownloadPathMode(mode: DownloadPathMode) {
         AppModel.downloadPathMode = mode
         refreshState()
     }
@@ -73,13 +86,15 @@ class SettingsViewModel :
         SettingsUiState.Normal(
             downloadPathMode = mode,
             currentPathDisplay = path,
+            downloadSourceMode = AppModel.downloadSourceMode,
+            downloadSourceCustomHost = AppModel.downloadSourceCustomHost,
             deleteSourceFilesAfterMerge = AppModel.deleteSourceFilesAfterMerge,
         ).setup()
     }
 
-    private fun getDisplayPath(mode: Int): String {
+    private fun getDisplayPath(mode: DownloadPathMode): String {
         return when (mode) {
-            AppModel.DOWNLOAD_PATH_EXTERNAL -> {
+            DownloadPathMode.EXTERNAL -> {
                 val downloadDir = Environment.getExternalStoragePublicDirectory(
                     Environment.DIRECTORY_DOWNLOADS
                 )

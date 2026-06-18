@@ -207,6 +207,17 @@
     <string name="settings_download_path_external_desc">Download/BVD directory</string>
     <string name="settings_download_path_current">Current: %s</string>
     <string name="settings_permission_denied">Storage permission denied, unable to switch to external directory</string>
+    <string name="settings_download_source">Download Source</string>
+    <string name="settings_download_source_default">Default</string>
+    <string name="settings_download_source_default_desc">Use the default URL returned by Bilibili</string>
+    <string name="settings_download_source_auto_probe">Auto Probe</string>
+    <string name="settings_download_source_auto_probe_desc">Probe available URLs before downloading and use the fastest responder</string>
+    <string name="settings_download_source_custom_host">Custom Host</string>
+    <string name="settings_download_source_custom_host_desc">Replace the download URL host with a specified host</string>
+    <string name="settings_download_source_custom_host_label">Host</string>
+    <string name="settings_download_source_custom_host_hint">upos-sz-mirrorali.bilivideo.com</string>
+    <string name="settings_download_source_preset_hosts">Available Hosts</string>
+    <string name="settings_download_source_preset_host_desc">Use this host</string>
     <string name="settings_delete_source_files_after_merge">Delete Source Files After Merge</string>
     <string name="settings_delete_source_files_after_merge_desc">Automatically delete the separate audio and video files after a successful merge</string>
 </resources>
