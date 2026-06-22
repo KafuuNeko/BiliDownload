@@ -123,44 +123,72 @@ private fun MergeSettingsCard(
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    onIntent(
-                        SettingsUiIntent.SetDeleteSourceFilesAfterMerge(
-                            !state.deleteSourceFilesAfterMerge
-                        )
-                    )
-                }
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.settings_delete_source_files_after_merge),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = stringResource(
-                        R.string.settings_delete_source_files_after_merge_desc
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Switch(
+        Column(modifier = Modifier.fillMaxWidth()) {
+            SettingsSwitchOption(
+                title = stringResource(R.string.settings_delete_source_files_after_merge),
+                description = stringResource(
+                    R.string.settings_delete_source_files_after_merge_desc
+                ),
                 checked = state.deleteSourceFilesAfterMerge,
                 onCheckedChange = {
                     onIntent(SettingsUiIntent.SetDeleteSourceFilesAfterMerge(it))
                 }
             )
+
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                color = colorResource(R.color.view_split_color),
+                thickness = 0.5.dp
+            )
+
+            SettingsSwitchOption(
+                title = stringResource(R.string.settings_auto_remux_audio_after_download),
+                description = stringResource(
+                    R.string.settings_auto_remux_audio_after_download_desc
+                ),
+                checked = state.autoRemuxAudioAfterDownload,
+                onCheckedChange = {
+                    onIntent(SettingsUiIntent.SetAutoRemuxAudioAfterDownload(it))
+                }
+            )
         }
+    }
+}
+
+@Composable
+private fun SettingsSwitchOption(
+    title: String,
+    description: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
     }
 }
 

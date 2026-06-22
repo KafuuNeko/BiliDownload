@@ -220,4 +220,6 @@
     <string name="settings_download_source_preset_host_desc">Use this host</string>
     <string name="settings_delete_source_files_after_merge">Delete Source Files After Merge</string>
     <string name="settings_delete_source_files_after_merge_desc">Automatically delete the separate audio and video files after a successful merge</string>
+    <string name="settings_auto_remux_audio_after_download">Auto Convert Audio Container</string>
+    <string name="settings_auto_remux_audio_after_download_desc">After downloading, copy audio streams into codec-specific containers such as AAC or FLAC when possible</string>
 </resources>

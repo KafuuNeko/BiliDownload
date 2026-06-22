@@ -5,11 +5,16 @@ object MimeTypeUtils {
         // 音频格式
         "audio/mp4" to "mp4",
         "audio/aac" to "aac",
+        "audio/x-aac" to "aac",
         "audio/mpeg" to "mp3",
         "audio/ogg" to "ogg",
+        "audio/opus" to "opus",
         "audio/wav" to "wav",
         "audio/webm" to "webm",
+        "audio/flac" to "flac",
         "audio/x-flac" to "flac",
+        "audio/ac3" to "ac3",
+        "audio/eac3" to "eac3",
         "audio/x-ms-wma" to "wma",
 
         // 视频格式

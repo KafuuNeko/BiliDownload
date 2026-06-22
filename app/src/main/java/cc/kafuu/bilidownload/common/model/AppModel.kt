@@ -21,6 +21,8 @@ object AppModel : KotprefModel() {
 
     var deleteSourceFilesAfterMerge by booleanPref(false)
 
+    var autoRemuxAudioAfterDownload by booleanPref(false)
+
     var downloadPathMode: DownloadPathMode
         get() = DownloadPathMode.fromCode(downloadPathModeCode)
         set(value) {

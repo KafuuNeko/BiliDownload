@@ -19,6 +19,7 @@ import cc.kafuu.bilidownload.common.model.event.DownloadRequestFailedEvent
 import cc.kafuu.bilidownload.common.model.event.DownloadStatusChangeEvent
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.room.entity.DownloadDashEntity
+import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.room.repository.BiliVideoRepository
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
@@ -262,7 +263,9 @@ class DownloadService : Service() {
         val videoDash = dashEntityList.find { it.type == DashType.VIDEO }
         val audioDash = dashEntityList.find { it.type == DashType.AUDIO }
 
+        var isMergedMediaTask = false
         val finalStatus = if (dashEntityList.size == 2 && videoDash != null && audioDash != null) {
+            isMergedMediaTask = true
             // 立即更新状态为正在合成
             DownloadRepository.update(task.apply { status = TaskStatus.SYNTHESIS.code })
             // 执行音视频合成逻辑
@@ -271,8 +274,78 @@ class DownloadService : Service() {
             TaskStatus.COMPLETED
         }
 
+        if (finalStatus == TaskStatus.COMPLETED) {
+            tryAutoRemuxAudioResources(
+                task = task,
+                skipSourceResources = isMergedMediaTask && AppModel.deleteSourceFilesAfterMerge
+            )
+        }
+
         // 更新记录为最终状态
         DownloadRepository.update(task.apply { status = finalStatus.code })
+    }
+
+    /**
+     * 尝试将保留的音频源资源无损转封装为音频专用格式。
+     */
+    private suspend fun tryAutoRemuxAudioResources(
+        task: DownloadTaskEntity,
+        skipSourceResources: Boolean
+    ) {
+        if (!AppModel.autoRemuxAudioAfterDownload || skipSourceResources) return
+
+        DownloadRepository.queryResourcesForExport(task.id)
+            .filter { it.type == DownloadResourceType.AUDIO }
+            .forEach { tryAutoRemuxAudioResource(it) }
+    }
+
+    private suspend fun tryAutoRemuxAudioResource(resource: DownloadResourceEntity) {
+        val sourceFile = File(resource.file)
+        if (!sourceFile.exists() || sourceFile.length() <= 0L) return
+
+        val remuxFormat = FFMpegUtils.detectAudioRemuxFormat(sourceFile.path) ?: return
+        if (sourceFile.extension.equals(remuxFormat.suffix, ignoreCase = true)) {
+            updateAudioResourceMimeTypeIfNeeded(resource, remuxFormat.mimeType)
+            return
+        }
+
+        val parentFile = sourceFile.parentFile ?: return
+        val targetFile = File(parentFile, "${sourceFile.nameWithoutExtension}.${remuxFormat.suffix}")
+        if (targetFile.exists()) targetFile.delete()
+
+        val isSuccess = FFMpegUtils.remuxAudio(
+            sourceFile = sourceFile.path,
+            targetFile = targetFile.path,
+            format = remuxFormat
+        )
+        if (!isSuccess) {
+            Log.d(TAG, "Audio remux failed, keep original file: ${sourceFile.path}")
+            return
+        }
+
+        try {
+            DownloadRepository.updateOrInsertResource(
+                resource.copy(
+                    mimeType = remuxFormat.mimeType,
+                    storageSizeBytes = targetFile.length(),
+                    file = targetFile.path
+                )
+            )
+            if (!sourceFile.delete()) {
+                Log.d(TAG, "Delete original audio file failed: ${sourceFile.path}")
+            }
+        } catch (e: Exception) {
+            if (targetFile.exists()) targetFile.delete()
+            Log.e(TAG, "Update remuxed audio resource failed", e)
+        }
+    }
+
+    private suspend fun updateAudioResourceMimeTypeIfNeeded(
+        resource: DownloadResourceEntity,
+        mimeType: String
+    ) {
+        if (resource.mimeType.equals(mimeType, ignoreCase = true)) return
+        DownloadRepository.updateOrInsertResource(resource.copy(mimeType = mimeType))
     }
 
     /**

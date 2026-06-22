@@ -9,6 +9,8 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.extractor.DefaultExtractorsFactory
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.audio.spectrum.AudioSpectrumAnalyzer
 import cc.kafuu.bilidownload.common.audio.spectrum.MusicSpectrumBitmapRenderer
@@ -106,7 +108,12 @@ class MusicPlayerViewModel :
         mAppContext = appContext
         mRealtimeSpectrumAnalyzer.clear()
 
+        val extractorsFactory = DefaultExtractorsFactory()
+            .setConstantBitrateSeekingEnabled(true)
+        val mediaSourceFactory = DefaultMediaSourceFactory(appContext, extractorsFactory)
+
         val player = ExoPlayer.Builder(appContext)
+            .setMediaSourceFactory(mediaSourceFactory)
             .setRenderersFactory(
                 RealtimeAudioRenderersFactory(
                     context = appContext,

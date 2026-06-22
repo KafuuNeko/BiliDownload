@@ -12,5 +12,6 @@ sealed class SettingsUiState {
         val downloadSourceMode: DownloadSourceMode,
         val downloadSourceCustomHost: String,
         val deleteSourceFilesAfterMerge: Boolean,
+        val autoRemuxAudioAfterDownload: Boolean,
     ) : SettingsUiState()
 }

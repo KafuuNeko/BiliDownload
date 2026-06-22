@@ -9,5 +9,6 @@ sealed class SettingsUiIntent {
     data class SetDownloadSourceMode(val mode: DownloadSourceMode) : SettingsUiIntent()
     data class SetDownloadSourceCustomHost(val host: String) : SettingsUiIntent()
     data class SetDeleteSourceFilesAfterMerge(val enabled: Boolean) : SettingsUiIntent()
+    data class SetAutoRemuxAudioAfterDownload(val enabled: Boolean) : SettingsUiIntent()
     data object GoBack : SettingsUiIntent()
 }

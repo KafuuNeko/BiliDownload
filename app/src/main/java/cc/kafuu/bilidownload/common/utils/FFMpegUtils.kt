@@ -9,9 +9,51 @@ import com.arthenica.ffmpegkit.FFmpegSession
 import com.arthenica.ffmpegkit.FFprobeKit
 import com.arthenica.ffmpegkit.ReturnCode
 import com.google.gson.JsonParser
+import java.io.File
 
 object FFMpegUtils {
     private const val TAG = "FFMpegUtils"
+
+    data class AudioRemuxFormat(
+        val suffix: String,
+        val mimeType: String,
+        val muxer: String
+    )
+
+    fun detectAudioRemuxFormat(sourceFile: String): AudioRemuxFormat? {
+        val mediaDetail = getMediaInfo(sourceFile) ?: return null
+        return when (mediaDetail.audioCodec?.lowercase()) {
+            "aac" -> AudioRemuxFormat("aac", "audio/aac", "adts")
+            "flac" -> AudioRemuxFormat("flac", "audio/flac", "flac")
+            "mp3" -> AudioRemuxFormat("mp3", "audio/mpeg", "mp3")
+            "opus" -> AudioRemuxFormat("opus", "audio/opus", "opus")
+            "vorbis" -> AudioRemuxFormat("ogg", "audio/ogg", "ogg")
+            "ac3" -> AudioRemuxFormat("ac3", "audio/ac3", "ac3")
+            "eac3" -> AudioRemuxFormat("eac3", "audio/eac3", "eac3")
+            "alac" -> AudioRemuxFormat("m4a", "audio/mp4", "mp4")
+            else -> null
+        }
+    }
+
+    fun remuxAudio(
+        sourceFile: String,
+        targetFile: String,
+        format: AudioRemuxFormat
+    ): Boolean {
+        val command = "-y -i ${quotePath(sourceFile)} -map 0:a:0 -vn " +
+            "-c:a copy -f ${format.muxer} ${quotePath(targetFile)}"
+        Log.d(TAG, "remuxAudio: $command")
+
+        val session = FFmpegKit.execute(command)
+        val outputFile = File(targetFile)
+        val isSuccess = ReturnCode.isSuccess(session.returnCode) &&
+            outputFile.exists() &&
+            outputFile.length() > 0L
+        if (!isSuccess && outputFile.exists()) {
+            outputFile.delete()
+        }
+        return isSuccess
+    }
 
     /**
      * @brief 以异步的形式转换视频封装格式、编码
@@ -57,7 +99,7 @@ object FFMpegUtils {
      * @param callback 回调
      */
     fun getMediaInfo(filePath: String, callback: IAsyncCallback<LocalMediaDetail, Exception>) {
-        val command = "-v quiet -print_format json -show_format -show_streams $filePath"
+        val command = buildMediaInfoCommand(filePath)
         FFprobeKit.executeAsync(command) { session ->
             val output = session.output
             Log.d(TAG, "getMediaInfo: $output")
@@ -67,6 +109,28 @@ object FFMpegUtils {
                 callback.onFailure(Exception("Failed to get media info, return code: ${session.returnCode}"))
             }
         }
+    }
+
+    fun getMediaInfo(filePath: String): LocalMediaDetail? {
+        val session = FFprobeKit.execute(buildMediaInfoCommand(filePath))
+        if (!ReturnCode.isSuccess(session.returnCode)) {
+            Log.d(TAG, "getMediaInfo failed, return code: ${session.returnCode}")
+            return null
+        }
+
+        return runCatching {
+            parseMediaInfo(filePath, session.output)
+        }.onFailure {
+            Log.e(TAG, "parse media info failed", it)
+        }.getOrNull()
+    }
+
+    private fun buildMediaInfoCommand(filePath: String): String {
+        return "-v quiet -print_format json -show_format -show_streams ${quotePath(filePath)}"
+    }
+
+    private fun quotePath(path: String): String {
+        return "\"${path.replace("\"", "\\\"")}\""
     }
 
     private fun parseMediaInfo(filePath: String, output: String): LocalMediaDetail {

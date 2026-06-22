@@ -42,6 +42,14 @@ class SettingsViewModel :
         refreshState()
     }
 
+    @UiIntentObserver(SettingsUiIntent.SetAutoRemuxAudioAfterDownload::class)
+    fun onSetAutoRemuxAudioAfterDownload(
+        intent: SettingsUiIntent.SetAutoRemuxAudioAfterDownload
+    ) {
+        AppModel.autoRemuxAudioAfterDownload = intent.enabled
+        refreshState()
+    }
+
     @UiIntentObserver(SettingsUiIntent.SetDownloadSourceMode::class)
     fun onSetDownloadSourceMode(intent: SettingsUiIntent.SetDownloadSourceMode) {
         AppModel.downloadSourceMode = intent.mode
@@ -89,6 +97,7 @@ class SettingsViewModel :
             downloadSourceMode = AppModel.downloadSourceMode,
             downloadSourceCustomHost = AppModel.downloadSourceCustomHost,
             deleteSourceFilesAfterMerge = AppModel.deleteSourceFilesAfterMerge,
+            autoRemuxAudioAfterDownload = AppModel.autoRemuxAudioAfterDownload,
         ).setup()
     }
 

@@ -220,4 +220,6 @@
     <string name="settings_download_source_preset_host_desc">使用此 Host</string>
     <string name="settings_delete_source_files_after_merge">合成后删除源文件</string>
     <string name="settings_delete_source_files_after_merge_desc">视频合成成功后自动删除单独的音频和视频文件</string>
+    <string name="settings_auto_remux_audio_after_download">自动转换音频封装</string>
+    <string name="settings_auto_remux_audio_after_download_desc">下载完成后尝试将音频无损转封装为 AAC、FLAC 等音频专用格式</string>
 </resources>
