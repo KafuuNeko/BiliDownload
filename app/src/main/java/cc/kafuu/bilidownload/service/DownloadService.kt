@@ -7,7 +7,6 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.constant.DownloadResourceType
 import cc.kafuu.bilidownload.common.download.DownloadGroupSnapshot
@@ -23,8 +22,8 @@ import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.room.repository.BiliVideoRepository
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
+import cc.kafuu.bilidownload.common.utils.DownloadFileNameUtils
 import cc.kafuu.bilidownload.common.utils.FFMpegUtils
-import cc.kafuu.bilidownload.common.utils.MimeTypeUtils
 import cc.kafuu.bilidownload.notification.DownloadNotification
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -255,13 +254,28 @@ class DownloadService : Service() {
         }
 
         // 如果当前任务处于正在下载状态，则将Dash资源注册
-        if (currentStatus == TaskStatus.DOWNLOADING) {
-            dashEntityList.forEach { DownloadRepository.registerResource(task, it) }
+        val registeredSourceResources = if (currentStatus == TaskStatus.DOWNLOADING) {
+            dashEntityList.map { DownloadRepository.registerResource(task, it) }
+        } else {
+            emptyList()
+        }
+        val sourceResources = registeredSourceResources.ifEmpty {
+            DownloadRepository.queryResourcesForExport(task.id)
+                .filter {
+                    it.type == DownloadResourceType.VIDEO ||
+                        it.type == DownloadResourceType.AUDIO
+                }
         }
 
         // 取得Dash资源执行合并操作
         val videoDash = dashEntityList.find { it.type == DashType.VIDEO }
         val audioDash = dashEntityList.find { it.type == DashType.AUDIO }
+        val videoResourceFile = sourceResources.find {
+            it.type == DownloadResourceType.VIDEO
+        }?.file?.let { File(it) }
+        val audioResourceFile = sourceResources.find {
+            it.type == DownloadResourceType.AUDIO
+        }?.file?.let { File(it) }
 
         var isMergedMediaTask = false
         val finalStatus = if (dashEntityList.size == 2 && videoDash != null && audioDash != null) {
@@ -269,7 +283,12 @@ class DownloadService : Service() {
             // 立即更新状态为正在合成
             DownloadRepository.update(task.apply { status = TaskStatus.SYNTHESIS.code })
             // 执行音视频合成逻辑
-            doMergeMediaTask(task, videoDash, audioDash)
+            doMergeMediaTask(
+                task = task,
+                videoDash = videoDash,
+                videoSourceFile = videoResourceFile ?: videoDash.getOutputFile(),
+                audioSourceFile = audioResourceFile ?: audioDash.getOutputFile()
+            )
         } else {
             TaskStatus.COMPLETED
         }
@@ -310,8 +329,11 @@ class DownloadService : Service() {
         }
 
         val parentFile = sourceFile.parentFile ?: return
-        val targetFile = File(parentFile, "${sourceFile.nameWithoutExtension}.${remuxFormat.suffix}")
-        if (targetFile.exists()) targetFile.delete()
+        val targetFile = DownloadFileNameUtils.buildUniqueFile(
+            directory = parentFile,
+            baseName = sourceFile.nameWithoutExtension,
+            extension = remuxFormat.suffix
+        )
 
         val isSuccess = FFMpegUtils.remuxAudio(
             sourceFile = sourceFile.path,
@@ -328,6 +350,11 @@ class DownloadService : Service() {
                 resource.copy(
                     mimeType = remuxFormat.mimeType,
                     storageSizeBytes = targetFile.length(),
+                    name = DownloadRepository.getResourceNameForFile(
+                        downloadResourceType = DownloadResourceType.AUDIO,
+                        resourceFile = targetFile,
+                        fallbackName = resource.name
+                    ),
                     file = targetFile.path
                 )
             )
@@ -354,11 +381,12 @@ class DownloadService : Service() {
     private suspend fun doMergeMediaTask(
         task: DownloadTaskEntity,
         videoDash: DownloadDashEntity,
-        audioDash: DownloadDashEntity
+        videoSourceFile: File,
+        audioSourceFile: File
     ): TaskStatus {
         // 如果合成失败将在一百毫秒后重新将尝试合成，如果再次失败则音视频合成失败
-        repeat(2) { attempt ->
-            if (tryMergeVideo(task, videoDash, audioDash)) {
+        repeat(2) {
+            if (tryMergeVideo(task, videoDash, videoSourceFile, audioSourceFile)) {
                 return TaskStatus.COMPLETED
             }
             delay(100)
@@ -406,25 +434,31 @@ class DownloadService : Service() {
     private suspend fun tryMergeVideo(
         task: DownloadTaskEntity,
         videoDash: DownloadDashEntity,
-        audioDash: DownloadDashEntity
+        videoSourceFile: File,
+        audioSourceFile: File
     ): Boolean {
-        val suffix = MimeTypeUtils.getExtensionFromMimeType(videoDash.mimeType) ?: "mkv"
-        val outputFile = File(
-            CommonLibs.requireResourcesDir(),
-            "merge-${task.id}-${System.currentTimeMillis()}.$suffix"
+        val outputFile = DownloadRepository.buildMixedResourceOutputFile(
+            downloadTaskEntity = task,
+            mimeType = videoDash.mimeType,
+            fallbackBaseName = "merge-${task.id}-${System.currentTimeMillis()}"
+        )
+        val resourceName = DownloadRepository.getResourceNameForFile(
+            downloadResourceType = DownloadResourceType.MIXED,
+            resourceFile = outputFile,
+            fallbackName = "Merge Resource"
         )
         // 预登记合成资源
         val resourceEntity = DownloadRepository.registerResource(
             downloadTaskId = task.id,
-            resourceName = "Merge Resource",
+            resourceName = resourceName,
             downloadResourceType = DownloadResourceType.MIXED,
             resourceFile = outputFile,
             mimeType = videoDash.mimeType
         )
         // 尝试合成
         val isSuccess = FFMpegUtils.mergeMedia(
-            videoDash.getOutputFile().path,
-            audioDash.getOutputFile().path,
+            videoSourceFile.path,
+            audioSourceFile.path,
             outputFile.path
         )
         if (isSuccess) {

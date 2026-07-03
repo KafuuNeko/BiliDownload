@@ -13,5 +13,8 @@ sealed class SettingsUiState {
         val downloadSourceCustomHost: String,
         val deleteSourceFilesAfterMerge: Boolean,
         val autoRemuxAudioAfterDownload: Boolean,
+        val audioResourceFileNameTemplate: String,
+        val videoResourceFileNameTemplate: String,
+        val mixedResourceFileNameTemplate: String,
     ) : SettingsUiState()
 }

@@ -207,6 +207,12 @@
     <string name="settings_download_path_external_desc">Download/BVD 目录</string>
     <string name="settings_download_path_current">当前：%s</string>
     <string name="settings_permission_denied">存储权限被拒绝，无法切换到外部目录</string>
+    <string name="settings_resource_file_name">资源文件名称</string>
+    <string name="settings_resource_file_name_desc">可用变量：{VideoName}、{PartName}。非法字符、超长名称和重复名称会自动调整。</string>
+    <string name="settings_resource_file_name_audio">音频文件</string>
+    <string name="settings_resource_file_name_video">视频文件</string>
+    <string name="settings_resource_file_name_mixed">合成后的文件</string>
+    <string name="settings_resource_file_name_hint">{VideoName}-{PartName}</string>
     <string name="settings_download_source">下载源</string>
     <string name="settings_download_source_default">默认</string>
     <string name="settings_download_source_default_desc">使用哔哩哔哩返回的默认下载地址</string>

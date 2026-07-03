@@ -207,6 +207,12 @@
     <string name="settings_download_path_external_desc">Download/BVD directory</string>
     <string name="settings_download_path_current">Current: %s</string>
     <string name="settings_permission_denied">Storage permission denied, unable to switch to external directory</string>
+    <string name="settings_resource_file_name">Resource File Names</string>
+    <string name="settings_resource_file_name_desc">Available variables: {VideoName}, {PartName}. Invalid characters, overly long names, and duplicates will be adjusted automatically.</string>
+    <string name="settings_resource_file_name_audio">Audio file</string>
+    <string name="settings_resource_file_name_video">Video file</string>
+    <string name="settings_resource_file_name_mixed">Merged file</string>
+    <string name="settings_resource_file_name_hint">{VideoName}-{PartName}</string>
     <string name="settings_download_source">Download Source</string>
     <string name="settings_download_source_default">Default</string>
     <string name="settings_download_source_default_desc">Use the default URL returned by Bilibili</string>

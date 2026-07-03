@@ -10,5 +10,8 @@ sealed class SettingsUiIntent {
     data class SetDownloadSourceCustomHost(val host: String) : SettingsUiIntent()
     data class SetDeleteSourceFilesAfterMerge(val enabled: Boolean) : SettingsUiIntent()
     data class SetAutoRemuxAudioAfterDownload(val enabled: Boolean) : SettingsUiIntent()
+    data class SetAudioResourceFileNameTemplate(val template: String) : SettingsUiIntent()
+    data class SetVideoResourceFileNameTemplate(val template: String) : SettingsUiIntent()
+    data class SetMixedResourceFileNameTemplate(val template: String) : SettingsUiIntent()
     data object GoBack : SettingsUiIntent()
 }

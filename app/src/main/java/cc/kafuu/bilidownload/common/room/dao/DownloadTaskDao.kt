@@ -61,6 +61,17 @@ interface DownloadTaskDao {
     )
     fun queryDownloadTaskDetailByTaskId(entityId: Long): LiveData<DownloadTaskWithVideoDetails>
 
+    @Query(
+        """
+        SELECT task.*, video.title, video.description, video.cover, part.partTitle
+        FROM DownloadTask task
+        INNER JOIN BiliVideoMain video ON task.biliBvid = video.biliBvid
+        INNER JOIN BiliVideoPart part ON task.biliBvid = part.biliBvid AND task.biliCid = part.biliCid
+        WHERE task.id = :entityId
+    """
+    )
+    suspend fun queryDownloadTaskDetailsByTaskId(entityId: Long): DownloadTaskWithVideoDetails?
+
     @Query("SELECT * FROM DownloadTask WHERE id = :id")
     suspend fun getDownloadTaskByTaskId(id: Long): DownloadTaskEntity?
 

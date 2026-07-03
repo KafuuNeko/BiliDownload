@@ -98,6 +98,12 @@ private fun SettingsContent(
             // 下载路径设置卡片
             DownloadPathCard(state, onIntent)
 
+            if (state.downloadPathMode == DownloadPathMode.EXTERNAL) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                ResourceFileNameCard(state, onIntent)
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             DownloadSourceCard(state, onIntent)
@@ -258,6 +264,87 @@ private fun DownloadPathCard(
             )
         }
     }
+}
+
+@Composable
+private fun ResourceFileNameCard(
+    state: SettingsUiState.Normal,
+    onIntent: (SettingsUiIntent) -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = stringResource(R.string.settings_resource_file_name),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
+            )
+
+            HorizontalDivider(
+                color = colorResource(R.color.view_split_color),
+                thickness = 0.5.dp
+            )
+
+            Text(
+                text = stringResource(R.string.settings_resource_file_name_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+            )
+
+            ResourceFileNameTextField(
+                value = state.audioResourceFileNameTemplate,
+                label = stringResource(R.string.settings_resource_file_name_audio),
+                onValueChange = {
+                    onIntent(SettingsUiIntent.SetAudioResourceFileNameTemplate(it))
+                }
+            )
+
+            ResourceFileNameTextField(
+                value = state.videoResourceFileNameTemplate,
+                label = stringResource(R.string.settings_resource_file_name_video),
+                onValueChange = {
+                    onIntent(SettingsUiIntent.SetVideoResourceFileNameTemplate(it))
+                }
+            )
+
+            ResourceFileNameTextField(
+                value = state.mixedResourceFileNameTemplate,
+                label = stringResource(R.string.settings_resource_file_name_mixed),
+                onValueChange = {
+                    onIntent(SettingsUiIntent.SetMixedResourceFileNameTemplate(it))
+                }
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+        }
+    }
+}
+
+@Composable
+private fun ResourceFileNameTextField(
+    value: String,
+    label: String,
+    onValueChange: (String) -> Unit
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        singleLine = true,
+        label = { Text(text = label) },
+        placeholder = {
+            Text(text = stringResource(R.string.settings_resource_file_name_hint))
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    )
 }
 
 @Composable

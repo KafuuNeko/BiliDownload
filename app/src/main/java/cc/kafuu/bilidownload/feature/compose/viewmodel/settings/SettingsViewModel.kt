@@ -62,6 +62,30 @@ class SettingsViewModel :
         refreshState()
     }
 
+    @UiIntentObserver(SettingsUiIntent.SetAudioResourceFileNameTemplate::class)
+    fun onSetAudioResourceFileNameTemplate(
+        intent: SettingsUiIntent.SetAudioResourceFileNameTemplate
+    ) {
+        AppModel.audioResourceFileNameTemplate = intent.template
+        refreshState()
+    }
+
+    @UiIntentObserver(SettingsUiIntent.SetVideoResourceFileNameTemplate::class)
+    fun onSetVideoResourceFileNameTemplate(
+        intent: SettingsUiIntent.SetVideoResourceFileNameTemplate
+    ) {
+        AppModel.videoResourceFileNameTemplate = intent.template
+        refreshState()
+    }
+
+    @UiIntentObserver(SettingsUiIntent.SetMixedResourceFileNameTemplate::class)
+    fun onSetMixedResourceFileNameTemplate(
+        intent: SettingsUiIntent.SetMixedResourceFileNameTemplate
+    ) {
+        AppModel.mixedResourceFileNameTemplate = intent.template
+        refreshState()
+    }
+
     @UiIntentObserver(SettingsUiIntent.GoBack::class)
     fun onGoBack() = viewModelScope.launch {
         SettingsUiEvent.Finish.send()
@@ -98,6 +122,9 @@ class SettingsViewModel :
             downloadSourceCustomHost = AppModel.downloadSourceCustomHost,
             deleteSourceFilesAfterMerge = AppModel.deleteSourceFilesAfterMerge,
             autoRemuxAudioAfterDownload = AppModel.autoRemuxAudioAfterDownload,
+            audioResourceFileNameTemplate = AppModel.audioResourceFileNameTemplate,
+            videoResourceFileNameTemplate = AppModel.videoResourceFileNameTemplate,
+            mixedResourceFileNameTemplate = AppModel.mixedResourceFileNameTemplate,
         ).setup()
     }
 

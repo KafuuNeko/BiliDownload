@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload.common.model
 
+import cc.kafuu.bilidownload.common.utils.DownloadFileNameUtils
 import com.chibatching.kotpref.KotprefModel
 
 object AppModel : KotprefModel() {
@@ -22,6 +23,18 @@ object AppModel : KotprefModel() {
     var deleteSourceFilesAfterMerge by booleanPref(false)
 
     var autoRemuxAudioAfterDownload by booleanPref(false)
+
+    var audioResourceFileNameTemplate by stringPref(
+        DownloadFileNameUtils.DEFAULT_AUDIO_TEMPLATE
+    )
+
+    var videoResourceFileNameTemplate by stringPref(
+        DownloadFileNameUtils.DEFAULT_VIDEO_TEMPLATE
+    )
+
+    var mixedResourceFileNameTemplate by stringPref(
+        DownloadFileNameUtils.DEFAULT_MIXED_TEMPLATE
+    )
 
     var downloadPathMode: DownloadPathMode
         get() = DownloadPathMode.fromCode(downloadPathModeCode)

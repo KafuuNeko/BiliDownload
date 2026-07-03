@@ -4,11 +4,15 @@ import android.database.sqlite.SQLiteConstraintException
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.constant.DownloadResourceType
+import cc.kafuu.bilidownload.common.model.AppModel
+import cc.kafuu.bilidownload.common.model.DownloadPathMode
 import cc.kafuu.bilidownload.common.model.TaskStatus
 import cc.kafuu.bilidownload.common.model.bili.BiliDashModel
 import cc.kafuu.bilidownload.common.room.entity.DownloadDashEntity
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
+import cc.kafuu.bilidownload.common.utils.DownloadFileNameUtils
+import cc.kafuu.bilidownload.common.utils.MimeTypeUtils
 import java.io.File
 
 object DownloadRepository {
@@ -81,14 +85,140 @@ object DownloadRepository {
             DashType.VIDEO -> DownloadResourceType.VIDEO
             else -> throw IllegalArgumentException("Unknown download resource type")
         }
-        val resourceName = if (downloadDashEntity.type == DashType.AUDIO) "AUDIO" else "VIDEO"
+        val sourceFile = downloadDashEntity.getOutputFile()
+        val resourceFile = prepareDownloadResourceFile(
+            downloadTaskEntity = downloadTaskEntity,
+            downloadResourceType = downloadResourceType,
+            sourceFile = sourceFile,
+            mimeType = downloadDashEntity.mimeType
+        )
+        val resourceName = if (isExternalResourceFileNameEnabled()) {
+            resourceFile.nameWithoutExtension
+        } else if (downloadDashEntity.type == DashType.AUDIO) {
+            "AUDIO"
+        } else {
+            "VIDEO"
+        }
         return registerResource(
             downloadTaskId = downloadTaskEntity.id,
             resourceName = resourceName,
             downloadResourceType = downloadResourceType,
-            resourceFile = downloadDashEntity.getOutputFile(),
+            resourceFile = resourceFile,
             mimeType = downloadDashEntity.mimeType
         )
+    }
+
+    suspend fun buildMixedResourceOutputFile(
+        downloadTaskEntity: DownloadTaskEntity,
+        mimeType: String,
+        fallbackBaseName: String
+    ): File {
+        if (!isExternalResourceFileNameEnabled()) {
+            val suffix = MimeTypeUtils.getExtensionFromMimeType(mimeType) ?: "mkv"
+            return File(CommonLibs.requireResourcesDir(), "$fallbackBaseName.$suffix")
+        }
+
+        return buildExternalResourceFile(
+            downloadTaskEntity = downloadTaskEntity,
+            downloadResourceType = DownloadResourceType.MIXED,
+            mimeType = mimeType,
+            fallbackBaseName = fallbackBaseName
+        )
+    }
+
+    fun getResourceNameForFile(
+        @DownloadResourceType downloadResourceType: Int,
+        resourceFile: File,
+        fallbackName: String
+    ): String {
+        val isDownloadResourceType = when (downloadResourceType) {
+            DownloadResourceType.AUDIO,
+            DownloadResourceType.VIDEO,
+            DownloadResourceType.MIXED -> true
+            else -> false
+        }
+        return if (isExternalResourceFileNameEnabled() && isDownloadResourceType) {
+            resourceFile.nameWithoutExtension
+        } else {
+            fallbackName
+        }
+    }
+
+    private suspend fun prepareDownloadResourceFile(
+        downloadTaskEntity: DownloadTaskEntity,
+        @DownloadResourceType downloadResourceType: Int,
+        sourceFile: File,
+        mimeType: String
+    ): File {
+        if (!isExternalResourceFileNameEnabled()) return sourceFile
+
+        val targetFile = buildExternalResourceFile(
+            downloadTaskEntity = downloadTaskEntity,
+            downloadResourceType = downloadResourceType,
+            mimeType = mimeType,
+            fallbackBaseName = sourceFile.nameWithoutExtension
+        )
+        if (sourceFile.absolutePath == targetFile.absolutePath || !sourceFile.exists()) {
+            return sourceFile
+        }
+        moveFile(sourceFile, targetFile)
+        return targetFile
+    }
+
+    private suspend fun buildExternalResourceFile(
+        downloadTaskEntity: DownloadTaskEntity,
+        @DownloadResourceType downloadResourceType: Int,
+        mimeType: String,
+        fallbackBaseName: String
+    ): File {
+        val fallbackSuffix = if (downloadResourceType == DownloadResourceType.MIXED) {
+            "mkv"
+        } else {
+            "bin"
+        }
+        val suffix = MimeTypeUtils.getExtensionFromMimeType(mimeType) ?: fallbackSuffix
+        return DownloadFileNameUtils.buildUniqueFile(
+            directory = CommonLibs.requireResourcesDir(),
+            template = getTemplateForResourceType(downloadResourceType),
+            context = getFileNameTemplateContext(downloadTaskEntity),
+            extension = suffix,
+            fallbackBaseName = fallbackBaseName
+        )
+    }
+
+    private suspend fun getFileNameTemplateContext(
+        downloadTaskEntity: DownloadTaskEntity
+    ): DownloadFileNameUtils.TemplateContext {
+        val details = mDownloadTaskDao.queryDownloadTaskDetailsByTaskId(downloadTaskEntity.id)
+        return DownloadFileNameUtils.TemplateContext(
+            videoName = details?.title ?: downloadTaskEntity.biliBvid,
+            partName = details?.partTitle ?: downloadTaskEntity.biliCid.toString()
+        )
+    }
+
+    private fun getTemplateForResourceType(
+        @DownloadResourceType downloadResourceType: Int
+    ) = when (downloadResourceType) {
+        DownloadResourceType.AUDIO -> AppModel.audioResourceFileNameTemplate
+        DownloadResourceType.VIDEO -> AppModel.videoResourceFileNameTemplate
+        DownloadResourceType.MIXED -> AppModel.mixedResourceFileNameTemplate
+        else -> DownloadFileNameUtils.DEFAULT_MIXED_TEMPLATE
+    }
+
+    private fun isExternalResourceFileNameEnabled(): Boolean {
+        return AppModel.downloadPathMode == DownloadPathMode.EXTERNAL
+    }
+
+    private fun moveFile(source: File, target: File) {
+        target.parentFile?.mkdirs()
+        if (source.renameTo(target)) return
+
+        source.inputStream().use { input ->
+            target.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+        source.delete()
     }
 
     /**
