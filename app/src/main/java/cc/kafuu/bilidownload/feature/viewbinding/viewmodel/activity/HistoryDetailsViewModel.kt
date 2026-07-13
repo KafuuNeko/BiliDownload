@@ -1,6 +1,7 @@
 package cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity
 
 import androidx.lifecycle.MutableLiveData
+import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.core.viewbinding.CoreViewModel
 import cc.kafuu.bilidownload.common.ext.liveData
@@ -8,6 +9,7 @@ import cc.kafuu.bilidownload.common.manager.DownloadManager
 import cc.kafuu.bilidownload.common.model.DownloadStatus
 import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.common.model.action.ViewAction
+import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
 import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
@@ -118,8 +120,13 @@ class HistoryDetailsViewModel : CoreViewModel() {
         entity.groupId?.let {
             DownloadManager.cancelDownload(it)
         }
-        runBlocking { DownloadRepository.deleteDownloadTask(entity.id) }
-        finishActivity()
+        if (runBlocking { DownloadRepository.deleteDownloadTask(entity.id) }) {
+            finishActivity()
+        } else {
+            popMessage(
+                ToastMessageAction(CommonLibs.getString(R.string.delete_resource_failed_message))
+            )
+        }
     }
 
     /**

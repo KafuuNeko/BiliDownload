@@ -124,14 +124,21 @@ class HistoryViewModel : RVViewModel() {
 
     suspend fun deleteSelectedTasks() {
         val selectedIds = mSelectedIdsLiveData.value ?: return
-        withContext(Dispatchers.IO) {
+        val hasFailure = withContext(Dispatchers.IO) {
+            var failed = false
             for (taskId in selectedIds) {
                 latestDownloadTaskLiveData.value?.find { it.downloadTask.id == taskId }
                     ?.downloadTask?.groupId?.let { groupId ->
                         DownloadManager.cancelDownload(groupId)
                     }
-                DownloadRepository.deleteDownloadTask(taskId)
+                if (!DownloadRepository.deleteDownloadTask(taskId)) failed = true
             }
+            failed
+        }
+        if (hasFailure) {
+            popMessage(
+                ToastMessageAction(CommonLibs.getString(R.string.delete_resource_failed_message))
+            )
         }
         exitMultiSelectMode()
     }

@@ -13,5 +13,7 @@ data class DownloadResourceEntity(
     val mimeType: String,
     val storageSizeBytes: Long,
     val creationTime: Long,
-    val file: String
+    val file: String,
+    /** 已发布到共享存储资源对应的 MediaStore 标识。 */
+    val contentUri: String? = null
 )

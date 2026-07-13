@@ -12,8 +12,6 @@ import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
-import cc.kafuu.bilidownload.common.model.AppModel
-import cc.kafuu.bilidownload.common.model.DownloadPathMode
 import cc.kafuu.bilidownload.common.room.AppDatabase
 import java.io.File
 import androidx.core.net.toUri
@@ -61,19 +59,25 @@ object CommonLibs {
     fun requireDownloadCacheDir(entityId: Long) =
         requireExternalFilesDir("cache", "download/task-e$entityId")
 
-    fun requireResourcesDir(): File {
-        return when (AppModel.downloadPathMode) {
-            DownloadPathMode.EXTERNAL -> {
-                val downloadDir = Environment.getExternalStoragePublicDirectory(
-                    Environment.DIRECTORY_DOWNLOADS
-                )
-                File(downloadDir, "BVD").apply {
-                    if (!(exists() || mkdirs())) {
-                        throw IllegalStateException("Directory $this cannot be created")
-                    }
-                }
+    /**
+     * 下载和 FFmpeg 处理文件始终存放在应用专属目录中。
+     * 完成后的资源由 ResourceStorage 发布到公共下载目录。
+     */
+    fun requireResourceWorkingDir() = requireExternalFilesDir("resources")
+
+    @Suppress("DEPRECATION")
+    fun getPublicResourcesDir(): File {
+        val downloadDir = Environment.getExternalStoragePublicDirectory(
+            Environment.DIRECTORY_DOWNLOADS
+        )
+        return File(downloadDir, "BVD")
+    }
+
+    fun requirePublicResourcesDir(): File {
+        return getPublicResourcesDir().apply {
+            if (!isDirectory && !mkdirs() && !isDirectory) {
+                throw IllegalStateException("Directory $this cannot be created")
             }
-            else -> requireExternalFilesDir("resources")
         }
     }
 

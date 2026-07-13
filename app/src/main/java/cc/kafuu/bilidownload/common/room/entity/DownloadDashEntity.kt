@@ -16,12 +16,19 @@ data class DownloadDashEntity (
     val mimeType: String,
     val codecs: String,
 ) {
+    private fun getOutputFileName(): String {
+        val suffix = MimeTypeUtils.getExtensionFromMimeType(mimeType) ?: "bin"
+        return "stream-$taskId-$dashId-$codecId.$suffix"
+    }
+
     fun getOutputFile(): File {
         // 根据mimetype取得文件后缀名
-        val suffix = MimeTypeUtils.getExtensionFromMimeType(mimeType) ?: "bin"
         // 取得合成文件输出路径
-        return File(CommonLibs.requireResourcesDir(), "stream-$taskId-$dashId-$codecId.$suffix")
+        return File(CommonLibs.requireResourceWorkingDir(), getOutputFileName())
     }
+
+    /** 资源改为应用专属目录暂存前使用的旧输出位置。 */
+    fun getLegacyOutputFile() = File(CommonLibs.getPublicResourcesDir(), getOutputFileName())
 
     fun getQualityDetails(defaultText: String) = when(type) {
         DashType.AUDIO -> BiliCodeUtils.getAudioQualityDescribe(dashId)

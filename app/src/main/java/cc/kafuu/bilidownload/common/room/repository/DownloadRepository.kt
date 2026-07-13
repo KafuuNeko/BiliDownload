@@ -1,6 +1,7 @@
 package cc.kafuu.bilidownload.common.room.repository
 
 import android.database.sqlite.SQLiteConstraintException
+import android.util.Log
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.constant.DownloadResourceType
@@ -11,11 +12,14 @@ import cc.kafuu.bilidownload.common.model.bili.BiliDashModel
 import cc.kafuu.bilidownload.common.room.entity.DownloadDashEntity
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
+import cc.kafuu.bilidownload.common.storage.ResourceStorage
 import cc.kafuu.bilidownload.common.utils.DownloadFileNameUtils
 import cc.kafuu.bilidownload.common.utils.MimeTypeUtils
 import java.io.File
 
 object DownloadRepository {
+    private const val TAG = "DownloadRepository"
+
     private val mDownloadTaskDao by lazy { CommonLibs.requireAppDatabase().downloadTaskDao() }
     private val mDownloadDashDao by lazy { CommonLibs.requireAppDatabase().downloadDashDao() }
     private val mDownloadResourceDao by lazy {
@@ -115,7 +119,7 @@ object DownloadRepository {
     ): File {
         if (!isExternalResourceFileNameEnabled()) {
             val suffix = MimeTypeUtils.getExtensionFromMimeType(mimeType) ?: "mkv"
-            return File(CommonLibs.requireResourcesDir(), "$fallbackBaseName.$suffix")
+            return File(CommonLibs.requireResourceWorkingDir(), "$fallbackBaseName.$suffix")
         }
 
         return buildExternalResourceFile(
@@ -178,7 +182,7 @@ object DownloadRepository {
         }
         val suffix = MimeTypeUtils.getExtensionFromMimeType(mimeType) ?: fallbackSuffix
         return DownloadFileNameUtils.buildUniqueFile(
-            directory = CommonLibs.requireResourcesDir(),
+            directory = CommonLibs.requireResourceWorkingDir(),
             template = getTemplateForResourceType(downloadResourceType),
             context = getFileNameTemplateContext(downloadTaskEntity),
             extension = suffix,
@@ -231,49 +235,81 @@ object DownloadRepository {
         return entity.copy(id = id)
     }
 
+    suspend fun publishResourceIfNeeded(
+        entity: DownloadResourceEntity
+    ): DownloadResourceEntity {
+        val published = ResourceStorage.publishIfNeeded(entity)
+        return if (published == entity) entity else updateOrInsertResource(published)
+    }
+
+    suspend fun publishResourcesIfNeeded(taskId: Long): Boolean {
+        var success = true
+        queryResourcesByTaskId(taskId).forEach { resource ->
+            try {
+                publishResourceIfNeeded(resource)
+            } catch (e: Exception) {
+                success = false
+                Log.e(TAG, "Unable to publish resource ${resource.id}", e)
+            }
+        }
+        return success
+    }
+
     /**
      * @brief 删除下载任务及其相关联的记录，同时删除关联的文件和目录
      */
-    suspend fun deleteDownloadTask(taskId: Long) {
-        CommonLibs.requireDownloadCacheDir(taskId).let {
-            it.deleteRecursively()
-            it.delete()
+    suspend fun deleteDownloadTask(taskId: Long): Boolean {
+        var success = CommonLibs.requireDownloadCacheDir(taskId).deleteRecursively()
+        queryResourcesByTaskId(taskId).forEach { resource ->
+            if (!ResourceStorage.delete(resource)) success = false
         }
-        queryResourcesByTaskId(taskId).forEach {
-            File(it.file).delete()
+        mDownloadDashDao.queryDashListByTaskEntityId(taskId).forEach { dash ->
+            if (!ResourceStorage.deleteFile(dash.getOutputFile(), dash.mimeType)) success = false
+            if (!ResourceStorage.deleteFile(dash.getLegacyOutputFile(), dash.mimeType)) {
+                success = false
+            }
         }
-        mDownloadDashDao.queryDashListByTaskEntityId(taskId).forEach {
-            it.getOutputFile().delete()
-        }
+        if (!success) return false
+
         mDownloadTaskDao.deleteTaskByTaskId(taskId)
         mDownloadDashDao.deleteTaskByTaskId(taskId)
         mDownloadResourceDao.deleteTaskByTaskId(taskId)
+        return true
     }
 
     /**
      * 删除某个任务所有合成类型的资源
      */
-    suspend fun deleteDownloadTaskMixedResource(taskId: Long) {
+    suspend fun deleteDownloadTaskMixedResource(taskId: Long): Boolean {
+        var success = true
         mDownloadResourceDao.queryResourceByTaskIdAndResourceType(
             taskId, DownloadResourceType.MIXED
-        ).forEach {
-            File(it.file).run { if (exists()) delete() }
-            mDownloadResourceDao.deleteById(it.id)
+        ).forEach { resource ->
+            if (ResourceStorage.delete(resource)) {
+                mDownloadResourceDao.deleteById(resource.id)
+            } else {
+                success = false
+            }
         }
+        return success
     }
 
     /**
      * 删除某个任务的音频和视频源文件及其资源记录
      */
-    suspend fun deleteDownloadTaskSourceResources(taskId: Long) {
+    suspend fun deleteDownloadTaskSourceResources(taskId: Long): Boolean {
+        var success = true
         listOf(DownloadResourceType.VIDEO, DownloadResourceType.AUDIO).forEach { type ->
-            mDownloadResourceDao.queryResourceByTaskIdAndResourceType(taskId, type).forEach {
-                val file = File(it.file)
-                if (!file.exists() || file.delete()) {
-                    mDownloadResourceDao.deleteById(it.id)
+            mDownloadResourceDao.queryResourceByTaskIdAndResourceType(taskId, type)
+                .forEach { resource ->
+                if (ResourceStorage.delete(resource)) {
+                    mDownloadResourceDao.deleteById(resource.id)
+                } else {
+                    success = false
                 }
             }
         }
+        return success
     }
 
     /**
@@ -328,8 +364,10 @@ object DownloadRepository {
     /**
      * @brief 根据资源id删除某个资源
      */
-    suspend fun deleteResourceById(resourceId: Long) = run {
-        mDownloadResourceDao.deleteById(resourceId)
+    suspend fun deleteResource(resource: DownloadResourceEntity): Boolean {
+        if (!ResourceStorage.delete(resource)) return false
+        mDownloadResourceDao.deleteById(resource.id)
+        return true
     }
 
     /**

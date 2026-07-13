@@ -259,14 +259,12 @@ class LocalResourceVideModel : CoreViewModel() {
      */
     private suspend fun doDeleteResource() {
         val resource = mResourceLiveData.value ?: return
-        val file = File(resource.file)
-        if (file.exists() && !file.delete()) {
+        if (!DownloadRepository.deleteResource(resource)) {
             popMessage(
                 ToastMessageAction(CommonLibs.getString(R.string.delete_resource_failed_message))
             )
             return
         }
-        DownloadRepository.deleteResourceById(resource.id)
         finishActivity()
     }
 
@@ -325,7 +323,7 @@ class LocalResourceVideModel : CoreViewModel() {
         targetResult: ConvertDialog.Companion.Result
     ) {
         val resource = mResourceLiveData.value ?: return
-        val targetFile = File(CommonLibs.requireResourcesDir(), targetName)
+        val targetFile = File(CommonLibs.requireResourceWorkingDir(), targetName)
         // 将临时文件移动到资源目录
         if (!convertCacheFile.renameTo(targetFile)) {
             onConvertFailed()
@@ -335,16 +333,22 @@ class LocalResourceVideModel : CoreViewModel() {
         val videoCodecName = targetResult.videoCodec?.let { ",${it.name}" } ?: ""
         // 登记资源
         runBlocking {
-            val resourceId = DownloadRepository.registerResource(
+            val registeredResource = DownloadRepository.registerResource(
                 downloadTaskId = resource.taskId,
                 resourceName = "Convert(${targetResult.format.name}$audioCodecName$videoCodecName)",
                 downloadResourceType = resource.type,
                 resourceFile = targetFile.absoluteFile,
                 mimeType = targetResult.format.mimeType
-            ).id
+            )
+            val storedResource = try {
+                DownloadRepository.publishResourceIfNeeded(registeredResource)
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to publish converted resource", e)
+                registeredResource
+            }
             startActivity(
                 LocalResourceActivity::class.java,
-                LocalResourceActivity.buildIntent(resource.taskId, resourceId)
+                LocalResourceActivity.buildIntent(resource.taskId, storedResource.id)
             )
         }
     }

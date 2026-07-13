@@ -22,6 +22,7 @@ import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.room.repository.BiliVideoRepository
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
+import cc.kafuu.bilidownload.common.storage.ResourceStorage
 import cc.kafuu.bilidownload.common.utils.DownloadFileNameUtils
 import cc.kafuu.bilidownload.common.utils.FFMpegUtils
 import cc.kafuu.bilidownload.notification.DownloadNotification
@@ -286,8 +287,8 @@ class DownloadService : Service() {
             doMergeMediaTask(
                 task = task,
                 videoDash = videoDash,
-                videoSourceFile = videoResourceFile ?: videoDash.getOutputFile(),
-                audioSourceFile = audioResourceFile ?: audioDash.getOutputFile()
+                videoSourceFile = videoResourceFile ?: resolveDashOutputFile(videoDash),
+                audioSourceFile = audioResourceFile ?: resolveDashOutputFile(audioDash)
             )
         } else {
             TaskStatus.COMPLETED
@@ -298,6 +299,9 @@ class DownloadService : Service() {
                 task = task,
                 skipSourceResources = isMergedMediaTask && AppModel.deleteSourceFilesAfterMerge
             )
+            if (!DownloadRepository.publishResourcesIfNeeded(task.id)) {
+                Log.e(TAG, "Some resources could not be published to shared Downloads storage")
+            }
         }
 
         // 更新记录为最终状态
@@ -346,23 +350,25 @@ class DownloadService : Service() {
         }
 
         try {
-            DownloadRepository.updateOrInsertResource(
-                resource.copy(
-                    mimeType = remuxFormat.mimeType,
-                    storageSizeBytes = targetFile.length(),
-                    name = DownloadRepository.getResourceNameForFile(
-                        downloadResourceType = DownloadResourceType.AUDIO,
-                        resourceFile = targetFile,
-                        fallbackName = resource.name
-                    ),
-                    file = targetFile.path
-                )
+            val remuxedResource = resource.copy(
+                mimeType = remuxFormat.mimeType,
+                storageSizeBytes = targetFile.length(),
+                name = DownloadRepository.getResourceNameForFile(
+                    downloadResourceType = DownloadResourceType.AUDIO,
+                    resourceFile = targetFile,
+                    fallbackName = resource.name
+                ),
+                file = targetFile.path,
+                contentUri = null
             )
-            if (!sourceFile.delete()) {
-                Log.d(TAG, "Delete original audio file failed: ${sourceFile.path}")
+            DownloadRepository.updateOrInsertResource(remuxedResource)
+            if (!ResourceStorage.delete(resource)) {
+                DownloadRepository.updateOrInsertResource(resource)
+                ResourceStorage.deleteFile(targetFile, remuxFormat.mimeType)
+                Log.e(TAG, "Delete original audio file failed: ${sourceFile.path}")
             }
         } catch (e: Exception) {
-            if (targetFile.exists()) targetFile.delete()
+            ResourceStorage.deleteFile(targetFile, remuxFormat.mimeType)
             Log.e(TAG, "Update remuxed audio resource failed", e)
         }
     }
@@ -469,13 +475,22 @@ class DownloadService : Service() {
                 DownloadRepository.updateOrInsertResource(this)
             }
             if (AppModel.deleteSourceFilesAfterMerge) {
-                DownloadRepository.deleteDownloadTaskSourceResources(task.id)
+                if (!DownloadRepository.deleteDownloadTaskSourceResources(task.id)) {
+                    Log.e(TAG, "Unable to delete one or more source resources for task ${task.id}")
+                }
             }
         } else {
             // 如果合成失败则清理合成输出资源
-            DownloadRepository.deleteResourceById(resourceEntity.id)
-            if (outputFile.exists()) outputFile.delete()
+            if (!DownloadRepository.deleteResource(resourceEntity)) {
+                Log.e(TAG, "Unable to clean failed merge output: ${outputFile.path}")
+            }
         }
         return isSuccess
+    }
+
+    private fun resolveDashOutputFile(dash: DownloadDashEntity): File {
+        val workingFile = dash.getOutputFile()
+        if (workingFile.exists()) return workingFile
+        return dash.getLegacyOutputFile().takeIf { it.exists() } ?: workingFile
     }
 }
