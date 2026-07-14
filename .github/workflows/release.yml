@@ -133,7 +133,7 @@ jobs:
 
           expected_abis=("armeabi-v7a" "arm64-v8a" "x86" "x86_64")
           for abi in "${expected_abis[@]}"; do
-            mapfile -t unsigned_apks < <(find app/build/outputs/apk/release -maxdepth 1 -type f -name "*${abi}*unsigned*.apk")
+            mapfile -t unsigned_apks < <(find app/build/outputs/apk/release -maxdepth 1 -type f -name "*-${abi}-release-unsigned.apk")
             test "${#unsigned_apks[@]}" -eq 1
 
             aligned_apk="$RUNNER_TEMP/BiliDownload-${APP_VERSION}-${abi}-aligned.apk"
