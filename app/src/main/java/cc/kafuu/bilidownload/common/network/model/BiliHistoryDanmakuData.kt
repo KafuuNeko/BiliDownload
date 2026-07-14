@@ -2,9 +2,6 @@ package cc.kafuu.bilidownload.common.network.model
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import java.time.LocalDate
-import java.time.YearMonth
-import java.time.format.DateTimeFormatter
 
 /**
  * B站历史弹幕索引数据
@@ -16,8 +13,6 @@ data class BiliHistoryDanmakuIndex(
     val data: List<String>?
 ) {
     companion object {
-        private val DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-
         /**
          * 从JsonObject解析
          */

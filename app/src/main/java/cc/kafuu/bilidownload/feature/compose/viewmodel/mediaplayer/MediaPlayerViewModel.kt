@@ -7,6 +7,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import cc.kafuu.bilidownload.common.audio.MediaPlayerFactory
 import cc.kafuu.bilidownload.common.core.compose.CoreCompViewModelWithEvent
 import cc.kafuu.bilidownload.common.core.compose.UiIntentObserver
 import kotlinx.coroutines.Job
@@ -63,7 +64,9 @@ class MediaPlayerViewModel :
     fun onInit(intent: MediaPlayerUiIntent.Init) {
         if (!isStateOf<MediaPlayerUiState.None>()) return
 
-        val player = ExoPlayer.Builder(intent.context.applicationContext).build().also {
+        val player = MediaPlayerFactory.configure(
+            ExoPlayer.Builder(intent.context.applicationContext)
+        ).build().also {
             mPlayer = it
             it.addListener(createPlayerListener())
         }
@@ -71,11 +74,12 @@ class MediaPlayerViewModel :
         MediaPlayerUiState.Playing(
             title = intent.title,
             filePath = intent.filePath,
+            contentUri = intent.contentUri,
             mimeType = intent.mimeType,
             player = player,
         ).setup()
 
-        val uri = Uri.fromFile(File(intent.filePath))
+        val uri = intent.contentUri?.let(Uri::parse) ?: Uri.fromFile(File(intent.filePath))
         val mediaItem = MediaItem.fromUri(uri)
         player.setMediaItem(mediaItem)
         player.prepare()
@@ -181,7 +185,8 @@ class MediaPlayerViewModel :
         MediaPlayerUiEvent.OpenWithOtherPlayer(
             filePath = state.filePath,
             title = state.title,
-            mimeType = state.mimeType
+            mimeType = state.mimeType,
+            contentUri = state.contentUri
         ).send()
         scheduleAutoHide()
     }

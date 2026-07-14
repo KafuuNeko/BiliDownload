@@ -81,6 +81,11 @@ object CommonLibs {
         }
     }
 
+    /**
+     * 返回公共影片目录下的 BVD 资源目录。
+     *
+     * 此方法只计算目录位置，不负责创建目录；目录创建由实际发布流程完成。
+     */
     @Suppress("DEPRECATION")
     fun getPublicVideoResourcesDir(): File {
         val moviesDir = Environment.getExternalStoragePublicDirectory(

@@ -3,7 +3,13 @@ package cc.kafuu.bilidownload.feature.compose.viewmodel.mediaplayer
 import android.content.Context
 
 sealed class MediaPlayerUiIntent {
-    data class Init(val context: Context, val filePath: String, val title: String, val mimeType: String) : MediaPlayerUiIntent()
+    data class Init(
+        val context: Context,
+        val filePath: String,
+        val title: String,
+        val mimeType: String,
+        val contentUri: String?
+    ) : MediaPlayerUiIntent()
     data object TogglePlayPause : MediaPlayerUiIntent()
     data class SetPlaybackSpeed(val speed: Float) : MediaPlayerUiIntent()
     data class SeekTo(val position: Long) : MediaPlayerUiIntent()

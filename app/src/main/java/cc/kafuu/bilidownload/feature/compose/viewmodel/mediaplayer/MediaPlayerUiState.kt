@@ -8,6 +8,7 @@ sealed class MediaPlayerUiState {
     data class Playing(
         val title: String,
         val filePath: String,
+        val contentUri: String?,
         val mimeType: String,
         val player: ExoPlayer,
         val isPlaying: Boolean = false,

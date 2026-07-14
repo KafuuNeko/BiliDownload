@@ -12,6 +12,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.extractor.DefaultExtractorsFactory
 import cc.kafuu.bilidownload.R
+import cc.kafuu.bilidownload.common.audio.MediaPlayerFactory
 import cc.kafuu.bilidownload.common.audio.spectrum.AudioSpectrumAnalyzer
 import cc.kafuu.bilidownload.common.audio.spectrum.MusicSpectrumBitmapRenderer
 import cc.kafuu.bilidownload.common.audio.spectrum.MusicSpectrumBitmapTile
@@ -112,7 +113,8 @@ class MusicPlayerViewModel :
             .setConstantBitrateSeekingEnabled(true)
         val mediaSourceFactory = DefaultMediaSourceFactory(appContext, extractorsFactory)
 
-        val player = ExoPlayer.Builder(appContext)
+        val player = MediaPlayerFactory.configure(
+            ExoPlayer.Builder(appContext)
             .setMediaSourceFactory(mediaSourceFactory)
             .setRenderersFactory(
                 RealtimeAudioRenderersFactory(
@@ -120,6 +122,7 @@ class MusicPlayerViewModel :
                     analyzer = mRealtimeSpectrumAnalyzer
                 )
             )
+        )
             .build()
             .also {
                 mPlayer = it
@@ -129,11 +132,12 @@ class MusicPlayerViewModel :
         MusicPlayerUiState.Playing(
             title = intent.title,
             filePath = intent.filePath,
+            contentUri = intent.contentUri,
             mimeType = intent.mimeType,
             player = player
         ).setup()
 
-        val uri = Uri.fromFile(File(intent.filePath))
+        val uri = intent.contentUri?.let(Uri::parse) ?: Uri.fromFile(File(intent.filePath))
         player.setMediaItem(MediaItem.fromUri(uri))
         player.prepare()
         player.playWhenReady = true
@@ -245,7 +249,8 @@ class MusicPlayerViewModel :
         MusicPlayerUiEvent.OpenWithOtherPlayer(
             filePath = state.filePath,
             title = state.title,
-            mimeType = state.mimeType
+            mimeType = state.mimeType,
+            contentUri = state.contentUri
         ).send()
     }
 

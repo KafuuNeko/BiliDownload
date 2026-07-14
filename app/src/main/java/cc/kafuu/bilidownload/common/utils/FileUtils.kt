@@ -38,18 +38,21 @@ object FileUtils {
      * @param title 分享对话框的标题
      * @param file 要分享的文件
      * @param mimetype 文件的MIME类型
+     * @param contentUri 已登记到媒体库的读取 URI；可访问时优先于文件路径
      */
-    fun tryShareFile(context: Context, title: String, file: File, mimetype: String) {
-        if (!file.exists()) return
-        val uri: Uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
-        )
+    fun tryShareFile(
+        context: Context,
+        title: String,
+        file: File,
+        mimetype: String,
+        contentUri: String? = null
+    ) {
+        val uri = resolveReadUri(context, file, contentUri) ?: return
 
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = mimetype
             putExtra(Intent.EXTRA_STREAM, uri)
+            clipData = ClipData.newUri(context.contentResolver, file.name, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
@@ -65,21 +68,18 @@ object FileUtils {
      * @param title 应用选择器标题
      * @param file 要打开的文件
      * @param mimetype 文件的MIME类型
+     * @param contentUri 已登记到媒体库的读取 URI；可访问时优先于文件路径
      * @return 是否成功启动系统应用选择器
      */
     fun tryOpenFileWithOtherApp(
         context: Context,
         title: String,
         file: File,
-        mimetype: String
+        mimetype: String,
+        contentUri: String? = null
     ): Boolean {
-        if (!file.exists()) return false
         return try {
-            val uri: Uri = FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                file
-            )
+            val uri = resolveReadUri(context, file, contentUri) ?: return false
 
             val intent = Intent(Intent.ACTION_VIEW).apply {
                 setDataAndType(uri, mimetype)
@@ -94,6 +94,44 @@ object FileUtils {
         } catch (_: IllegalArgumentException) {
             false
         } catch (_: SecurityException) {
+            false
+        }
+    }
+
+    /**
+     * 解析可授予其他组件读取权限的 URI。
+     *
+     * 优先验证并使用 MediaStore 的 `content://` URI；URI 缺失或失效时，如果文件仍存在，
+     * 再通过 FileProvider 生成回退 URI。两种方式都不可用时返回 `null`。
+     *
+     * @param context 用于访问 ContentResolver 和 FileProvider 的上下文。
+     * @param file URI 回退所使用的本地文件。
+     * @param contentUri 数据库中保存的媒体库 URI。
+     */
+    fun resolveReadUri(context: Context, file: File, contentUri: String? = null): Uri? {
+        contentUri?.let(Uri::parse)
+            ?.takeIf { it.scheme == "content" && canReadUri(context, it) }
+            ?.let { return it }
+
+        if (!file.isFile) return null
+        return try {
+            FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
+        } catch (_: IllegalArgumentException) {
+            null
+        } catch (_: SecurityException) {
+            null
+        }
+    }
+
+    /** 通过实际打开文件描述符验证当前进程仍可读取 URI。 */
+    private fun canReadUri(context: Context, uri: Uri): Boolean {
+        return try {
+            context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { true } ?: false
+        } catch (_: Exception) {
             false
         }
     }

@@ -155,7 +155,7 @@
 
             <!-- 下载失败时显示 -->
             <androidx.cardview.widget.CardView
-                bindVisible="@{viewModel.downloadDetailsLiveData != null &amp;&amp; (viewModel.downloadDetailsLiveData.downloadTask.status == TaskStatus.DOWNLOAD_FAILED.code || viewModel.downloadDetailsLiveData.downloadTask.groupId == -1)}"
+                bindVisible="@{viewModel.downloadDetailsLiveData != null &amp;&amp; (viewModel.downloadDetailsLiveData.downloadTask.status == TaskStatus.DOWNLOAD_FAILED.code || viewModel.downloadDetailsLiveData.downloadTask.status == TaskStatus.PUBLISH_FAILED.code || viewModel.downloadDetailsLiveData.downloadTask.groupId == -1)}"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
@@ -173,7 +173,7 @@
                     <androidx.appcompat.widget.AppCompatTextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/text_download_failed"
+                        android:text="@{viewModel.downloadDetailsLiveData.downloadTask.status == TaskStatus.PUBLISH_FAILED.code ? @string/text_publish_failed : @string/text_download_failed}"
                         android:textColor="@color/common_red"
                         android:textSize="@dimen/size_text_common_size" />
 
@@ -222,7 +222,7 @@
 
             <!-- 正在合成时显示 -->
             <androidx.cardview.widget.CardView
-                bindVisible="@{viewModel.downloadDetailsLiveData != null &amp;&amp; viewModel.downloadDetailsLiveData.downloadTask.status == TaskStatus.SYNTHESIS.code}"
+                bindVisible="@{viewModel.downloadDetailsLiveData != null &amp;&amp; (viewModel.downloadDetailsLiveData.downloadTask.status == TaskStatus.SYNTHESIS.code || viewModel.downloadDetailsLiveData.downloadTask.status == TaskStatus.PUBLISHING.code)}"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
@@ -245,7 +245,7 @@
                     <androidx.appcompat.widget.AppCompatTextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/text_synthesising"
+                        android:text="@{viewModel.downloadDetailsLiveData.downloadTask.status == TaskStatus.PUBLISHING.code ? @string/text_publishing : @string/text_synthesising}"
                         android:textColor="@color/general_text_color"
                         android:textSize="@dimen/size_text_common_size" />
                 </LinearLayout>

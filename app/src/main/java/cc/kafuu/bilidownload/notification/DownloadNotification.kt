@@ -93,6 +93,19 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
         )
     }
 
+    /** 显示公共媒体库发布失败通知，并附带可用于定位资源的失败摘要。 */
+    fun notificationPublishFailed(task: DownloadTaskEntity, reason: String) {
+        showTaskMessageNotification(
+            task,
+            CommonLibs.getString(R.string.notification_publish_failed_title),
+            CommonLibs.getString(
+                R.string.notification_publish_failed_message,
+                "${task.biliBvid}(${task.id})",
+                reason
+            )
+        )
+    }
+
     fun notificationRequestFailed(
         task: DownloadTaskEntity,
         httpCode: Int,
@@ -102,8 +115,13 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
         showTaskMessageNotification(
             task,
             CommonLibs.getString(R.string.notification_request_failed_title),
-            CommonLibs.getString(R.string.notification_request_failed_message)
-                .format("${task.biliBvid}(${task.id})", httpCode, code, message),
+            CommonLibs.getString(
+                R.string.notification_request_failed_message,
+                "${task.biliBvid}(${task.id})",
+                httpCode,
+                code,
+                message
+            ),
         )
     }
 
@@ -116,8 +134,12 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
         showTaskMessageNotification(
             task,
             CommonLibs.getString(R.string.notification_get_video_details_failed_title),
-            CommonLibs.getString(R.string.notification_get_video_details_failed_message)
-                .format(responseCode, returnCode, message)
+            CommonLibs.getString(
+                R.string.notification_get_video_details_failed_message,
+                responseCode,
+                returnCode,
+                message
+            )
         )
     }
 }

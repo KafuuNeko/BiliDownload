@@ -12,6 +12,7 @@ import cc.kafuu.bilidownload.common.ext.limit
 import cc.kafuu.bilidownload.common.ext.liveData
 import cc.kafuu.bilidownload.common.model.IAsyncCallback
 import cc.kafuu.bilidownload.common.model.LoadingStatus
+import cc.kafuu.bilidownload.common.model.TaskStatus
 import cc.kafuu.bilidownload.common.model.LocalMediaDetail
 import cc.kafuu.bilidownload.common.model.action.ViewAction
 import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
@@ -20,6 +21,7 @@ import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
 import cc.kafuu.bilidownload.common.utils.FFMpegUtils
 import cc.kafuu.bilidownload.common.utils.FileUtils
+import cc.kafuu.bilidownload.common.storage.ResourcePublishResult
 import cc.kafuu.bilidownload.feature.viewbinding.view.activity.LocalResourceActivity
 import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.ConfirmDialog
 import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.ConvertDialog
@@ -33,7 +35,10 @@ class LocalResourceVideModel : CoreViewModel() {
         private const val TAG = "LocalResourceVideModel"
 
         class OpenResourceAction(
-            val title: String, val file: File, val mimetype: String
+            val title: String,
+            val file: File,
+            val mimetype: String,
+            val contentUri: String?
         ) : ViewAction()
 
         class ExportResourceAction(
@@ -45,7 +50,8 @@ class LocalResourceVideModel : CoreViewModel() {
         class PlayResourceAction(
             val filePath: String,
             val title: String,
-            val mimetype: String
+            val mimetype: String,
+            val contentUri: String?
         ) : ViewAction()
     }
 
@@ -131,7 +137,8 @@ class LocalResourceVideModel : CoreViewModel() {
             OpenResourceAction(
                 taskDetail.title,
                 File(resource.file),
-                resource.mimeType
+                resource.mimeType,
+                resource.contentUri
             )
         )
     }
@@ -146,7 +153,8 @@ class LocalResourceVideModel : CoreViewModel() {
             PlayResourceAction(
                 filePath = resource.file,
                 title = "${taskDetail.title} - ${resource.name}",
-                mimetype = resource.mimeType
+                mimetype = resource.mimeType,
+                contentUri = resource.contentUri
             )
         )
     }
@@ -340,11 +348,28 @@ class LocalResourceVideModel : CoreViewModel() {
                 resourceFile = targetFile.absoluteFile,
                 mimeType = targetResult.format.mimeType
             )
-            val storedResource = try {
-                DownloadRepository.publishResourceIfNeeded(registeredResource)
-            } catch (e: Exception) {
-                Log.e(TAG, "Unable to publish converted resource", e)
-                registeredResource
+            val storedResource = when (
+                val publishResult = DownloadRepository.publishResourceIfNeeded(registeredResource)
+            ) {
+                is ResourcePublishResult.Success -> publishResult.resource
+                is ResourcePublishResult.Failure -> {
+                    DownloadRepository.getDownloadTaskByTaskId(resource.taskId)?.let { task ->
+                        DownloadRepository.update(task.apply {
+                            status = TaskStatus.PUBLISH_FAILED.code
+                        })
+                    }
+                    Log.e(
+                        TAG,
+                        "Unable to publish converted resource: ${publishResult.reason}",
+                        publishResult.cause
+                    )
+                    popMessage(
+                        ToastMessageAction(
+                            CommonLibs.getString(R.string.convert_resource_publish_failed_message)
+                        )
+                    )
+                    registeredResource
+                }
             }
             startActivity(
                 LocalResourceActivity::class.java,

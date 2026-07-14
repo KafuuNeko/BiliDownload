@@ -4,8 +4,9 @@ import androidx.annotation.OptIn
 import androidx.media3.common.C
 import androidx.media3.common.util.UnstableApi
 import cc.kafuu.bilidownload.common.audio.kissfft.KissFft
+import cc.kafuu.bilidownload.common.audio.pcm.PcmDecoder
+import cc.kafuu.bilidownload.common.audio.pcm.PcmSampleEncoding
 import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.max
@@ -13,6 +14,11 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
+/**
+ * 接收播放器输出的 PCM 数据，并按播放时间生成实时频谱和波形帧。
+ *
+ * 内部环形缓冲区受同一把锁保护，可由音频渲染线程写入、UI 线程读取。
+ */
 class RealtimeSpectrumAnalyzer(
     private val mFftSize: Int = 2048,
     private val mSpectrumBars: Int = 96,
@@ -44,6 +50,7 @@ class RealtimeSpectrumAnalyzer(
     private var mTimedSegmentFirstTimeUs = C.TIME_UNSET
     private var mTimedSegmentLastTimeUs = C.TIME_UNSET
 
+    /** 设置输出采样率；采样率变化时重建缓冲区并清除旧时间轴。 */
     fun configure(sampleRate: Int) {
         val nextSampleRate = sampleRate.coerceAtLeast(1)
         synchronized(mLock) {
@@ -54,18 +61,20 @@ class RealtimeSpectrumAnalyzer(
         }
     }
 
+    /** 清除已捕获样本、时间戳和频谱平滑状态。 */
     fun clear() {
         synchronized(mLock) {
             clearLocked()
         }
     }
 
+    /** 追加没有展示时间戳的 PCM，供仅需最新波形的调用场景使用。 */
     @OptIn(UnstableApi::class)
     fun appendPcm(
         inputBuffer: ByteBuffer,
         sampleRate: Int,
         channelCount: Int,
-        encoding: Int
+        encoding: PcmSampleEncoding
     ) {
         configure(sampleRate)
         val sampleCount = decodePcmToScratch(inputBuffer, channelCount, encoding)
@@ -81,13 +90,16 @@ class RealtimeSpectrumAnalyzer(
         }
     }
 
+    /**
+     * 追加带播放器展示时间戳的 PCM，使 UI 能按当前播放位置选取对应样本。
+     */
     @OptIn(UnstableApi::class)
     fun appendTimestampedPcm(
         inputBuffer: ByteBuffer,
         startTimeUs: Long,
         sampleRate: Int,
         channelCount: Int,
-        encoding: Int
+        encoding: PcmSampleEncoding
     ) {
         configure(sampleRate)
         val sampleCount = decodePcmToScratch(inputBuffer, channelCount, encoding)
@@ -103,6 +115,11 @@ class RealtimeSpectrumAnalyzer(
         }
     }
 
+    /**
+     * 生成指定播放位置的可视化帧。
+     *
+     * 调用方可分别关闭频谱或波形计算，以减少当前界面不需要的 FFT 和复制开销。
+     */
     fun createFrame(
         positionMs: Long,
         includeSpectrum: Boolean = true,
@@ -171,136 +188,27 @@ class RealtimeSpectrumAnalyzer(
         )
     }
 
-    @OptIn(UnstableApi::class)
     private fun decodePcmToScratch(
         inputBuffer: ByteBuffer,
         channelCount: Int,
-        encoding: Int
+        encoding: PcmSampleEncoding
     ): Int {
         val safeChannelCount = channelCount.coerceAtLeast(1)
-        val bytesPerFrame = bytesPerSample(encoding) * safeChannelCount
-        if (bytesPerFrame <= 0 || inputBuffer.remaining() < bytesPerFrame) return 0
-
-        val buffer = inputBuffer.asReadOnlyBuffer().order(ByteOrder.LITTLE_ENDIAN)
-        val frameCapacity = buffer.remaining() / bytesPerFrame
+        val frameCapacity = PcmDecoder.frameCount(inputBuffer, safeChannelCount, encoding)
+        if (frameCapacity <= 0) return 0
         ensureAppendScratchCapacity(frameCapacity)
-        return when (encoding) {
-            C.ENCODING_PCM_FLOAT -> decodeFloatPcm(buffer, safeChannelCount, mAppendScratch)
-            C.ENCODING_PCM_8BIT -> decode8BitPcm(buffer, safeChannelCount, mAppendScratch)
-            C.ENCODING_PCM_24BIT -> decode24BitPcm(buffer, safeChannelCount, mAppendScratch)
-            C.ENCODING_PCM_32BIT -> decode32BitPcm(buffer, safeChannelCount, mAppendScratch)
-            else -> decode16BitPcm(buffer, safeChannelCount, mAppendScratch)
-        }
+        return PcmDecoder.decodeToMono(
+            inputBuffer,
+            safeChannelCount,
+            encoding,
+            mAppendScratch
+        )
     }
 
     private fun ensureAppendScratchCapacity(size: Int) {
         if (mAppendScratch.size < size) {
             mAppendScratch = FloatArray(size)
         }
-    }
-
-    private fun decode16BitPcm(
-        buffer: ByteBuffer,
-        channelCount: Int,
-        output: FloatArray
-    ): Int {
-        val frameSize = channelCount * BYTES_PER_SHORT_SAMPLE
-        var outputIndex = 0
-        while (buffer.remaining() >= frameSize && outputIndex < output.size) {
-            var mixed = 0f
-            var channelIndex = 0
-            while (channelIndex < channelCount) {
-                mixed += buffer.short / SHORT_SAMPLE_SCALE
-                channelIndex++
-            }
-            output[outputIndex++] = mixed / channelCount
-        }
-        return outputIndex
-    }
-
-    private fun decodeFloatPcm(
-        buffer: ByteBuffer,
-        channelCount: Int,
-        output: FloatArray
-    ): Int {
-        val frameSize = channelCount * BYTES_PER_FLOAT_SAMPLE
-        var outputIndex = 0
-        while (buffer.remaining() >= frameSize && outputIndex < output.size) {
-            var mixed = 0f
-            var channelIndex = 0
-            while (channelIndex < channelCount) {
-                mixed += buffer.float.coerceIn(-1f, 1f)
-                channelIndex++
-            }
-            output[outputIndex++] = mixed / channelCount
-        }
-        return outputIndex
-    }
-
-    private fun decode8BitPcm(
-        buffer: ByteBuffer,
-        channelCount: Int,
-        output: FloatArray
-    ): Int {
-        val frameSize = channelCount
-        var outputIndex = 0
-        while (buffer.remaining() >= frameSize && outputIndex < output.size) {
-            var mixed = 0f
-            var channelIndex = 0
-            while (channelIndex < channelCount) {
-                mixed += ((buffer.get().toInt() and 0xff) - 128) / BYTE_SAMPLE_SCALE
-                channelIndex++
-            }
-            output[outputIndex++] = mixed / channelCount
-        }
-        return outputIndex
-    }
-
-    private fun decode24BitPcm(
-        buffer: ByteBuffer,
-        channelCount: Int,
-        output: FloatArray
-    ): Int {
-        val frameSize = channelCount * BYTES_PER_24BIT_SAMPLE
-        var outputIndex = 0
-        while (buffer.remaining() >= frameSize && outputIndex < output.size) {
-            var mixed = 0f
-            var channelIndex = 0
-            while (channelIndex < channelCount) {
-                val byte0 = buffer.get().toInt() and 0xff
-                val byte1 = buffer.get().toInt() and 0xff
-                val byte2 = buffer.get().toInt() and 0xff
-                val rawSample = byte0 or (byte1 shl 8) or (byte2 shl 16)
-                val signedSample = if (rawSample and SIGN_24BIT_MASK != 0) {
-                    rawSample or SIGN_EXTEND_24BIT
-                } else {
-                    rawSample
-                }
-                mixed += signedSample / SAMPLE_24BIT_SCALE
-                channelIndex++
-            }
-            output[outputIndex++] = mixed / channelCount
-        }
-        return outputIndex
-    }
-
-    private fun decode32BitPcm(
-        buffer: ByteBuffer,
-        channelCount: Int,
-        output: FloatArray
-    ): Int {
-        val frameSize = channelCount * BYTES_PER_32BIT_SAMPLE
-        var outputIndex = 0
-        while (buffer.remaining() >= frameSize && outputIndex < output.size) {
-            var mixed = 0f
-            var channelIndex = 0
-            while (channelIndex < channelCount) {
-                mixed += buffer.int / SAMPLE_32BIT_SCALE
-                channelIndex++
-            }
-            output[outputIndex++] = mixed / channelCount
-        }
-        return outputIndex
     }
 
     private fun appendSamplesLocked(
@@ -613,17 +521,6 @@ class RealtimeSpectrumAnalyzer(
             .coerceIn(mSpectrumBars, halfFftSize)
     }
 
-    @OptIn(UnstableApi::class)
-    private fun bytesPerSample(encoding: Int): Int {
-        return when (encoding) {
-            C.ENCODING_PCM_FLOAT -> BYTES_PER_FLOAT_SAMPLE
-            C.ENCODING_PCM_8BIT -> BYTES_PER_8BIT_SAMPLE
-            C.ENCODING_PCM_24BIT -> BYTES_PER_24BIT_SAMPLE
-            C.ENCODING_PCM_32BIT -> BYTES_PER_32BIT_SAMPLE
-            else -> BYTES_PER_SHORT_SAMPLE
-        }
-    }
-
     companion object {
         private val EMPTY_FLOAT_ARRAY = FloatArray(0)
         private const val DEFAULT_SAMPLE_RATE = 44_100
@@ -637,17 +534,6 @@ class RealtimeSpectrumAnalyzer(
         private const val MIN_WAVEFORM_SAMPLE_DIVISOR = 10
         private const val TIMESTAMP_DISCONTINUITY_US = 50_000L
         private const val TIMED_SAMPLE_UNSET = Long.MIN_VALUE
-        private const val BYTES_PER_8BIT_SAMPLE = 1
-        private const val BYTES_PER_SHORT_SAMPLE = 2
-        private const val BYTES_PER_FLOAT_SAMPLE = 4
-        private const val BYTES_PER_24BIT_SAMPLE = 3
-        private const val BYTES_PER_32BIT_SAMPLE = 4
-        private const val BYTE_SAMPLE_SCALE = 128f
-        private const val SHORT_SAMPLE_SCALE = 32768f
-        private const val SAMPLE_24BIT_SCALE = 8_388_608f
-        private const val SAMPLE_32BIT_SCALE = 2_147_483_648f
-        private const val SIGN_24BIT_MASK = 0x80_0000
-        private const val SIGN_EXTEND_24BIT = -0x100_0000
         private const val EFFECTIVE_BIN_RATIO = 0.45f
         private const val HIGH_BAND_LINEAR_GAIN = 0.05f
         private const val HIGH_BAND_QUADRATIC_GAIN = 0.002f

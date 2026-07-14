@@ -47,10 +47,12 @@ class HomeFragment : CoreFragment<FragmentHomeBinding, HomeViewModel>(
             TaskStatus.PREPARE,
             TaskStatus.DOWNLOADING,
             TaskStatus.SYNTHESIS,
+            TaskStatus.PUBLISHING,
         ),
         R.string.home_tab_text_failed to DownloadHistoryFragment.builder(
             TaskStatus.DOWNLOAD_FAILED,
             TaskStatus.SYNTHESIS_FAILED,
+            TaskStatus.PUBLISH_FAILED,
         ),
     )
 }

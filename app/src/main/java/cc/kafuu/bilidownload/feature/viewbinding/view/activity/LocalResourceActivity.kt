@@ -19,6 +19,7 @@ import cc.kafuu.bilidownload.databinding.ActivityLocalResourceBinding
 import cc.kafuu.bilidownload.feature.compose.activity.MediaPlayerActivity
 import cc.kafuu.bilidownload.feature.compose.activity.MusicPlayerActivity
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity.LocalResourceVideModel
+import java.io.File
 import kotlinx.coroutines.launch
 
 class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalResourceVideModel>(
@@ -99,19 +100,44 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
     }
 
     private fun onOpenResource(action: LocalResourceVideModel.Companion.OpenResourceAction) {
-        val opened = FileUtils.tryOpenFileWithOtherApp(this, action.title, action.file, action.mimetype)
+        val opened = FileUtils.tryOpenFileWithOtherApp(
+            this,
+            action.title,
+            action.file,
+            action.mimetype,
+            action.contentUri
+        )
         if (!opened) {
             Toast.makeText(this, R.string.no_external_player_message, Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun onPlayResource(action: LocalResourceVideModel.Companion.PlayResourceAction) {
+        val playbackUri = FileUtils.resolveReadUri(
+            this,
+            File(action.filePath),
+            action.contentUri
+        )?.toString()
+        if (playbackUri == null) {
+            Toast.makeText(this, R.string.no_external_player_message, Toast.LENGTH_SHORT).show()
+            return
+        }
         val intent = if (MimeTypeUtils.isAudioMimeType(action.mimetype)) {
-            MusicPlayerActivity.buildIntent(action.filePath, action.title, action.mimetype).apply {
+            MusicPlayerActivity.buildIntent(
+                action.filePath,
+                action.title,
+                action.mimetype,
+                playbackUri
+            ).apply {
                 setClass(this@LocalResourceActivity, MusicPlayerActivity::class.java)
             }
         } else {
-            MediaPlayerActivity.buildIntent(action.filePath, action.title, action.mimetype).apply {
+            MediaPlayerActivity.buildIntent(
+                action.filePath,
+                action.title,
+                action.mimetype,
+                playbackUri
+            ).apply {
                 setClass(this@LocalResourceActivity, MediaPlayerActivity::class.java)
             }
         }

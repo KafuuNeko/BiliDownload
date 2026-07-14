@@ -5,6 +5,7 @@ sealed class MusicPlayerUiEvent {
     data class OpenWithOtherPlayer(
         val filePath: String,
         val title: String,
-        val mimeType: String
+        val mimeType: String,
+        val contentUri: String?
     ) : MusicPlayerUiEvent()
 }

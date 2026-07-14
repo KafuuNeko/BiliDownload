@@ -6,4 +6,7 @@
     <external-path
         name="downloads"
         path="Download/BVD/" />
+    <external-path
+        name="movies"
+        path="Movies/BVD/" />
 </paths>

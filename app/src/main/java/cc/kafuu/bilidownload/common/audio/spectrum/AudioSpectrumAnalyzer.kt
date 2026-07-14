@@ -5,10 +5,12 @@ import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import cc.kafuu.bilidownload.common.audio.kissfft.KissFft
+import cc.kafuu.bilidownload.common.audio.pcm.PcmDecoder
+import cc.kafuu.bilidownload.common.audio.pcm.PcmEncodingMapper
+import cc.kafuu.bilidownload.common.audio.pcm.PcmSampleEncoding
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.ln
@@ -17,12 +19,25 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
 
+/**
+ * 离线解码完整音频文件并生成可持久展示的频谱数据。
+ *
+ * MediaCodec 输出的各种 PCM 位深统一交给 [PcmDecoder] 归一化，避免离线分析与实时频谱
+ * 对同一音频产生不同振幅结果。
+ */
 class AudioSpectrumAnalyzer(
     private val mFftSize: Int = 4096,
     private val mHopSize: Int = 512,
     private val mSpectrumColumns: Int = 960,
     private val mSpectrumRows: Int = 160
 ) {
+    /**
+     * 分析指定文件的首条音轨。
+     *
+     * @param filePath MediaExtractor 可读取的本地文件路径。
+     * @param onProgress 接收 `0..1` 的分析进度；协程取消会及时终止解码。
+     * @return 包含频谱矩阵及时间信息的数据。
+     */
     suspend fun analyze(
         filePath: String,
         onProgress: (Float) -> Unit = {}
@@ -93,7 +108,7 @@ class AudioSpectrumAnalyzer(
         var inputEnded = false
         var outputEnded = false
         var channelCount = initialChannelCount.coerceAtLeast(1)
-        var pcmEncoding = AudioFormat.ENCODING_PCM_16BIT
+        var pcmEncoding = PcmSampleEncoding.PCM_16_BIT
         var lastProgressSample = 0L
 
         while (!outputEnded) {
@@ -138,9 +153,11 @@ class AudioSpectrumAnalyzer(
                         MediaFormat.KEY_CHANNEL_COUNT,
                         channelCount
                     ).coerceAtLeast(1)
-                    pcmEncoding = outputFormat.getIntegerOrDefault(
-                        MediaFormat.KEY_PCM_ENCODING,
-                        AudioFormat.ENCODING_PCM_16BIT
+                    pcmEncoding = PcmEncodingMapper.fromPlatform(
+                        outputFormat.getIntegerOrDefault(
+                            MediaFormat.KEY_PCM_ENCODING,
+                            AudioFormat.ENCODING_PCM_16BIT
+                        )
                     )
                 }
 
@@ -172,72 +189,19 @@ class AudioSpectrumAnalyzer(
         }
     }
 
+    /** 将一块解码后的 PCM 数据转为单声道样本并送入频谱收集器。 */
     private fun processPcmBuffer(
         outputBuffer: ByteBuffer,
         info: MediaCodec.BufferInfo,
         channelCount: Int,
-        pcmEncoding: Int,
+        pcmEncoding: PcmSampleEncoding,
         collector: SpectrumCollector
     ) {
         outputBuffer.position(info.offset)
         outputBuffer.limit(info.offset + info.size)
-        val buffer = outputBuffer.slice().order(ByteOrder.LITTLE_ENDIAN)
-
-        when (pcmEncoding) {
-            AudioFormat.ENCODING_PCM_FLOAT -> processFloatPcm(buffer, channelCount, collector)
-            AudioFormat.ENCODING_PCM_8BIT -> process8BitPcm(buffer, channelCount, collector)
-            else -> process16BitPcm(buffer, channelCount, collector)
-        }
-    }
-
-    private fun process16BitPcm(
-        buffer: ByteBuffer,
-        channelCount: Int,
-        collector: SpectrumCollector
-    ) {
-        val frameSize = channelCount * BYTES_PER_SHORT_SAMPLE
-        while (buffer.remaining() >= frameSize) {
-            var mixed = 0f
-            var channelIndex = 0
-            while (channelIndex < channelCount) {
-                mixed += buffer.short / SHORT_SAMPLE_SCALE
-                channelIndex++
-            }
-            collector.addSample(mixed / channelCount)
-        }
-    }
-
-    private fun processFloatPcm(
-        buffer: ByteBuffer,
-        channelCount: Int,
-        collector: SpectrumCollector
-    ) {
-        val frameSize = channelCount * BYTES_PER_FLOAT_SAMPLE
-        while (buffer.remaining() >= frameSize) {
-            var mixed = 0f
-            var channelIndex = 0
-            while (channelIndex < channelCount) {
-                mixed += buffer.float.coerceIn(-1f, 1f)
-                channelIndex++
-            }
-            collector.addSample(mixed / channelCount)
-        }
-    }
-
-    private fun process8BitPcm(
-        buffer: ByteBuffer,
-        channelCount: Int,
-        collector: SpectrumCollector
-    ) {
-        val frameSize = channelCount
-        while (buffer.remaining() >= frameSize) {
-            var mixed = 0f
-            var channelIndex = 0
-            while (channelIndex < channelCount) {
-                mixed += ((buffer.get().toInt() and 0xff) - 128) / 128f
-                channelIndex++
-            }
-            collector.addSample(mixed / channelCount)
+        val buffer = outputBuffer.slice()
+        PcmDecoder.decodeToMono(buffer, channelCount, pcmEncoding).forEach { sample ->
+            collector.addSample(sample)
         }
     }
 
@@ -385,9 +349,6 @@ class AudioSpectrumAnalyzer(
 
     companion object {
         private const val DEQUEUE_TIMEOUT_US = 10_000L
-        private const val BYTES_PER_SHORT_SAMPLE = 2
-        private const val BYTES_PER_FLOAT_SAMPLE = 4
-        private const val SHORT_SAMPLE_SCALE = 32768f
         private const val FALLBACK_DURATION_SECONDS = 240
         private const val LOG_SCALE = 64.0
         private const val SPECTRUM_COLUMNS_PER_SECOND = 4

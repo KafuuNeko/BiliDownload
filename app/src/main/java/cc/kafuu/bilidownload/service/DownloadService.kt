@@ -67,9 +67,12 @@ class DownloadService : Service() {
             DownloadRepository.queryDownloadTaskDetailByTaskId(
                 TaskStatus.DOWNLOADING,
                 TaskStatus.PREPARE,
-                TaskStatus.SYNTHESIS
+                TaskStatus.SYNTHESIS,
+                TaskStatus.PUBLISHING
             ).forEach {
-                if (it.groupId != null && !DownloadManager.containsTaskGroup(it.groupId!!)) {
+                val shouldResume = it.status == TaskStatus.PUBLISHING.code ||
+                    (it.groupId != null && !DownloadManager.containsTaskGroup(it.groupId!!))
+                if (shouldResume) {
                     intent.putExtra(KEY_TASK_ID, it.id)
                     startService(context, intent)
                 }
@@ -131,12 +134,32 @@ class DownloadService : Service() {
         val taskEntity = DownloadRepository.getDownloadTaskByTaskId(taskId)
             ?: throw IllegalStateException("Task [T$taskId] get download task entity failed")
 
+        if (
+            taskEntity.status == TaskStatus.PUBLISHING.code ||
+            taskEntity.status == TaskStatus.PUBLISH_FAILED.code
+        ) {
+            try {
+                publishTaskResources(taskEntity)
+            } catch (e: Exception) {
+                Log.e(TAG, "Task [T$taskId] publishing crashed", e)
+                runCatching {
+                    DownloadRepository.update(taskEntity.apply {
+                        status = TaskStatus.PUBLISH_FAILED.code
+                    })
+                }
+            } finally {
+                mRunningTaskCount--
+            }
+            return
+        }
+
         // 如果此任务处于合成状态，则可能是因为此任务在合成执行过程中应用退出导致合成中断
         if (taskEntity.status == TaskStatus.SYNTHESIS.code) {
             // 清理资源
             DownloadRepository.deleteDownloadTaskMixedResource(taskId)
             // 重新走任务下载完成流程
             onDownloadCompleted(taskEntity, true)
+            mRunningTaskCount--
             return
         }
 
@@ -299,13 +322,44 @@ class DownloadService : Service() {
                 task = task,
                 skipSourceResources = isMergedMediaTask && AppModel.deleteSourceFilesAfterMerge
             )
-            if (!DownloadRepository.publishResourcesIfNeeded(task.id)) {
-                Log.e(TAG, "Some resources could not be published to shared Downloads storage")
-            }
+            publishTaskResources(task)
+            return
         }
 
         // 更新记录为最终状态
         DownloadRepository.update(task.apply { status = finalStatus.code })
+    }
+
+    /**
+     * 把下载完成的任务推进到最终发布状态。
+     *
+     * 内部存储任务可直接完成；公共存储任务先标记为 `PUBLISHING`，全部资源发布成功后才
+     * 标记为 `COMPLETED`。任一资源失败都会保留可恢复信息并进入 `PUBLISH_FAILED`。
+     */
+    private suspend fun publishTaskResources(task: DownloadTaskEntity) {
+        val isPublishingRetry = task.status == TaskStatus.PUBLISHING.code ||
+            task.status == TaskStatus.PUBLISH_FAILED.code
+        if (
+            !isPublishingRetry &&
+            AppModel.downloadPathMode == cc.kafuu.bilidownload.common.model.DownloadPathMode.INTERNAL
+        ) {
+            DownloadRepository.update(task.apply { status = TaskStatus.COMPLETED.code })
+            return
+        }
+
+        DownloadRepository.update(task.apply { status = TaskStatus.PUBLISHING.code })
+        val result = DownloadRepository.publishResourcesIfNeeded(task.id, forcePublish = true)
+        if (result.isSuccess) {
+            DownloadRepository.update(task.apply { status = TaskStatus.COMPLETED.code })
+            return
+        }
+
+        DownloadRepository.update(task.apply { status = TaskStatus.PUBLISH_FAILED.code })
+        val failureSummary = result.failures.joinToString { failure ->
+            "resource ${failure.resourceId}: ${failure.reason}"
+        }
+        Log.e(TAG, "Task [T${task.id}] publishing failed: $failureSummary")
+        mDownloadNotification.notificationPublishFailed(task, failureSummary)
     }
 
     /**

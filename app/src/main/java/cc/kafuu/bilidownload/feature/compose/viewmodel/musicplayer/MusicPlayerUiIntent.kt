@@ -7,7 +7,8 @@ sealed class MusicPlayerUiIntent {
         val context: Context,
         val filePath: String,
         val title: String,
-        val mimeType: String
+        val mimeType: String,
+        val contentUri: String?
     ) : MusicPlayerUiIntent()
 
     data object TogglePlayPause : MusicPlayerUiIntent()

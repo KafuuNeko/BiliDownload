@@ -68,7 +68,12 @@ class MeViewModel : CoreViewModel() {
     private fun doClearData() = viewModelScope.launch {
         mClearingDataLiveData.value = true
         DownloadRepository.queryDownloadTasksDetails(
-            listOf(TaskStatus.COMPLETED, TaskStatus.SYNTHESIS_FAILED, TaskStatus.DOWNLOAD_FAILED)
+            listOf(
+                TaskStatus.COMPLETED,
+                TaskStatus.SYNTHESIS_FAILED,
+                TaskStatus.DOWNLOAD_FAILED,
+                TaskStatus.PUBLISH_FAILED
+            )
         ).forEach {
             DownloadRepository.deleteDownloadTask(it.downloadTask.id)
         }

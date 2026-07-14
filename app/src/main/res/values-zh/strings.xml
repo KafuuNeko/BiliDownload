@@ -10,15 +10,17 @@
     <string name="notification_channel_name">下载服务</string>
     <string name="notification_title_download_foreground">BVD正在下载</string>
     <string name="notification_title_download_end">下载任务结束</string>
-    <string name="notification_title_download_inventory">共 %d 个任务 - 成功：%d，失败：%d，取消：%d。</string>
+    <string name="notification_title_download_inventory">共 %1$d 个任务 - 成功：%2$d，失败：%3$d，取消：%4$d。</string>
     <string name="notification_cancelled_download_title">取消下载任务</string>
     <string name="notification_cancelled_download_message">您已取消了%s的下载任务</string>
     <string name="notification_download_failed_title">下载失败</string>
     <string name="notification_download_failed_message">任务%s下载失败</string>
+    <string name="notification_publish_failed_title">发布失败</string>
+    <string name="notification_publish_failed_message">任务 %1$s 无法发布：%2$s</string>
     <string name="notification_synthesis_failed_title">合成失败</string>
     <string name="notification_synthesis_failed_message">任务%s合成资源失败</string>
     <string name="notification_request_failed_title">下载请求失败</string>
-    <string name="notification_request_failed_message">任务%s下载请求失败，请求代码[%d], 返回代码[%d]，错误信息[%s]</string>
+    <string name="notification_request_failed_message">任务%1$s下载请求失败，请求代码[%2$d]，返回代码[%3$d]，错误信息[%4$s]</string>
     <string name="notification_downloading_title">正在下载%s</string>
     <string name="rb_home_text">主页</string>
     <string name="rb_me_text">我的</string>
@@ -30,7 +32,7 @@
     <string name="home_tab_text_running">进行中</string>
     <string name="home_tab_text_failed">已失败</string>
     <string name="notification_get_video_details_failed_title">获取视频信息失败</string>
-    <string name="notification_get_video_details_failed_message">回应代码: %d, 返回代码: $d, %s</string>
+    <string name="notification_get_video_details_failed_message">回应代码：%1$d，返回代码：%2$d，%3$s</string>
     <string name="iv_video_cover_content_description">视频封面</string>
     <string name="video_description_240p">240P</string>
     <string name="video_description_360p">360P</string>
@@ -74,6 +76,8 @@
     <string name="text_continue">继续</string>
     <string name="text_synthesising">合成中...</string>
     <string name="text_download_failed">下载失败</string>
+    <string name="text_publish_failed">发布失败</string>
+    <string name="text_publishing">正在发布到共享存储…</string>
     <string name="text_retry">重试</string>
     <string name="text_delete">删除</string>
     <string name="text_delete_confirm">删除确认</string>
@@ -99,6 +103,7 @@
     <string name="logout_confirm_message">是否立即退出当前账户?</string>
     <string name="text_convert">转换</string>
     <string name="convert_resource_failed_message">转换失败</string>
+    <string name="convert_resource_publish_failed_message">转换成功，但发布失败，请在任务详情中重试。</string>
     <string name="resource_have_mission_progress">有任务正在执行，请稍等。</string>
     <string name="convert_progress">%.2f/100.00 转换中…</string>
     <string name="convert_stop_message">是否停止转换?</string>

@@ -10,15 +10,17 @@
     <string name="notification_channel_name">Download Service</string>
     <string name="notification_title_download_foreground">BVD is downloading</string>
     <string name="notification_title_download_end">Download task ended</string>
-    <string name="notification_title_download_inventory">Total %d tasks - Success: %d, Failure: %d, Cancelled: %d.</string>
+    <string name="notification_title_download_inventory">Total %1$d tasks - Success: %2$d, Failure: %3$d, Cancelled: %4$d.</string>
     <string name="notification_cancelled_download_title">Download Task Cancelled</string>
     <string name="notification_cancelled_download_message">You have cancelled the download of %s</string>
     <string name="notification_download_failed_title">Download Failed</string>
     <string name="notification_download_failed_message">Task %s download failed</string>
+    <string name="notification_publish_failed_title">Publishing Failed</string>
+    <string name="notification_publish_failed_message">Task %1$s could not be published: %2$s</string>
     <string name="notification_synthesis_failed_title">Synthesis Failed</string>
     <string name="notification_synthesis_failed_message">Task %s failed to synthesize resources</string>
     <string name="notification_request_failed_title">Download Request Failed</string>
-    <string name="notification_request_failed_message">Task %s download request failed, request code [%d], return code [%d], error message [%s]</string>
+    <string name="notification_request_failed_message">Task %1$s download request failed, request code [%2$d], return code [%3$d], error message [%4$s]</string>
     <string name="notification_downloading_title">Downloading %s</string>
     <string name="rb_home_text">Home</string>
     <string name="rb_me_text">Me</string>
@@ -30,7 +32,7 @@
     <string name="home_tab_text_running">In Progress</string>
     <string name="home_tab_text_failed">Failed</string>
     <string name="notification_get_video_details_failed_title">Failed to Get Video Details</string>
-    <string name="notification_get_video_details_failed_message">Response code: %d, Return code: %d, %s</string>
+    <string name="notification_get_video_details_failed_message">Response code: %1$d, Return code: %2$d, %3$s</string>
     <string name="iv_video_cover_content_description">Video Cover</string>
     <string name="video_description_240p">240P</string>
     <string name="video_description_360p">360P</string>
@@ -74,6 +76,8 @@
     <string name="text_continue">Continue</string>
     <string name="text_synthesising">Synthesising...</string>
     <string name="text_download_failed">Download Failed</string>
+    <string name="text_publish_failed">Publishing Failed</string>
+    <string name="text_publishing">Publishing to shared storage…</string>
     <string name="text_retry">Retry</string>
     <string name="text_delete">Delete</string>
     <string name="text_delete_confirm">Delete Confirmation</string>
@@ -99,6 +103,7 @@
     <string name="logout_confirm_message">Do you want to log out of the current account immediately?</string>
     <string name="text_convert">Convert</string>
     <string name="convert_resource_failed_message">Conversion failure</string>
+    <string name="convert_resource_publish_failed_message">Conversion succeeded, but publishing failed. Retry from the task details.</string>
     <string name="resource_have_mission_progress">A task is being executed. Please wait</string>
     <string name="convert_progress">%.2f/100.00 Converting…</string>
     <string name="convert_stop_message">Do you want to stop conversion?</string>

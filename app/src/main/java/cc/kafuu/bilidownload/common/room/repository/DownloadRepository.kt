@@ -13,6 +13,8 @@ import cc.kafuu.bilidownload.common.room.entity.DownloadDashEntity
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
 import cc.kafuu.bilidownload.common.storage.ResourceStorage
+import cc.kafuu.bilidownload.common.storage.ResourcePublishBatchResult
+import cc.kafuu.bilidownload.common.storage.ResourcePublishResult
 import cc.kafuu.bilidownload.common.utils.DownloadFileNameUtils
 import cc.kafuu.bilidownload.common.utils.MimeTypeUtils
 import java.io.File
@@ -235,24 +237,56 @@ object DownloadRepository {
         return entity.copy(id = id)
     }
 
+    /**
+     * 按当前存储策略发布单个资源，并把每个可恢复检查点写回数据库。
+     *
+     * 内部存储模式下通常直接返回原记录；公共存储模式下会委托 [ResourceStorage]
+     * 完成复制、MediaStore 登记及源文件清理。发布异常会转换为失败结果，便于任务进入
+     * 可重试状态，而不是让下载服务因未捕获异常退出。
+     *
+     * @param entity 待检查或发布的资源记录。
+     * @param forcePublish 是否忽略当前内部存储设置，继续恢复已经开始的发布流程。
+     */
     suspend fun publishResourceIfNeeded(
-        entity: DownloadResourceEntity
-    ): DownloadResourceEntity {
-        val published = ResourceStorage.publishIfNeeded(entity)
-        return if (published == entity) entity else updateOrInsertResource(published)
+        entity: DownloadResourceEntity,
+        forcePublish: Boolean = false
+    ): ResourcePublishResult {
+        return try {
+            val published = ResourceStorage.publishIfNeeded(entity, forcePublish) { checkpoint ->
+                updateOrInsertResource(checkpoint)
+            }
+            ResourcePublishResult.Success(published)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to publish resource ${entity.id}", e)
+            ResourcePublishResult.Failure(
+                resourceId = entity.id,
+                reason = e.message ?: "Unknown publishing error",
+                cause = e
+            )
+        }
     }
 
-    suspend fun publishResourcesIfNeeded(taskId: Long): Boolean {
-        var success = true
+    /**
+     * 发布指定任务下的全部资源，并分别收集成功项与失败项。
+     *
+     * 单个资源失败不会阻止其余资源继续处理，调用方应根据批量结果决定任务最终状态。
+     *
+     * @param taskId 下载任务的数据库主键。
+     * @param forcePublish 是否强制完成已开始的发布流程。
+     */
+    suspend fun publishResourcesIfNeeded(
+        taskId: Long,
+        forcePublish: Boolean = false
+    ): ResourcePublishBatchResult {
+        val publishedResources = mutableListOf<DownloadResourceEntity>()
+        val failures = mutableListOf<ResourcePublishResult.Failure>()
         queryResourcesByTaskId(taskId).forEach { resource ->
-            try {
-                publishResourceIfNeeded(resource)
-            } catch (e: Exception) {
-                success = false
-                Log.e(TAG, "Unable to publish resource ${resource.id}", e)
+            when (val result = publishResourceIfNeeded(resource, forcePublish)) {
+                is ResourcePublishResult.Success -> publishedResources += result.resource
+                is ResourcePublishResult.Failure -> failures += result
             }
         }
-        return success
+        return ResourcePublishBatchResult(publishedResources, failures)
     }
 
     /**

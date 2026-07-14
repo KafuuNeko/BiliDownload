@@ -61,6 +61,8 @@ class HistoryViewModel : RVViewModel() {
             TaskStatus.SYNTHESIS -> R.drawable.ic_synthesis
             TaskStatus.SYNTHESIS_FAILED -> R.drawable.ic_synthesis_failed
             TaskStatus.COMPLETED -> R.drawable.ic_download_done_cloud
+            TaskStatus.PUBLISHING -> R.drawable.ic_synthesis
+            TaskStatus.PUBLISH_FAILED -> R.drawable.ic_download_failed_cloud
             else -> R.drawable.ic_unknown_med
         }
     )
