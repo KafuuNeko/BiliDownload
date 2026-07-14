@@ -1,0 +1,185 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: "Create or update a GitHub Release"
+        required: true
+        default: false
+        type: boolean
+      release_tag:
+        description: "Existing tag to release, for example 2.3.3.foss. Leave empty to use versionName."
+        required: false
+        type: string
+  push:
+    tags:
+      - "*.*.*.foss"
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    name: Build signed release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Select existing tag for manual publish
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_release
+        shell: bash
+        env:
+          INPUT_RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          app_version="$(sed -nE 's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' app/build.gradle.kts | head -n 1)"
+          test -n "$app_version"
+
+          release_tag="$INPUT_RELEASE_TAG"
+          if [ -z "$release_tag" ]; then
+            release_tag="$app_version"
+          fi
+
+          echo "RELEASE_TAG=$release_tag" >> "$GITHUB_ENV"
+          git rev-parse --verify --quiet "refs/tags/$release_tag^{commit}" >/dev/null
+          git checkout --detach "refs/tags/$release_tag"
+
+      - name: Resolve release metadata
+        shell: bash
+        env:
+          PUBLISH_RELEASE: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release }}
+        run: |
+          app_version="$(sed -nE 's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' app/build.gradle.kts | head -n 1)"
+          test -n "$app_version"
+
+          if [ -z "${RELEASE_TAG:-}" ]; then
+            if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+              release_tag="$GITHUB_REF_NAME"
+            else
+              release_tag="$app_version"
+            fi
+            echo "RELEASE_TAG=$release_tag" >> "$GITHUB_ENV"
+          else
+            release_tag="$RELEASE_TAG"
+          fi
+
+          if [ "$GITHUB_EVENT_NAME" = "push" ] || [ "$PUBLISH_RELEASE" = "true" ]; then
+            test "$release_tag" = "$app_version"
+          fi
+
+          echo "APP_VERSION=$app_version" >> "$GITHUB_ENV"
+
+      - name: Ensure tag commit is on develop
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          tag_commit="$(git rev-list -n 1 "$GITHUB_REF_NAME")"
+          git branch --remotes --contains "$tag_commit" | grep -q "origin/develop"
+
+      - name: Ensure manual publish runs from develop
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_release
+        shell: bash
+        run: |
+          tag_commit="$(git rev-parse HEAD)"
+          git branch --remotes --contains "$tag_commit" | grep -q "origin/develop"
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Android native toolchains
+        shell: bash
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "ndk;28.1.13356709" \
+            "cmake;3.31.0" >/dev/null
+
+      - name: Restore signing key
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$RELEASE_KEYSTORE_BASE64"
+          echo "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.keystore"
+
+      - name: Build release APKs
+        shell: bash
+        run: bash ./gradlew --no-daemon clean test assembleRelease
+
+      - name: Sign and verify release APKs
+        shell: bash
+        env:
+          RELEASE_STORE_FILE: ${{ runner.temp }}/release.keystore
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          test -n "$RELEASE_STORE_PASSWORD"
+          test -n "$RELEASE_KEY_ALIAS"
+          test -n "$RELEASE_KEY_PASSWORD"
+
+          build_tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          test -n "$build_tools"
+          mkdir -p release-artifacts
+
+          expected_abis=("armeabi-v7a" "arm64-v8a" "x86" "x86_64")
+          for abi in "${expected_abis[@]}"; do
+            mapfile -t unsigned_apks < <(find app/build/outputs/apk/release -maxdepth 1 -type f -name "*${abi}*unsigned*.apk")
+            test "${#unsigned_apks[@]}" -eq 1
+
+            aligned_apk="$RUNNER_TEMP/BiliDownload-${APP_VERSION}-${abi}-aligned.apk"
+            signed_apk="release-artifacts/BiliDownload-${APP_VERSION}-${abi}.apk"
+
+            "$build_tools/zipalign" -p -f 4 "${unsigned_apks[0]}" "$aligned_apk"
+            "$build_tools/apksigner" sign \
+              --ks "$RELEASE_STORE_FILE" \
+              --ks-pass "pass:$RELEASE_STORE_PASSWORD" \
+              --ks-key-alias "$RELEASE_KEY_ALIAS" \
+              --key-pass "pass:$RELEASE_KEY_PASSWORD" \
+              --out "$signed_apk" \
+              "$aligned_apk"
+            "$build_tools/apksigner" verify --verbose "$signed_apk"
+
+            badging="$("$build_tools/aapt" dump badging "$signed_apk")"
+            grep -Fq "versionName='$APP_VERSION'" <<< "$badging"
+            grep -Eq "^native-code: '$abi'$" <<< "$badging"
+          done
+
+          test "$(find release-artifacts -maxdepth 1 -type f -name '*.apk' | wc -l)" -eq 4
+
+      - name: Upload release artifacts
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: BiliDownload-${{ env.APP_VERSION }}
+          path: release-artifacts/*
+
+      - name: Resolve release description
+        id: release_description
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_release)
+        shell: bash
+        run: |
+          delimiter="release-body-$(git rev-parse HEAD)"
+          {
+            echo "body<<$delimiter"
+            git show --no-patch --format=%B "refs/tags/$RELEASE_TAG^{commit}"
+            echo "$delimiter"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub Release
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_release)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: BiliDownload ${{ env.APP_VERSION }}
+          body: ${{ steps.release_description.outputs.body }}
+          files: release-artifacts/*
