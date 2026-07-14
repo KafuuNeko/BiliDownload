@@ -145,6 +145,7 @@ jobs:
               --ks-pass "pass:$RELEASE_STORE_PASSWORD" \
               --ks-key-alias "$RELEASE_KEY_ALIAS" \
               --key-pass "pass:$RELEASE_KEY_PASSWORD" \
+              --v4-signing-enabled false \
               --out "$signed_apk" \
               "$aligned_apk"
             "$build_tools/apksigner" verify --verbose "$signed_apk"
@@ -161,7 +162,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: BiliDownload-${{ env.APP_VERSION }}
-          path: release-artifacts/*
+          path: release-artifacts/*.apk
+          if-no-files-found: error
 
       - name: Resolve release description
         id: release_description
@@ -182,4 +184,4 @@ jobs:
           tag_name: ${{ env.RELEASE_TAG }}
           name: BiliDownload ${{ env.APP_VERSION }}
           body: ${{ steps.release_description.outputs.body }}
-          files: release-artifacts/*
+          files: release-artifacts/*.apk
