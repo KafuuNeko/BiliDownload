@@ -1,5 +1,8 @@
 package cc.kafuu.bilidownload
 
+import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import cc.kafuu.bilidownload.common.CommonLibs
@@ -58,6 +61,51 @@ class ExampleInstrumentedTest {
             assertNotNull(published.contentUri)
             assertFalse(workingFile.exists())
             assertTrue(File(published.file).isFile)
+
+            assertTrue(ResourceStorage.delete(published))
+            assertFalse(File(published.file).exists())
+        } finally {
+            publishedResource?.let { ResourceStorage.delete(it) }
+            workingFile.delete()
+            AppModel.downloadPathMode = originalMode
+        }
+    }
+
+    @Test
+    fun externalMediaVideoIsPublishedToMoviesVideoCollection() = runBlocking {
+        val originalMode = AppModel.downloadPathMode
+        val workingFile = File(
+            CommonLibs.requireResourceWorkingDir(),
+            "media-storage-test-${System.currentTimeMillis()}.mp4"
+        )
+        var publishedResource: DownloadResourceEntity? = null
+
+        try {
+            AppModel.downloadPathMode = DownloadPathMode.EXTERNAL_MEDIA
+            workingFile.writeBytes(ByteArray(1024) { 0x5A.toByte() })
+            val resource = DownloadResourceEntity(
+                taskId = Long.MAX_VALUE,
+                type = DownloadResourceType.MIXED,
+                name = "Video collection test",
+                mimeType = "video/mp4",
+                storageSizeBytes = workingFile.length(),
+                creationTime = System.currentTimeMillis(),
+                file = workingFile.absolutePath
+            )
+
+            val published = ResourceStorage.publishIfNeeded(resource)
+            publishedResource = published
+
+            assertEquals(
+                CommonLibs.getPublicVideoResourcesDir().canonicalPath,
+                File(published.file).parentFile?.canonicalPath
+            )
+            assertNotNull(published.contentUri)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val uri = Uri.parse(published.contentUri)
+                assertEquals(MediaStore.Video.Media.EXTERNAL_CONTENT_URI.authority, uri.authority)
+                assertTrue(uri.path.orEmpty().startsWith("/external/video/media/"))
+            }
 
             assertTrue(ResourceStorage.delete(published))
             assertFalse(File(published.file).exists())

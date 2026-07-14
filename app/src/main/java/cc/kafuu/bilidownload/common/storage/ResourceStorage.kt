@@ -9,6 +9,7 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.system.Os
 import android.util.Log
+import androidx.annotation.RequiresApi
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.model.AppModel
 import cc.kafuu.bilidownload.common.model.DownloadPathMode
@@ -31,11 +32,22 @@ object ResourceStorage {
     private const val COPY_BUFFER_SIZE = 1024 * 1024
     private const val PUBLIC_SUBDIRECTORY = "BVD"
 
-    private val relativePublicPath = "${Environment.DIRECTORY_DOWNLOADS}/$PUBLIC_SUBDIRECTORY/"
+    private val relativeDownloadPath =
+        "${Environment.DIRECTORY_DOWNLOADS}/$PUBLIC_SUBDIRECTORY/"
+    private val relativeVideoPath =
+        "${Environment.DIRECTORY_MOVIES}/$PUBLIC_SUBDIRECTORY/"
+
+    private data class PublicTarget(
+        val directory: File,
+        val relativePath: String,
+        val mediaCollection: MediaCollection
+    )
+
+    private enum class MediaCollection { DOWNLOADS, VIDEO }
 
     suspend fun publishIfNeeded(resource: DownloadResourceEntity): DownloadResourceEntity =
         withContext(Dispatchers.IO) {
-            if (AppModel.downloadPathMode != DownloadPathMode.EXTERNAL) {
+            if (AppModel.downloadPathMode == DownloadPathMode.INTERNAL) {
                 return@withContext resource
             }
 
@@ -50,10 +62,11 @@ object ResourceStorage {
                 return@withContext resource.copy(contentUri = uri?.toString())
             }
 
+            val target = resolvePublicTarget(resource)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                publishWithMediaStore(resource, source)
+                publishWithMediaStore(resource, source, target)
             } else {
-                publishLegacy(resource, source)
+                publishLegacy(resource, source, target)
             }
         }
 
@@ -74,22 +87,24 @@ object ResourceStorage {
     suspend fun deleteFile(file: File, mimeType: String? = null): Boolean =
         withContext(Dispatchers.IO) { deleteFileInternal(file, mimeType) }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     private fun publishWithMediaStore(
         resource: DownloadResourceEntity,
-        source: File
+        source: File,
+        target: PublicTarget
     ): DownloadResourceEntity {
         val context = CommonLibs.requireContext()
         val resolver = context.contentResolver
-        val displayName = findAvailableDisplayName(source.name)
+        val displayName = findAvailableDisplayName(source.name, target.directory)
         val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, displayName)
             put(MediaStore.MediaColumns.MIME_TYPE, resource.mimeType)
-            put(MediaStore.MediaColumns.RELATIVE_PATH, relativePublicPath)
+            put(MediaStore.MediaColumns.RELATIVE_PATH, target.relativePath)
             put(MediaStore.MediaColumns.DATE_ADDED, resource.creationTime / 1000L)
             put(MediaStore.MediaColumns.DATE_MODIFIED, System.currentTimeMillis() / 1000L)
             put(MediaStore.MediaColumns.IS_PENDING, 1)
         }
-        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+        val uri = resolver.insert(resolveMediaStoreCollection(target.mediaCollection), values)
             ?: throw IOException("Unable to create MediaStore resource for $displayName")
 
         return try {
@@ -115,7 +130,7 @@ object ResourceStorage {
             }
 
             val publishedPath = queryDataPath(uri)
-                ?: File(CommonLibs.getPublicResourcesDir(), displayName).absolutePath
+                ?: File(target.directory, displayName).absolutePath
             if (!source.delete()) {
                 throw IOException("Unable to remove working resource: ${source.absolutePath}")
             }
@@ -133,26 +148,31 @@ object ResourceStorage {
 
     private suspend fun publishLegacy(
         resource: DownloadResourceEntity,
-        source: File
+        source: File,
+        target: PublicTarget
     ): DownloadResourceEntity {
-        val target = File(
-            CommonLibs.requirePublicResourcesDir(),
-            findAvailableDisplayName(source.name)
+        val outputFile = File(
+            target.directory.apply {
+                if (!isDirectory && !mkdirs() && !isDirectory) {
+                    throw IOException("Unable to create public directory: $this")
+                }
+            },
+            findAvailableDisplayName(source.name, target.directory)
         )
-        source.copyTo(target, overwrite = false)
-        if (target.length() != source.length()) {
-            target.delete()
-            throw IOException("Published resource size mismatch: ${target.absolutePath}")
+        source.copyTo(outputFile, overwrite = false)
+        if (outputFile.length() != source.length()) {
+            outputFile.delete()
+            throw IOException("Published resource size mismatch: ${outputFile.absolutePath}")
         }
-        val uri = scanFile(target, resource.mimeType)
+        val uri = scanFile(outputFile, resource.mimeType)
         if (!source.delete()) {
-            target.delete()
+            outputFile.delete()
             throw IOException("Unable to remove working resource: ${source.absolutePath}")
         }
         return resource.copy(
-            file = target.absolutePath,
+            file = outputFile.absolutePath,
             contentUri = uri?.toString(),
-            storageSizeBytes = target.length()
+            storageSizeBytes = outputFile.length()
         )
     }
 
@@ -208,10 +228,9 @@ object ResourceStorage {
     private fun findMediaStoreUri(file: File): Uri? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return null
         val resolver = CommonLibs.requireContext().contentResolver
-        val collection = MediaStore.Downloads.EXTERNAL_CONTENT_URI
         val projection = arrayOf(MediaStore.MediaColumns._ID)
 
-        fun query(selection: String, args: Array<String>): Uri? = try {
+        fun query(collection: Uri, selection: String, args: Array<String>): Uri? = try {
             resolver.query(collection, projection, selection, args, null)?.use { cursor ->
                 if (!cursor.moveToFirst()) return@use null
                 ContentUris.withAppendedId(collection, cursor.getLong(0))
@@ -221,14 +240,34 @@ object ResourceStorage {
             null
         }
 
-        return query(
-            "${MediaStore.MediaColumns.DATA} = ?",
-            arrayOf(file.absolutePath)
-        ) ?: query(
-            "${MediaStore.MediaColumns.RELATIVE_PATH} = ? AND " +
-                "${MediaStore.MediaColumns.DISPLAY_NAME} = ?",
-            arrayOf(relativePublicPath, file.name)
-        )
+        val isVideoDirectory = isFileInside(file, CommonLibs.getPublicVideoResourcesDir())
+        val relativePath = if (isVideoDirectory) relativeVideoPath else relativeDownloadPath
+        val collections = if (isVideoDirectory) {
+            listOf(
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI
+            )
+        } else {
+            listOf(
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+            )
+        }
+
+        collections.forEach { collection ->
+            query(
+                collection,
+                "${MediaStore.MediaColumns.DATA} = ?",
+                arrayOf(file.absolutePath)
+            )?.let { return it }
+            query(
+                collection,
+                "${MediaStore.MediaColumns.RELATIVE_PATH} = ? AND " +
+                    "${MediaStore.MediaColumns.DISPLAY_NAME} = ?",
+                arrayOf(relativePath, file.name)
+            )?.let { return it }
+        }
+        return null
     }
 
     private fun queryDataPath(uri: Uri): String? {
@@ -265,18 +304,21 @@ object ResourceStorage {
         }
 
     private fun isPublicResourceFile(file: File): Boolean {
-        val publicDirectory = CommonLibs.getPublicResourcesDir()
+        return isFileInside(file, CommonLibs.getPublicResourcesDir()) ||
+            isFileInside(file, CommonLibs.getPublicVideoResourcesDir())
+    }
+
+    private fun isFileInside(file: File, directory: File): Boolean {
         return try {
-            val directoryPath = publicDirectory.canonicalPath + File.separator
+            val directoryPath = directory.canonicalPath + File.separator
             file.canonicalPath.startsWith(directoryPath)
         } catch (_: IOException) {
-            val directoryPath = publicDirectory.absolutePath + File.separator
+            val directoryPath = directory.absolutePath + File.separator
             file.absolutePath.startsWith(directoryPath)
         }
     }
 
-    private fun findAvailableDisplayName(originalName: String): String {
-        val directory = CommonLibs.getPublicResourcesDir()
+    private fun findAvailableDisplayName(originalName: String, directory: File): String {
         if (!File(directory, originalName).exists()) return originalName
 
         val dotIndex = originalName.lastIndexOf('.')
@@ -285,5 +327,30 @@ object ResourceStorage {
         var index = 1
         while (File(directory, "$baseName($index)$extension").exists()) index++
         return "$baseName($index)$extension"
+    }
+
+    private fun resolvePublicTarget(resource: DownloadResourceEntity): PublicTarget {
+        val isVideo = resource.mimeType.startsWith("video/", ignoreCase = true)
+        return if (AppModel.downloadPathMode == DownloadPathMode.EXTERNAL_MEDIA && isVideo) {
+            PublicTarget(
+                directory = CommonLibs.getPublicVideoResourcesDir(),
+                relativePath = relativeVideoPath,
+                mediaCollection = MediaCollection.VIDEO
+            )
+        } else {
+            PublicTarget(
+                directory = CommonLibs.getPublicResourcesDir(),
+                relativePath = relativeDownloadPath,
+                mediaCollection = MediaCollection.DOWNLOADS
+            )
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun resolveMediaStoreCollection(collection: MediaCollection): Uri {
+        return when (collection) {
+            MediaCollection.DOWNLOADS -> MediaStore.Downloads.EXTERNAL_CONTENT_URI
+            MediaCollection.VIDEO -> MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+        }
     }
 }

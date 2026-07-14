@@ -206,6 +206,8 @@
     <string name="settings_download_path_internal_desc">App private directory (no extra permissions required)</string>
     <string name="settings_download_path_external">External Storage</string>
     <string name="settings_download_path_external_desc">Download/BVD directory</string>
+    <string name="settings_download_path_external_media">External Media</string>
+    <string name="settings_download_path_external_media_desc">Publish videos to Movies/BVD and save other files to Download/BVD</string>
     <string name="settings_download_path_current">Current: %s</string>
     <string name="settings_permission_denied">Storage permission denied, unable to switch to external directory</string>
     <string name="settings_resource_file_name">Resource File Names</string>

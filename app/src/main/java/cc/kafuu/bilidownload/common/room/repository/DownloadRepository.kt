@@ -210,7 +210,7 @@ object DownloadRepository {
     }
 
     private fun isExternalResourceFileNameEnabled(): Boolean {
-        return AppModel.downloadPathMode == DownloadPathMode.EXTERNAL
+        return AppModel.downloadPathMode != DownloadPathMode.INTERNAL
     }
 
     private fun moveFile(source: File, target: File) {

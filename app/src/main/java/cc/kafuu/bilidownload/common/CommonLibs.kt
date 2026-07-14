@@ -81,6 +81,14 @@ object CommonLibs {
         }
     }
 
+    @Suppress("DEPRECATION")
+    fun getPublicVideoResourcesDir(): File {
+        val moviesDir = Environment.getExternalStoragePublicDirectory(
+            Environment.DIRECTORY_MOVIES
+        )
+        return File(moviesDir, "BVD")
+    }
+
     fun requireConvertTemporaryDir() = requireExternalFilesDir("temporary", "convert")
 
     fun getVersionName(): String {

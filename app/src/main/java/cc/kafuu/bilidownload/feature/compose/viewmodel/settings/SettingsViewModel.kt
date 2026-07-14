@@ -24,7 +24,7 @@ class SettingsViewModel :
 
     @UiIntentObserver(SettingsUiIntent.SetDownloadPathMode::class)
     fun onSetDownloadPathMode(intent: SettingsUiIntent.SetDownloadPathMode) {
-        if (intent.mode == DownloadPathMode.EXTERNAL && needsStoragePermission()) {
+        if (intent.mode != DownloadPathMode.INTERNAL && needsStoragePermission()) {
             // 需要先请求权限
             viewModelScope.launch {
                 SettingsUiEvent.RequestPermission(intent.mode).send()
@@ -136,7 +136,13 @@ class SettingsViewModel :
                 )
                 File(downloadDir, "BVD").absolutePath
             }
-            else -> {
+            DownloadPathMode.EXTERNAL_MEDIA -> {
+                val moviesDir = Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_MOVIES
+                )
+                File(moviesDir, "BVD").absolutePath
+            }
+            DownloadPathMode.INTERNAL -> {
                 try {
                     CommonLibs.requireContext().getExternalFilesDir("resources")?.absolutePath
                         ?: "N/A"

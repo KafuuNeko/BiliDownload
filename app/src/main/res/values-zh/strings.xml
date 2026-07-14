@@ -206,6 +206,8 @@
     <string name="settings_download_path_internal_desc">应用私有目录（无需额外权限）</string>
     <string name="settings_download_path_external">外部存储</string>
     <string name="settings_download_path_external_desc">Download/BVD 目录</string>
+    <string name="settings_download_path_external_media">外部媒体</string>
+    <string name="settings_download_path_external_media_desc">视频发布到 Movies/BVD，其他文件保存到 Download/BVD</string>
     <string name="settings_download_path_current">当前：%s</string>
     <string name="settings_permission_denied">存储权限被拒绝，无法切换到外部目录</string>
     <string name="settings_resource_file_name">资源文件名称</string>

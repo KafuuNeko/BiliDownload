@@ -98,7 +98,7 @@ private fun SettingsContent(
             // 下载路径设置卡片
             DownloadPathCard(state, onIntent)
 
-            if (state.downloadPathMode == DownloadPathMode.EXTERNAL) {
+            if (state.downloadPathMode != DownloadPathMode.INTERNAL) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 ResourceFileNameCard(state, onIntent)
@@ -246,6 +246,23 @@ private fun DownloadPathCard(
                 description = stringResource(R.string.settings_download_path_external_desc),
                 isSelected = state.downloadPathMode == DownloadPathMode.EXTERNAL,
                 onClick = { onIntent(SettingsUiIntent.SetDownloadPathMode(DownloadPathMode.EXTERNAL)) }
+            )
+
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                color = colorResource(R.color.view_split_color),
+                thickness = 0.5.dp
+            )
+
+            SettingsRadioOption(
+                title = stringResource(R.string.settings_download_path_external_media),
+                description = stringResource(R.string.settings_download_path_external_media_desc),
+                isSelected = state.downloadPathMode == DownloadPathMode.EXTERNAL_MEDIA,
+                onClick = {
+                    onIntent(
+                        SettingsUiIntent.SetDownloadPathMode(DownloadPathMode.EXTERNAL_MEDIA)
+                    )
+                }
             )
 
             HorizontalDivider(
