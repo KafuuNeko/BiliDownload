@@ -73,19 +73,19 @@ jobs:
 
           echo "APP_VERSION=$app_version" >> "$GITHUB_ENV"
 
-      - name: Ensure tag commit is on develop
+      - name: Ensure tag commit is on master
         if: github.event_name == 'push'
         shell: bash
         run: |
           tag_commit="$(git rev-list -n 1 "$GITHUB_REF_NAME")"
-          git branch --remotes --contains "$tag_commit" | grep -q "origin/develop"
+          git branch --remotes --contains "$tag_commit" | grep -q "origin/master"
 
-      - name: Ensure manual publish runs from develop
+      - name: Ensure manual publish runs from master
         if: github.event_name == 'workflow_dispatch' && inputs.publish_release
         shell: bash
         run: |
           tag_commit="$(git rev-parse HEAD)"
-          git branch --remotes --contains "$tag_commit" | grep -q "origin/develop"
+          git branch --remotes --contains "$tag_commit" | grep -q "origin/master"
 
       - name: Set up JDK
         uses: actions/setup-java@v4
