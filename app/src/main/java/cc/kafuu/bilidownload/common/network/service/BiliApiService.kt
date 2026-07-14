@@ -5,6 +5,7 @@ import cc.kafuu.bilidownload.common.network.model.BiliFavoriteData
 import cc.kafuu.bilidownload.common.network.model.BiliFavoriteDetailsData
 import cc.kafuu.bilidownload.common.network.model.BiliFavoriteListData
 import cc.kafuu.bilidownload.common.network.model.BiliHistoryData
+import cc.kafuu.bilidownload.common.network.model.BiliLikeListData
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
 import cc.kafuu.bilidownload.common.network.model.BiliRespond
 import cc.kafuu.bilidownload.common.network.model.BiliSearchData
@@ -79,6 +80,11 @@ interface BiliApiService {
         @Query("type") type: String = "all",
         @Query("ps") ps: Int
     ): Call<BiliRespond<BiliHistoryData>>
+
+    @GET("x/space/like/video")
+    fun requestUserRecentLikes(
+        @Query("vmid") mid: Long
+    ): Call<BiliRespond<BiliLikeListData>>
 
     @GET
     fun requestAccountData(@Url fullUrl: String?): Call<BiliRespond<BiliAccountData>>

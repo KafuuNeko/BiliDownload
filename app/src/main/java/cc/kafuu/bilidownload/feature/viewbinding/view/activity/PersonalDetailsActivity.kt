@@ -14,6 +14,7 @@ import cc.kafuu.bilidownload.common.utils.bindOnEditorAction
 import cc.kafuu.bilidownload.databinding.ActivityPersonalDetailsBinding
 import cc.kafuu.bilidownload.feature.viewbinding.view.fragment.FavoriteListFragment
 import cc.kafuu.bilidownload.feature.viewbinding.view.fragment.ManuscriptFragment
+import cc.kafuu.bilidownload.feature.viewbinding.view.fragment.RecentLikesFragment
 import cc.kafuu.bilidownload.feature.viewbinding.view.fragment.WatchHistoryFragment
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity.PersonalDetailsViewModel
 import com.google.android.material.tabs.TabLayoutMediator
@@ -127,6 +128,9 @@ class PersonalDetailsActivity :
         val fragmentBuilders = mutableListOf<Pair<Int, CoreFragmentBuilder<*>>>()
         if (isMyself) {
             fragmentBuilders.add(R.string.personal_tab_history to WatchHistoryFragment.builder())
+            fragmentBuilders.add(
+                R.string.personal_tab_recent_likes to RecentLikesFragment.builder(mid)
+            )
         }
         mManuscriptPosition = fragmentBuilders.size
         fragmentBuilders.add(R.string.personal_tab_manuscript to ManuscriptFragment.builder(mid))

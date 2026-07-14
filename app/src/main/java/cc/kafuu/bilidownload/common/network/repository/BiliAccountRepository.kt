@@ -7,6 +7,7 @@ import cc.kafuu.bilidownload.common.network.model.BiliAccountData
 import cc.kafuu.bilidownload.common.network.model.BiliFavoriteDetailsData
 import cc.kafuu.bilidownload.common.network.model.BiliFavoriteListData
 import cc.kafuu.bilidownload.common.network.model.BiliHistoryData
+import cc.kafuu.bilidownload.common.network.model.BiliLikeListData
 import cc.kafuu.bilidownload.common.network.model.BiliQrCodeData
 import cc.kafuu.bilidownload.common.network.model.BiliQrCodePollData
 import cc.kafuu.bilidownload.common.network.model.MyBiliAccountData
@@ -112,6 +113,14 @@ class BiliAccountRepository(
             )
             .enqueue(callback) { _, data -> data }
     }
+
+    /**
+     * 请求用户最近点赞的视频
+     */
+    fun requestUserRecentLikes(
+        mid: Long,
+        callback: IServerCallback<BiliLikeListData>
+    ) = biliApiService.requestUserRecentLikes(mid).enqueue(callback) { _, data -> data }
 
     /**
      * 账号登出
