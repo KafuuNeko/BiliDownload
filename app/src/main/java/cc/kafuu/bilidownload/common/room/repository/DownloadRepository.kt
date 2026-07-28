@@ -1,6 +1,7 @@
 package cc.kafuu.bilidownload.common.room.repository
 
 import android.database.sqlite.SQLiteConstraintException
+import androidx.room.withTransaction
 import android.util.Log
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.constant.DashType
@@ -22,6 +23,13 @@ import java.io.File
 object DownloadRepository {
     private const val TAG = "DownloadRepository"
 
+    internal fun getActiveTaskStatusCodes() = intArrayOf(
+        TaskStatus.PREPARE.code,
+        TaskStatus.DOWNLOADING.code,
+        TaskStatus.SYNTHESIS.code,
+        TaskStatus.PUBLISHING.code,
+    )
+
     private val mDownloadTaskDao by lazy { CommonLibs.requireAppDatabase().downloadTaskDao() }
     private val mDownloadDashDao by lazy { CommonLibs.requireAppDatabase().downloadDashDao() }
     private val mDownloadResourceDao by lazy {
@@ -32,15 +40,27 @@ object DownloadRepository {
         mDownloadTaskDao.update(downloadTask)
     }
 
+    /**
+     * Atomically skips an active video part or creates its task and DASH records.
+     * The task id is also persisted as groupId so PREPARE tasks survive process restarts.
+     */
     @Throws(IllegalStateException::class, SQLiteConstraintException::class)
-    suspend fun createNewRecord(
+    suspend fun createNewRecordIfAbsent(
         bvid: String,
         cid: Long,
         resources: List<BiliDashModel>
-    ): Long {
-        val taskId = mDownloadTaskDao.insert(
-            DownloadTaskEntity.createEntity(bvid, cid)
-        ).also { if (it == -1L) throw IllegalStateException("Invalid download task id") }
+    ): Long? = CommonLibs.requireAppDatabase().withTransaction {
+        val activeStatuses = getActiveTaskStatusCodes()
+        val hasActiveTask = mDownloadTaskDao.countTasksByVideoPartAndStatuses(
+            bvid,
+            cid,
+            *activeStatuses
+        ) > 0
+        if (hasActiveTask) return@withTransaction null
+        val task = DownloadTaskEntity.createEntity(bvid, cid)
+        val taskId = mDownloadTaskDao.insert(task)
+            .also { if (it == -1L) throw IllegalStateException("Invalid download task id") }
+        mDownloadTaskDao.update(task.copy(id = taskId, groupId = taskId))
         resources.map {
             DownloadDashEntity(
                 dashId = it.dashId,
@@ -51,7 +71,7 @@ object DownloadRepository {
                 mimeType = it.mimeType
             )
         }.let { mDownloadDashDao.insertOrUpdate(*it.toTypedArray()) }
-        return taskId
+        taskId
     }
 
     suspend fun queryDashList(entity: DownloadTaskEntity) =

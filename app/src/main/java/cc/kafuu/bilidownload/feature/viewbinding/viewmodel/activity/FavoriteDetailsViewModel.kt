@@ -91,7 +91,13 @@ class FavoriteDetailsViewModel : BiliRVViewModel() {
             updateList(favoriteData)
             return
         }
-        favoriteData.addAll(medias.map { BiliVideoModel.create(it) })
+        favoriteData.addAll(
+            medias.asSequence()
+                // 当前下载流程只支持普通视频稿件，音频和合集不应伪装成 BV 稿件。
+                .filter { it.type == 2 }
+                .map { BiliVideoModel.create(it) }
+                .toList()
+        )
         updateList(favoriteData)
         mLatestPage++
     }

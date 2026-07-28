@@ -11,6 +11,12 @@ class BiliMediaModel(
     pubDate: Long,
     val mediaId: Long,
     val seasonId: Long,
+    /**
+     * 从观看历史进入时对应的剧集 ID。
+     *
+     * 搜索结果没有具体观看剧集，因此保持为空并默认选择第一集。
+     */
+    val preferredEpisodeId: Long? = null,
 ): BiliResourceModel(title, cover, description, pubDate) {
     companion object {
         fun create(data: BiliSeasonData) = BiliMediaModel(
@@ -30,6 +36,7 @@ class BiliMediaModel(
                 pubDate = data.viewAt,
                 mediaId = data.history.epid ?: return null,
                 seasonId = 0,
+                preferredEpisodeId = data.history.epid,
             )
         }
 

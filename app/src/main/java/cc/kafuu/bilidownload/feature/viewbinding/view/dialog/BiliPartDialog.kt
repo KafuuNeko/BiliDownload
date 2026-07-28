@@ -1,7 +1,6 @@
 package cc.kafuu.bilidownload.feature.viewbinding.view.dialog
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
@@ -12,7 +11,6 @@ import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.core.viewbinding.dialog.CoreAdvancedDialog
 import cc.kafuu.bilidownload.common.ext.getSerializableByClass
 import cc.kafuu.bilidownload.common.ext.putArgument
-import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
 import cc.kafuu.bilidownload.common.model.bili.BiliStreamResourceModel
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
 import cc.kafuu.bilidownload.databinding.DialogBiliPartBinding
@@ -123,12 +121,6 @@ class BiliPartDialog :
     }
 
     private fun onConfirm() {
-        mViewModel.popMessage(
-            ToastMessageAction(
-                CommonLibs.getString(R.string.text_added_download_queue),
-                Toast.LENGTH_SHORT
-            )
-        )
         Result(
             videoStream = mViewModel.currentVideoResourceLiveData.value?.resource,
             audioStream = mViewModel.currentAudioResourceLiveData.value?.resource

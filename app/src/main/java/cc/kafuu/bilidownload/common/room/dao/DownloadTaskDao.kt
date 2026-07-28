@@ -78,6 +78,18 @@ interface DownloadTaskDao {
     @Query("SELECT * FROM DownloadTask WHERE groupId = :groupId")
     suspend fun getDownloadTaskByGroupId(groupId: Long): DownloadTaskEntity?
 
+    @Query(
+        """
+        SELECT COUNT(*) FROM DownloadTask
+        WHERE biliBvid = :bvid AND biliCid = :cid AND status IN (:statuses)
+        """
+    )
+    suspend fun countTasksByVideoPartAndStatuses(
+        bvid: String,
+        cid: Long,
+        vararg statuses: Int
+    ): Int
+
     @Query("DELETE FROM DownloadTask")
     suspend fun deleteAll()
 }

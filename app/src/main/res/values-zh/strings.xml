@@ -236,4 +236,15 @@
     <string name="settings_delete_source_files_after_merge_desc">视频合成成功后自动删除单独的音频和视频文件</string>
     <string name="settings_auto_remux_audio_after_download">自动转换音频封装</string>
     <string name="settings_auto_remux_audio_after_download_desc">下载完成后尝试将音频无损转封装为 AAC、FLAC 等音频专用格式</string>
+    <string name="text_select">选择</string>
+    <string name="text_download_selected">下载所选项目</string>
+    <string name="text_download_selected_count">下载所选项目（%1$d）</string>
+    <string name="text_batch_download_preparing">正在解析并准备下载…</string>
+    <string name="text_batch_resolve_failed">未能解析出任何可下载项目</string>
+    <string name="text_batch_download_scope_title">发现多个分 P 或剧集</string>
+    <string name="text_batch_download_scope_message">已解析 %1$d 个项目，共包含 %2$d 个可下载分 P 或剧集；另有 %3$d 个项目解析失败。是否全部加入下载列表？</string>
+    <string name="text_download_default_part">仅下载默认项</string>
+    <string name="text_download_all_parts">全部加入</string>
+    <string name="text_batch_download_result">已加入 %1$d 个下载任务，跳过 %2$d 个。</string>
+    <string name="text_download_task_already_active">该项目已有正在进行的下载任务</string>
 </resources>

@@ -40,6 +40,7 @@ import java.io.IOException
 import java.io.RandomAccessFile
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
@@ -56,11 +57,20 @@ object DownloadManager {
     private const val BUFFER_SIZE = 128 * 1024
     private const val PROGRESS_INTERVAL_MS = 500L
     private const val PROBE_TIMEOUT_MS = 3000L
+    private const val MAX_CONCURRENT_TASKS = 3
 
     private val mCoroutineScope by lazy { CoroutineScope(Dispatchers.Default + SupervisorJob()) }
 
     // 运行中的任务组。key 使用 DownloadTaskEntity.id，避免再维护第三方库的任务 ID。
     private val mRunningTaskMap = ConcurrentHashMap<Long, RunningTask>()
+
+    // 等待队列与正在请求播放地址的任务共同占用全局下载槽位，避免批量任务同时启动。
+    private val mPendingTaskQueue = ConcurrentLinkedQueue<DownloadTaskEntity>()
+    private val mPendingTaskIdSet =
+        Collections.newSetFromMap(ConcurrentHashMap<Long, Boolean>())
+    private val mStartingTaskIdSet =
+        Collections.newSetFromMap(ConcurrentHashMap<Long, Boolean>())
+    private val mStartingTaskStopStatusMap = ConcurrentHashMap<Long, DownloadStatus>()
 
     // 最近一次状态快照，供历史列表和详情页直接查询当前进度。
     private val mSnapshotMap = ConcurrentHashMap<Long, DownloadGroupSnapshot>()
@@ -68,7 +78,10 @@ object DownloadManager {
     // 暂停状态需要跨一次任务取消保留下来，恢复下载时再清除。
     private val mPausedTaskSet = Collections.newSetFromMap(ConcurrentHashMap<Long, Boolean>())
 
-    fun containsTaskGroup(groupId: Long) = mRunningTaskMap.containsKey(groupId)
+    fun containsTaskGroup(groupId: Long) =
+        mRunningTaskMap.containsKey(groupId) ||
+            mPendingTaskIdSet.contains(groupId) ||
+            mStartingTaskIdSet.contains(groupId)
 
     fun getSnapshot(groupId: Long) = mSnapshotMap[groupId]
 
@@ -80,8 +93,14 @@ object DownloadManager {
         bvid: String,
         cid: Long,
         resources: List<BiliDashModel>
-    ) = DownloadRepository.createNewRecord(bvid, cid, resources).also {
-        DownloadService.startDownload(context, it)
+    ): Boolean {
+        val taskId = DownloadRepository.createNewRecordIfAbsent(
+            bvid,
+            cid,
+            resources
+        ) ?: return false
+        DownloadService.startDownload(context, taskId)
+        return true
     }
 
     fun cancelDownload(groupId: Long) {
@@ -94,11 +113,22 @@ object DownloadManager {
         stopRunningTask(groupId, DownloadStatus.STOPPED)
     }
 
+    @Synchronized
     private fun stopRunningTask(groupId: Long, status: DownloadStatus) {
         mRunningTaskMap[groupId]?.let {
             it.requestedStopStatus = status
             it.calls.forEach(Call::cancel)
             it.job?.cancel()
+            return
+        }
+        removePendingTask(groupId)?.let {
+            publishWaitingTaskStatus(it, status)
+            drainPendingTasks()
+            return
+        }
+        if (mStartingTaskIdSet.contains(groupId)) {
+            // 播放地址请求已经发出时先记录用户操作，待回调到达后再发布停止或取消事件。
+            mStartingTaskStopStatusMap[groupId] = status
         }
     }
 
@@ -110,7 +140,40 @@ object DownloadManager {
             DownloadRepository.update(task.apply { this.groupId = groupId })
         }
         mPausedTaskSet.remove(groupId)
+        enqueueTask(task)
+    }
 
+    @Synchronized
+    private fun enqueueTask(task: DownloadTaskEntity) {
+        if (containsTaskGroup(task.id)) return
+        mPendingTaskQueue.offer(task)
+        mPendingTaskIdSet.add(task.id)
+        drainPendingTasks()
+    }
+
+    /**
+     * 在全局并发上限内启动等待任务。
+     */
+    @Synchronized
+    private fun drainPendingTasks() {
+        while (
+            mRunningTaskMap.size + mStartingTaskIdSet.size < MAX_CONCURRENT_TASKS
+        ) {
+            val task = mPendingTaskQueue.poll() ?: return
+            mPendingTaskIdSet.remove(task.id)
+            if (!mStartingTaskIdSet.add(task.id)) continue
+            try {
+                requestPlayStream(task)
+            } catch (e: Exception) {
+                mStartingTaskIdSet.remove(task.id)
+                EventBus.getDefault().post(
+                    DownloadRequestFailedEvent(task, 0, 0, e.message ?: "unknown error")
+                )
+            }
+        }
+    }
+
+    private fun requestPlayStream(task: DownloadTaskEntity) {
         // 下载前必须重新请求播放流，因为 B 站返回的真实资源 URL 可能过期。
         object : IServerCallback<BiliPlayStreamDash> {
             override fun onSuccess(
@@ -119,14 +182,27 @@ object DownloadManager {
                 message: String,
                 data: BiliPlayStreamDash
             ) {
+                consumeStartingStopStatus(task)?.let {
+                    publishWaitingTaskStatus(task, it)
+                    drainPendingTasks()
+                    return
+                }
                 onGetPlayStreamDashDone(task, httpCode, code, message, data)
             }
 
             override fun onFailure(httpCode: Int, code: Int, message: String) {
+                val stopStatus = finishStartingRequest(task)
+                if (stopStatus != null) {
+                    publishWaitingTaskStatus(task, stopStatus)
+                    drainPendingTasks()
+                    return
+                }
+                mStartingTaskIdSet.remove(task.id)
                 Log.e(TAG, "onFailure: httpCode = $httpCode, code = $code, message = $message")
                 EventBus.getDefault().post(
                     DownloadRequestFailedEvent(task, httpCode, code, message)
                 )
+                drainPendingTasks()
             }
         }.apply {
             NetworkManager.biliVideoRepository.requestPlayStreamDash(
@@ -135,6 +211,42 @@ object DownloadManager {
                 this
             )
         }
+    }
+
+    @Synchronized
+    private fun removePendingTask(groupId: Long): DownloadTaskEntity? {
+        val task = mPendingTaskQueue.find { it.id == groupId } ?: return null
+        if (!mPendingTaskQueue.remove(task)) return null
+        mPendingTaskIdSet.remove(groupId)
+        return task
+    }
+
+    @Synchronized
+    private fun consumeStartingStopStatus(task: DownloadTaskEntity): DownloadStatus? {
+        val status = mStartingTaskStopStatusMap.remove(task.id)
+        if (status != null) mStartingTaskIdSet.remove(task.id)
+        return status
+    }
+
+    @Synchronized
+    private fun finishStartingRequest(task: DownloadTaskEntity): DownloadStatus? {
+        mStartingTaskIdSet.remove(task.id)
+        return mStartingTaskStopStatusMap.remove(task.id)
+    }
+
+    private fun publishWaitingTaskStatus(
+        task: DownloadTaskEntity,
+        status: DownloadStatus
+    ) {
+        val snapshot = DownloadGroupSnapshot(
+            id = task.id,
+            status = status,
+            percent = 0,
+            currentProgress = 0,
+            fileSize = 0
+        )
+        mSnapshotMap[task.id] = snapshot
+        EventBus.getDefault().post(DownloadStatusChangeEvent(task, snapshot, status))
     }
 
     fun onGetPlayStreamDashDone(
@@ -153,9 +265,15 @@ object DownloadManager {
                 throw IllegalStateException("Task [G${task.groupId}] no resources available for download")
             }
         } catch (e: Exception) {
-            EventBus.getDefault().post(
-                DownloadRequestFailedEvent(task, httpCode, code, e.message ?: "unknown error")
-            )
+            val stopStatus = finishStartingRequest(task)
+            if (stopStatus != null) {
+                publishWaitingTaskStatus(task, stopStatus)
+            } else {
+                EventBus.getDefault().post(
+                    DownloadRequestFailedEvent(task, httpCode, code, e.message ?: "unknown error")
+                )
+            }
+            drainPendingTasks()
         }
     }
 
@@ -277,7 +395,16 @@ object DownloadManager {
     @Synchronized
     private fun doStartDownload(task: DownloadTaskEntity, requests: List<ResourceRequest>) {
         val groupId = task.id
-        if (mRunningTaskMap.containsKey(groupId)) return
+        mStartingTaskIdSet.remove(groupId)
+        mStartingTaskStopStatusMap.remove(groupId)?.let {
+            publishWaitingTaskStatus(task, it)
+            drainPendingTasks()
+            return
+        }
+        if (mRunningTaskMap.containsKey(groupId)) {
+            drainPendingTasks()
+            return
+        }
 
         // groupId 保持写回数据库，旧 UI 和恢复流程仍可通过它定位下载组。
         task.groupId = groupId
@@ -315,7 +442,6 @@ object DownloadManager {
             // 下载成功后子资源已经移动到最终资源目录，缓存目录只保留 .part 临时文件。
             CommonLibs.requireDownloadCacheDir(task.id).deleteRecursively()
             publishSnapshot(runningTask, progressMap, DownloadStatus.COMPLETED, true)
-            mRunningTaskMap.remove(task.id)
         } catch (e: Exception) {
             val stopStatus = runningTask.requestedStopStatus
             if (stopStatus == DownloadStatus.STOPPED) {
@@ -329,7 +455,9 @@ object DownloadManager {
                 }
                 publishSnapshot(runningTask, progressMap, DownloadStatus.FAILURE, true)
             }
+        } finally {
             mRunningTaskMap.remove(task.id)
+            drainPendingTasks()
         }
     }
 

@@ -19,6 +19,13 @@ class BiliVideoModel(
     val author: String,
     val bvid: String,
     val duration: String,
+    /**
+     * 列表来源建议优先下载的分 P。
+     *
+     * 目前仅观看历史会提供该值，收藏、点赞、搜索和投稿列表保持为空，
+     * 由批量下载流程默认选择第一个分 P。
+     */
+    val preferredCid: Long? = null,
 ) : BiliResourceModel(title, cover, description, pubDate) {
     @SuppressLint("SimpleDateFormat")
     companion object {
@@ -42,7 +49,8 @@ class BiliVideoModel(
                 pubDate = data.viewAt,
                 author = data.authorName,
                 bvid = data.history.bvid ?: return null,
-                duration = TimeUtils.formatDuration(data.duration?.toDouble() ?: 0.0)
+                duration = TimeUtils.formatDuration(data.duration?.toDouble() ?: 0.0),
+                preferredCid = data.history.cid
             )
         }
 

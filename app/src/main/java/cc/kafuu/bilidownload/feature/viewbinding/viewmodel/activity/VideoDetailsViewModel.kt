@@ -217,7 +217,20 @@ class VideoDetailsViewModel : CoreViewModel() {
         val result = popSelectedVideoPartDialog(
             part.name, dash
         ) as? ResultWrapper.Success ?: return@launch
-        startDownload(part, result.value.videoStream, result.value.audioStream)
+        val taskCreated = startDownload(
+            part,
+            result.value.videoStream,
+            result.value.audioStream
+        )
+        popMessage(
+            ToastMessageAction(
+                CommonLibs.getString(
+                    if (taskCreated) R.string.text_added_download_queue
+                    else R.string.text_download_task_already_active
+                ),
+                Toast.LENGTH_SHORT
+            )
+        )
     }
 
     /**
@@ -267,6 +280,8 @@ class VideoDetailsViewModel : CoreViewModel() {
             mLatestChangeIndexLiveData.value = -1
             return@launch
         }
+        var addedCount = 0
+        var skippedCount = 0
         // 处理用户选择的每一个片段
         partList.forEachIndexed { index, part ->
             val dash = dashList[index]
@@ -280,14 +295,41 @@ class VideoDetailsViewModel : CoreViewModel() {
             } ?: true
             // 如果当前视频dash存在用户首次选择的视频和音频流，直接下载
             if (videoStreamVerify && audioStreamVerify) {
-                startDownload(part, defaultVideoStream, defaultAudioStream)
+                if (startDownload(part, defaultVideoStream, defaultAudioStream)) {
+                    addedCount++
+                } else {
+                    skippedCount++
+                }
                 return@forEachIndexed
             }
             // 如果不存在则再次询问用户选择
-            (popSelectedVideoPartDialog(part.name, dash) as? ResultWrapper.Success)?.let {
-                startDownload(part, it.value.videoStream, it.value.audioStream)
+            val selection = popSelectedVideoPartDialog(
+                part.name,
+                dash
+            ) as? ResultWrapper.Success
+            if (selection == null) {
+                skippedCount++
+            } else if (startDownload(
+                    part,
+                    selection.value.videoStream,
+                    selection.value.audioStream
+                )
+            ) {
+                addedCount++
+            } else {
+                skippedCount++
             }
         }
+        popMessage(
+            ToastMessageAction(
+                CommonLibs.getString(
+                    R.string.text_batch_download_result,
+                    addedCount,
+                    skippedCount
+                ),
+                Toast.LENGTH_LONG
+            )
+        )
         // 执行完所有操作后，退出多选模式
         onSwitchMultipleSelectMode()
     }
@@ -345,7 +387,7 @@ class VideoDetailsViewModel : CoreViewModel() {
         part: BiliVideoPartModel,
         videoStream: BiliPlayStreamResource?,
         audioStream: BiliPlayStreamResource?,
-    ) {
+    ): Boolean {
         val resources = mutableListOf<BiliDashModel>().apply {
             videoStream?.let { res ->
                 add(BiliDashModel.create(DashType.VIDEO, res))
@@ -354,7 +396,12 @@ class VideoDetailsViewModel : CoreViewModel() {
                 add(BiliDashModel.create(DashType.AUDIO, res))
             }
         }
-        DownloadManager.startDownload(CommonLibs.requireContext(), part.bvid, part.cid, resources)
+        return DownloadManager.startDownload(
+            CommonLibs.requireContext(),
+            part.bvid,
+            part.cid,
+            resources
+        )
     }
 
     fun onDescriptionLongClick(): Boolean {

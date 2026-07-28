@@ -33,12 +33,14 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import java.io.File
 import java.util.concurrent.Executors
-import kotlin.properties.Delegates
+import java.util.concurrent.atomic.AtomicInteger
 
 class DownloadService : Service() {
     companion object {
@@ -82,9 +84,18 @@ class DownloadService : Service() {
 
     private val mServiceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
-    private var mRunningTaskCount by Delegates.observable(0) { _, _, value ->
-        if (value > 0) return@observable
-        stopSelf()
+    // 限制任务进入下载队列前的视频详情同步请求，批量入队时不会同时请求全部稿件。
+    private val mAssignmentSemaphore = Semaphore(4)
+    private val mRunningTaskCount = AtomicInteger(0)
+
+    private fun increaseRunningTaskCount() {
+        mRunningTaskCount.incrementAndGet()
+    }
+
+    private fun decreaseRunningTaskCount() {
+        if (mRunningTaskCount.decrementAndGet() <= 0) {
+            stopSelf()
+        }
     }
 
     private lateinit var mDownloadNotification: DownloadNotification
@@ -112,12 +123,14 @@ class DownloadService : Service() {
             return super.onStartCommand(intent, flags, startId)
         }
         Log.d(TAG, "onStartCommand: $entityId")
-        mRunningTaskCount++
+        increaseRunningTaskCount()
         mServiceScope.launch {
             try {
-                assigningTask(entityId)
+                mAssignmentSemaphore.withPermit {
+                    assigningTask(entityId)
+                }
             } catch (e: Exception) {
-                mRunningTaskCount--
+                decreaseRunningTaskCount()
                 Log.e(TAG, e.message ?: "Unknown error")
             }
         }
@@ -148,7 +161,7 @@ class DownloadService : Service() {
                     })
                 }
             } finally {
-                mRunningTaskCount--
+                decreaseRunningTaskCount()
             }
             return
         }
@@ -159,12 +172,12 @@ class DownloadService : Service() {
             DownloadRepository.deleteDownloadTaskMixedResource(taskId)
             // 重新走任务下载完成流程
             onDownloadCompleted(taskEntity, true)
-            mRunningTaskCount--
+            decreaseRunningTaskCount()
             return
         }
 
         if (taskEntity.groupId?.let { DownloadManager.containsTaskGroup(it) } == true) {
-            mRunningTaskCount--
+            decreaseRunningTaskCount()
             return
         }
 
@@ -206,11 +219,21 @@ class DownloadService : Service() {
      * 请求下载资源失败事件 */
     @Subscribe(threadMode = ThreadMode.POSTING)
     fun onRequestFailedEvent(event: DownloadRequestFailedEvent) {
-        mRunningTaskCount--
-        mDownloadNotification.notificationRequestFailed(
-            event.task,
-            event.httpCode, event.code, event.message
-        )
+        mServiceScope.launch {
+            try {
+                DownloadRepository.update(event.task.apply {
+                    status = TaskStatus.DOWNLOAD_FAILED.code
+                })
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to persist request failure for task T${event.task.id}", e)
+            } finally {
+                mDownloadNotification.notificationRequestFailed(
+                    event.task,
+                    event.httpCode, event.code, event.message
+                )
+                decreaseRunningTaskCount()
+            }
+        }
     }
 
     /**
@@ -236,7 +259,7 @@ class DownloadService : Service() {
             // 是终止态
             if (event.status.isEndStatus) {
                 mDownloadNotification.updateDownloadProgress(event.task, null)
-                mRunningTaskCount--
+                decreaseRunningTaskCount()
             }
         }
     }
@@ -484,7 +507,7 @@ class DownloadService : Service() {
      * from [onDownloadStatusChangeEvent] */
     private fun onDownloadStopped(task: DownloadTaskEntity, group: DownloadGroupSnapshot) {
         mDownloadNotification.updateDownloadProgress(task, null)
-        mRunningTaskCount--
+        decreaseRunningTaskCount()
     }
 
     /**

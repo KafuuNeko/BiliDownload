@@ -36,7 +36,8 @@
             android:clickable="true"
             android:focusable="true"
             android:foreground="?attr/selectableItemBackground"
-            android:onClick="@{() -> viewModel.enterDetails(data)}">
+            android:onClick="@{() -> viewModel.onResourceClick(data)}"
+            android:onLongClick="@{() -> viewModel.onResourceLongClick(data)}">
 
             <ImageView
                 android:id="@+id/iv_video_cover"
@@ -50,13 +51,26 @@
                 app:layout_constraintTop_toTopOf="parent"
                 tools:src="@drawable/ic_2233" />
 
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/iv_multi_select"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:contentDescription="@string/text_select"
+                android:src="@{viewModel.multipleSelectItemsLiveData.contains(data) ? @drawable/ic_checked : @drawable/ic_uncheck}"
+                bindVisible="@{viewModel.multipleSelectModeLiveData}"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:src="@drawable/ic_checked"
+                tools:visibility="visible" />
+
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:gravity="center_vertical"
                 android:orientation="vertical"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/iv_multi_select"
                 app:layout_constraintStart_toEndOf="@+id/iv_video_cover"
                 app:layout_constraintTop_toTopOf="parent">
 
