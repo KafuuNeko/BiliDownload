@@ -12,11 +12,11 @@ import cc.kafuu.bilidownload.common.network.model.BiliSearchMediaResultData
 import cc.kafuu.bilidownload.common.network.model.BiliSearchVideoResultData
 import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
+import cc.kafuu.bilidownload.common.utils.BiliAddressParser
 import cc.kafuu.bilidownload.common.utils.BvConvertUtils
 import cc.kafuu.bilidownload.common.utils.NetworkUtils
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.common.BiliRVViewModel
 import java.util.Locale
-import java.util.regex.Pattern
 
 class SearchListViewModel : BiliRVViewModel() {
     var keyword: String? = null
@@ -81,6 +81,7 @@ class SearchListViewModel : BiliRVViewModel() {
             // 尝试直接解析搜索内容中是否有视频id
             parseAddress(keyword)?.let {
                 tryAnalysisId(it)
+                return
             }
         }
 
@@ -115,8 +116,8 @@ class SearchListViewModel : BiliRVViewModel() {
      * 尝试通过分析搜索文本中的链接直接跳转到视频详情页
      */
     private fun doAnalysisUrl(text: String) {
-        // 如果是分享链接
-        if (text.contains("https://b23.tv/")) {
+        // 如果是分享短链接
+        BiliAddressParser.findB23ShortUrl(text)?.let { shortUrl ->
             object : IServerCallback<String> {
                 override fun onSuccess(httpCode: Int, code: Int, message: String, data: String) {
                     doAnalysisUrl(data)
@@ -127,13 +128,8 @@ class SearchListViewModel : BiliRVViewModel() {
                     forceSearch()
                 }
             }.also {
-                val matcher = Pattern.compile("https://b23.tv/.*").matcher(text)
-                if (!matcher.find()) {
-                    forceSearch()
-                    return
-                }
                 Log.d(cc.kafuu.bilidownload.feature.viewbinding.viewmodel.fragment.SearchListViewModel.Companion.TAG, "doAnalysisUrl: $text")
-                NetworkUtils.redirection(matcher.group(), it)
+                NetworkUtils.redirection(shortUrl, it)
             }
             return
         }
@@ -282,7 +278,6 @@ class SearchListViewModel : BiliRVViewModel() {
      * @param address 要解析的视频地址
      */
     private fun parseAddress(address: String): String? {
-        val matcher = Pattern.compile("(BV.{10})|((av|ep|ss|AV|EP|SS)\\d*)").matcher(address)
-        return if (!matcher.find()) null else matcher.group()
+        return BiliAddressParser.findContentId(address)
     }
 }

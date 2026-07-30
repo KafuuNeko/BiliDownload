@@ -20,4 +20,12 @@
         <item name="android:windowCloseOnTouchOutside">false</item>
         <item name="android:windowBackground">@color/common_transparent</item>
     </style>
+
+    <style name="Theme.BiliDownload.Transparent" parent="Theme.BiliDownload">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@color/common_transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowDisablePreview">true</item>
+    </style>
 </resources>

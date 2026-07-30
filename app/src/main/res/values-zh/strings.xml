@@ -15,6 +15,8 @@
     <string name="notification_cancelled_download_message">您已取消了%s的下载任务</string>
     <string name="notification_download_failed_title">下载失败</string>
     <string name="notification_download_failed_message">任务%s下载失败</string>
+    <string name="notification_download_completed_title">下载完成</string>
+    <string name="notification_download_completed_message">任务%s已下载完成</string>
     <string name="notification_publish_failed_title">发布失败</string>
     <string name="notification_publish_failed_message">任务 %1$s 无法发布：%2$s</string>
     <string name="notification_synthesis_failed_title">合成失败</string>
@@ -26,6 +28,7 @@
     <string name="rb_me_text">我的</string>
     <string name="iv_profile_content_description">用户头像</string>
     <string name="et_search_hint">BV/AV/搜索</string>
+    <string name="share_import_unsupported_message">分享内容中未找到支持的哔哩哔哩地址</string>
     <string name="tl_page_selector_content_description">主页子视图选择器</string>
     <string name="home_tab_text_all">全部</string>
     <string name="home_tab_text_completed">已完成</string>

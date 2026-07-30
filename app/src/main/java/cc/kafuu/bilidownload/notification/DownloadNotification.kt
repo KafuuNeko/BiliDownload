@@ -17,6 +17,7 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
     fun getForegroundNotification(): Notification = getNotificationBuild(
         R.drawable.ic_downloading,
         CommonLibs.getString(R.string.notification_title_download_foreground),
+        notificationIntent = NotificationNavigation.createDownloadsPendingIntent(mContext)
     ).build()
 
     private fun showTaskMessageNotification(
@@ -26,7 +27,10 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
     ) {
         val id = getNewNotificationId()
         getNotificationBuild(
-            R.drawable.ic_downloading, title, message
+            R.drawable.ic_downloading,
+            title,
+            message,
+            NotificationNavigation.createTaskPendingIntent(mContext, task.id)
         ).apply {
             setAutoCancel(true)
             setOngoing(false)
@@ -48,7 +52,10 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
         }
 
         getNotificationBuild(
-            R.drawable.ic_downloading, title, null
+            R.drawable.ic_downloading,
+            title,
+            null,
+            NotificationNavigation.createTaskPendingIntent(mContext, task.id)
         ).apply {
             setAutoCancel(false)
             setOngoing(true)
@@ -71,6 +78,15 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
             task,
             CommonLibs.getString(R.string.notification_cancelled_download_title),
             CommonLibs.getString(R.string.notification_cancelled_download_message)
+                .format("${task.biliBvid}(${task.id})")
+        )
+    }
+
+    fun notificationDownloadCompleted(task: DownloadTaskEntity) {
+        showTaskMessageNotification(
+            task,
+            CommonLibs.getString(R.string.notification_download_completed_title),
+            CommonLibs.getString(R.string.notification_download_completed_message)
                 .format("${task.biliBvid}(${task.id})")
         )
     }

@@ -9,7 +9,7 @@ import androidx.annotation.DrawableRes
 import androidx.core.app.NotificationCompat
 import cc.kafuu.bilidownload.common.model.AppModel
 
-abstract class NotificationHelper(private val mContext: Context) {
+abstract class NotificationHelper(protected val mContext: Context) {
     protected val mNotificationManager =
         mContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 

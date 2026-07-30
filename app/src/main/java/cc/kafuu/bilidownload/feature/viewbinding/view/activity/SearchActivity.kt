@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload.feature.viewbinding.view.activity
 
+import android.content.Intent
 import android.text.TextUtils
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -10,28 +11,37 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs.requireContext
 import cc.kafuu.bilidownload.common.constant.SearchType
 import cc.kafuu.bilidownload.common.core.viewbinding.CoreActivity
-import cc.kafuu.bilidownload.common.utils.NetworkUtils
+import cc.kafuu.bilidownload.common.utils.BiliAddressParser
 import cc.kafuu.bilidownload.common.utils.bindOnEditorAction
 import cc.kafuu.bilidownload.databinding.ActivitySearchBinding
 import cc.kafuu.bilidownload.feature.viewbinding.view.fragment.SearchListFragment
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity.SearchViewModel
-import java.util.regex.Pattern
-
 
 class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
     SearchViewModel::class.java,
     R.layout.activity_search,
     BR.viewModel
 ), AdapterView.OnItemSelectedListener {
+    companion object {
+        private const val EXTRA_AUTO_SEARCH_CONTENT = "auto_search_content"
+
+        fun buildIntent(searchContent: String) = Intent().apply {
+            putExtra(EXTRA_AUTO_SEARCH_CONTENT, searchContent)
+        }
+    }
+
+    private var mIsAutoSearch = false
 
     override fun initViews() {
         setImmersionStatusBar()
         mViewDataBinding.initSearchContent()
         initListener()
+        handleAutoSearch()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
+        if (!hasFocus || mIsAutoSearch) return
         mViewDataBinding.etSearchContent.apply {
             requestFocus()
             (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).showSoftInput(
@@ -43,6 +53,7 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
 
     override fun onResume() {
         super.onResume()
+        if (mIsAutoSearch) return
         // 检查搜索框内容是否为可跳转的地址，如果是则全选并展开键盘
         val searchText = mViewDataBinding.etSearchContent.text.toString()
         if (!TextUtils.isEmpty(searchText) && isJumpableAddress(searchText)) {
@@ -57,6 +68,11 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
                 }
             }
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        mIsAutoSearch = false
     }
 
     private fun ActivitySearchBinding.initSearchContent() {
@@ -102,12 +118,19 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
         }
     }
 
-    private fun onStartSearch() {
-        mViewModel.onSearch(mViewDataBinding.etSearchContent.text.toString(), getSearchType())
+    private fun onStartSearch(@SearchType searchType: Int = getSearchType()) {
+        mViewModel.onSearch(mViewDataBinding.etSearchContent.text.toString(), searchType)
         mViewDataBinding.apply {
             etSearchContent.clearFocus()
             etSearchContent.post { etSearchContent.dismissDropDown() }
         }
+    }
+
+    private fun handleAutoSearch() {
+        val searchContent = intent.getStringExtra(EXTRA_AUTO_SEARCH_CONTENT) ?: return
+        mIsAutoSearch = true
+        mViewDataBinding.etSearchContent.setText(searchContent)
+        onStartSearch(SearchType.VIDEO)
     }
 
     private fun hideSoftInput() {
@@ -137,12 +160,6 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
      * 包括：包含URL或包含视频ID（BV、AV、EP、SS）
      */
     private fun isJumpableAddress(text: String): Boolean {
-        // 检查是否包含URL
-        if (NetworkUtils.containsUrl(text)) {
-            return true
-        }
-        // 检查是否包含视频ID（BV、AV、EP、SS）
-        val matcher = Pattern.compile("(BV.{10})|((av|ep|ss|AV|EP|SS)\\d*)").matcher(text)
-        return matcher.find()
+        return BiliAddressParser.containsSupportedAddress(text)
     }
 }

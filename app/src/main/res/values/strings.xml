@@ -15,6 +15,8 @@
     <string name="notification_cancelled_download_message">You have cancelled the download of %s</string>
     <string name="notification_download_failed_title">Download Failed</string>
     <string name="notification_download_failed_message">Task %s download failed</string>
+    <string name="notification_download_completed_title">Download Completed</string>
+    <string name="notification_download_completed_message">Task %s has completed downloading</string>
     <string name="notification_publish_failed_title">Publishing Failed</string>
     <string name="notification_publish_failed_message">Task %1$s could not be published: %2$s</string>
     <string name="notification_synthesis_failed_title">Synthesis Failed</string>
@@ -26,6 +28,7 @@
     <string name="rb_me_text">Me</string>
     <string name="iv_profile_content_description">User Avatar</string>
     <string name="et_search_hint">BV/AV/Search</string>
+    <string name="share_import_unsupported_message">No supported Bilibili address was found in the shared text</string>
     <string name="tl_page_selector_content_description">Home Sub-view Selector</string>
     <string name="home_tab_text_all">All</string>
     <string name="home_tab_text_completed">Completed</string>

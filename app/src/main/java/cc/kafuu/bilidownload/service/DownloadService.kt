@@ -367,6 +367,7 @@ class DownloadService : Service() {
             AppModel.downloadPathMode == cc.kafuu.bilidownload.common.model.DownloadPathMode.INTERNAL
         ) {
             DownloadRepository.update(task.apply { status = TaskStatus.COMPLETED.code })
+            mDownloadNotification.notificationDownloadCompleted(task)
             return
         }
 
@@ -374,6 +375,7 @@ class DownloadService : Service() {
         val result = DownloadRepository.publishResourcesIfNeeded(task.id, forcePublish = true)
         if (result.isSuccess) {
             DownloadRepository.update(task.apply { status = TaskStatus.COMPLETED.code })
+            mDownloadNotification.notificationDownloadCompleted(task)
             return
         }
 

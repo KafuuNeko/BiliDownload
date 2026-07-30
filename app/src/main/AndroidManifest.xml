@@ -47,6 +47,21 @@
             android:exported="false" />
 
         <activity
+            android:name=".feature.viewbinding.view.activity.ShareReceiverActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:theme="@style/Theme.BiliDownload.Transparent">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <activity
             android:name=".feature.viewbinding.view.activity.VideoDetailsActivity"
             android:configChanges="orientation|screenSize"
             android:exported="false" />
