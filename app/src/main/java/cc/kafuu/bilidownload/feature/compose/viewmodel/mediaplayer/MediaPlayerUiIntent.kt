@@ -11,6 +11,7 @@ sealed class MediaPlayerUiIntent {
         val contentUri: String?
     ) : MediaPlayerUiIntent()
     data object TogglePlayPause : MediaPlayerUiIntent()
+    data object Pause : MediaPlayerUiIntent()
     data class SetPlaybackSpeed(val speed: Float) : MediaPlayerUiIntent()
     data class SeekTo(val position: Long) : MediaPlayerUiIntent()
     data object SeekBarDragStart : MediaPlayerUiIntent()

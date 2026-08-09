@@ -8,6 +8,7 @@ import cc.kafuu.bilidownload.common.core.compose.CoreCompViewModelWithEvent
 import cc.kafuu.bilidownload.common.core.compose.UiIntentObserver
 import cc.kafuu.bilidownload.common.model.AppModel
 import cc.kafuu.bilidownload.common.model.DownloadPathMode
+import cc.kafuu.bilidownload.common.utils.LocalNetworkPermissionPolicy
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -15,6 +16,9 @@ class SettingsViewModel :
     CoreCompViewModelWithEvent<SettingsUiIntent, SettingsUiState, SettingsUiEvent>(
         SettingsUiState.Loading
     ) {
+    private var mLocalNetworkPermissionRequestSent = false
+    private var mLocalNetworkPermissionCheckInProgress = false
+    private var mFinishAfterLocalNetworkPermissionResult = false
 
     @UiIntentObserver(SettingsUiIntent.Init::class)
     fun onInit() {
@@ -87,8 +91,8 @@ class SettingsViewModel :
     }
 
     @UiIntentObserver(SettingsUiIntent.GoBack::class)
-    fun onGoBack() = viewModelScope.launch {
-        SettingsUiEvent.Finish.send()
+    fun onGoBack() {
+        requestLocalNetworkPermissionBeforeFinish()
     }
 
     /**
@@ -107,9 +111,46 @@ class SettingsViewModel :
         }
     }
 
+    fun onLocalNetworkPermissionResult(granted: Boolean) {
+        viewModelScope.launch {
+            mLocalNetworkPermissionCheckInProgress = false
+            if (!granted) {
+                SettingsUiEvent.LocalNetworkPermissionDenied.send()
+            }
+            if (mFinishAfterLocalNetworkPermissionResult) {
+                mFinishAfterLocalNetworkPermissionResult = false
+                SettingsUiEvent.Finish.send()
+            }
+        }
+    }
+
     private fun applyDownloadPathMode(mode: DownloadPathMode) {
         AppModel.downloadPathMode = mode
         refreshState()
+    }
+
+    private fun requestLocalNetworkPermissionBeforeFinish() {
+        if (mLocalNetworkPermissionCheckInProgress) return
+        mLocalNetworkPermissionCheckInProgress = true
+        mFinishAfterLocalNetworkPermissionResult = true
+        val sourceMode = AppModel.downloadSourceMode
+        val host = AppModel.downloadSourceCustomHost
+        viewModelScope.launch {
+            val shouldRequest = LocalNetworkPermissionPolicy.shouldRequest(
+                sdkInt = Build.VERSION.SDK_INT,
+                sourceMode = sourceMode,
+                rawHost = host,
+                requestSent = mLocalNetworkPermissionRequestSent
+            )
+            if (!shouldRequest) {
+                mLocalNetworkPermissionCheckInProgress = false
+                mFinishAfterLocalNetworkPermissionResult = false
+                SettingsUiEvent.Finish.send()
+                return@launch
+            }
+            mLocalNetworkPermissionRequestSent = true
+            SettingsUiEvent.RequestLocalNetworkPermission.send()
+        }
     }
 
     private fun refreshState() {

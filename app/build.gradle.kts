@@ -1,19 +1,18 @@
 plugins {
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.jetbrainsKotlinAndroid)
+    alias(libs.plugins.androidLegacyKapt)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.devtools.ksp") version "2.0.21-1.0.28"
-    id("kotlin-kapt")
+    id("com.google.devtools.ksp") version "2.3.10"
 }
 
 android {
     namespace = "cc.kafuu.bilidownload"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "cc.kafuu.bilidownload"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 37
         versionCode = 2_03_05
         versionName = "2.3.5.foss"
 
@@ -32,9 +31,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = "1.8"
     }
     buildFeatures {
         dataBinding = true
@@ -106,7 +102,6 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.documentfile)
-    implementation(libs.design)
 
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -117,7 +112,6 @@ dependencies {
 
     // room
     implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
     //gson

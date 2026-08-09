@@ -218,6 +218,7 @@
     <string name="settings_download_path_external_media_desc">Publish videos to Movies/BVD and save other files to Download/BVD</string>
     <string name="settings_download_path_current">Current: %s</string>
     <string name="settings_permission_denied">Storage permission denied, unable to switch to external directory</string>
+    <string name="settings_local_network_permission_denied">Local network permission denied. Public custom hosts remain available, but LAN hosts cannot be accessed.</string>
     <string name="settings_resource_file_name">Resource File Names</string>
     <string name="settings_resource_file_name_desc">Available variables: {VideoName}, {PartName}. Invalid characters, overly long names, and duplicates will be adjusted automatically.</string>
     <string name="settings_resource_file_name_audio">Audio file</string>

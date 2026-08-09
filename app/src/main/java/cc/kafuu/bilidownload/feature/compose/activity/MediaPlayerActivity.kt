@@ -56,6 +56,13 @@ class MediaPlayerActivity : CoreCompActivity() {
         )
     }
 
+    override fun onStop() {
+        if (!isChangingConfigurations) {
+            mViewModel.emit(MediaPlayerUiIntent.Pause)
+        }
+        super.onStop()
+    }
+
     @Composable
     override fun ViewContent() {
         val uiState by mViewModel.uiStateFlow.collectAsState()

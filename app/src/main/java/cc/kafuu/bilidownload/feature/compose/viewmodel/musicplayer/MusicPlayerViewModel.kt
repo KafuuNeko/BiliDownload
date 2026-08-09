@@ -156,6 +156,11 @@ class MusicPlayerViewModel :
         }
     }
 
+    @UiIntentObserver(MusicPlayerUiIntent.Pause::class)
+    fun onPause() {
+        mPlayer?.pause()
+    }
+
     @UiIntentObserver(MusicPlayerUiIntent.SetPlaybackSpeed::class)
     fun onSetPlaybackSpeed(intent: MusicPlayerUiIntent.SetPlaybackSpeed) {
         val speed = intent.speed

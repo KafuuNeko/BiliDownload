@@ -56,6 +56,13 @@ class MusicPlayerActivity : CoreCompActivity() {
         )
     }
 
+    override fun onStop() {
+        if (!isChangingConfigurations) {
+            mViewModel.emit(MusicPlayerUiIntent.Pause)
+        }
+        super.onStop()
+    }
+
     @Composable
     override fun ViewContent() {
         val uiState by mViewModel.uiStateFlow.collectAsState()

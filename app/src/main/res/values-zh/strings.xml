@@ -218,6 +218,7 @@
     <string name="settings_download_path_external_media_desc">视频发布到 Movies/BVD，其他文件保存到 Download/BVD</string>
     <string name="settings_download_path_current">当前：%s</string>
     <string name="settings_permission_denied">存储权限被拒绝，无法切换到外部目录</string>
+    <string name="settings_local_network_permission_denied">本地网络权限被拒绝；公网自定义 Host 仍可使用，但无法访问局域网 Host</string>
     <string name="settings_resource_file_name">资源文件名称</string>
     <string name="settings_resource_file_name_desc">可用变量：{VideoName}、{PartName}。非法字符、超长名称和重复名称会自动调整。</string>
     <string name="settings_resource_file_name_audio">音频文件</string>

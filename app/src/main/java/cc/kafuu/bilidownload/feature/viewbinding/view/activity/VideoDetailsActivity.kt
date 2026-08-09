@@ -4,7 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.view.KeyEvent
+import androidx.activity.addCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
@@ -66,6 +66,9 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        onBackPressedDispatcher.addCallback(this) {
+            if (!mViewModel.onBack()) finish()
+        }
         initSaveCoverLauncher()
         initSaveDanmakuLauncher()
         initSaveSubtitleLauncher()
@@ -130,14 +133,6 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
                 mPendingBccSubtitle = null
             }
         }
-    }
-
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if (!mViewModel.onBack()) finish()
-            return true
-        }
-        return super.onKeyDown(keyCode, event)
     }
 
     private fun doInitData() = when (intent.getStringExtra(KEY_OBJECT_TYPE)) {

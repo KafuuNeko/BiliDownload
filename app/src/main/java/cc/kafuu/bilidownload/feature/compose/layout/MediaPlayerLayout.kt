@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -241,6 +242,7 @@ private fun BottomControls(
     modifier: Modifier = Modifier
 ) {
     val duration = state.duration.coerceAtLeast(1L)
+    val canRequestOrientation = LocalConfiguration.current.smallestScreenWidthDp < 600
     var sliderPosition by remember(state.currentPosition, state.isSeekBarDragging) {
         mutableFloatStateOf(state.currentPosition.toFloat())
     }
@@ -324,20 +326,22 @@ private fun BottomControls(
                     )
                 }
 
-                // 全屏切换按钮
-                IconButton(
-                    onClick = { onIntent(MediaPlayerUiIntent.ToggleFullScreen) },
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(
-                            if (state.isFullScreen) R.drawable.ic_media_fullscreen_exit
-                            else R.drawable.ic_media_fullscreen
-                        ),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
+                // Android 17 会在大屏设备上忽略强制横屏，因此只在手机尺寸显示切换入口。
+                if (canRequestOrientation) {
+                    IconButton(
+                        onClick = { onIntent(MediaPlayerUiIntent.ToggleFullScreen) },
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(
+                                if (state.isFullScreen) R.drawable.ic_media_fullscreen_exit
+                                else R.drawable.ic_media_fullscreen
+                            ),
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
             }
         }

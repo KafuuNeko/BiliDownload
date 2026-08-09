@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- 下载源支持用户配置，因此保留与原配置一致的 HTTP 兼容能力。 -->
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

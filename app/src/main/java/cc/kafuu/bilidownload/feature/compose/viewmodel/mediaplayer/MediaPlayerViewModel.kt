@@ -115,6 +115,11 @@ class MediaPlayerViewModel :
         scheduleAutoHide()
     }
 
+    @UiIntentObserver(MediaPlayerUiIntent.Pause::class)
+    fun onPause() {
+        mPlayer?.pause()
+    }
+
     @UiIntentObserver(MediaPlayerUiIntent.SeekTo::class)
     fun onSeekTo(intent: MediaPlayerUiIntent.SeekTo) {
         getOrNull<MediaPlayerUiState.Playing>()?.copy(

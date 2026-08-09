@@ -1,17 +1,21 @@
 package cc.kafuu.bilidownload.feature.viewbinding.view.activity
 
 import android.content.Intent
+import android.os.Bundle
 import android.text.TextUtils
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.Toast
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs.requireContext
 import cc.kafuu.bilidownload.common.constant.SearchType
 import cc.kafuu.bilidownload.common.core.viewbinding.CoreActivity
+import cc.kafuu.bilidownload.common.model.AppModel
 import cc.kafuu.bilidownload.common.utils.BiliAddressParser
+import cc.kafuu.bilidownload.common.utils.LocalNetworkPermissionRequester
 import cc.kafuu.bilidownload.common.utils.bindOnEditorAction
 import cc.kafuu.bilidownload.databinding.ActivitySearchBinding
 import cc.kafuu.bilidownload.feature.viewbinding.view.fragment.SearchListFragment
@@ -31,6 +35,23 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
     }
 
     private var mIsAutoSearch = false
+    private val mLocalNetworkPermissionRequester = LocalNetworkPermissionRequester(this) {
+        if (!it) {
+            Toast.makeText(
+                this,
+                R.string.settings_local_network_permission_denied,
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        mLocalNetworkPermissionRequester.check(
+            AppModel.downloadSourceMode,
+            AppModel.downloadSourceCustomHost
+        )
+    }
 
     override fun initViews() {
         setImmersionStatusBar()

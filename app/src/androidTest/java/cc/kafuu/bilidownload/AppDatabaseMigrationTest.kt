@@ -30,7 +30,7 @@ class AppDatabaseMigrationTest {
                         storageSizeBytes, creationTime, file
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """.trimIndent(),
-                arrayOf(
+                arrayOf<Any?>(
                     17L,
                     23L,
                     2,
@@ -69,7 +69,7 @@ class AppDatabaseMigrationTest {
                         id, downloadTaskId, status, biliBvid, biliCid, createTime
                     ) VALUES (?, ?, ?, ?, ?, ?)
                 """.trimIndent(),
-                arrayOf(5L, 99L, 3, "BV1legacy", 77L, 654321L)
+                arrayOf<Any?>(5L, 99L, 3, "BV1legacy", 77L, 654321L)
             )
             execSQL(
                 """
@@ -78,7 +78,7 @@ class AppDatabaseMigrationTest {
                         storageSizeBytes, creationTime, file
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """.trimIndent(),
-                arrayOf(
+                arrayOf<Any?>(
                     6L,
                     5L,
                     0,

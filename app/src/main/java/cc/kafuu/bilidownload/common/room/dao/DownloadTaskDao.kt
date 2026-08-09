@@ -28,7 +28,8 @@ interface DownloadTaskDao {
 
     @Query(
         """
-        SELECT task.*, video.title, video.description, video.cover, part.partTitle
+        SELECT task.id, task.groupId, task.status, task.biliBvid, task.biliCid,
+               task.createTime, video.title, video.description, video.cover, part.partTitle
         FROM DownloadTask task
         INNER JOIN BiliVideoMain video ON task.biliBvid = video.biliBvid
         INNER JOIN BiliVideoPart part ON task.biliBvid = part.biliBvid AND task.biliCid = part.biliCid
@@ -40,7 +41,8 @@ interface DownloadTaskDao {
 
     @Query(
         """
-        SELECT task.*, video.title, video.description, video.cover, part.partTitle
+        SELECT task.id, task.groupId, task.status, task.biliBvid, task.biliCid,
+               task.createTime, video.title, video.description, video.cover, part.partTitle
         FROM DownloadTask task
         INNER JOIN BiliVideoMain video ON task.biliBvid = video.biliBvid
         INNER JOIN BiliVideoPart part ON task.biliBvid = part.biliBvid AND task.biliCid = part.biliCid
@@ -52,7 +54,8 @@ interface DownloadTaskDao {
 
     @Query(
         """
-        SELECT task.*, video.title, video.description, video.cover, part.partTitle
+        SELECT task.id, task.groupId, task.status, task.biliBvid, task.biliCid,
+               task.createTime, video.title, video.description, video.cover, part.partTitle
         FROM DownloadTask task
         INNER JOIN BiliVideoMain video ON task.biliBvid = video.biliBvid
         INNER JOIN BiliVideoPart part ON task.biliBvid = part.biliBvid AND task.biliCid = part.biliCid
@@ -63,7 +66,8 @@ interface DownloadTaskDao {
 
     @Query(
         """
-        SELECT task.*, video.title, video.description, video.cover, part.partTitle
+        SELECT task.id, task.groupId, task.status, task.biliBvid, task.biliCid,
+               task.createTime, video.title, video.description, video.cover, part.partTitle
         FROM DownloadTask task
         INNER JOIN BiliVideoMain video ON task.biliBvid = video.biliBvid
         INNER JOIN BiliVideoPart part ON task.biliBvid = part.biliBvid AND task.biliCid = part.biliCid

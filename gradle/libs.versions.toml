@@ -1,6 +1,5 @@
 [versions]
-agp = "8.5.1"
-design = "28.0.0"
+agp = "9.1.1"
 eventbus = "3.3.1"
 ffmpegKitFull = "6.0-2"
 fragmentKtx = "1.6.2"
@@ -8,7 +7,7 @@ glideVersion = "4.16.0"
 gsonVersion = "2.10.1"
 hutoolCrypto = "5.8.27"
 jsoup = "1.16.1"
-kotlin = "2.0.21"
+kotlin = "2.2.10"
 coreKtx = "1.15.0"
 junit = "4.13.2"
 junitVersion = "1.1.5"
@@ -20,7 +19,7 @@ material = "1.11.0"
 constraintlayout = "2.1.4"
 refreshLayoutKernel = "2.1.0"
 retrofit = "2.11.0"
-roomRuntime = "2.6.1"
+roomRuntime = "2.8.4"
 smartExceptionJavaVersion = "0.2.1"
 workRuntimeKtx = "2.9.0"
 activity = "1.8.0"
@@ -42,7 +41,6 @@ androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version
 arthenica-smart-exception-java = { module = "com.arthenica:smart-exception-java", version.ref = "smartExceptionJavaVersion" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
 converter-scalars = { module = "com.squareup.retrofit2:converter-scalars", version.ref = "retrofit" }
-design = { module = "com.android.support:design", version.ref = "design" }
 eventbus = { module = "org.greenrobot:eventbus", version.ref = "eventbus" }
 ffmpeg-kit-full = { module = "com.arthenica:ffmpeg-kit-full", version.ref = "ffmpegKitFull" }
 github-glide = { module = "com.github.bumptech.glide:glide", version.ref = "glideVersion" }
@@ -80,5 +78,5 @@ media3-session = { module = "androidx.media3:media3-session", version.ref = "med
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
-jetbrainsKotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+androidLegacyKapt = { id = "com.android.legacy-kapt", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
