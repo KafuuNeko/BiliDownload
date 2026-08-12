@@ -34,7 +34,7 @@ abstract class CoreBasicsDialog<V : ViewDataBinding, RS : Serializable>(
     companion object {
         const val KEY_RESULT = "result"
 
-        //界面重建时是否自动关闭dialog
+        // 界面重建时是否自动关闭 Dialog。
         private const val ARG_DISMISS_ON_RECREATE = "dismiss_on_recreate"
     }
 
@@ -46,6 +46,14 @@ abstract class CoreBasicsDialog<V : ViewDataBinding, RS : Serializable>(
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NO_TITLE, R.style.Theme_Dialog)
+        if (savedInstanceState != null &&
+            arguments?.getBoolean(ARG_DISMISS_ON_RECREATE) == true
+        ) {
+            // FragmentManager 可以恢复 DialogFragment，但无法恢复等待结果的协程。
+            // 禁止旧实例重新显示，由持有 UI 状态的新页面按需创建新 Dialog。
+            showsDialog = false
+            dismissAllowingStateLoss()
+        }
     }
 
     override fun onStart() {

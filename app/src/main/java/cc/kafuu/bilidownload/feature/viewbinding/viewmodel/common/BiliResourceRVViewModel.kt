@@ -13,15 +13,43 @@ import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
 import cc.kafuu.bilidownload.common.model.bili.BiliResourceModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.feature.viewbinding.view.activity.VideoDetailsActivity
-import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.BiliPartDialog
-import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.ConfirmDialog
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlin.coroutines.resume
 
 /** 管理可下载 B 站资源列表的条目选择和批量下载 UI 状态。 */
 open class BiliResourceRVViewModel : BiliRVViewModel() {
+    /** 可跨配置变更重放的批量下载选择状态，不持有 Fragment 或 LifecycleOwner。 */
+    sealed interface BatchDialogRequest {
+        val id: Long
+
+        data class Scope(
+            override val id: Long,
+            val request: BatchDownloadUseCase.ScopeSelectionRequest,
+        ) : BatchDialogRequest
+
+        data class Streams(
+            override val id: Long,
+            val request: BatchDownloadUseCase.StreamSelectionRequest,
+        ) : BatchDialogRequest
+    }
+
+    private sealed interface PendingBatchDialog {
+        val id: Long
+
+        data class Scope(
+            override val id: Long,
+            val result: CompletableDeferred<BatchDownloadUseCase.DownloadScope?>,
+        ) : PendingBatchDialog
+
+        data class Streams(
+            override val id: Long,
+            val result: CompletableDeferred<BatchDownloadResolver.StreamSelection?>,
+        ) : PendingBatchDialog
+    }
+
     private val mBatchDownloadUseCase = BatchDownloadUseCase()
+    private var mNextBatchDialogId = 0L
+    private var mPendingBatchDialog: PendingBatchDialog? = null
 
     private val mMultipleSelectModeLiveData = MutableLiveData(false)
     val multipleSelectModeLiveData = mMultipleSelectModeLiveData.liveData()
@@ -32,6 +60,9 @@ open class BiliResourceRVViewModel : BiliRVViewModel() {
 
     private val mBatchDownloadRunningLiveData = MutableLiveData(false)
     val batchDownloadRunningLiveData = mBatchDownloadRunningLiveData.liveData()
+
+    private val mBatchDialogRequestLiveData = MutableLiveData<BatchDialogRequest?>(null)
+    val batchDialogRequestLiveData = mBatchDialogRequestLiveData.liveData()
 
     fun enterDetails(element: BiliVideoModel) {
         startActivity(VideoDetailsActivity::class.java, VideoDetailsActivity.buildIntent(element))
@@ -114,64 +145,60 @@ open class BiliResourceRVViewModel : BiliRVViewModel() {
     private suspend fun selectDownloadScope(
         request: BatchDownloadUseCase.ScopeSelectionRequest
     ): BatchDownloadUseCase.DownloadScope? {
-        val message = CommonLibs.getString(
-            R.string.text_batch_download_scope_message,
-            request.sourceCount,
-            request.totalPartCount,
-            request.resolveFailureCount,
+        check(mPendingBatchDialog == null) { "A batch dialog is already pending" }
+        val pending = PendingBatchDialog.Scope(
+            id = ++mNextBatchDialogId,
+            result = CompletableDeferred(),
         )
-        return suspendCancellableCoroutine { continuation ->
-            popDialog(
-                dialog = ConfirmDialog.buildDialog(
-                    title = CommonLibs.getString(R.string.text_batch_download_scope_title),
-                    message = message,
-                    leftButtonText = CommonLibs.getString(R.string.text_download_default_part),
-                    rightButtonText = CommonLibs.getString(R.string.text_download_all_parts),
-                ),
-                success = {
-                    if (continuation.isActive) {
-                        val scope = if (it as Boolean) {
-                            BatchDownloadUseCase.DownloadScope.ALL_PARTS
-                        } else {
-                            BatchDownloadUseCase.DownloadScope.PREFERRED_PART
-                        }
-                        continuation.resume(scope)
-                    }
-                },
-                failed = {
-                    if (continuation.isActive) continuation.resume(null)
-                },
-            )
+        mPendingBatchDialog = pending
+        mBatchDialogRequestLiveData.value = BatchDialogRequest.Scope(pending.id, request)
+        return try {
+            pending.result.await()
+        } finally {
+            clearBatchDialog(pending)
         }
     }
 
     private suspend fun selectDownloadStreams(
         request: BatchDownloadUseCase.StreamSelectionRequest
-    ): BatchDownloadResolver.StreamSelection? =
-        suspendCancellableCoroutine { continuation ->
-            popDialog(
-                dialog = BiliPartDialog.buildDialog(
-                    request.partTitle
-                        ?: CommonLibs.getString(R.string.text_select_the_resource_to_download),
-                    request.dash.video,
-                    request.dash.getAllAudio(),
-                ),
-                success = {
-                    if (continuation.isActive) {
-                        val result = it as BiliPartDialog.Companion.Result
-                        continuation.resume(
-                            BatchDownloadResolver.StreamSelection(
-                                result.videoStream,
-                                result.audioStream,
-                            )
-                        )
-                    }
-                },
-                failed = {
-                    if (continuation.isActive) continuation.resume(null)
-                },
-            )
+    ): BatchDownloadResolver.StreamSelection? {
+        check(mPendingBatchDialog == null) { "A batch dialog is already pending" }
+        val pending = PendingBatchDialog.Streams(
+            id = ++mNextBatchDialogId,
+            result = CompletableDeferred(),
+        )
+        mPendingBatchDialog = pending
+        mBatchDialogRequestLiveData.value = BatchDialogRequest.Streams(pending.id, request)
+        return try {
+            pending.result.await()
+        } finally {
+            clearBatchDialog(pending)
         }
+    }
+
+    fun onDownloadScopeSelected(
+        requestId: Long,
+        scope: BatchDownloadUseCase.DownloadScope?,
+    ) {
+        // 页面重建前的旧 Dialog 可能延迟返回；类型和 ID 必须同时匹配当前请求。
+        val pending = mPendingBatchDialog as? PendingBatchDialog.Scope ?: return
+        if (pending.id == requestId) pending.result.complete(scope)
+    }
+
+    fun onDownloadStreamsSelected(
+        requestId: Long,
+        streams: BatchDownloadResolver.StreamSelection?,
+    ) {
+        // 页面重建前的旧 Dialog 可能延迟返回；类型和 ID 必须同时匹配当前请求。
+        val pending = mPendingBatchDialog as? PendingBatchDialog.Streams ?: return
+        if (pending.id == requestId) pending.result.complete(streams)
+    }
+
+    private fun clearBatchDialog(pending: PendingBatchDialog) {
+        if (mPendingBatchDialog !== pending) return
+        mPendingBatchDialog = null
+        mBatchDialogRequestLiveData.value = null
+    }
 
     private fun showResolveFailure() {
         popMessage(

@@ -28,6 +28,7 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
 ), AdapterView.OnItemSelectedListener {
     companion object {
         private const val EXTRA_AUTO_SEARCH_CONTENT = "auto_search_content"
+        private const val STATE_AUTO_SEARCH_HANDLED = "auto_search_handled"
 
         fun buildIntent(searchContent: String) = Intent().apply {
             putExtra(EXTRA_AUTO_SEARCH_CONTENT, searchContent)
@@ -35,6 +36,7 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
     }
 
     private var mIsAutoSearch = false
+    private var mAutoSearchHandled = false
     private val mLocalNetworkPermissionRequester = LocalNetworkPermissionRequester(this) {
         if (!it) {
             Toast.makeText(
@@ -46,11 +48,17 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        mAutoSearchHandled = savedInstanceState?.getBoolean(STATE_AUTO_SEARCH_HANDLED) == true
         super.onCreate(savedInstanceState)
         mLocalNetworkPermissionRequester.check(
             AppModel.downloadSourceMode,
             AppModel.downloadSourceCustomHost
         )
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean(STATE_AUTO_SEARCH_HANDLED, mAutoSearchHandled)
+        super.onSaveInstanceState(outState)
     }
 
     override fun initViews() {
@@ -126,9 +134,15 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
 
     private fun initListener() {
         mViewModel.searchRequestLiveData.observe(this) {
-            if (TextUtils.isEmpty(it)) return@observe
-            mViewDataBinding.fvFragment.getFragment<SearchListFragment>().doSearch(it)
-            hideSoftInput()
+            val searchContent = it ?: return@observe
+            try {
+                mViewDataBinding.fvFragment
+                    .getFragment<SearchListFragment>()
+                    .doSearch(searchContent)
+                hideSoftInput()
+            } finally {
+                mViewModel.onSearchRequestHandled(searchContent)
+            }
         }
         mViewDataBinding.spSearchType.onItemSelectedListener = this
         mViewDataBinding.tvSearch.setOnClickListener {
@@ -148,7 +162,10 @@ class SearchActivity : CoreActivity<ActivitySearchBinding, SearchViewModel>(
     }
 
     private fun handleAutoSearch() {
+        if (mAutoSearchHandled) return
         val searchContent = intent.getStringExtra(EXTRA_AUTO_SEARCH_CONTENT) ?: return
+        mAutoSearchHandled = true
+        intent.removeExtra(EXTRA_AUTO_SEARCH_CONTENT)
         mIsAutoSearch = true
         mViewDataBinding.etSearchContent.setText(searchContent)
         onStartSearch(SearchType.VIDEO)

@@ -4,12 +4,19 @@ import android.annotation.SuppressLint
 import android.view.View
 import android.view.ViewStub
 import android.widget.TextView
+import androidx.lifecycle.lifecycleScope
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.adapter.BiliResourceRVAdapter
 import cc.kafuu.bilidownload.common.core.viewbinding.CoreRVAdapter
+import cc.kafuu.bilidownload.common.download.BatchDownloadResolver
+import cc.kafuu.bilidownload.common.download.BatchDownloadUseCase
+import cc.kafuu.bilidownload.common.model.ResultWrapper
+import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.BiliPartDialog
+import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.ConfirmDialog
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.common.BiliResourceRVViewModel
 import com.scwang.smart.refresh.layout.api.RefreshLayout
+import kotlinx.coroutines.launch
 
 /** 提供可下载资源列表的适配器及多选操作栏。 */
 open class BiliResourceRVFragment<VM : BiliResourceRVViewModel>(
@@ -22,6 +29,7 @@ open class BiliResourceRVFragment<VM : BiliResourceRVViewModel>(
     override fun initViews() {
         super.initViews()
         initMultipleSelectViews()
+        observeBatchDialogRequests()
     }
 
     override fun getRVAdapter(): CoreRVAdapter<*> = mAdapter
@@ -69,5 +77,74 @@ open class BiliResourceRVFragment<VM : BiliResourceRVViewModel>(
                 )
             }
         }
+    }
+
+    private fun observeBatchDialogRequests() {
+        mViewModel.batchDialogRequestLiveData.observe(viewLifecycleOwner) { request ->
+            request ?: return@observe
+            // View 被销毁时等待协程自动取消；新 View 会从 ViewModel 重放同一请求。
+            viewLifecycleOwner.lifecycleScope.launch {
+                when (request) {
+                    is BiliResourceRVViewModel.BatchDialogRequest.Scope ->
+                        showDownloadScopeDialog(request)
+
+                    is BiliResourceRVViewModel.BatchDialogRequest.Streams ->
+                        showDownloadStreamsDialog(request)
+                }
+            }
+        }
+    }
+
+    private suspend fun showDownloadScopeDialog(
+        dialogRequest: BiliResourceRVViewModel.BatchDialogRequest.Scope,
+    ) {
+        val request = dialogRequest.request
+        val message = CommonLibs.getString(
+            R.string.text_batch_download_scope_message,
+            request.sourceCount,
+            request.totalPartCount,
+            request.resolveFailureCount,
+        )
+        val result = ConfirmDialog.buildDialog(
+            title = CommonLibs.getString(R.string.text_batch_download_scope_title),
+            message = message,
+            leftButtonText = CommonLibs.getString(R.string.text_download_default_part),
+            rightButtonText = CommonLibs.getString(R.string.text_download_all_parts),
+        ).showAndWaitResult(
+            lifecycleOwner = this,
+            dialogTag = "BatchDownloadScopeDialog_${dialogRequest.id}",
+            waitWhenInvisible = true,
+        )
+        val scope = (result as? ResultWrapper.Success)?.value?.let { downloadAllParts ->
+            if (downloadAllParts) {
+                BatchDownloadUseCase.DownloadScope.ALL_PARTS
+            } else {
+                BatchDownloadUseCase.DownloadScope.PREFERRED_PART
+            }
+        }
+        mViewModel.onDownloadScopeSelected(dialogRequest.id, scope)
+    }
+
+    private suspend fun showDownloadStreamsDialog(
+        dialogRequest: BiliResourceRVViewModel.BatchDialogRequest.Streams,
+    ) {
+        val request = dialogRequest.request
+        val result = BiliPartDialog.buildDialog(
+            request.partTitle
+                ?: CommonLibs.getString(R.string.text_select_the_resource_to_download),
+            request.dash.video,
+            request.dash.getAllAudio(),
+        ).showAndWaitResult(
+            lifecycleOwner = this,
+            dialogTag = "BatchDownloadStreamsDialog_${dialogRequest.id}",
+            waitWhenInvisible = true,
+        )
+        val streams = (result as? ResultWrapper.Success)?.value?.let { selection ->
+            BatchDownloadResolver.StreamSelection(
+                selection.videoStream,
+                selection.audioStream,
+            )
+        }
+        mViewModel.onDownloadStreamsSelected(dialogRequest.id, streams)
     }
 }

@@ -24,7 +24,10 @@ object LocalNetworkPermissionPolicy {
             return false
         }
         return withContext(Dispatchers.IO) {
-            LocalNetworkHostUtils.requiresPermission(rawHost)
+            LocalNetworkHostUtils.requiresPermission(
+                rawHost = rawHost,
+                localIpv6RouteMatcher = LocalNetworkRouteUtils::matches,
+            )
         }
     }
 }

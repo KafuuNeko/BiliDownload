@@ -72,4 +72,52 @@ class LocalNetworkHostUtilsTest {
             }
         )
     }
+
+    @Test
+    fun globalIpv6OnLocalRouteRequiresPermission() {
+        val localAddress = InetAddress.getByName("2001:db8:1234::20")
+
+        assertTrue(
+            LocalNetworkHostUtils.requiresPermission(
+                rawHost = "[2001:db8:1234::20]",
+                localIpv6RouteMatcher = { it == localAddress },
+            )
+        )
+    }
+
+    @Test
+    fun globalIpv6OnDefaultRouteDoesNotRequirePermission() {
+        assertFalse(
+            LocalNetworkHostUtils.requiresPermission(
+                rawHost = "[2001:4860:4860::8888]",
+                localIpv6RouteMatcher = { false },
+            )
+        )
+    }
+
+    @Test
+    fun publicIpv4DoesNotUseIpv6RouteMatcher() {
+        assertFalse(
+            LocalNetworkHostUtils.requiresPermission(
+                rawHost = "203.0.113.20",
+                localIpv6RouteMatcher = { true },
+            )
+        )
+    }
+
+    @Test
+    fun routeMatcherFailureDoesNotHideProtectedResolvedAddress() {
+        assertTrue(
+            LocalNetworkHostUtils.requiresPermission(
+                rawHost = "mixed.example.com",
+                localIpv6RouteMatcher = { error("Route snapshot unavailable") },
+                addressResolver = {
+                    arrayOf(
+                        InetAddress.getByName("2001:4860:4860::8888"),
+                        InetAddress.getByName("192.168.50.20"),
+                    )
+                },
+            )
+        )
+    }
 }
