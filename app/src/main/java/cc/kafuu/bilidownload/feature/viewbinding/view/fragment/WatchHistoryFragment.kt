@@ -2,10 +2,10 @@ package cc.kafuu.bilidownload.feature.viewbinding.view.fragment
 
 import cc.kafuu.bilidownload.common.core.viewbinding.CoreFragmentBuilder
 import cc.kafuu.bilidownload.common.model.LoadingStatus
-import cc.kafuu.bilidownload.feature.viewbinding.view.fragment.common.BiliRVFragment
+import cc.kafuu.bilidownload.feature.viewbinding.view.fragment.common.BiliResourceRVFragment
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.fragment.WatchHistoryViewModel
 
-class WatchHistoryFragment : BiliRVFragment<WatchHistoryViewModel>(
+class WatchHistoryFragment : BiliResourceRVFragment<WatchHistoryViewModel>(
     WatchHistoryViewModel::class.java
 ) {
     companion object {

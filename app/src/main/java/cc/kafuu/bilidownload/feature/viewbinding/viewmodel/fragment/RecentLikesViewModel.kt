@@ -5,9 +5,9 @@ import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.common.network.IServerCallback
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliLikeListData
-import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.common.BiliRVViewModel
+import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.common.BiliResourceRVViewModel
 
-class RecentLikesViewModel : BiliRVViewModel() {
+class RecentLikesViewModel : BiliResourceRVViewModel() {
     private val mBiliAccountRepository = NetworkManager.biliAccountRepository
     private var mMid = 0L
 

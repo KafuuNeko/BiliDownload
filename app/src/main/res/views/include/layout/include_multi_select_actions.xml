@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ll_multi_select_actions"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/shape_dialog_background"
+    android:elevation="8dp"
+    android:orientation="horizontal"
+    android:padding="10dp"
+    android:visibility="gone">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tv_cancel_multi_select"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:background="@drawable/shape_button_cancel"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
+        android:gravity="center"
+        android:paddingVertical="10dp"
+        android:text="@string/text_cancel"
+        android:textColor="@color/general_text_color"
+        android:textSize="@dimen/size_text_button_size" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tv_download_multi_select"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_weight="2"
+        android:background="@drawable/shape_button_general"
+        android:clickable="true"
+        android:drawablePadding="6dp"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
+        android:gravity="center"
+        android:paddingVertical="10dp"
+        android:text="@string/text_download_selected"
+        android:textColor="@color/common_white"
+        android:textSize="@dimen/size_text_button_size" />
+</LinearLayout>

@@ -3,11 +3,12 @@ package cc.kafuu.bilidownload.feature.viewbinding.view.fragment
 import cc.kafuu.bilidownload.common.constant.SearchType
 import cc.kafuu.bilidownload.common.core.viewbinding.CoreFragmentBuilder
 import cc.kafuu.bilidownload.common.model.LoadingStatus
-import cc.kafuu.bilidownload.feature.viewbinding.view.fragment.common.BiliRVFragment
+import cc.kafuu.bilidownload.feature.viewbinding.view.fragment.common.BiliResourceRVFragment
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.fragment.SearchListViewModel
 
-class SearchListFragment : BiliRVFragment<cc.kafuu.bilidownload.feature.viewbinding.viewmodel.fragment.SearchListViewModel>(
-    cc.kafuu.bilidownload.feature.viewbinding.viewmodel.fragment.SearchListViewModel::class.java) {
+class SearchListFragment : BiliResourceRVFragment<SearchListViewModel>(
+    SearchListViewModel::class.java
+) {
     companion object {
         object Builder : CoreFragmentBuilder<SearchListFragment>() {
             override fun onMallocFragment() = SearchListFragment()

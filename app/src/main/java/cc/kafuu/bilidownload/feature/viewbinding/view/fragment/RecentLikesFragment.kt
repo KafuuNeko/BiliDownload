@@ -1,10 +1,10 @@
 package cc.kafuu.bilidownload.feature.viewbinding.view.fragment
 
 import cc.kafuu.bilidownload.common.core.viewbinding.CoreFragmentBuilder
-import cc.kafuu.bilidownload.feature.viewbinding.view.fragment.common.BiliRVFragment
+import cc.kafuu.bilidownload.feature.viewbinding.view.fragment.common.BiliResourceRVFragment
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.fragment.RecentLikesViewModel
 
-class RecentLikesFragment : BiliRVFragment<RecentLikesViewModel>(
+class RecentLikesFragment : BiliResourceRVFragment<RecentLikesViewModel>(
     RecentLikesViewModel::class.java
 ) {
     companion object {

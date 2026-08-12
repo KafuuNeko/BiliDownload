@@ -3,10 +3,10 @@ package cc.kafuu.bilidownload.feature.viewbinding.view.fragment
 import androidx.fragment.app.activityViewModels
 import cc.kafuu.bilidownload.common.core.viewbinding.CoreFragmentBuilder
 import cc.kafuu.bilidownload.common.model.LoadingStatus
-import cc.kafuu.bilidownload.feature.viewbinding.view.fragment.common.BiliRVFragment
+import cc.kafuu.bilidownload.feature.viewbinding.view.fragment.common.BiliResourceRVFragment
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity.FavoriteDetailsViewModel
 
-class FavoriteContentFragment : BiliRVFragment<FavoriteDetailsViewModel>(
+class FavoriteContentFragment : BiliResourceRVFragment<FavoriteDetailsViewModel>(
     FavoriteDetailsViewModel::class.java
 ) {
     companion object {

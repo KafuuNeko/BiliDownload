@@ -7,7 +7,7 @@ import cc.kafuu.bilidownload.common.network.IServerCallback
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliFavoriteData
 import cc.kafuu.bilidownload.common.network.model.BiliFavoriteListData
-import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.common.BiliRVViewModel
+import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.common.BiliFavoriteRVViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -15,7 +15,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class FavoriteListViewModel : BiliRVViewModel() {
+class FavoriteListViewModel : BiliFavoriteRVViewModel() {
     private val mBiliAccountRepository = NetworkManager.biliAccountRepository
 
     // 用户mid

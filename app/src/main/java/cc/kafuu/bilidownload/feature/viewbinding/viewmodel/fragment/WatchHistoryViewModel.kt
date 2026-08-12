@@ -9,9 +9,9 @@ import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliHistoryCursor
 import cc.kafuu.bilidownload.common.network.model.BiliHistoryData
 import cc.kafuu.bilidownload.common.network.model.BiliHistoryItem
-import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.common.BiliRVViewModel
+import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.common.BiliResourceRVViewModel
 
-class WatchHistoryViewModel : BiliRVViewModel() {
+class WatchHistoryViewModel : BiliResourceRVViewModel() {
     private val mBiliAccountRepository = NetworkManager.biliAccountRepository
     private var mLastHistoryCursor: BiliHistoryCursor? = null
 

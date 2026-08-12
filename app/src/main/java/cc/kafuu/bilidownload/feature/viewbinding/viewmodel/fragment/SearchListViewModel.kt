@@ -15,10 +15,10 @@ import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.utils.BiliAddressParser
 import cc.kafuu.bilidownload.common.utils.BvConvertUtils
 import cc.kafuu.bilidownload.common.utils.NetworkUtils
-import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.common.BiliRVViewModel
+import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.common.BiliResourceRVViewModel
 import java.util.Locale
 
-class SearchListViewModel : BiliRVViewModel() {
+class SearchListViewModel : BiliResourceRVViewModel() {
     var keyword: String? = null
 
     @SearchType
