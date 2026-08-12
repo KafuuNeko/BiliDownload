@@ -40,7 +40,6 @@ import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import java.io.File
 import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicInteger
 
 class DownloadService : Service() {
     companion object {
@@ -86,16 +85,10 @@ class DownloadService : Service() {
 
     // 限制任务进入下载队列前的视频详情同步请求，批量入队时不会同时请求全部稿件。
     private val mAssignmentSemaphore = Semaphore(4)
-    private val mRunningTaskCount = AtomicInteger(0)
+    private val mTaskRegistry = DownloadServiceTaskRegistry()
 
-    private fun increaseRunningTaskCount() {
-        mRunningTaskCount.incrementAndGet()
-    }
-
-    private fun decreaseRunningTaskCount() {
-        if (mRunningTaskCount.decrementAndGet() <= 0) {
-            stopSelf()
-        }
+    private fun finishTask(taskId: Long) {
+        mTaskRegistry.finish(taskId)?.let(::stopSelfResult)
     }
 
     private lateinit var mDownloadNotification: DownloadNotification
@@ -122,15 +115,18 @@ class DownloadService : Service() {
         if (entityId == null || entityId == -1L) {
             return super.onStartCommand(intent, flags, startId)
         }
+        if (!mTaskRegistry.tryRegister(entityId, startId)) {
+            Log.d(TAG, "Task [T$entityId] is already assigned, skip duplicate start")
+            return super.onStartCommand(intent, flags, startId)
+        }
         Log.d(TAG, "onStartCommand: $entityId")
-        increaseRunningTaskCount()
         mServiceScope.launch {
             try {
                 mAssignmentSemaphore.withPermit {
                     assigningTask(entityId)
                 }
             } catch (e: Exception) {
-                decreaseRunningTaskCount()
+                finishTask(entityId)
                 Log.e(TAG, e.message ?: "Unknown error")
             }
         }
@@ -161,7 +157,7 @@ class DownloadService : Service() {
                     })
                 }
             } finally {
-                decreaseRunningTaskCount()
+                finishTask(taskId)
             }
             return
         }
@@ -172,12 +168,12 @@ class DownloadService : Service() {
             DownloadRepository.deleteDownloadTaskMixedResource(taskId)
             // 重新走任务下载完成流程
             onDownloadCompleted(taskEntity, true)
-            decreaseRunningTaskCount()
+            finishTask(taskId)
             return
         }
 
         if (taskEntity.groupId?.let { DownloadManager.containsTaskGroup(it) } == true) {
-            decreaseRunningTaskCount()
+            finishTask(taskId)
             return
         }
 
@@ -231,7 +227,7 @@ class DownloadService : Service() {
                     event.task,
                     event.httpCode, event.code, event.message
                 )
-                decreaseRunningTaskCount()
+                finishTask(event.task.id)
             }
         }
     }
@@ -259,7 +255,7 @@ class DownloadService : Service() {
             // 是终止态
             if (event.status.isEndStatus) {
                 mDownloadNotification.updateDownloadProgress(event.task, null)
-                decreaseRunningTaskCount()
+                finishTask(event.task.id)
             }
         }
     }
@@ -509,7 +505,7 @@ class DownloadService : Service() {
      * from [onDownloadStatusChangeEvent] */
     private fun onDownloadStopped(task: DownloadTaskEntity, group: DownloadGroupSnapshot) {
         mDownloadNotification.updateDownloadProgress(task, null)
-        decreaseRunningTaskCount()
+        finishTask(task.id)
     }
 
     /**
