@@ -240,6 +240,13 @@
     <string name="settings_delete_source_files_after_merge_desc">Automatically delete the separate audio and video files after a successful merge</string>
     <string name="settings_auto_remux_audio_after_download">Auto Convert Audio Container</string>
     <string name="settings_auto_remux_audio_after_download_desc">After downloading, copy audio streams into codec-specific containers such as AAC or FLAC when possible</string>
+    <string name="settings_batch_quality_mismatch">When Batch Download Qualities Differ</string>
+    <string name="settings_batch_quality_mismatch_auto">Automatically Downgrade</string>
+    <string name="settings_batch_quality_mismatch_auto_desc">Use the selected quality as a ceiling, choose the highest available quality, and prefer the same codec</string>
+    <string name="settings_batch_quality_mismatch_ask">Ask Me</string>
+    <string name="settings_batch_quality_mismatch_ask_desc">Show the resource picker for each part that cannot be matched exactly</string>
+    <string name="settings_batch_quality_mismatch_skip">Skip</string>
+    <string name="settings_batch_quality_mismatch_skip_desc">Skip parts that cannot be matched exactly and include them in the final summary</string>
     <string name="text_select">Select</string>
     <string name="text_download_selected">Download Selected</string>
     <string name="text_download_selected_count">Download Selected (%1$d)</string>

@@ -9,6 +9,8 @@ import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.download.BatchDownloadResolver
 import cc.kafuu.bilidownload.common.ext.liveData
 import cc.kafuu.bilidownload.common.manager.DownloadManager
+import cc.kafuu.bilidownload.common.model.AppModel
+import cc.kafuu.bilidownload.common.model.BatchQualityMismatchMode
 import cc.kafuu.bilidownload.common.model.ResultWrapper
 import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
 import cc.kafuu.bilidownload.common.model.bili.BiliDashModel
@@ -237,24 +239,13 @@ open class BiliRVViewModel : RVViewModel() {
                 }
             }
 
-            val videoStream = BatchDownloadResolver.selectCompatibleStream(
-                selectedStreams.videoStream,
-                dash.video
-            )
-            val audioStream = BatchDownloadResolver.selectCompatibleStream(
-                selectedStreams.audioStream,
-                dash.getAllAudio()
-            )
-            val selectedVideoUnavailable =
-                selectedStreams.videoStream != null && videoStream == null
-            val selectedAudioUnavailable =
-                selectedStreams.audioStream != null && audioStream == null
-            if (selectedVideoUnavailable || selectedAudioUnavailable) {
+            val streams = resolveBatchStreams(part, dash, selectedStreams)
+            if (streams == null) {
                 skippedCount++
                 continue
             }
 
-            val resources = buildDashModels(videoStream, audioStream)
+            val resources = buildDashModels(streams.videoStream, streams.audioStream)
             if (resources.isEmpty()) {
                 skippedCount++
                 continue
@@ -276,6 +267,36 @@ open class BiliRVViewModel : RVViewModel() {
 
         showBatchDownloadResult(addedCount, skippedCount)
         return true
+    }
+
+    private suspend fun resolveBatchStreams(
+        part: BiliVideoPartModel,
+        dash: BiliPlayStreamDash,
+        preferred: BiliPartDialog.Companion.Result
+    ): BatchDownloadResolver.StreamSelection? {
+        BatchDownloadResolver.selectExactStreams(
+            preferred.videoStream,
+            preferred.audioStream,
+            dash
+        )?.let { return it }
+
+        return when (AppModel.batchQualityMismatchMode) {
+            BatchQualityMismatchMode.AUTO_FALLBACK ->
+                BatchDownloadResolver.selectCompatibleStreams(
+                    preferred.videoStream,
+                    preferred.audioStream,
+                    dash
+                )
+
+            BatchQualityMismatchMode.ASK -> selectDownloadStreams(
+                dash = dash,
+                title = part.name
+            )?.let {
+                BatchDownloadResolver.StreamSelection(it.videoStream, it.audioStream)
+            }
+
+            BatchQualityMismatchMode.SKIP -> null
+        }
     }
 
     private fun showBatchDownloadResult(addedCount: Int, skippedCount: Int) {
@@ -328,11 +349,12 @@ open class BiliRVViewModel : RVViewModel() {
     }
 
     private suspend fun selectDownloadStreams(
-        dash: BiliPlayStreamDash
+        dash: BiliPlayStreamDash,
+        title: String = CommonLibs.getString(R.string.text_select_the_resource_to_download)
     ): BiliPartDialog.Companion.Result? = suspendCancellableCoroutine { continuation ->
         popDialog(
             dialog = BiliPartDialog.buildDialog(
-                CommonLibs.getString(R.string.text_select_the_resource_to_download),
+                title,
                 dash.video,
                 dash.getAllAudio()
             ),

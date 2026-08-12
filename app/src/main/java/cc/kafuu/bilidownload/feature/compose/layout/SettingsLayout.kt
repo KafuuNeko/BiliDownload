@@ -42,6 +42,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cc.kafuu.bilidownload.R
+import cc.kafuu.bilidownload.common.model.BatchQualityMismatchMode
 import cc.kafuu.bilidownload.common.model.DownloadPathMode
 import cc.kafuu.bilidownload.common.model.DownloadSourceMode
 import cc.kafuu.bilidownload.common.model.DownloadSourcePreset
@@ -110,9 +111,99 @@ private fun SettingsContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            BatchQualityMismatchCard(state, onIntent)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             MergeSettingsCard(state, onIntent)
 
             Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+private fun BatchQualityMismatchCard(
+    state: SettingsUiState.Normal,
+    onIntent: (SettingsUiIntent) -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = stringResource(R.string.settings_batch_quality_mismatch),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
+            )
+
+            HorizontalDivider(
+                color = colorResource(R.color.view_split_color),
+                thickness = 0.5.dp
+            )
+
+            SettingsRadioOption(
+                title = stringResource(R.string.settings_batch_quality_mismatch_auto),
+                description = stringResource(
+                    R.string.settings_batch_quality_mismatch_auto_desc
+                ),
+                isSelected = state.batchQualityMismatchMode ==
+                    BatchQualityMismatchMode.AUTO_FALLBACK,
+                onClick = {
+                    onIntent(
+                        SettingsUiIntent.SetBatchQualityMismatchMode(
+                            BatchQualityMismatchMode.AUTO_FALLBACK
+                        )
+                    )
+                }
+            )
+
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                color = colorResource(R.color.view_split_color),
+                thickness = 0.5.dp
+            )
+
+            SettingsRadioOption(
+                title = stringResource(R.string.settings_batch_quality_mismatch_ask),
+                description = stringResource(
+                    R.string.settings_batch_quality_mismatch_ask_desc
+                ),
+                isSelected = state.batchQualityMismatchMode == BatchQualityMismatchMode.ASK,
+                onClick = {
+                    onIntent(
+                        SettingsUiIntent.SetBatchQualityMismatchMode(
+                            BatchQualityMismatchMode.ASK
+                        )
+                    )
+                }
+            )
+
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                color = colorResource(R.color.view_split_color),
+                thickness = 0.5.dp
+            )
+
+            SettingsRadioOption(
+                title = stringResource(R.string.settings_batch_quality_mismatch_skip),
+                description = stringResource(
+                    R.string.settings_batch_quality_mismatch_skip_desc
+                ),
+                isSelected = state.batchQualityMismatchMode == BatchQualityMismatchMode.SKIP,
+                onClick = {
+                    onIntent(
+                        SettingsUiIntent.SetBatchQualityMismatchMode(
+                            BatchQualityMismatchMode.SKIP
+                        )
+                    )
+                }
+            )
         }
     }
 }

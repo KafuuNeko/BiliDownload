@@ -240,6 +240,13 @@
     <string name="settings_delete_source_files_after_merge_desc">视频合成成功后自动删除单独的音频和视频文件</string>
     <string name="settings_auto_remux_audio_after_download">自动转换音频封装</string>
     <string name="settings_auto_remux_audio_after_download_desc">下载完成后尝试将音频无损转封装为 AAC、FLAC 等音频专用格式</string>
+    <string name="settings_batch_quality_mismatch">批量下载画质不一致时</string>
+    <string name="settings_batch_quality_mismatch_auto">自动降级</string>
+    <string name="settings_batch_quality_mismatch_auto_desc">以首次选择的画质为上限，自动使用最高可用画质并优先保持编码</string>
+    <string name="settings_batch_quality_mismatch_ask">询问我</string>
+    <string name="settings_batch_quality_mismatch_ask_desc">无法精确匹配时，逐个显示资源选择窗口</string>
+    <string name="settings_batch_quality_mismatch_skip">跳过</string>
+    <string name="settings_batch_quality_mismatch_skip_desc">跳过无法精确匹配的分 P，并在完成后汇总数量</string>
     <string name="text_select">选择</string>
     <string name="text_download_selected">下载所选项目</string>
     <string name="text_download_selected_count">下载所选项目（%1$d）</string>

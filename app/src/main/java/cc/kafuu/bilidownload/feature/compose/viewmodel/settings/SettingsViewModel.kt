@@ -66,6 +66,12 @@ class SettingsViewModel :
         refreshState()
     }
 
+    @UiIntentObserver(SettingsUiIntent.SetBatchQualityMismatchMode::class)
+    fun onSetBatchQualityMismatchMode(intent: SettingsUiIntent.SetBatchQualityMismatchMode) {
+        AppModel.batchQualityMismatchMode = intent.mode
+        refreshState()
+    }
+
     @UiIntentObserver(SettingsUiIntent.SetAudioResourceFileNameTemplate::class)
     fun onSetAudioResourceFileNameTemplate(
         intent: SettingsUiIntent.SetAudioResourceFileNameTemplate
@@ -161,6 +167,7 @@ class SettingsViewModel :
             currentPathDisplay = path,
             downloadSourceMode = AppModel.downloadSourceMode,
             downloadSourceCustomHost = AppModel.downloadSourceCustomHost,
+            batchQualityMismatchMode = AppModel.batchQualityMismatchMode,
             deleteSourceFilesAfterMerge = AppModel.deleteSourceFilesAfterMerge,
             autoRemuxAudioAfterDownload = AppModel.autoRemuxAudioAfterDownload,
             audioResourceFileNameTemplate = AppModel.audioResourceFileNameTemplate,

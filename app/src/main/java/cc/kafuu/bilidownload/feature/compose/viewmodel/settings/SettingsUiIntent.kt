@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload.feature.compose.viewmodel.settings
 
+import cc.kafuu.bilidownload.common.model.BatchQualityMismatchMode
 import cc.kafuu.bilidownload.common.model.DownloadPathMode
 import cc.kafuu.bilidownload.common.model.DownloadSourceMode
 
@@ -8,6 +9,7 @@ sealed class SettingsUiIntent {
     data class SetDownloadPathMode(val mode: DownloadPathMode) : SettingsUiIntent()
     data class SetDownloadSourceMode(val mode: DownloadSourceMode) : SettingsUiIntent()
     data class SetDownloadSourceCustomHost(val host: String) : SettingsUiIntent()
+    data class SetBatchQualityMismatchMode(val mode: BatchQualityMismatchMode) : SettingsUiIntent()
     data class SetDeleteSourceFilesAfterMerge(val enabled: Boolean) : SettingsUiIntent()
     data class SetAutoRemuxAudioAfterDownload(val enabled: Boolean) : SettingsUiIntent()
     data class SetAudioResourceFileNameTemplate(val template: String) : SettingsUiIntent()

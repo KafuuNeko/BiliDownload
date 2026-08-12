@@ -5,6 +5,7 @@ import cc.kafuu.bilidownload.common.model.bili.BiliResourceModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoPartModel
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
+import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
 import cc.kafuu.bilidownload.common.utils.TimeUtils
 import kotlinx.coroutines.Dispatchers
@@ -13,7 +14,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
-import kotlin.math.abs
 
 /**
  * 将不同列表页面中的稿件或剧集条目解析为实际可下载的分 P。
@@ -39,6 +39,11 @@ object BatchDownloadResolver {
     data class ResolveResult(
         val candidates: List<ResolvedCandidate>,
         val failures: List<ResolveFailure>,
+    )
+
+    data class StreamSelection(
+        val videoStream: BiliPlayStreamResource?,
+        val audioStream: BiliPlayStreamResource?,
     )
 
     private sealed interface CandidateResult {
@@ -136,7 +141,7 @@ object BatchDownloadResolver {
      * 根据用户第一次选择的资源规格，为其他分 P 选择兼容资源。
      *
      * 优先级依次为：完全相同、相同编码的最近低档、相同档位、
-     * 任意编码的最近低档，最后才选择数值距离最近的资源。
+     * 任意编码的最近低档。不会选择高于用户首次选择档位的资源。
      */
     fun selectCompatibleStream(
         preferred: BiliPlayStreamResource?,
@@ -146,9 +151,7 @@ object BatchDownloadResolver {
         val streams = available.orEmpty()
         if (streams.isEmpty()) return null
 
-        streams.find {
-            it.id == preferred.id && it.codecId == preferred.codecId
-        }?.let { return it }
+        selectExactStream(preferred, streams)?.let { return it }
 
         streams.filter { it.codecId == preferred.codecId && it.id <= preferred.id }
             .maxByOrNull { it.id }
@@ -160,6 +163,55 @@ object BatchDownloadResolver {
             .maxByOrNull { it.id }
             ?.let { return it }
 
-        return streams.minByOrNull { abs(it.id - preferred.id) }
+        return null
+    }
+
+    /** 根据档位和编码查找与首次选择完全一致的资源。 */
+    fun selectExactStream(
+        preferred: BiliPlayStreamResource?,
+        available: List<BiliPlayStreamResource>?
+    ): BiliPlayStreamResource? {
+        if (preferred == null) return null
+        return available.orEmpty().find {
+            it.id == preferred.id && it.codecId == preferred.codecId
+        }
+    }
+
+    fun selectExactStreams(
+        preferredVideo: BiliPlayStreamResource?,
+        preferredAudio: BiliPlayStreamResource?,
+        dash: BiliPlayStreamDash
+    ): StreamSelection? = selectStreams(
+        preferredVideo = preferredVideo,
+        preferredAudio = preferredAudio,
+        dash = dash,
+        selector = ::selectExactStream
+    )
+
+    fun selectCompatibleStreams(
+        preferredVideo: BiliPlayStreamResource?,
+        preferredAudio: BiliPlayStreamResource?,
+        dash: BiliPlayStreamDash
+    ): StreamSelection? = selectStreams(
+        preferredVideo = preferredVideo,
+        preferredAudio = preferredAudio,
+        dash = dash,
+        selector = ::selectCompatibleStream
+    )
+
+    private fun selectStreams(
+        preferredVideo: BiliPlayStreamResource?,
+        preferredAudio: BiliPlayStreamResource?,
+        dash: BiliPlayStreamDash,
+        selector: (
+            BiliPlayStreamResource?,
+            List<BiliPlayStreamResource>?
+        ) -> BiliPlayStreamResource?
+    ): StreamSelection? {
+        val videoStream = selector(preferredVideo, dash.video)
+        val audioStream = selector(preferredAudio, dash.getAllAudio())
+        if (preferredVideo != null && videoStream == null) return null
+        if (preferredAudio != null && audioStream == null) return null
+        return StreamSelection(videoStream, audioStream)
     }
 }

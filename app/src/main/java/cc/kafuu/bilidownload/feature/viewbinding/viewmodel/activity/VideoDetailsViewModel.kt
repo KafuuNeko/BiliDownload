@@ -8,10 +8,13 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.core.viewbinding.CoreViewModel
+import cc.kafuu.bilidownload.common.download.BatchDownloadResolver
 import cc.kafuu.bilidownload.common.ext.limit
 import cc.kafuu.bilidownload.common.ext.liveData
 import cc.kafuu.bilidownload.common.manager.AccountManager
 import cc.kafuu.bilidownload.common.manager.DownloadManager
+import cc.kafuu.bilidownload.common.model.AppModel
+import cc.kafuu.bilidownload.common.model.BatchQualityMismatchMode
 import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.common.model.ResultWrapper
 import cc.kafuu.bilidownload.common.model.action.ViewAction
@@ -285,34 +288,18 @@ class VideoDetailsViewModel : CoreViewModel() {
         // 处理用户选择的每一个片段
         partList.forEachIndexed { index, part ->
             val dash = dashList[index]
-            // 验证当前视频dash是否存在与用户首次选择一样的流
-            val videoStreamVerify = defaultVideoStream?.let { stream ->
-                dash.video?.find { it.id == stream.id && it.codecId == stream.codecId } != null
-            } ?: true
-            // 验证当前音频dash是否存在与用户首次选择一样的流
-            val audioStreamVerify = defaultAudioStream?.let { stream ->
-                dash.audio?.find { it.id == stream.id && it.codecId == stream.codecId } != null
-            } ?: true
-            // 如果当前视频dash存在用户首次选择的视频和音频流，直接下载
-            if (videoStreamVerify && audioStreamVerify) {
-                if (startDownload(part, defaultVideoStream, defaultAudioStream)) {
-                    addedCount++
-                } else {
-                    skippedCount++
-                }
-                return@forEachIndexed
-            }
-            // 如果不存在则再次询问用户选择
-            val selection = popSelectedVideoPartDialog(
-                part.name,
-                dash
-            ) as? ResultWrapper.Success
+            val selection = resolveBatchStreams(
+                part = part,
+                dash = dash,
+                preferredVideo = defaultVideoStream,
+                preferredAudio = defaultAudioStream
+            )
             if (selection == null) {
                 skippedCount++
             } else if (startDownload(
                     part,
-                    selection.value.videoStream,
-                    selection.value.audioStream
+                    selection.videoStream,
+                    selection.audioStream
                 )
             ) {
                 addedCount++
@@ -332,6 +319,39 @@ class VideoDetailsViewModel : CoreViewModel() {
         )
         // 执行完所有操作后，退出多选模式
         onSwitchMultipleSelectMode()
+    }
+
+    private suspend fun resolveBatchStreams(
+        part: BiliVideoPartModel,
+        dash: BiliPlayStreamDash,
+        preferredVideo: BiliPlayStreamResource?,
+        preferredAudio: BiliPlayStreamResource?
+    ): BatchDownloadResolver.StreamSelection? {
+        BatchDownloadResolver.selectExactStreams(
+            preferredVideo,
+            preferredAudio,
+            dash
+        )?.let { return it }
+
+        return when (AppModel.batchQualityMismatchMode) {
+            BatchQualityMismatchMode.AUTO_FALLBACK ->
+                BatchDownloadResolver.selectCompatibleStreams(
+                    preferredVideo,
+                    preferredAudio,
+                    dash
+                )
+
+            BatchQualityMismatchMode.ASK -> {
+                val result = popSelectedVideoPartDialog(part.name, dash)
+                    as? ResultWrapper.Success ?: return null
+                BatchDownloadResolver.StreamSelection(
+                    result.value.videoStream,
+                    result.value.audioStream
+                )
+            }
+
+            BatchQualityMismatchMode.SKIP -> null
+        }
     }
 
     /**

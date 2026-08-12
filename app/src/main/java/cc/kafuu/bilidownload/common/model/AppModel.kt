@@ -18,6 +18,11 @@ object AppModel : KotprefModel() {
         key = "downloadSourceMode"
     )
 
+    private var batchQualityMismatchModeCode by intPref(
+        default = BatchQualityMismatchMode.AUTO_FALLBACK.code,
+        key = "batchQualityMismatchMode"
+    )
+
     var downloadSourceCustomHost by stringPref("")
 
     var deleteSourceFilesAfterMerge by booleanPref(false)
@@ -46,5 +51,11 @@ object AppModel : KotprefModel() {
         get() = DownloadSourceMode.fromCode(downloadSourceModeCode)
         set(value) {
             downloadSourceModeCode = value.code
+        }
+
+    var batchQualityMismatchMode: BatchQualityMismatchMode
+        get() = BatchQualityMismatchMode.fromCode(batchQualityMismatchModeCode)
+        set(value) {
+            batchQualityMismatchModeCode = value.code
         }
 }
