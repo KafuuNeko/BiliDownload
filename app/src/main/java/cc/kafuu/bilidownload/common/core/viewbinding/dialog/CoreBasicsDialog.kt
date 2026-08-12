@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload.common.core.viewbinding.dialog
 
+import android.content.DialogInterface
 import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -71,6 +72,12 @@ abstract class CoreBasicsDialog<V : ViewDataBinding, RS : Serializable>(
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initViews()
+    }
+
+    override fun onCancel(dialog: DialogInterface) {
+        // 系统返回键或点击弹窗外部也应当结束 showAndWaitResult 的等待。
+        setFragmentResult(mRequestKey, Bundle())
+        super.onCancel(dialog)
     }
 
     protected fun dismissWithResult(result: RS? = null) {
