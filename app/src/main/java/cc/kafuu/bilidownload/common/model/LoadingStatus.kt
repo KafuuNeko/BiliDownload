@@ -45,7 +45,7 @@ class LoadingStatus private constructor(
         fun emptyStatus(
             visibility: Boolean = true,
             icon: Drawable? = CommonLibs.getDrawable(R.drawable.ic_list_item_empty),
-            message: String = ""
+            message: String = CommonLibs.getString(R.string.list_is_empty)
         ) = LoadingStatus(
             statusCode = CODE_EMPTY,
             visibility = visibility,

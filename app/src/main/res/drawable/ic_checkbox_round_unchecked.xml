@@ -1,0 +1,12 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Outer outlined circle -->
+    <path
+        android:strokeColor="@color/main_tab_text_passive_color"
+        android:strokeWidth="1.8"
+        android:fillColor="@color/common_transparent"
+        android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2z" />
+</vector>

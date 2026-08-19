@@ -52,7 +52,7 @@
     <string name="video_description_unknown">未知</string>
     <string name="iv_download_status_image_content_description">下载状态</string>
     <string name="loading_status_icon">列表状态图标</string>
-    <string name="list_is_empty">无数据</string>
+    <string name="list_is_empty">暂无数据</string>
     <string name="tv_search_text">搜索</string>
     <string name="iv_back_content_description">返回</string>
     <string name="text_source_repository">代码仓库</string>
@@ -199,7 +199,7 @@
     <string name="music_spectrum_frequency_mid">中</string>
     <string name="music_spectrum_frequency_high">高</string>
     <string name="music_spectrum_analysis_failed">频谱分析失败</string>
-    <string name="multi_select_count">已选择 %d 项</string>
+    <string name="multi_select_count">已选 %d 项</string>
     <string name="batch_delete_confirm_message">确定删除所选的 %d 个下载记录吗？点击删除后将立即删除记录和对应的数据，操作不可撤销。</string>
     <string name="batch_export_progress_title">导出中…</string>
     <string name="batch_export_progress_message">正在导出 %1$d / %2$d</string>
@@ -258,4 +258,5 @@
     <string name="text_download_all_parts">全部加入</string>
     <string name="text_batch_download_result">已加入 %1$d 个下载任务，跳过 %2$d 个。</string>
     <string name="text_download_task_already_active">该项目已有正在进行的下载任务</string>
+    <string name="text_deselect_all">反选</string>
 </resources>
