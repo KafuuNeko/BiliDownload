@@ -7,6 +7,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.FileProvider
+import androidx.documentfile.provider.DocumentFile
 import cc.kafuu.bilidownload.common.manager.AccountManager
 import cc.kafuu.bilidownload.common.network.NetworkConfig
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
@@ -16,6 +17,7 @@ import okhttp3.Request
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.Locale
 
 object FileUtils {
     /**
@@ -28,7 +30,7 @@ object FileUtils {
         if (sizeBytes < 1024) return "$sizeBytes B"
         val z = (63 - sizeBytes.countLeadingZeroBits()) / 10
         val sizeInUnit = sizeBytes.toDouble() / (1L shl (z * 10))
-        return String.format("%.1f %sB", sizeInUnit, " KMGTPE"[z])
+        return String.format(Locale.ROOT, "%.1f %sB", sizeInUnit, " KMGTPE"[z])
     }
 
     /**
@@ -166,16 +168,33 @@ object FileUtils {
      * @param sourceFile 源文件
      * @return 成功返回true，失败返回false
      */
-    fun writeFileToUri(context: Context, uri: Uri, sourceFile: File) = try {
-        context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+    fun writeFileToUri(context: Context, uri: Uri, sourceFile: File): Boolean = try {
+        val outputStream = context.contentResolver.openOutputStream(uri) ?: return false
+        outputStream.use {
             sourceFile.inputStream().use { inputStream ->
-                copyStream(inputStream, outputStream)
+                copyStream(inputStream, it)
             }
         }
         true
     } catch (e: Exception) {
         e.printStackTrace()
         false
+    }
+
+    /** 返回目标目录中尚未被占用的显示文件名，并保留原扩展名。 */
+    fun resolveUniqueDocumentName(parent: DocumentFile, desiredName: String): String {
+        if (parent.findFile(desiredName) == null) return desiredName
+
+        val dotIndex = desiredName.lastIndexOf('.')
+        val baseName = if (dotIndex > 0) desiredName.substring(0, dotIndex) else desiredName
+        val extension = if (dotIndex > 0) desiredName.substring(dotIndex) else ""
+        var suffix = 1
+        var candidate: String
+        do {
+            candidate = "$baseName($suffix)$extension"
+            suffix++
+        } while (parent.findFile(candidate) != null)
+        return candidate
     }
 
     private fun copyStream(inputStream: InputStream, outputStream: OutputStream) {

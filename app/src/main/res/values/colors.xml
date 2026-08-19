@@ -27,6 +27,17 @@
     <color name="view_split_color">#809F9F9F</color>
 
     <color name="general_text_color">#707070</color>
+    <color name="general_sub_text_color">#999999</color>
     <color name="general_window_background_color">@color/common_white</color>
     <color name="general_item_background_color">@color/common_white</color>
+
+    <!-- Modern M3 Surface & Container Tokens -->
+    <color name="card_selected_background">#FFF4F7</color>
+    <color name="card_selected_stroke">#FA7298</color>
+    <color name="card_unselected_stroke">#F0F0F2</color>
+    <color name="surface_container_low">#F7F8FA</color>
+    <color name="surface_floating_bar">#FDFDFD</color>
+    <color name="color_delete_container">#FFEBEE</color>
+    <color name="color_delete_on_container">#C62828</color>
+    <color name="search_bar_background">#F2F3F5</color>
 </resources>

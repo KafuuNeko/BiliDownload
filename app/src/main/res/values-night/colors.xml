@@ -1,8 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="general_text_color">#B6B6B6</color>
-    <color name="general_window_background_color">#343434</color>
-    <color name="general_item_background_color">#4D4D4D</color>
-    <color name="popup_bg_color">#FF2C2C2C</color>
+    <color name="general_window_background_color">#18181A</color>
+    <color name="general_item_background_color">#242426</color>
+    <color name="general_text_color">#B0B0B4</color>
+    <color name="general_sub_text_color">#7D7D82</color>
+
+    <color name="main_tab_text_active_color">#FFFFFF</color>
+    <color name="main_tab_text_passive_color">#707078</color>
+
+    <color name="popup_bg_color">#FF262628</color>
     <color name="popup_text_color">#FFF3F3F3</color>
+    <color name="view_split_color">#333336</color>
+
+    <!-- Modern M3 Surface & Container Tokens for Dark Mode -->
+    <color name="card_selected_background">#3B2028</color>
+    <color name="card_selected_stroke">#FA7298</color>
+    <color name="card_unselected_stroke">#323236</color>
+    <color name="surface_container_low">#2A2A2D</color>
+    <color name="surface_floating_bar">#27272A</color>
+    <color name="color_delete_container">#421F22</color>
+    <color name="color_delete_on_container">#FF8A80</color>
+    <color name="search_bar_background">#28282B</color>
 </resources>

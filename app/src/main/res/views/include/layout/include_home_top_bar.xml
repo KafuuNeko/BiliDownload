@@ -18,30 +18,37 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:onClick="@{()->viewModel.switchToMe()}"
-        android:paddingHorizontal="8dp">
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="4dp">
 
         <ImageView
             android:id="@+id/iv_profile"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:layout_margin="8dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="10dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
             android:contentDescription="@string/iv_profile_content_description"
+            android:focusable="true"
+            android:onClick="@{()->viewModel.switchToMe()}"
             app:bindPlaceholder="@{@drawable/ic_2233}"
             app:bindProfileAccount="@{AccountManager.INSTANCE.accountLiveData}"
             app:bindTransformation="@{GlideUtils.INSTANCE.circleCrop}" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_marginVertical="12dp"
+            android:layout_height="40dp"
             android:layout_weight="1"
             android:background="@drawable/ic_shape_search_bg"
+            android:clickable="true"
+            android:drawablePadding="10dp"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
             android:gravity="center_vertical"
             android:onClick="@{()->viewModel.jumpSearchActivity()}"
-            android:paddingHorizontal="5dp"
+            android:paddingHorizontal="14dp"
             android:text="@string/et_search_hint"
-            android:textColor="@color/general_text_color"
+            android:textColor="@color/general_sub_text_color"
             android:textSize="@dimen/size_text_common_size"
             app:drawableStartCompat="@drawable/ic_search" />
     </LinearLayout>

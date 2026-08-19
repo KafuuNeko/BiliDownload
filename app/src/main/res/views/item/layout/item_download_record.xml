@@ -26,13 +26,17 @@
         <import type="cc.kafuu.bilidownload.common.model.TaskStatus" />
     </data>
 
-    <androidx.cardview.widget.CardView
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_root"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:background="@color/general_item_background_color"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginVertical="6dp"
+        app:cardBackgroundColor="@color/general_item_background_color"
         app:cardCornerRadius="@dimen/card_item_corner_radius"
-        app:cardElevation="@dimen/card_item_elevation">
+        app:cardElevation="@dimen/card_item_elevation"
+        app:strokeColor="@color/card_unselected_stroke"
+        app:strokeWidth="1dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -40,38 +44,29 @@
             android:clickable="true"
             android:focusable="true"
             android:foreground="?attr/selectableItemBackground"
+            android:padding="8dp"
             android:onClick="@{()->viewModel.entryHistoryDetails(data)}"
             android:onLongClick="@{(v)->viewModel.onItemLongClick(data)}">
 
-            <CheckBox
-                android:id="@+id/cb_select"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:clickable="false"
-                android:focusable="false"
-                android:visibility="gone"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:visibility="visible" />
-
-            <ImageView
+            <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/iv_video_cover"
                 bindImageUrl="@{data.cover}"
                 bindPlaceholder="@{CommonLibs.INSTANCE.getDrawable(R.drawable.ic_2233)}"
                 bindTransformation="@{viewModel.centerCrop}"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
+                android:layout_width="@dimen/card_cover_width"
+                android:layout_height="@dimen/card_cover_height"
                 android:contentDescription="@string/iv_video_cover_content_description"
-                app:layout_constraintStart_toEndOf="@+id/cb_select"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
+                app:shapeAppearanceOverlay="@style/RoundedImageView8dp"
                 tools:src="@drawable/ic_2233" />
 
             <LinearLayout
                 android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:gravity="center_vertical"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="6dp"
                 android:orientation="vertical"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/ll_status"
@@ -82,12 +77,10 @@
                     android:id="@+id/tv_history_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginTop="4dp"
                     android:ellipsize="end"
                     android:maxLines="1"
                     android:text="@{data.title}"
-                    android:textColor="@color/primary_color"
+                    android:textColor="@color/main_tab_text_active_color"
                     android:textSize="@dimen/size_text_card_title"
                     android:textStyle="bold"
                     tools:text="文色徒然" />
@@ -96,8 +89,7 @@
                     android:id="@+id/tv_part_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="3dp"
                     android:ellipsize="end"
                     android:maxLines="1"
                     android:text="@{data.partTitle}"
@@ -109,13 +101,12 @@
                     android:id="@+id/tv_create_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="3dp"
                     android:ellipsize="end"
                     android:maxLines="1"
                     android:text="@{TimeUtils.INSTANCE.formatTimestamp(data.downloadTask.createTime)}"
-                    android:textColor="@color/general_text_color"
-                    android:textSize="@dimen/size_text_card_content"
+                    android:textColor="@color/general_sub_text_color"
+                    android:textSize="@dimen/size_text_card_sub"
                     tools:text="2024-05-14 16:00:00" />
             </LinearLayout>
 
@@ -123,7 +114,7 @@
                 android:id="@+id/ll_status"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="6dp"
                 android:gravity="center"
                 android:orientation="vertical"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -134,7 +125,7 @@
                     android:id="@+id/iv_status_image"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:layout_marginHorizontal="10dp"
+                    android:layout_marginHorizontal="6dp"
                     android:contentDescription="@string/iv_download_status_image_content_description"
                     android:src="@{viewModel.getStatusIcon(data)}"
                     tools:src="@drawable/ic_download_done_cloud" />
@@ -146,7 +137,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:text="@{viewModel.getStatusText(data)}"
-                    android:textColor="@color/secondary_color"
+                    android:textColor="@color/primary_color"
                     android:textSize="@dimen/size_text_card_content"
                     tools:ignore="SmallSp"
                     tools:text="100%" />
@@ -155,5 +146,5 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-    </androidx.cardview.widget.CardView>
+    </com.google.android.material.card.MaterialCardView>
 </layout>

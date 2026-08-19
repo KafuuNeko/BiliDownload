@@ -1,56 +1,56 @@
 package cc.kafuu.bilidownload.feature.viewbinding.viewmodel.fragment
 
 import android.net.Uri
-import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
-import cc.kafuu.bilidownload.common.constant.DownloadResourceType
+import cc.kafuu.bilidownload.common.download.BatchDeleteUseCase
+import cc.kafuu.bilidownload.common.download.BatchExportUseCase
 import cc.kafuu.bilidownload.common.ext.liveData
 import cc.kafuu.bilidownload.common.manager.DownloadManager
 import cc.kafuu.bilidownload.common.model.TaskStatus
 import cc.kafuu.bilidownload.common.model.action.ViewAction
 import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
 import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
-import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
 import cc.kafuu.bilidownload.feature.viewbinding.view.activity.HistoryDetailsActivity
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.common.RVViewModel
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.io.File
 
 class HistoryViewModel : RVViewModel() {
     val centerCrop = CenterCrop()
 
+    private val mBatchDeleteUseCase = BatchDeleteUseCase()
+    private val mBatchExportUseCase = BatchExportUseCase()
+    private var mDisplayedTasks: List<DownloadTaskWithVideoDetails> = emptyList()
+
     lateinit var latestDownloadTaskLiveData: LiveData<List<DownloadTaskWithVideoDetails>>
         private set
 
-    // 多选模式状态
-    private val mMultiSelectModeLiveData = MutableLiveData(false)
-    val multiSelectModeLiveData = mMultiSelectModeLiveData.liveData()
-
-    // 已选中的任务ID集合
-    private val mSelectedIdsLiveData = MutableLiveData<Set<Long>>(emptySet())
-    val selectedIdsLiveData = mSelectedIdsLiveData.liveData()
+    private val mMultiSelectUiStateLiveData = MutableLiveData(HistoryMultiSelectUiState())
+    val multiSelectUiStateLiveData = mMultiSelectUiStateLiveData.liveData()
 
     // 批量导出进度
-    private val mBatchExportProgressLiveData = MutableLiveData<BatchExportProgress?>(null)
+    private val mBatchExportProgressLiveData =
+        MutableLiveData<BatchExportUseCase.Progress?>(null)
     val batchExportProgressLiveData = mBatchExportProgressLiveData.liveData()
 
     companion object {
         class RequestExportDirAction : ViewAction()
     }
 
-    data class BatchExportProgress(
-        val current: Int,
-        val total: Int
-    )
-
     fun initData(status: List<TaskStatus>) {
+        if (::latestDownloadTaskLiveData.isInitialized) return
         latestDownloadTaskLiveData = DownloadRepository.queryDownloadTasksDetailsLiveData(status)
+    }
+
+    fun updateHistoryList(tasks: List<DownloadTaskWithVideoDetails>) {
+        mDisplayedTasks = tasks
+        updateList(tasks.toMutableList())
+        updateMultiSelectState {
+            it.updateAvailableIds(tasks.mapTo(mutableSetOf()) { task -> task.downloadTask.id })
+        }
     }
 
     fun getStatusIcon(task: DownloadTaskWithVideoDetails) = CommonLibs.getDrawable(
@@ -75,7 +75,7 @@ class HistoryViewModel : RVViewModel() {
     }
 
     fun entryHistoryDetails(task: DownloadTaskWithVideoDetails) {
-        if (mMultiSelectModeLiveData.value == true) {
+        if (currentMultiSelectState().isEnabled) {
             toggleItemSelection(task.downloadTask.id)
             return
         }
@@ -86,58 +86,37 @@ class HistoryViewModel : RVViewModel() {
     }
 
     fun onItemLongClick(task: DownloadTaskWithVideoDetails): Boolean {
-        if (mMultiSelectModeLiveData.value == true) return false
-        enterMultiSelectMode()
+        if (currentMultiSelectState().isEnabled) return false
         toggleItemSelection(task.downloadTask.id)
         return true
     }
 
-    fun enterMultiSelectMode() {
-        mMultiSelectModeLiveData.value = true
-    }
-
     fun exitMultiSelectMode() {
-        mMultiSelectModeLiveData.value = false
-        mSelectedIdsLiveData.value = emptySet()
+        updateMultiSelectState(HistoryMultiSelectUiState::clearSelection)
     }
 
     fun toggleItemSelection(taskId: Long) {
-        val current = mSelectedIdsLiveData.value ?: emptySet()
-        mSelectedIdsLiveData.value = if (current.contains(taskId)) {
-            current - taskId
-        } else {
-            current + taskId
-        }
-        if (mSelectedIdsLiveData.value.isNullOrEmpty()) {
-            exitMultiSelectMode()
-        }
+        updateMultiSelectState { it.toggleItem(taskId) }
     }
 
-    fun selectAll() {
-        val allIds = latestDownloadTaskLiveData.value?.map { it.downloadTask.id }?.toSet()
-        mSelectedIdsLiveData.value = allIds ?: emptySet()
+    fun toggleSelectAll() {
+        updateMultiSelectState(HistoryMultiSelectUiState::toggleAll)
     }
 
-    fun isItemSelected(taskId: Long): Boolean {
-        return mSelectedIdsLiveData.value?.contains(taskId) == true
-    }
-
-    fun getSelectedCount(): Int = mSelectedIdsLiveData.value?.size ?: 0
+    fun getSelectedCount(): Int = currentMultiSelectState().selectedIds.size
 
     suspend fun deleteSelectedTasks() {
-        val selectedIds = mSelectedIdsLiveData.value ?: return
-        val hasFailure = withContext(Dispatchers.IO) {
-            var failed = false
-            for (taskId in selectedIds) {
-                latestDownloadTaskLiveData.value?.find { it.downloadTask.id == taskId }
-                    ?.downloadTask?.groupId?.let { groupId ->
-                        DownloadManager.cancelDownload(groupId)
-                    }
-                if (!DownloadRepository.deleteDownloadTask(taskId)) failed = true
-            }
-            failed
+        val selectedIds = currentMultiSelectState().selectedIds
+        if (selectedIds.isEmpty()) return
+        val targets = mDisplayedTasks.mapNotNull { task ->
+            val taskId = task.downloadTask.id
+            if (taskId !in selectedIds) return@mapNotNull null
+            BatchDeleteUseCase.Target(
+                taskId = taskId,
+                groupId = task.downloadTask.groupId,
+            )
         }
-        if (hasFailure) {
+        if (mBatchDeleteUseCase.execute(targets).hasFailure) {
             popMessage(
                 ToastMessageAction(CommonLibs.getString(R.string.delete_resource_failed_message))
             )
@@ -146,117 +125,76 @@ class HistoryViewModel : RVViewModel() {
     }
 
     fun tryBatchExport() {
-        val selectedIds = mSelectedIdsLiveData.value
-        if (selectedIds.isNullOrEmpty()) return
+        if (!currentMultiSelectState().hasSelection) return
         sendViewAction(RequestExportDirAction())
     }
 
     suspend fun executeBatchExport(treeUri: Uri) {
-        val context = CommonLibs.requireContext()
-        val selectedIds = mSelectedIdsLiveData.value ?: return
-        val treeDoc = DocumentFile.fromTreeUri(context, treeUri) ?: return
-
-        val exportItems = withContext(Dispatchers.IO) {
-            buildExportItems(selectedIds)
+        val selectedIds = currentMultiSelectState().selectedIds
+        if (selectedIds.isEmpty()) return
+        val sources = mDisplayedTasks.mapNotNull { task ->
+            val taskId = task.downloadTask.id
+            if (taskId !in selectedIds) return@mapNotNull null
+            BatchExportUseCase.Source(
+                taskId = taskId,
+                displayName = "${task.title} - ${task.partTitle}",
+            )
         }
 
-        if (exportItems.isEmpty()) {
-            popMessage(
+        val result = try {
+            mBatchExportUseCase.execute(treeUri, sources) { progress ->
+                mBatchExportProgressLiveData.postValue(progress)
+            }
+        } catch (_: Exception) {
+            BatchExportUseCase.Result.InvalidDestination
+        } finally {
+            mBatchExportProgressLiveData.postValue(null)
+        }
+
+        when (result) {
+            BatchExportUseCase.Result.NoExportableResources -> popMessage(
                 ToastMessageAction(CommonLibs.getString(R.string.batch_export_no_resource_message))
             )
-            mBatchExportProgressLiveData.postValue(null)
-            return
-        }
 
-        val total = exportItems.size
-        mBatchExportProgressLiveData.postValue(BatchExportProgress(0, total))
+            BatchExportUseCase.Result.InvalidDestination -> showBatchExportFailure()
 
-        withContext(Dispatchers.IO) {
-            var successCount = 0
-            for ((index, item) in exportItems.withIndex()) {
-                mBatchExportProgressLiveData.postValue(BatchExportProgress(index + 1, total))
-                val safeName = resolveConflictName(treeDoc, item.fileName)
-                val created = treeDoc.createFile(item.mimeType, safeName)
-                if (created?.uri == null) continue
-                val success = copyFileToUri(context, created.uri, item.sourceFile)
-                if (success) successCount++
-            }
-            mBatchExportProgressLiveData.postValue(null)
-            if (successCount > 0) {
-                popMessage(
-                    ToastMessageAction(
-                        CommonLibs.getString(R.string.batch_export_success_message, successCount)
-                    )
-                )
-            } else {
-                popMessage(
-                    ToastMessageAction(
-                        CommonLibs.getString(
-                            R.string.batch_export_failed_message,
-                            CommonLibs.getString(R.string.error_unknown)
+            is BatchExportUseCase.Result.Completed -> {
+                if (result.successCount > 0) {
+                    popMessage(
+                        ToastMessageAction(
+                            CommonLibs.getString(
+                                R.string.batch_export_success_message,
+                                result.successCount,
+                            )
                         )
                     )
+                } else {
+                    showBatchExportFailure()
+                }
+                exitMultiSelectMode()
+            }
+        }
+    }
+
+    private fun showBatchExportFailure() {
+        popMessage(
+            ToastMessageAction(
+                CommonLibs.getString(
+                    R.string.batch_export_failed_message,
+                    CommonLibs.getString(R.string.error_unknown),
                 )
-            }
-        }
-
-        exitMultiSelectMode()
+            )
+        )
     }
 
-    private data class ExportItem(
-        val fileName: String,
-        val mimeType: String,
-        val sourceFile: File
-    )
+    private fun currentMultiSelectState(): HistoryMultiSelectUiState =
+        mMultiSelectUiStateLiveData.value ?: HistoryMultiSelectUiState()
 
-    private suspend fun buildExportItems(selectedIds: Set<Long>): List<ExportItem> {
-        val items = mutableListOf<ExportItem>()
-        for (taskId in selectedIds) {
-            val resources = DownloadRepository.queryResourcesForExport(taskId)
-            val resource = pickBestResource(resources) ?: continue
-            val detail = latestDownloadTaskLiveData.value?.find { it.downloadTask.id == taskId }
-            val baseName = detail?.let { "${it.title} - ${it.partTitle}" } ?: "export_$taskId"
-            val sourceFile = File(resource.file)
-            if (!sourceFile.exists()) continue
-            val ext = sourceFile.extension.let { if (it.isNotEmpty()) ".$it" else "" }
-            items.add(ExportItem("$baseName$ext", resource.mimeType, sourceFile))
-        }
-        return items
-    }
-
-    private fun pickBestResource(resources: List<DownloadResourceEntity>): DownloadResourceEntity? {
-        return resources.find { it.type == DownloadResourceType.MIXED }
-            ?: resources.find { it.type == DownloadResourceType.VIDEO }
-            ?: resources.firstOrNull()
-    }
-
-    private fun resolveConflictName(parentDoc: DocumentFile, desiredName: String): String {
-        val dotIndex = desiredName.lastIndexOf('.')
-        val nameWithoutExt = if (dotIndex > 0) desiredName.substring(0, dotIndex) else desiredName
-        val ext = if (dotIndex > 0) desiredName.substring(dotIndex) else ""
-
-        if (parentDoc.findFile(desiredName) == null) return nameWithoutExt
-
-        var counter = 1
-        while (parentDoc.findFile("$nameWithoutExt($counter)$ext") != null) {
-            counter++
-        }
-        return "$nameWithoutExt($counter)"
-    }
-
-    private fun copyFileToUri(
-        context: android.content.Context,
-        uri: Uri,
-        sourceFile: File
-    ): Boolean = try {
-        context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-            sourceFile.inputStream().use { inputStream ->
-                inputStream.copyTo(outputStream, bufferSize = 8192)
-            }
-        }
-        true
-    } catch (e: Exception) {
-        e.printStackTrace()
-        false
+    private fun updateMultiSelectState(
+        transform: (HistoryMultiSelectUiState) -> HistoryMultiSelectUiState
+    ) {
+        val current = currentMultiSelectState()
+        val updated = transform(current)
+        if (updated != current) mMultiSelectUiStateLiveData.value = updated
     }
 }

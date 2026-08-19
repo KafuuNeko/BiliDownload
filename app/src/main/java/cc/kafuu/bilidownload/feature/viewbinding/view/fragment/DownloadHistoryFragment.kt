@@ -3,13 +3,11 @@ package cc.kafuu.bilidownload.feature.viewbinding.view.fragment
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
-import android.view.ActionMode
-import android.view.Menu
-import android.view.MenuItem
+import android.view.HapticFeedbackConstants
+import android.view.View
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.adapter.DownloadHistoryRVAdapter
@@ -20,8 +18,10 @@ import cc.kafuu.bilidownload.common.model.action.ViewAction
 import cc.kafuu.bilidownload.common.model.event.DownloadStatusChangeEvent
 import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
 import cc.kafuu.bilidownload.common.utils.DebounceQueue
+import cc.kafuu.bilidownload.databinding.IncludeMultiSelectActionsBinding
 import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.ConfirmDialog
 import cc.kafuu.bilidownload.feature.viewbinding.view.fragment.common.RVFragment
+import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.fragment.HistoryMultiSelectUiState
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.fragment.HistoryViewModel
 import kotlinx.coroutines.launch
 import org.greenrobot.eventbus.EventBus
@@ -31,6 +31,8 @@ import org.greenrobot.eventbus.ThreadMode
 class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::class.java) {
     companion object {
         private const val KEY_STATES = "states"
+        private const val MULTI_SELECT_SHOW_DURATION_MS = 220L
+        private const val MULTI_SELECT_HIDE_DURATION_MS = 180L
 
         class Builder(private val states: List<TaskStatus>) :
             CoreFragmentBuilder<DownloadHistoryFragment>() {
@@ -49,22 +51,19 @@ class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::c
         scope = lifecycleScope,
         delayMillis = 2000
     ) { tasks ->
-        lifecycleScope.launch {
-            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                mViewModel.updateList(tasks.toMutableList())
-            }
+        mViewModel.updateHistoryList(tasks)
+    }
+
+    private var mAdapter: DownloadHistoryRVAdapter? = null
+    private var mMultiSelectActionsBinding: IncludeMultiSelectActionsBinding? = null
+    private var mShouldShowMultiSelectActions = false
+    private var mExportProgressDialog: AlertDialog? = null
+
+    private val mBackPressedCallback = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() {
+            mViewModel.exitMultiSelectMode()
         }
     }
-
-    private val mAdapter: DownloadHistoryRVAdapter by lazy {
-        DownloadHistoryRVAdapter(
-            mViewModel, requireContext()
-        )
-    }
-
-    private var mActionMode: ActionMode? = null
-
-    private var mExportProgressDialog: AlertDialog? = null
 
     private val mExportDirLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocumentTree()
@@ -85,6 +84,18 @@ class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::c
         EventBus.getDefault().unregister(this)
     }
 
+    override fun onDestroyView() {
+        mListUpdateTask.cancel()
+        mShouldShowMultiSelectActions = false
+        mBackPressedCallback.isEnabled = false
+        mMultiSelectActionsBinding?.root?.animate()?.cancel()
+        mMultiSelectActionsBinding = null
+        mViewDataBinding.rvContent.adapter = null
+        mAdapter = null
+        dismissExportProgressDialog()
+        super.onDestroyView()
+    }
+
     override fun initViews() {
         super.initViews()
 
@@ -94,12 +105,21 @@ class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::c
 
         mViewModel.init(states)
         initSmartRefreshLayout()
+        initMultiSelectViews()
+        initBackPressHandler()
         observeMultiSelectState()
+    }
+
+    private fun initBackPressHandler() {
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            mBackPressedCallback
+        )
     }
 
     private fun HistoryViewModel.init(states: Array<TaskStatus>) {
         initData(states.toList())
-        latestDownloadTaskLiveData.observe(this@DownloadHistoryFragment) {
+        latestDownloadTaskLiveData.observe(viewLifecycleOwner) {
             mListUpdateTask.schedule(it)
         }
     }
@@ -109,27 +129,56 @@ class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::c
         setEnableLoadMore(false)
     }
 
-    private fun observeMultiSelectState() {
-        mViewModel.multiSelectModeLiveData.observe(viewLifecycleOwner) { isMultiSelect ->
-            if (isMultiSelect) {
-                startActionMode()
-            } else {
-                mActionMode?.finish()
-                mActionMode = null
-            }
-            mAdapter.updateMultiSelectState(
-                isMultiSelect,
-                mViewModel.selectedIdsLiveData.value ?: emptySet()
-            )
+    private fun initMultiSelectViews() {
+        val stubProxy = mViewDataBinding.multiSelectActionsStub
+        stubProxy.viewStub?.inflate()
+        val binding = (stubProxy.binding as IncludeMultiSelectActionsBinding).also {
+            mMultiSelectActionsBinding = it
+        }
+        binding.layoutHistoryActions.visibility = View.VISIBLE
+
+        binding.btnHistorySelectAll.setOnClickListener {
+            view?.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            mViewModel.toggleSelectAll()
         }
 
-        mViewModel.selectedIdsLiveData.observe(viewLifecycleOwner) { selectedIds ->
-            mActionMode?.title = CommonLibs.getString(
-                R.string.multi_select_count, selectedIds.size
+        binding.btnHistoryExport.setOnClickListener {
+            view?.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            mViewModel.tryBatchExport()
+        }
+
+        binding.btnHistoryDelete.setOnClickListener {
+            view?.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            showBatchDeleteConfirmDialog()
+        }
+
+        binding.btnHistoryClose.setOnClickListener {
+            view?.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            mViewModel.exitMultiSelectMode()
+        }
+    }
+
+    private fun observeMultiSelectState() {
+        mViewModel.multiSelectUiStateLiveData.observe(viewLifecycleOwner) { state ->
+            val binding = mMultiSelectActionsBinding ?: return@observe
+            mBackPressedCallback.isEnabled = state.isEnabled
+            binding.tvHistorySelectedCount.text = CommonLibs.getString(
+                R.string.multi_select_count,
+                state.selectedIds.size,
             )
-            mAdapter.updateMultiSelectState(
-                mViewModel.multiSelectModeLiveData.value == true,
-                selectedIds
+            binding.btnHistorySelectAll.text = if (state.isAllSelected) {
+                CommonLibs.getString(R.string.text_deselect_all)
+            } else {
+                CommonLibs.getString(R.string.text_select_all)
+            }
+            binding.btnHistoryDelete.isEnabled = state.hasSelection
+            binding.btnHistoryExport.isEnabled = state.hasSelection
+            binding.btnHistoryDelete.alpha = if (state.hasSelection) 1f else 0.5f
+            binding.btnHistoryExport.alpha = if (state.hasSelection) 1f else 0.5f
+            renderMultiSelectActions(state)
+            mAdapter?.updateMultiSelectState(
+                state.isEnabled,
+                state.selectedIds,
             )
         }
 
@@ -142,6 +191,42 @@ class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::c
         }
     }
 
+    private fun renderMultiSelectActions(state: HistoryMultiSelectUiState) {
+        val actionView = mMultiSelectActionsBinding?.root ?: return
+        val show = state.isEnabled
+        mShouldShowMultiSelectActions = show
+        actionView.animate().cancel()
+        if (show) {
+            if (actionView.visibility != View.VISIBLE) {
+                actionView.alpha = 0f
+                actionView.translationY = resources.getDimension(
+                    R.dimen.multi_select_action_animation_offset
+                )
+                actionView.visibility = View.VISIBLE
+            }
+            actionView.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(MULTI_SELECT_SHOW_DURATION_MS)
+                .start()
+            return
+        }
+
+        if (actionView.visibility != View.VISIBLE) return
+        actionView.animate()
+            .alpha(0f)
+            .translationY(resources.getDimension(R.dimen.multi_select_action_animation_offset))
+            .setDuration(MULTI_SELECT_HIDE_DURATION_MS)
+            .withEndAction {
+                if (!mShouldShowMultiSelectActions &&
+                    mMultiSelectActionsBinding?.root === actionView
+                ) {
+                    actionView.visibility = View.GONE
+                }
+            }
+            .start()
+    }
+
     override fun onViewAction(action: ViewAction) {
         when (action) {
             is HistoryViewModel.Companion.RequestExportDirAction -> {
@@ -151,7 +236,10 @@ class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::c
         }
     }
 
-    override fun getRVAdapter() = mAdapter
+    override fun getRVAdapter() = mAdapter ?: DownloadHistoryRVAdapter(
+        mViewModel,
+        requireContext(),
+    ).also { mAdapter = it }
 
     @Subscribe(threadMode = ThreadMode.POSTING)
     fun handleTaskRunning(event: DownloadStatusChangeEvent) {
@@ -159,42 +247,7 @@ class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::c
             it.downloadTask.groupId == event.group.id
         }
         if (changeIndex == null || changeIndex == -1) return
-        lifecycleScope.launch { mAdapter.notifyItemChanged(changeIndex) }
-    }
-
-    private fun startActionMode() {
-        if (mActionMode != null) return
-        mActionMode = requireActivity().startActionMode(object : ActionMode.Callback {
-            override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
-                mode.menuInflater.inflate(R.menu.menu_multi_select, menu)
-                return true
-            }
-
-            override fun onPrepareActionMode(mode: ActionMode, menu: Menu) = false
-
-            override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
-                return when (item.itemId) {
-                    R.id.action_select_all -> {
-                        mViewModel.selectAll()
-                        true
-                    }
-                    R.id.action_export -> {
-                        mViewModel.tryBatchExport()
-                        true
-                    }
-                    R.id.action_delete -> {
-                        showBatchDeleteConfirmDialog()
-                        true
-                    }
-                    else -> false
-                }
-            }
-
-            override fun onDestroyActionMode(mode: ActionMode) {
-                mActionMode = null
-                mViewModel.exitMultiSelectMode()
-            }
-        })
+        lifecycleScope.launch { mAdapter?.notifyItemChanged(changeIndex) }
     }
 
     private fun showBatchDeleteConfirmDialog() {

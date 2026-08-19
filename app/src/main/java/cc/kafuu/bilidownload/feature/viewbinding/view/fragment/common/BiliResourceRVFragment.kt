@@ -2,8 +2,6 @@ package cc.kafuu.bilidownload.feature.viewbinding.view.fragment.common
 
 import android.annotation.SuppressLint
 import android.view.View
-import android.view.ViewStub
-import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
@@ -12,6 +10,7 @@ import cc.kafuu.bilidownload.common.core.viewbinding.CoreRVAdapter
 import cc.kafuu.bilidownload.common.download.BatchDownloadResolver
 import cc.kafuu.bilidownload.common.download.BatchDownloadUseCase
 import cc.kafuu.bilidownload.common.model.ResultWrapper
+import cc.kafuu.bilidownload.databinding.IncludeMultiSelectActionsBinding
 import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.BiliPartDialog
 import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.ConfirmDialog
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.common.BiliResourceRVViewModel
@@ -41,11 +40,13 @@ open class BiliResourceRVFragment<VM : BiliResourceRVViewModel>(
 
     @SuppressLint("NotifyDataSetChanged")
     private fun initMultipleSelectViews() {
-        val actionView = mViewDataBinding.root
-            .findViewById<ViewStub>(R.id.multi_select_actions_stub)
-            .inflate()
-        val cancelView = actionView.findViewById<TextView>(R.id.tv_cancel_multi_select)
-        val downloadView = actionView.findViewById<TextView>(R.id.tv_download_multi_select)
+        val stubProxy = mViewDataBinding.multiSelectActionsStub
+        stubProxy.viewStub?.inflate()
+        val actionBinding = stubProxy.binding as IncludeMultiSelectActionsBinding
+        actionBinding.layoutResourceActions.visibility = View.VISIBLE
+        val actionView = actionBinding.root
+        val cancelView = actionBinding.tvCancelMultiSelect
+        val downloadView = actionBinding.tvDownloadMultiSelect
 
         cancelView.setOnClickListener {
             mViewModel.cancelMultipleSelect()

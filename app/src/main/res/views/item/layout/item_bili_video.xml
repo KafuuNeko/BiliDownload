@@ -53,15 +53,15 @@
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/iv_multi_select"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="8dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_margin="10dp"
                 android:contentDescription="@string/text_select"
-                android:src="@{viewModel.multipleSelectItemsLiveData.contains(data) ? @drawable/ic_checked : @drawable/ic_uncheck}"
+                android:src="@{viewModel.multipleSelectItemsLiveData.contains(data) ? @drawable/ic_checkbox_round_checked : @drawable/ic_checkbox_round_unchecked}"
                 bindVisible="@{viewModel.multipleSelectModeLiveData}"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                tools:src="@drawable/ic_checked"
+                tools:src="@drawable/ic_checkbox_round_checked"
                 tools:visibility="visible" />
 
             <LinearLayout

@@ -14,10 +14,17 @@
 
     <dimen name="size_text_card_title">14sp</dimen>
     <dimen name="size_text_card_content">12sp</dimen>
+    <dimen name="size_text_card_sub">11sp</dimen>
 
-    <dimen name="card_item_corner_radius">10dp</dimen>
-    <dimen name="card_item_elevation">3dp</dimen>
+    <dimen name="card_item_corner_radius">12dp</dimen>
+    <dimen name="card_item_elevation">2dp</dimen>
+    <dimen name="card_cover_width">104dp</dimen>
+    <dimen name="card_cover_height">58.5dp</dimen>
+    <dimen name="card_cover_corner_radius">8dp</dimen>
+
     <dimen name="button_corner_radius">40dp</dimen>
+    <dimen name="floating_bar_corner_radius">28dp</dimen>
+    <dimen name="multi_select_action_animation_offset">40dp</dimen>
     
     <dimen name="dialog_corner_radius">16dp</dimen>
 </resources>

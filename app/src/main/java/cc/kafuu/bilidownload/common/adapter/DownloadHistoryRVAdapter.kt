@@ -2,12 +2,14 @@ package cc.kafuu.bilidownload.common.adapter
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
+import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.adapter.holder.ItemDownloadRecordHolder
 import cc.kafuu.bilidownload.common.core.viewbinding.CoreRVAdapter
 import cc.kafuu.bilidownload.common.core.viewbinding.CoreRVHolder
 import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
+import cc.kafuu.bilidownload.common.utils.DensityUtils
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.fragment.HistoryViewModel
 
 class DownloadHistoryRVAdapter(viewModel: HistoryViewModel, context: Context) :
@@ -24,14 +26,8 @@ class DownloadHistoryRVAdapter(viewModel: HistoryViewModel, context: Context) :
         super.onBindViewHolder(holder, position)
         val data = getItemData(position) as? DownloadTaskWithVideoDetails ?: return
         val recordHolder = holder as? ItemDownloadRecordHolder ?: return
-        val checkBox = recordHolder.binding.cbSelect
-        if (mIsMultiSelectMode) {
-            checkBox.visibility = View.VISIBLE
-            checkBox.isChecked = mSelectedIds.contains(data.downloadTask.id)
-        } else {
-            checkBox.visibility = View.GONE
-            checkBox.isChecked = false
-        }
+        val isSelected = mSelectedIds.contains(data.downloadTask.id)
+        bindSelectionState(recordHolder, isSelected)
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -48,16 +44,36 @@ class DownloadHistoryRVAdapter(viewModel: HistoryViewModel, context: Context) :
 
     companion object {
         private const val PAYLOAD_SELECTION = "selection"
+        private const val SELECTED_STROKE_WIDTH_DP = 1.5f
+        private const val DEFAULT_STROKE_WIDTH_DP = 1f
     }
 
     override fun onBindViewHolder(holder: CoreRVHolder<*>, position: Int, payloads: MutableList<Any>) {
         if (payloads.contains(PAYLOAD_SELECTION)) {
             val data = getItemData(position) as? DownloadTaskWithVideoDetails ?: return
             val recordHolder = holder as? ItemDownloadRecordHolder ?: return
-            val checkBox = recordHolder.binding.cbSelect
-            checkBox.isChecked = mSelectedIds.contains(data.downloadTask.id)
+            val isSelected = mSelectedIds.contains(data.downloadTask.id)
+            bindSelectionState(recordHolder, isSelected)
         } else {
             super.onBindViewHolder(holder, position, payloads)
+        }
+    }
+
+    private fun bindSelectionState(recordHolder: ItemDownloadRecordHolder, isSelected: Boolean) {
+        val cardRoot = recordHolder.binding.cardRoot
+
+        if (mIsMultiSelectMode && isSelected) {
+            cardRoot.setCardBackgroundColor(
+                ContextCompat.getColor(mContext, R.color.card_selected_background)
+            )
+            cardRoot.strokeColor = ContextCompat.getColor(mContext, R.color.card_selected_stroke)
+            cardRoot.strokeWidth = DensityUtils.dpToPx(mContext, SELECTED_STROKE_WIDTH_DP)
+        } else {
+            cardRoot.setCardBackgroundColor(
+                ContextCompat.getColor(mContext, R.color.general_item_background_color)
+            )
+            cardRoot.strokeColor = ContextCompat.getColor(mContext, R.color.card_unselected_stroke)
+            cardRoot.strokeWidth = DensityUtils.dpToPx(mContext, DEFAULT_STROKE_WIDTH_DP)
         }
     }
 }

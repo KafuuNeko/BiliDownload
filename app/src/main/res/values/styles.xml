@@ -11,4 +11,8 @@
         <item name="android:textSize">@dimen/size_text_main_tab</item>
         <item name="android:textColor">@color/selector_color_main_tab</item>
     </style>
+
+    <style name="RoundedImageView8dp">
+        <item name="cornerSize">@dimen/card_cover_corner_radius</item>
+    </style>
 </resources>
