@@ -1,7 +1,6 @@
 package cc.kafuu.bilidownload.feature.compose.viewmodel.musicplayer
 
 import android.graphics.Bitmap
-import androidx.media3.exoplayer.ExoPlayer
 import cc.kafuu.bilidownload.common.audio.spectrum.MusicSpectrumBitmapTile
 import cc.kafuu.bilidownload.common.audio.spectrum.MusicSpectrumData
 import cc.kafuu.bilidownload.common.audio.spectrum.RealtimeSpectrumFrame
@@ -14,7 +13,6 @@ sealed class MusicPlayerUiState {
         val filePath: String,
         val contentUri: String?,
         val mimeType: String,
-        val player: ExoPlayer,
         val isPlaying: Boolean = false,
         val currentPosition: Long = 0L,
         val duration: Long = 0L,

@@ -12,7 +12,6 @@ sealed class MusicPlayerUiIntent {
     ) : MusicPlayerUiIntent()
 
     data object TogglePlayPause : MusicPlayerUiIntent()
-    data object Pause : MusicPlayerUiIntent()
     data class SetPlaybackSpeed(val speed: Float) : MusicPlayerUiIntent()
     data class SetSpectrumMode(val mode: MusicSpectrumMode) : MusicPlayerUiIntent()
     data class SetSpectrogramWindow(val startMs: Long, val followPlayback: Boolean = false) : MusicPlayerUiIntent()

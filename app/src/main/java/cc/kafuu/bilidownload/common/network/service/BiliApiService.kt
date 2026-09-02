@@ -14,6 +14,7 @@ import cc.kafuu.bilidownload.common.network.model.BiliSearchMediaResultData
 import cc.kafuu.bilidownload.common.network.model.BiliSearchVideoResultData
 import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
+import cc.kafuu.bilidownload.common.network.model.BiliWatchLaterData
 import cc.kafuu.bilidownload.common.network.model.BiliWbiData
 import cc.kafuu.bilidownload.common.network.model.MyBiliAccountData
 import retrofit2.Call
@@ -80,6 +81,9 @@ interface BiliApiService {
         @Query("type") type: String = "all",
         @Query("ps") ps: Int
     ): Call<BiliRespond<BiliHistoryData>>
+
+    @GET("x/v2/history/toview")
+    fun requestWatchLater(): Call<BiliRespond<BiliWatchLaterData>>
 
     @GET("x/space/like/video")
     fun requestUserRecentLikes(

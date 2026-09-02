@@ -7,6 +7,7 @@ import cc.kafuu.bilidownload.common.network.model.BiliLikeVideoData
 import cc.kafuu.bilidownload.common.network.model.BiliSearchManuscriptVideo
 import cc.kafuu.bilidownload.common.network.model.BiliSearchVideoResultData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
+import cc.kafuu.bilidownload.common.network.model.BiliWatchLaterItem
 import cc.kafuu.bilidownload.common.utils.BvConvertUtils
 import cc.kafuu.bilidownload.common.utils.TimeUtils
 import java.text.SimpleDateFormat
@@ -98,5 +99,21 @@ class BiliVideoModel(
             author = data.owner.name,
             duration = TimeUtils.formatDuration(data.duration.toDouble())
         )
+
+        fun create(data: BiliWatchLaterItem): BiliVideoModel? {
+            val bvid = data.bvid?.takeIf { it.isNotBlank() }
+                ?: data.aid.takeIf { it > 0L }?.let { BvConvertUtils.av2bv(it.toString()) }
+                ?: return null
+            return BiliVideoModel(
+                title = data.title.orEmpty(),
+                bvid = bvid,
+                cover = data.cover.orEmpty(),
+                description = data.description.orEmpty(),
+                pubDate = data.addAt.takeIf { it > 0L } ?: data.pubDate,
+                author = data.owner?.name.orEmpty(),
+                duration = TimeUtils.formatDuration(data.duration.toDouble()),
+                preferredCid = data.cid?.takeIf { it > 0L }
+            )
+        }
     }
 }

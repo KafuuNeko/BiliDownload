@@ -10,6 +10,7 @@ import cc.kafuu.bilidownload.common.network.model.BiliHistoryData
 import cc.kafuu.bilidownload.common.network.model.BiliLikeListData
 import cc.kafuu.bilidownload.common.network.model.BiliQrCodeData
 import cc.kafuu.bilidownload.common.network.model.BiliQrCodePollData
+import cc.kafuu.bilidownload.common.network.model.BiliWatchLaterData
 import cc.kafuu.bilidownload.common.network.model.MyBiliAccountData
 import cc.kafuu.bilidownload.common.network.service.BiliApiService
 import cc.kafuu.bilidownload.common.network.service.BiliPassportService
@@ -113,6 +114,13 @@ class BiliAccountRepository(
             )
             .enqueue(callback) { _, data -> data }
     }
+
+    /**
+     * 请求当前登录用户的稍后再看列表。
+     */
+    fun requestWatchLater(
+        callback: IServerCallback<BiliWatchLaterData>
+    ) = biliApiService.requestWatchLater().enqueue(callback) { _, data -> data }
 
     /**
      * 请求用户最近点赞的视频

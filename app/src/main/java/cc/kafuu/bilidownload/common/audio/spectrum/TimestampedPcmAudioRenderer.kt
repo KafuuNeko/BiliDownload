@@ -86,10 +86,14 @@ class TimestampedPcmAudioRenderer(
     }
 
     @Throws(ExoPlaybackException::class)
-    override fun onPositionReset(positionUs: Long, joining: Boolean) {
+    override fun onPositionReset(
+        positionUs: Long,
+        joining: Boolean,
+        mayRenderStartOfStream: Boolean
+    ) {
         analyzer.clear()
         resetCaptureGuard()
-        super.onPositionReset(positionUs, joining)
+        super.onPositionReset(positionUs, joining, mayRenderStartOfStream)
     }
 
     @Throws(ExoPlaybackException::class)

@@ -1,32 +1,30 @@
 package cc.kafuu.bilidownload.feature.compose.viewmodel.musicplayer
 
+import android.content.ComponentName
 import android.content.Context
-import android.net.Uri
-import androidx.annotation.OptIn
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewModelScope
-import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
-import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.extractor.DefaultExtractorsFactory
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
 import cc.kafuu.bilidownload.R
-import cc.kafuu.bilidownload.common.audio.MediaPlayerFactory
+import cc.kafuu.bilidownload.common.audio.MusicPlaybackRequest
+import cc.kafuu.bilidownload.common.audio.MusicPlaybackRuntime
 import cc.kafuu.bilidownload.common.audio.spectrum.AudioSpectrumAnalyzer
 import cc.kafuu.bilidownload.common.audio.spectrum.MusicSpectrumBitmapRenderer
 import cc.kafuu.bilidownload.common.audio.spectrum.MusicSpectrumBitmapTile
-import cc.kafuu.bilidownload.common.audio.spectrum.RealtimeAudioRenderersFactory
-import cc.kafuu.bilidownload.common.audio.spectrum.RealtimeSpectrumAnalyzer
 import cc.kafuu.bilidownload.common.core.compose.CoreCompViewModelWithEvent
 import cc.kafuu.bilidownload.common.core.compose.UiIntentObserver
+import cc.kafuu.bilidownload.service.MusicPlaybackService
+import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 import kotlin.time.Duration.Companion.milliseconds
 
 class MusicPlayerViewModel :
@@ -34,7 +32,9 @@ class MusicPlayerViewModel :
         MusicPlayerUiState.None
     ) {
 
-    private var mPlayer: ExoPlayer? = null
+    private var mPlayer: MediaController? = null
+    private var mPlayerListener: Player.Listener? = null
+    private var mControllerFuture: ListenableFuture<MediaController>? = null
     private var mAppContext: Context? = null
     private var mProgressJob: Job? = null
     private var mSpectrumJob: Job? = null
@@ -42,7 +42,7 @@ class MusicPlayerViewModel :
     private var mRealtimeSpectrumJob: Job? = null
     private var mSelectedPlaybackSpeed = 1.0f
     private val mSpectrumAnalyzer = AudioSpectrumAnalyzer()
-    private val mRealtimeSpectrumAnalyzer = RealtimeSpectrumAnalyzer()
+    private val mRealtimeSpectrumAnalyzer = MusicPlaybackRuntime.realtimeSpectrumAnalyzer
     private val mSpectrumBitmapRenderer = MusicSpectrumBitmapRenderer()
     private val mSpectrogramTileCache =
         object : LinkedHashMap<Long, MusicSpectrumBitmapTile>(MAX_TILE_CACHE_SIZE, 0.75f, true) {
@@ -92,6 +92,15 @@ class MusicPlayerViewModel :
             }
         }
 
+        override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
+            val speed = playbackParameters.speed
+            mSelectedPlaybackSpeed = speed
+            getOrNull<MusicPlayerUiState.Playing>()?.copy(
+                playbackSpeed = speed,
+                selectedPlaybackSpeed = speed
+            )?.setup()
+        }
+
         override fun onPlayerError(error: PlaybackException) {
             MusicPlayerUiState.Error(
                 error.localizedMessage
@@ -101,47 +110,85 @@ class MusicPlayerViewModel :
         }
     }
 
-    @OptIn(UnstableApi::class)
     @UiIntentObserver(MusicPlayerUiIntent.Init::class)
     fun onInit(intent: MusicPlayerUiIntent.Init) {
         if (!isStateOf<MusicPlayerUiState.None>()) return
         val appContext = intent.context.applicationContext
         mAppContext = appContext
-        mRealtimeSpectrumAnalyzer.clear()
-
-        val extractorsFactory = DefaultExtractorsFactory()
-            .setConstantBitrateSeekingEnabled(true)
-        val mediaSourceFactory = DefaultMediaSourceFactory(appContext, extractorsFactory)
-
-        val player = MediaPlayerFactory.configure(
-            ExoPlayer.Builder(appContext)
-            .setMediaSourceFactory(mediaSourceFactory)
-            .setRenderersFactory(
-                RealtimeAudioRenderersFactory(
-                    context = appContext,
-                    analyzer = mRealtimeSpectrumAnalyzer
-                )
-            )
+        val sessionToken = SessionToken(
+            appContext,
+            ComponentName(appContext, MusicPlaybackService::class.java)
         )
-            .build()
-            .also {
-                mPlayer = it
-                it.addListener(createPlayerListener())
-            }
+        val controllerFuture = MediaController.Builder(appContext, sessionToken).buildAsync()
+        mControllerFuture = controllerFuture
+        controllerFuture.addListener(
+            { onControllerConnected(controllerFuture, intent) },
+            ContextCompat.getMainExecutor(appContext)
+        )
+    }
 
+    private fun onControllerConnected(
+        controllerFuture: ListenableFuture<MediaController>,
+        intent: MusicPlayerUiIntent.Init
+    ) {
+        if (mControllerFuture !== controllerFuture) return
+        val controller = try {
+            controllerFuture.get()
+        } catch (exception: Exception) {
+            MusicPlayerUiState.Error(
+                exception.cause?.localizedMessage
+                    ?: exception.localizedMessage
+                    ?: mAppContext?.getString(R.string.error_unknown).orEmpty()
+            ).setup()
+            return
+        }
+
+        mPlayer = controller
+        mSelectedPlaybackSpeed = controller.playbackParameters.speed
+        val listener = createPlayerListener()
+        mPlayerListener = listener
+        controller.addListener(listener)
         MusicPlayerUiState.Playing(
             title = intent.title,
             filePath = intent.filePath,
             contentUri = intent.contentUri,
             mimeType = intent.mimeType,
-            player = player
+            isPlaying = controller.isPlaying,
+            currentPosition = controller.currentPosition.coerceAtLeast(0L),
+            duration = controller.duration.coerceAtLeast(0L),
+            playbackSpeed = controller.playbackParameters.speed,
+            selectedPlaybackSpeed = controller.playbackParameters.speed
         ).setup()
 
-        val uri = intent.contentUri?.let(Uri::parse) ?: Uri.fromFile(File(intent.filePath))
-        player.setMediaItem(MediaItem.fromUri(uri))
-        player.prepare()
-        player.playWhenReady = true
+        val request = MusicPlaybackRequest(
+            filePath = intent.filePath,
+            title = intent.title,
+            mimeType = intent.mimeType,
+            contentUri = intent.contentUri
+        )
+        val mediaItem = request.toMediaItem()
+        when {
+            controller.currentMediaItem?.mediaId != mediaItem.mediaId -> {
+                mSelectedPlaybackSpeed = 1.0f
+                mRealtimeSpectrumAnalyzer.clear()
+                controller.setMediaItem(mediaItem)
+                controller.setPlaybackSpeed(mSelectedPlaybackSpeed)
+                controller.prepare()
+                controller.play()
+            }
 
+            controller.playbackState == Player.STATE_ENDED -> {
+                controller.seekTo(0L)
+                controller.play()
+            }
+
+            controller.playbackState == Player.STATE_IDLE -> controller.prepare()
+        }
+
+        if (controller.isPlaying) {
+            startProgressUpdate()
+            startRealtimeSpectrumUpdate()
+        }
         startSpectrumAnalysis(intent.context.applicationContext, intent.filePath)
     }
 
@@ -154,11 +201,6 @@ class MusicPlayerViewModel :
             if (player.playbackState == Player.STATE_ENDED) player.seekTo(0)
             player.play()
         }
-    }
-
-    @UiIntentObserver(MusicPlayerUiIntent.Pause::class)
-    fun onPause() {
-        mPlayer?.pause()
     }
 
     @UiIntentObserver(MusicPlayerUiIntent.SetPlaybackSpeed::class)
@@ -474,8 +516,11 @@ class MusicPlayerViewModel :
         mSpectrogramTileJob = null
         stopRealtimeSpectrumUpdate()
         mSpectrogramTileCache.clear()
-        mPlayer?.release()
+        mPlayerListener?.let { listener -> mPlayer?.removeListener(listener) }
+        mPlayerListener = null
         mPlayer = null
+        mControllerFuture?.let(MediaController::releaseFuture)
+        mControllerFuture = null
         mAppContext = null
     }
 
