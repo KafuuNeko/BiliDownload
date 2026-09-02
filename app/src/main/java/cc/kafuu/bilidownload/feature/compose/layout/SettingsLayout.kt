@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
@@ -96,6 +97,10 @@ private fun SettingsContent(
         ) {
             Spacer(modifier = Modifier.height(12.dp))
 
+            PlaybackSettingsCard(state, onIntent)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // 下载路径设置卡片
             DownloadPathCard(state, onIntent)
 
@@ -119,6 +124,36 @@ private fun SettingsContent(
 
             Spacer(modifier = Modifier.height(16.dp))
         }
+    }
+}
+
+@Composable
+private fun PlaybackSettingsCard(
+    state: SettingsUiState.Normal,
+    onIntent: (SettingsUiIntent) -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        SettingsSwitchOption(
+            title = stringResource(R.string.settings_picture_in_picture_playback),
+            description = stringResource(
+                if (state.isPictureInPictureSupported) {
+                    R.string.settings_picture_in_picture_playback_desc
+                } else {
+                    R.string.settings_picture_in_picture_playback_unsupported_desc
+                }
+            ),
+            checked = state.pictureInPicturePlaybackEnabled,
+            enabled = state.isPictureInPictureSupported,
+            onCheckedChange = {
+                onIntent(SettingsUiIntent.SetPictureInPicturePlaybackEnabled(it))
+            }
+        )
     }
 }
 
@@ -257,12 +292,14 @@ private fun SettingsSwitchOption(
     title: String,
     description: String,
     checked: Boolean,
+    enabled: Boolean = true,
     onCheckedChange: (Boolean) -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) }
+            .clickable(enabled = enabled) { onCheckedChange(!checked) }
+            .alpha(if (enabled) 1f else 0.5f)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -284,6 +321,7 @@ private fun SettingsSwitchOption(
 
         Switch(
             checked = checked,
+            enabled = enabled,
             onCheckedChange = onCheckedChange
         )
     }

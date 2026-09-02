@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload.feature.compose.viewmodel.settings
 
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
 import androidx.lifecycle.viewModelScope
@@ -51,6 +52,15 @@ class SettingsViewModel :
         intent: SettingsUiIntent.SetAutoRemuxAudioAfterDownload
     ) {
         AppModel.autoRemuxAudioAfterDownload = intent.enabled
+        refreshState()
+    }
+
+    @UiIntentObserver(SettingsUiIntent.SetPictureInPicturePlaybackEnabled::class)
+    fun onSetPictureInPicturePlaybackEnabled(
+        intent: SettingsUiIntent.SetPictureInPicturePlaybackEnabled
+    ) {
+        if (!isPictureInPictureSupported()) return
+        AppModel.pictureInPicturePlaybackEnabled = intent.enabled
         refreshState()
     }
 
@@ -162,6 +172,7 @@ class SettingsViewModel :
     private fun refreshState() {
         val mode = AppModel.downloadPathMode
         val path = getDisplayPath(mode)
+        val isPictureInPictureSupported = isPictureInPictureSupported()
         SettingsUiState.Normal(
             downloadPathMode = mode,
             currentPathDisplay = path,
@@ -170,6 +181,9 @@ class SettingsViewModel :
             batchQualityMismatchMode = AppModel.batchQualityMismatchMode,
             deleteSourceFilesAfterMerge = AppModel.deleteSourceFilesAfterMerge,
             autoRemuxAudioAfterDownload = AppModel.autoRemuxAudioAfterDownload,
+            pictureInPicturePlaybackEnabled = isPictureInPictureSupported &&
+                AppModel.pictureInPicturePlaybackEnabled,
+            isPictureInPictureSupported = isPictureInPictureSupported,
             audioResourceFileNameTemplate = AppModel.audioResourceFileNameTemplate,
             videoResourceFileNameTemplate = AppModel.videoResourceFileNameTemplate,
             mixedResourceFileNameTemplate = AppModel.mixedResourceFileNameTemplate,
@@ -203,5 +217,12 @@ class SettingsViewModel :
 
     private fun needsStoragePermission(): Boolean {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
+    }
+
+    private fun isPictureInPictureSupported(): Boolean {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            CommonLibs.requireContext().packageManager.hasSystemFeature(
+                PackageManager.FEATURE_PICTURE_IN_PICTURE
+            )
     }
 }

@@ -12,6 +12,7 @@ sealed class SettingsUiIntent {
     data class SetBatchQualityMismatchMode(val mode: BatchQualityMismatchMode) : SettingsUiIntent()
     data class SetDeleteSourceFilesAfterMerge(val enabled: Boolean) : SettingsUiIntent()
     data class SetAutoRemuxAudioAfterDownload(val enabled: Boolean) : SettingsUiIntent()
+    data class SetPictureInPicturePlaybackEnabled(val enabled: Boolean) : SettingsUiIntent()
     data class SetAudioResourceFileNameTemplate(val template: String) : SettingsUiIntent()
     data class SetVideoResourceFileNameTemplate(val template: String) : SettingsUiIntent()
     data class SetMixedResourceFileNameTemplate(val template: String) : SettingsUiIntent()

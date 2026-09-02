@@ -15,6 +15,8 @@ sealed class SettingsUiState {
         val batchQualityMismatchMode: BatchQualityMismatchMode,
         val deleteSourceFilesAfterMerge: Boolean,
         val autoRemuxAudioAfterDownload: Boolean,
+        val pictureInPicturePlaybackEnabled: Boolean,
+        val isPictureInPictureSupported: Boolean,
         val audioResourceFileNameTemplate: String,
         val videoResourceFileNameTemplate: String,
         val mixedResourceFileNameTemplate: String,

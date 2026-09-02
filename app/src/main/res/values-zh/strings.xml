@@ -210,6 +210,9 @@
     <string name="text_select_all">全选</string>
     <string name="text_share">分享</string>
     <string name="text_settings">设置</string>
+    <string name="settings_picture_in_picture_playback">小窗播放</string>
+    <string name="settings_picture_in_picture_playback_desc">播放视频时返回或切换到其他应用，自动进入画中画</string>
+    <string name="settings_picture_in_picture_playback_unsupported_desc">需要 Android 8.0 或支持画中画的设备</string>
     <string name="settings_download_path">下载路径</string>
     <string name="settings_download_path_internal">内部存储</string>
     <string name="settings_download_path_internal_desc">应用私有目录（无需额外权限）</string>

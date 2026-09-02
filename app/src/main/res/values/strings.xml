@@ -210,6 +210,9 @@
     <string name="text_select_all">Select All</string>
     <string name="text_share">Share</string>
     <string name="text_settings">Settings</string>
+    <string name="settings_picture_in_picture_playback">Picture-in-Picture Playback</string>
+    <string name="settings_picture_in_picture_playback_desc">Keep playing video in a small window when you go back or switch to another app</string>
+    <string name="settings_picture_in_picture_playback_unsupported_desc">Requires Android 8.0 or a device that supports picture-in-picture</string>
     <string name="settings_download_path">Download Path</string>
     <string name="settings_download_path_internal">Internal Storage</string>
     <string name="settings_download_path_internal_desc">App private directory (no extra permissions required)</string>

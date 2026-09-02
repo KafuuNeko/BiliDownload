@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload.feature.compose.layout
 
+import android.graphics.Rect
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -40,6 +41,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalConfiguration
@@ -53,15 +56,23 @@ import androidx.media3.ui.PlayerView
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.feature.compose.viewmodel.mediaplayer.MediaPlayerUiIntent
 import cc.kafuu.bilidownload.feature.compose.viewmodel.mediaplayer.MediaPlayerUiState
+import kotlin.math.roundToInt
 
 @Composable
 fun MediaPlayerLayout(
     state: MediaPlayerUiState,
+    isInPictureInPictureMode: Boolean,
+    onPlayerBoundsChanged: (Rect) -> Unit,
     onIntent: (MediaPlayerUiIntent) -> Unit
 ) {
     when (state) {
         MediaPlayerUiState.None -> LoadingView()
-        is MediaPlayerUiState.Playing -> PlayerContent(state, onIntent)
+        is MediaPlayerUiState.Playing -> PlayerContent(
+            state = state,
+            isInPictureInPictureMode = isInPictureInPictureMode,
+            onPlayerBoundsChanged = onPlayerBoundsChanged,
+            onIntent = onIntent
+        )
         is MediaPlayerUiState.Error -> ErrorView(state.message, onIntent)
     }
 }
@@ -113,6 +124,8 @@ private fun ErrorView(message: String, onIntent: (MediaPlayerUiIntent) -> Unit) 
 @Composable
 private fun PlayerContent(
     state: MediaPlayerUiState.Playing,
+    isInPictureInPictureMode: Boolean,
+    onPlayerBoundsChanged: (Rect) -> Unit,
     onIntent: (MediaPlayerUiIntent) -> Unit
 ) {
     val player = state.player
@@ -134,68 +147,82 @@ private fun PlayerContent(
             update = { view ->
                 view.player = player
             },
-            modifier = Modifier.fillMaxSize()
-        )
-
-        // 触摸检测层 - 点击切换控制栏，长按加速
-        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onTap = { onIntent(MediaPlayerUiIntent.ToggleControls) },
-                        onLongPress = { onIntent(MediaPlayerUiIntent.LongPressStart) },
-                        onPress = {
-                            tryAwaitRelease()
-                            onIntent(MediaPlayerUiIntent.LongPressEnd)
-                        }
+                .onGloballyPositioned { coordinates ->
+                    val bounds = coordinates.boundsInWindow()
+                    onPlayerBoundsChanged(
+                        Rect(
+                            bounds.left.roundToInt(),
+                            bounds.top.roundToInt(),
+                            bounds.right.roundToInt(),
+                            bounds.bottom.roundToInt()
+                        )
                     )
                 }
         )
 
-        // 长按加速提示
-        AnimatedVisibility(
-            visible = state.isLongPressing,
-            enter = fadeIn(),
-            exit = fadeOut(),
-            modifier = Modifier.align(Alignment.Center)
-        ) {
-            Text(
-                text = stringResource(R.string.speed_indicator, state.playbackSpeed),
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
+        if (!isInPictureInPictureMode) {
+            // 触摸检测层 - 点击切换控制栏，长按加速
+            Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.Black.copy(alpha = 0.6f))
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = { onIntent(MediaPlayerUiIntent.ToggleControls) },
+                            onLongPress = { onIntent(MediaPlayerUiIntent.LongPressStart) },
+                            onPress = {
+                                tryAwaitRelease()
+                                onIntent(MediaPlayerUiIntent.LongPressEnd)
+                            }
+                        )
+                    }
             )
-        }
 
-        // 控制栏
-        AnimatedVisibility(
-            visible = state.showControls,
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                // 顶栏
-                TopBar(
-                    title = state.title,
-                    onBack = { onIntent(MediaPlayerUiIntent.GoBack) },
+            // 长按加速提示
+            AnimatedVisibility(
+                visible = state.isLongPressing,
+                enter = fadeIn(),
+                exit = fadeOut(),
+                modifier = Modifier.align(Alignment.Center)
+            ) {
+                Text(
+                    text = stringResource(R.string.speed_indicator, state.playbackSpeed),
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .statusBarsPadding()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.Black.copy(alpha = 0.6f))
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                 )
+            }
 
-                // 底部控制栏
-                BottomControls(
-                    state = state,
-                    onIntent = onIntent,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .navigationBarsPadding()
-                )
+            // 控制栏
+            AnimatedVisibility(
+                visible = state.showControls,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    // 顶栏
+                    TopBar(
+                        title = state.title,
+                        onBack = { onIntent(MediaPlayerUiIntent.GoBack) },
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .statusBarsPadding()
+                    )
+
+                    // 底部控制栏
+                    BottomControls(
+                        state = state,
+                        onIntent = onIntent,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .navigationBarsPadding()
+                    )
+                }
             }
         }
     }

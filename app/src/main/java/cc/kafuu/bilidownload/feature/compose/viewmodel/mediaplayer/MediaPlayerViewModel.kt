@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.VideoSize
 import androidx.media3.exoplayer.ExoPlayer
 import cc.kafuu.bilidownload.common.audio.MediaPlayerFactory
 import cc.kafuu.bilidownload.common.core.compose.CoreCompViewModelWithEvent
@@ -53,6 +54,13 @@ class MediaPlayerViewModel :
             if (isPlaying) startProgressUpdate() else stopProgressUpdate()
         }
 
+        override fun onVideoSizeChanged(videoSize: VideoSize) {
+            getOrNull<MediaPlayerUiState.Playing>()?.copy(
+                videoWidth = videoSize.width,
+                videoHeight = videoSize.height
+            )?.setup()
+        }
+
         override fun onPlayerError(error: PlaybackException) {
             MediaPlayerUiState.Error(
                 error.localizedMessage ?: "Playback error"
@@ -62,14 +70,17 @@ class MediaPlayerViewModel :
 
     @UiIntentObserver(MediaPlayerUiIntent.Init::class)
     fun onInit(intent: MediaPlayerUiIntent.Init) {
-        if (!isStateOf<MediaPlayerUiState.None>()) return
+        stopProgressUpdate()
+        cancelAutoHide()
+        mSelectedPlaybackSpeed = 1.0f
 
-        val player = MediaPlayerFactory.configure(
+        val player = mPlayer ?: MediaPlayerFactory.configure(
             ExoPlayer.Builder(intent.context.applicationContext)
         ).build().also {
             mPlayer = it
             it.addListener(createPlayerListener())
         }
+        player.setPlaybackSpeed(mSelectedPlaybackSpeed)
 
         MediaPlayerUiState.Playing(
             title = intent.title,
@@ -203,7 +214,7 @@ class MediaPlayerViewModel :
             state.copy(isFullScreen = false).setup()
             MediaPlayerUiEvent.SetFullScreen(false).send()
         } else {
-            MediaPlayerUiEvent.Finish.send()
+            MediaPlayerUiEvent.RequestPictureInPicture.send()
         }
     }
 

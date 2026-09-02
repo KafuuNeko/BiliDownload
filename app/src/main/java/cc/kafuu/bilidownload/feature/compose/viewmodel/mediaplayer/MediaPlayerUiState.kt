@@ -20,6 +20,8 @@ sealed class MediaPlayerUiState {
         val isSeekBarDragging: Boolean = false,
         val showControls: Boolean = true,
         val isFullScreen: Boolean = false,
+        val videoWidth: Int = 0,
+        val videoHeight: Int = 0,
     ) : MediaPlayerUiState()
 
     data class Error(val message: String) : MediaPlayerUiState()

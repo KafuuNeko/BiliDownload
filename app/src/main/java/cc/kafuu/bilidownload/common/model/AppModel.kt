@@ -29,6 +29,8 @@ object AppModel : KotprefModel() {
 
     var autoRemuxAudioAfterDownload by booleanPref(false)
 
+    var pictureInPicturePlaybackEnabled by booleanPref(true)
+
     var audioResourceFileNameTemplate by stringPref(
         DownloadFileNameUtils.DEFAULT_AUDIO_TEMPLATE
     )
