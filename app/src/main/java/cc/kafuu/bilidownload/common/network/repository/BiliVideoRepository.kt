@@ -64,43 +64,97 @@ class BiliVideoRepository(
     }
 
     fun requestVideoDetail(bvid: String, callback: IServerCallback<BiliVideoData>) {
-        biliApiService
-            .requestVideoDetail(null, bvid)
-            .enqueue(callback) { _, data -> data }
+        requestVideoDetailWbi(linkedMapOf("bvid" to bvid), callback)
     }
 
     fun syncRequestVideoDetail(
         bvid: String,
         onFailure: ((Int, Int, String) -> Unit)? = null
-    ) = biliApiService
-        .requestVideoDetail(null, bvid)
-        .execute(onFailure) { _, data -> data }
+    ) = syncRequestVideoDetailWbi(linkedMapOf("bvid" to bvid), onFailure)
 
     fun requestSeasonDetailBySeasonId(seasonId: Long, callback: IServerCallback<BiliSeasonData>) {
-        biliApiService
-            .requestSeasonDetail(seasonId, null)
-            .enqueue(callback) { _, data -> data }
+        requestSeasonDetailWbi(linkedMapOf("season_id" to seasonId), callback)
     }
 
     fun syncRequestSeasonDetailBySeasonId(
         seasonId: Long,
         onFailure: ((Int, Int, String) -> Unit)? = null
-    ) = biliApiService
-        .requestSeasonDetail(seasonId, null)
-        .execute(onFailure) { _, data -> data }
+    ) = syncRequestSeasonDetailWbi(linkedMapOf("season_id" to seasonId), onFailure)
 
     fun requestSeasonDetailByEpId(epId: Long, callback: IServerCallback<BiliSeasonData>) {
-        biliApiService
-            .requestSeasonDetail(null, epId)
-            .enqueue(callback) { _, data -> data }
+        requestSeasonDetailWbi(linkedMapOf("ep_id" to epId), callback)
     }
 
     fun syncRequestSeasonDetailByEpId(
         epId: Long,
         onFailure: ((Int, Int, String) -> Unit)? = null
-    ) = biliApiService
-        .requestSeasonDetail(null, epId)
-        .execute(onFailure) { _, data -> data }
+    ) = syncRequestSeasonDetailWbi(linkedMapOf("ep_id" to epId), onFailure)
+
+    private fun requestVideoDetailWbi(
+        params: Map<String, Any>,
+        callback: IServerCallback<BiliVideoData>
+    ) {
+        WbiManager.asyncGenerateSignature(params, object : IServerCallback<String> {
+            override fun onSuccess(httpCode: Int, code: Int, message: String, data: String) {
+                biliApiService
+                    .requestVideoDetail(NetworkConfig.buildFullUrl("/x/web-interface/view", data))
+                    .enqueue(callback) { _, data -> data }
+            }
+
+            override fun onFailure(httpCode: Int, code: Int, message: String) {
+                callback.onFailure(httpCode, code, message)
+            }
+        })
+    }
+
+    private fun syncRequestVideoDetailWbi(
+        params: Map<String, Any>,
+        onFailure: ((Int, Int, String) -> Unit)?
+    ): BiliVideoData? {
+        val signedParams = try {
+            WbiManager.syncGenerateSignature(params)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            onFailure?.invoke(0, 0, e.message ?: "WBI signing failed") ?: throw e
+            return null
+        }
+        return biliApiService
+            .requestVideoDetail(NetworkConfig.buildFullUrl("/x/web-interface/view", signedParams))
+            .execute(onFailure) { _, data -> data }
+    }
+
+    private fun requestSeasonDetailWbi(
+        params: Map<String, Any>,
+        callback: IServerCallback<BiliSeasonData>
+    ) {
+        WbiManager.asyncGenerateSignature(params, object : IServerCallback<String> {
+            override fun onSuccess(httpCode: Int, code: Int, message: String, data: String) {
+                biliApiService
+                    .requestSeasonDetail(NetworkConfig.buildFullUrl("/pgc/view/web/season", data))
+                    .enqueue(callback) { _, data -> data }
+            }
+
+            override fun onFailure(httpCode: Int, code: Int, message: String) {
+                callback.onFailure(httpCode, code, message)
+            }
+        })
+    }
+
+    private fun syncRequestSeasonDetailWbi(
+        params: Map<String, Any>,
+        onFailure: ((Int, Int, String) -> Unit)?
+    ): BiliSeasonData? {
+        val signedParams = try {
+            WbiManager.syncGenerateSignature(params)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            onFailure?.invoke(0, 0, e.message ?: "WBI signing failed") ?: throw e
+            return null
+        }
+        return biliApiService
+            .requestSeasonDetail(NetworkConfig.buildFullUrl("/pgc/view/web/season", signedParams))
+            .execute(onFailure) { _, data -> data }
+    }
 
     /**
      * 请求视频弹幕数据
