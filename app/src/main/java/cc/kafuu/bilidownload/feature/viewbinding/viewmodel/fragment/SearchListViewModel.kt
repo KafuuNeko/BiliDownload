@@ -109,6 +109,9 @@ class SearchListViewModel : BiliResourceRVViewModel() {
      * 强制搜索
      */
     private fun forceSearch() {
+        // 失败兜底路径需要绕过 doSearch 的"已在加载中"早返回守卫。
+        // 否则前一次失败回调触发的兜底会被静默丢弃，导致 loading 状态永远不会被清除。
+        setLoadingStatus(LoadingStatus.waitStatus())
         doSearch(LoadingStatus.loadingStatus(), loadMore = false, forceSearch = true)
     }
 

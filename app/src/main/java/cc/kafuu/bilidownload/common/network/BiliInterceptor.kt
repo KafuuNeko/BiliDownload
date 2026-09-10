@@ -12,6 +12,19 @@ class BiliInterceptor(
 ) : Interceptor {
     companion object {
         private const val TAG = "BiliInterceptor"
+        // B 站的 WAF/风控对浏览器 User-Agent 在 /x/web-interface/view 等接口上
+        // 触发 412 风险拦截，但对 okhttp 客户端 User-Agent 不拦截；
+        // 相反 /x/player/playurl 对 okhttp UA 会被拦截，需要保留浏览器 UA。
+        // 因此按路径分别下发 User-Agent。
+        private const val OKHTTP_USER_AGENT = "okhttp/4.12.0"
+        private val OKHTTP_UA_PATH_PREFIXES = listOf(
+            "/x/web-interface/view",
+            "/x/web-interface/archive",
+            "/x/v2/view",
+        )
+        private val BROWSER_UA_PATH_PREFIXES = listOf(
+            "/x/player/playurl",
+        )
     }
 
     private var mCachedCookies: String? = null
@@ -28,14 +41,22 @@ class BiliInterceptor(
      * @return Response 返回经过处理的请求的响应。
      */
     override fun intercept(chain: Interceptor.Chain): Response {
-        val request = chain.request().newBuilder().apply {
+        val original = chain.request()
+        val path = original.url().encodedPath()
+        val request = original.newBuilder().apply {
             // 获取最新cookie，若是不存在则访问网站获取默认cookie
             getLatestCookies()?.let {
                 addHeader("Cookie", it)
             } ?: getDefaultCookiesByBili()?.let {
                 addHeader("Cookie", it)
             }
-            NetworkConfig.GENERAL_HEADERS.forEach { (key, value) -> addHeader(key, value) }
+            NetworkConfig.GENERAL_HEADERS.forEach { (key, value) ->
+                if (key == "User-Agent") {
+                    addHeader(key, pickUserAgent(path))
+                } else {
+                    addHeader(key, value)
+                }
+            }
         }.build()
 
         Log.d(TAG, "Ready request: $request, cookie: ${request.headers()["Cookie"]}")
@@ -43,6 +64,13 @@ class BiliInterceptor(
         return chain.proceed(request).also {
             Log.d(TAG, "End of request: $it")
         }
+    }
+
+    private fun pickUserAgent(path: String): String {
+        val defaultUa = NetworkConfig.GENERAL_HEADERS["User-Agent"] ?: OKHTTP_USER_AGENT
+        if (OKHTTP_UA_PATH_PREFIXES.any { path.startsWith(it) }) return OKHTTP_USER_AGENT
+        if (BROWSER_UA_PATH_PREFIXES.any { path.startsWith(it) }) return defaultUa
+        return defaultUa
     }
 
     private fun getDefaultCookiesByBili(): String? {
