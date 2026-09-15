@@ -3,6 +3,7 @@ package cc.kafuu.bilidownload.feature.viewbinding.viewmodel.fragment
 import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.download.BatchDeleteUseCase
@@ -16,13 +17,23 @@ import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
 import cc.kafuu.bilidownload.feature.viewbinding.view.activity.HistoryDetailsActivity
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.common.RVViewModel
+import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.ExportOptionsDialog
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 
 class HistoryViewModel : RVViewModel() {
     val centerCrop = CenterCrop()
 
     private val mBatchDeleteUseCase = BatchDeleteUseCase()
     private val mBatchExportUseCase = BatchExportUseCase()
+    private data class PendingExport(
+        val sources: List<BatchExportUseCase.Source>,
+        val deleteSourceAfterExport: Boolean,
+    )
+
+    private var mPendingExport: PendingExport? = null
+    private var mIsExporting = false
     private var mDisplayedTasks: List<DownloadTaskWithVideoDetails> = emptyList()
 
     lateinit var latestDownloadTaskLiveData: LiveData<List<DownloadTaskWithVideoDetails>>
@@ -125,11 +136,7 @@ class HistoryViewModel : RVViewModel() {
     }
 
     fun tryBatchExport() {
-        if (!currentMultiSelectState().hasSelection) return
-        sendViewAction(RequestExportDirAction())
-    }
-
-    suspend fun executeBatchExport(treeUri: Uri) {
+        if (mPendingExport != null || mIsExporting) return
         val selectedIds = currentMultiSelectState().selectedIds
         if (selectedIds.isEmpty()) return
         val sources = mDisplayedTasks.mapNotNull { task ->
@@ -141,14 +148,40 @@ class HistoryViewModel : RVViewModel() {
             )
         }
 
+        popDialog(ExportOptionsDialog(), success = {
+            val options = it as? ExportOptionsDialog.Result ?: return@popDialog
+            if (mPendingExport != null || mIsExporting) return@popDialog
+            mPendingExport = PendingExport(sources, options.deleteSourceAfterExport)
+            sendViewAction(RequestExportDirAction())
+        })
+    }
+
+    fun executeBatchExport(treeUri: Uri?) {
+        val request = mPendingExport ?: return
+        mPendingExport = null
+        treeUri ?: return
+        mIsExporting = true
+        viewModelScope.launch {
+            try {
+                exportResources(treeUri, request)
+            } finally {
+                mIsExporting = false
+                mBatchExportProgressLiveData.value = null
+            }
+        }
+    }
+
+    private suspend fun exportResources(treeUri: Uri, request: PendingExport) {
         val result = try {
-            mBatchExportUseCase.execute(treeUri, sources) { progress ->
+            mBatchExportUseCase.execute(
+                treeUri, request.sources, request.deleteSourceAfterExport
+            ) { progress ->
                 mBatchExportProgressLiveData.postValue(progress)
             }
+        } catch (exception: CancellationException) {
+            throw exception
         } catch (_: Exception) {
             BatchExportUseCase.Result.InvalidDestination
-        } finally {
-            mBatchExportProgressLiveData.postValue(null)
         }
 
         when (result) {
@@ -159,18 +192,22 @@ class HistoryViewModel : RVViewModel() {
             BatchExportUseCase.Result.InvalidDestination -> showBatchExportFailure()
 
             is BatchExportUseCase.Result.Completed -> {
-                if (result.successCount > 0) {
-                    popMessage(
-                        ToastMessageAction(
-                            CommonLibs.getString(
-                                R.string.batch_export_success_message,
-                                result.successCount,
-                            )
-                        )
+                val message = if (request.deleteSourceAfterExport) {
+                    CommonLibs.getString(
+                        R.string.batch_export_move_result_message,
+                        result.successCount,
+                        result.total - result.successCount,
+                        result.deletedSourceCount,
+                        result.sourceDeleteFailureCount,
                     )
                 } else {
-                    showBatchExportFailure()
+                    CommonLibs.getString(
+                        R.string.batch_export_result_message,
+                        result.successCount,
+                        result.total - result.successCount,
+                    )
                 }
+                popMessage(ToastMessageAction(message))
                 exitMultiSelectMode()
             }
         }

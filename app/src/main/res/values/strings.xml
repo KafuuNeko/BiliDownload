@@ -263,4 +263,10 @@
     <string name="text_batch_download_result">Added %1$d tasks to the download queue; skipped %2$d.</string>
     <string name="text_download_task_already_active">This item already has an active download task</string>
     <string name="text_deselect_all">Deselect</string>
+    <string name="export_options_message">Choose where to export next. If selected, only successfully exported resources and their local records will be deleted; download history will be kept.</string>
+    <string name="export_delete_source_option">Delete source files after successful export (move)</string>
+    <string name="export_source_deleted_message">Resource exported and source file deleted: %s</string>
+    <string name="export_source_delete_failed_message">Resource exported, but source cleanup failed. Please check local resources.</string>
+    <string name="batch_export_result_message">Exported %1$d resources; %2$d failed.</string>
+    <string name="batch_export_move_result_message">Exported %1$d resources; %2$d failed. Deleted %3$d source files; %4$d could not be cleaned up.</string>
 </resources>

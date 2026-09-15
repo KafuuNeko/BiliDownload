@@ -1,7 +1,6 @@
 package cc.kafuu.bilidownload.feature.viewbinding.view.fragment
 
 import android.app.AlertDialog
-import android.content.Intent
 import android.os.Bundle
 import android.view.HapticFeedbackConstants
 import android.view.View
@@ -68,10 +67,7 @@ class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::c
     private val mExportDirLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
-        uri ?: return@registerForActivityResult
-        val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-        requireContext().contentResolver.takePersistableUriPermission(uri, flags)
-        lifecycleScope.launch { mViewModel.executeBatchExport(uri) }
+        mViewModel.executeBatchExport(uri)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

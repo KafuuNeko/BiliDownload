@@ -4,9 +4,11 @@ import android.net.Uri
 import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.core.viewbinding.CoreViewModel
+import cc.kafuu.bilidownload.common.download.ResourceExportUseCase
 import cc.kafuu.bilidownload.common.ext.getSplitExtension
 import cc.kafuu.bilidownload.common.ext.limit
 import cc.kafuu.bilidownload.common.ext.liveData
@@ -25,8 +27,10 @@ import cc.kafuu.bilidownload.common.storage.ResourcePublishResult
 import cc.kafuu.bilidownload.feature.viewbinding.view.activity.LocalResourceActivity
 import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.ConfirmDialog
 import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.ConvertDialog
+import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.ExportOptionsDialog
 import com.arthenica.ffmpegkit.FFmpegSession
 import com.arthenica.ffmpegkit.SessionState
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.File
 
@@ -46,6 +50,8 @@ class LocalResourceVideModel : CoreViewModel() {
             val name: String,
             val mimetype: String
         ) : ViewAction()
+
+        class ResourceMovedAction(val message: String) : ViewAction()
 
         class PlayResourceAction(
             val filePath: String,
@@ -70,6 +76,17 @@ class LocalResourceVideModel : CoreViewModel() {
     // 此资源文件信息
     private val mLocalMediaDetailLiveData = MutableLiveData<LocalMediaDetail>()
     val localMediaDetailLiveData = mLocalMediaDetailLiveData.liveData()
+
+    private val mResourceExportUseCase = ResourceExportUseCase()
+
+    // 固定本次导出的资源和选择，避免系统文件选择器返回时使用已变化的页面数据。
+    private data class PendingExport(
+        val resource: DownloadResourceEntity,
+        val title: String,
+        val deleteSourceAfterExport: Boolean,
+    )
+
+    private var mPendingExport: PendingExport? = null
 
     // 是否正在导出
     private val mIsExportingLiveData = MutableLiveData(false)
@@ -163,24 +180,30 @@ class LocalResourceVideModel : CoreViewModel() {
      * @brief 尝试询问用户要将此资源导出到何处
      */
     fun tryExportResource() {
-        if (mIsExportingLiveData.value == true) return
+        if (isTaskProgressing()) return
         val resource = mResourceLiveData.value ?: return
         val taskDetail = mTaskDetailLiveData.value ?: return
         val file = File(resource.file)
         val defaultName = "${taskDetail.title} - ${taskDetail.partTitle}".limit(128)
-        sendViewAction(
-            ExportResourceAction(
-                file = file,
-                name = "${defaultName}${file.getSplitExtension()}",
-                mimetype = resource.mimeType
+        popDialog(ExportOptionsDialog(), success = {
+            val options = it as? ExportOptionsDialog.Result ?: return@popDialog
+            if (isTaskProgressing() || !file.isFile) return@popDialog
+            mPendingExport = PendingExport(resource, taskDetail.title, options.deleteSourceAfterExport)
+            sendViewAction(
+                ExportResourceAction(
+                    file = file,
+                    name = "${defaultName}${file.getSplitExtension()}",
+                    mimetype = resource.mimeType
+                )
             )
-        )
+        })
     }
 
     /**
      * @brief 尝试询问用户转换此资源为何种格式
      */
     fun tryCovertResource() {
+        if (mPendingExport != null || mIsExportingLiveData.value == true) return
         val details = mLocalMediaDetailLiveData.value ?: return
         val resource = resourceLiveData.value ?: return
         val format = details.getAVFormatOrNull() ?: return
@@ -206,7 +229,7 @@ class LocalResourceVideModel : CoreViewModel() {
         popDialog(
             ConvertDialog.buildDialog(resource.name, format, audioCodec, videoCodec),
             success = {
-                if (mConvertSession?.state == SessionState.RUNNING) return@popDialog
+                if (isTaskProgressing()) return@popDialog
                 mIsConvertingLiveData.value = true
                 mConvertSession = doCovertResource(it as ConvertDialog.Companion.Result)
                 if (mConvertSession == null) onConvertFailed()
@@ -240,26 +263,39 @@ class LocalResourceVideModel : CoreViewModel() {
     /**
      * @brief 导出资源
      */
-    fun exportResource(uri: Uri) {
-        val taskDetail = mTaskDetailLiveData.value ?: return
-        val resource = mResourceLiveData.value ?: return
-        val sourceFile = File(resource.file)
-        mIsExportingLiveData.postValue(true)
-        if (!FileUtils.writeFileToUri(CommonLibs.requireContext(), uri, sourceFile)) {
-            popMessage(
-                ToastMessageAction(CommonLibs.getString(R.string.export_resource_failed_message))
-            )
-        } else {
-            popMessage(
-                ToastMessageAction(
-                    CommonLibs.getString(
-                        R.string.export_resource_success_message,
-                        taskDetail.title
-                    ),
-                )
-            )
+    fun exportResource(uri: Uri?) {
+        val request = mPendingExport ?: return
+        mPendingExport = null
+        uri ?: return
+        mIsExportingLiveData.value = true
+        viewModelScope.launch {
+            val result = try {
+                mResourceExportUseCase.execute(request.resource, request.deleteSourceAfterExport) {
+                    FileUtils.writeFileToUri(
+                        CommonLibs.requireContext(), uri, File(request.resource.file),
+                        verifyContents = request.deleteSourceAfterExport,
+                    )
+                }
+            } finally {
+                mIsExportingLiveData.value = false
+            }
+            val message = when (result) {
+                ResourceExportUseCase.Result.EXPORT_FAILED ->
+                    CommonLibs.getString(R.string.export_resource_failed_message)
+                ResourceExportUseCase.Result.EXPORTED ->
+                    CommonLibs.getString(R.string.export_resource_success_message, request.title)
+                ResourceExportUseCase.Result.SOURCE_DELETED ->
+                    CommonLibs.getString(R.string.export_source_deleted_message, request.title)
+                ResourceExportUseCase.Result.SOURCE_DELETE_FAILED ->
+                    CommonLibs.getString(R.string.export_source_delete_failed_message)
+            }
+            if (result == ResourceExportUseCase.Result.SOURCE_DELETED) {
+                // 提示和关闭页面通过同一个动作派发，避免 LiveData.postValue 合并连续动作。
+                sendViewAction(ResourceMovedAction(message))
+            } else {
+                popMessage(ToastMessageAction(message))
+            }
         }
-        mIsExportingLiveData.postValue(false)
     }
 
     /**
@@ -404,7 +440,8 @@ class LocalResourceVideModel : CoreViewModel() {
      * @brief 是否有导出或者转换任务正在执行
      */
     private fun isTaskProgressing(): Boolean {
-        return mIsExportingLiveData.value == true || mIsConvertingLiveData.value == true
+        return mPendingExport != null ||
+            mIsExportingLiveData.value == true || mIsConvertingLiveData.value == true
     }
 
 }

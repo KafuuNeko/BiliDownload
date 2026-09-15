@@ -5,6 +5,8 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.ParcelFileDescriptor
+import android.system.Os
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.FileProvider
 import androidx.documentfile.provider.DocumentFile
@@ -15,8 +17,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Request
 import java.io.File
+import java.io.FileInputStream
 import java.io.InputStream
 import java.io.OutputStream
+import java.security.MessageDigest
 import java.util.Locale
 
 object FileUtils {
@@ -166,19 +170,70 @@ object FileUtils {
      * @param context 上下文对象
      * @param uri 目标URI
      * @param sourceFile 源文件
-     * @return 成功返回true，失败返回false
+     * @param verifyContents 是否回读目标并核验内容；删除源文件前必须开启
+     * @return 关闭输出流且完成所需核验后返回true，失败返回false
      */
-    fun writeFileToUri(context: Context, uri: Uri, sourceFile: File): Boolean = try {
-        val outputStream = context.contentResolver.openOutputStream(uri) ?: return false
-        outputStream.use {
-            sourceFile.inputStream().use { inputStream ->
-                copyStream(inputStream, it)
+    fun writeFileToUri(
+        context: Context,
+        uri: Uri,
+        sourceFile: File,
+        verifyContents: Boolean = false,
+    ): Boolean {
+        return try {
+            // 普通复制沿用流式写入，兼容只支持写入或使用管道的文档提供方。
+            if (!verifyContents) {
+                sourceFile.inputStream().use { input ->
+                    val output = context.contentResolver.openOutputStream(uri) ?: return false
+                    output.use { copyStream(input, it) }
+                }
+                return true
+            }
+
+            val digest = MessageDigest.getInstance("SHA-256")
+            FileInputStream(sourceFile).use { input ->
+                // 先以不截断的方式打开并比较文件标识，防止不同 URI 实际指向同一个源文件。
+                val descriptor = context.contentResolver.openFileDescriptor(uri, "rw") ?: return false
+                ParcelFileDescriptor.AutoCloseOutputStream(descriptor).use { output ->
+                    val sourceStat = Os.fstat(input.fd)
+                    val targetStat = Os.fstat(descriptor.fileDescriptor)
+                    if (sourceStat.st_dev == targetStat.st_dev && sourceStat.st_ino == targetStat.st_ino) {
+                        return false
+                    }
+                    output.channel.truncate(0)
+                    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                    var copiedBytes = 0L
+                    while (true) {
+                        val count = input.read(buffer)
+                        if (count < 0) break
+                        output.write(buffer, 0, count)
+                        digest.update(buffer, 0, count)
+                        copiedBytes += count
+                    }
+                    if (copiedBytes != sourceStat.st_size || input.channel.size() != copiedBytes) {
+                        return false
+                    }
+                }
+            }
+            verifyUriContents(context, uri, digest.digest())
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    /** 回读核验不依赖文档提供方的大小元数据；无法核验时保留源文件。 */
+    private fun verifyUriContents(context: Context, uri: Uri, expectedDigest: ByteArray): Boolean {
+        val digest = MessageDigest.getInstance("SHA-256")
+        val input = context.contentResolver.openInputStream(uri) ?: return false
+        input.use {
+            val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+            while (true) {
+                val count = it.read(buffer)
+                if (count < 0) break
+                digest.update(buffer, 0, count)
             }
         }
-        true
-    } catch (e: Exception) {
-        e.printStackTrace()
-        false
+        return MessageDigest.isEqual(expectedDigest, digest.digest())
     }
 
     /** 返回目标目录中尚未被占用的显示文件名，并保留原扩展名。 */

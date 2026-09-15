@@ -17,6 +17,7 @@ class BatchExportUseCase(
     private val contextProvider: () -> Context = CommonLibs::requireContext,
     private val queryResources: suspend (Long) -> List<DownloadResourceEntity> =
         DownloadRepository::queryResourcesForExport,
+    private val resourceExportUseCase: ResourceExportUseCase = ResourceExportUseCase(),
 ) {
     data class Source(
         val taskId: Long,
@@ -31,18 +32,25 @@ class BatchExportUseCase(
     sealed interface Result {
         data object NoExportableResources : Result
         data object InvalidDestination : Result
-        data class Completed(val successCount: Int, val total: Int) : Result
+        data class Completed(
+            val successCount: Int,
+            val total: Int,
+            val deletedSourceCount: Int,
+            val sourceDeleteFailureCount: Int,
+        ) : Result
     }
 
     private data class ExportItem(
         val fileName: String,
         val mimeType: String,
         val sourceFile: File,
+        val resource: DownloadResourceEntity,
     )
 
     suspend fun execute(
         treeUri: Uri,
         sources: List<Source>,
+        deleteSourceAfterExport: Boolean = false,
         onProgress: (Progress) -> Unit,
     ): Result = withContext(Dispatchers.IO) {
         val context = contextProvider()
@@ -53,20 +61,33 @@ class BatchExportUseCase(
 
         onProgress(Progress(0, exportItems.size))
         var successCount = 0
+        var deletedSourceCount = 0
+        var sourceDeleteFailureCount = 0
         exportItems.forEachIndexed { index, item ->
             onProgress(Progress(index + 1, exportItems.size))
-            val exported = runCatching {
+            val result = resourceExportUseCase.execute(item.resource, deleteSourceAfterExport) copy@{
                 val fileName = FileUtils.resolveUniqueDocumentName(
                     targetDirectory,
                     item.fileName,
                 )
                 val target = targetDirectory.createFile(item.mimeType, fileName)
-                    ?: return@runCatching false
-                FileUtils.writeFileToUri(context, target.uri, item.sourceFile)
-            }.getOrDefault(false)
-            if (exported) successCount++
+                    ?: return@copy false
+                val copied = FileUtils.writeFileToUri(
+                    context, target.uri, item.sourceFile,
+                    verifyContents = deleteSourceAfterExport,
+                )
+                // 仅清理由本次批量导出创建的不完整目标，源文件始终留给用户重试。
+                if (!copied) runCatching { target.delete() }
+                copied
+            }
+            if (result != ResourceExportUseCase.Result.EXPORT_FAILED) successCount++
+            when (result) {
+                ResourceExportUseCase.Result.SOURCE_DELETED -> deletedSourceCount++
+                ResourceExportUseCase.Result.SOURCE_DELETE_FAILED -> sourceDeleteFailureCount++
+                else -> Unit
+            }
         }
-        Result.Completed(successCount, exportItems.size)
+        Result.Completed(successCount, exportItems.size, deletedSourceCount, sourceDeleteFailureCount)
     }
 
     private suspend fun buildExportItems(sources: List<Source>): List<ExportItem> = buildList {
@@ -79,6 +100,7 @@ class BatchExportUseCase(
                     fileName = "${source.displayName}$extension",
                     mimeType = resource.mimeType,
                     sourceFile = sourceFile,
+                    resource = resource,
                 )
             )
         }
