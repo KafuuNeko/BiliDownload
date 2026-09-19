@@ -183,18 +183,9 @@ object FileUtils {
 
     /** 返回目标目录中尚未被占用的显示文件名，并保留原扩展名。 */
     fun resolveUniqueDocumentName(parent: DocumentFile, desiredName: String): String {
-        if (parent.findFile(desiredName) == null) return desiredName
-
-        val dotIndex = desiredName.lastIndexOf('.')
-        val baseName = if (dotIndex > 0) desiredName.substring(0, dotIndex) else desiredName
-        val extension = if (dotIndex > 0) desiredName.substring(dotIndex) else ""
-        var suffix = 1
-        var candidate: String
-        do {
-            candidate = "$baseName($suffix)$extension"
-            suffix++
-        } while (parent.findFile(candidate) != null)
-        return candidate
+        return DownloadFileNameUtils.resolveUniqueFileName(desiredName) {
+            parent.findFile(it) != null
+        }
     }
 
     private fun copyStream(inputStream: InputStream, outputStream: OutputStream) {

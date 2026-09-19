@@ -83,6 +83,24 @@ object DownloadFileNameUtils {
         }
     }
 
+    /** 根据目标目录检查重名，追加序号时为扩展名和序号预留字节。 */
+    fun resolveUniqueFileName(
+        desiredName: String,
+        nameExists: (String) -> Boolean,
+    ): String {
+        val dotIndex = desiredName.lastIndexOf('.')
+        val baseName = if (dotIndex > 0) desiredName.substring(0, dotIndex) else desiredName
+        val extension = if (dotIndex > 0) desiredName.substring(dotIndex + 1) else ""
+        val safeExtension = sanitizeExtension(extension)
+        var index = 0
+        while (true) {
+            val suffix = if (index == 0) "" else "($index)"
+            val fileName = buildFileNameWithSuffix(baseName, safeExtension, suffix)
+            if (!nameExists(fileName)) return fileName
+            index++
+        }
+    }
+
     private fun renderBaseName(
         template: String,
         context: TemplateContext,

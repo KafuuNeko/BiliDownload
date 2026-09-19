@@ -72,4 +72,50 @@ class DownloadFileNameUtilsTest {
             directory.deleteRecursively()
         }
     }
+
+    @Test
+    fun resolveUniqueFileName_keepsAvailableNamesAndSkipsOccupiedSuffixes() {
+        val existingNames = setOf("Name.mp4", "Name(1).mp4", "Name(2).mp4")
+
+        assertEquals(
+            "Available.mp4",
+            DownloadFileNameUtils.resolveUniqueFileName("Available.mp4", existingNames::contains),
+        )
+        assertEquals(
+            "Name(3).mp4",
+            DownloadFileNameUtils.resolveUniqueFileName("Name.mp4", existingNames::contains),
+        )
+    }
+
+    @Test
+    fun resolveUniqueFileName_preservesDotsAndHandlesMissingExtensions() {
+        val existingNames = setOf("Video.Part.mp4", "Video")
+
+        assertEquals(
+            "Video.Part(1).mp4",
+            DownloadFileNameUtils.resolveUniqueFileName("Video.Part.mp4", existingNames::contains),
+        )
+        assertEquals(
+            "Video(1)",
+            DownloadFileNameUtils.resolveUniqueFileName("Video", existingNames::contains),
+        )
+    }
+
+    @Test
+    fun resolveUniqueFileName_reservesBytesForGrowingSuffixesWithoutOverwriting() {
+        val desiredName = "测🎵".repeat(33) + "测.mp4"
+        val existingNames = mutableSetOf(desiredName)
+
+        repeat(12) { index ->
+            val fileName = DownloadFileNameUtils.resolveUniqueFileName(
+                desiredName,
+                existingNames::contains,
+            )
+
+            assertTrue(fileName.toByteArray(Charsets.UTF_8).size <= 240)
+            assertTrue(fileName.endsWith("(${index + 1}).mp4"))
+            assertEquals(fileName, fileName.toByteArray(Charsets.UTF_8).toString(Charsets.UTF_8))
+            assertTrue(existingNames.add(fileName))
+        }
+    }
 }

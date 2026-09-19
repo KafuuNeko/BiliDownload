@@ -14,6 +14,7 @@ import cc.kafuu.bilidownload.common.model.action.ViewAction
 import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
 import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
+import cc.kafuu.bilidownload.common.utils.DownloadFileNameUtils
 import cc.kafuu.bilidownload.feature.viewbinding.view.activity.HistoryDetailsActivity
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.common.RVViewModel
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
@@ -137,7 +138,10 @@ class HistoryViewModel : RVViewModel() {
             if (taskId !in selectedIds) return@mapNotNull null
             BatchExportUseCase.Source(
                 taskId = taskId,
-                displayName = "${task.title} - ${task.partTitle}",
+                fileNameContext = DownloadFileNameUtils.TemplateContext(
+                    videoName = task.title.ifBlank { task.downloadTask.biliBvid },
+                    partName = task.partTitle.ifBlank { task.downloadTask.biliCid.toString() },
+                ),
             )
         }
 

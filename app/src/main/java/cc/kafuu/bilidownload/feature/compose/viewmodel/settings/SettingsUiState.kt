@@ -20,5 +20,8 @@ sealed class SettingsUiState {
         val audioResourceFileNameTemplate: String,
         val videoResourceFileNameTemplate: String,
         val mixedResourceFileNameTemplate: String,
+        val audioExportFileNameTemplate: String,
+        val videoExportFileNameTemplate: String,
+        val mixedExportFileNameTemplate: String,
     ) : SettingsUiState()
 }

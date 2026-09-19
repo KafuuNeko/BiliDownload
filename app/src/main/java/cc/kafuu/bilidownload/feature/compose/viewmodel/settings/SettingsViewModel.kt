@@ -106,6 +106,30 @@ class SettingsViewModel :
         refreshState()
     }
 
+    @UiIntentObserver(SettingsUiIntent.SetAudioExportFileNameTemplate::class)
+    fun onSetAudioExportFileNameTemplate(
+        intent: SettingsUiIntent.SetAudioExportFileNameTemplate
+    ) {
+        AppModel.audioExportFileNameTemplate = intent.template
+        refreshState()
+    }
+
+    @UiIntentObserver(SettingsUiIntent.SetVideoExportFileNameTemplate::class)
+    fun onSetVideoExportFileNameTemplate(
+        intent: SettingsUiIntent.SetVideoExportFileNameTemplate
+    ) {
+        AppModel.videoExportFileNameTemplate = intent.template
+        refreshState()
+    }
+
+    @UiIntentObserver(SettingsUiIntent.SetMixedExportFileNameTemplate::class)
+    fun onSetMixedExportFileNameTemplate(
+        intent: SettingsUiIntent.SetMixedExportFileNameTemplate
+    ) {
+        AppModel.mixedExportFileNameTemplate = intent.template
+        refreshState()
+    }
+
     @UiIntentObserver(SettingsUiIntent.GoBack::class)
     fun onGoBack() {
         requestLocalNetworkPermissionBeforeFinish()
@@ -187,6 +211,9 @@ class SettingsViewModel :
             audioResourceFileNameTemplate = AppModel.audioResourceFileNameTemplate,
             videoResourceFileNameTemplate = AppModel.videoResourceFileNameTemplate,
             mixedResourceFileNameTemplate = AppModel.mixedResourceFileNameTemplate,
+            audioExportFileNameTemplate = AppModel.audioExportFileNameTemplate,
+            videoExportFileNameTemplate = AppModel.videoExportFileNameTemplate,
+            mixedExportFileNameTemplate = AppModel.mixedExportFileNameTemplate,
         ).setup()
     }
 

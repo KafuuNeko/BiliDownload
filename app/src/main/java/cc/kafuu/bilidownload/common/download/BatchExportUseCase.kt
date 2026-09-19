@@ -5,8 +5,11 @@ import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.constant.DownloadResourceType
+import cc.kafuu.bilidownload.common.model.AppModel
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
+import cc.kafuu.bilidownload.common.utils.DownloadFileNameUtils
+import cc.kafuu.bilidownload.common.utils.ExportFileNameUtils
 import cc.kafuu.bilidownload.common.utils.FileUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -17,10 +20,12 @@ class BatchExportUseCase(
     private val contextProvider: () -> Context = CommonLibs::requireContext,
     private val queryResources: suspend (Long) -> List<DownloadResourceEntity> =
         DownloadRepository::queryResourcesForExport,
+    private val templatesProvider: () -> ExportFileNameUtils.Templates =
+        AppModel::getExportFileNameTemplates,
 ) {
     data class Source(
         val taskId: Long,
-        val displayName: String,
+        val fileNameContext: DownloadFileNameUtils.TemplateContext,
     )
 
     data class Progress(
@@ -70,13 +75,18 @@ class BatchExportUseCase(
     }
 
     private suspend fun buildExportItems(sources: List<Source>): List<ExportItem> = buildList {
+        val templates = templatesProvider()
         sources.forEach { source ->
             val resource = pickBestResource(queryResources(source.taskId)) ?: return@forEach
             val sourceFile = File(resource.file).takeIf(File::isFile) ?: return@forEach
-            val extension = sourceFile.extension.takeIf(String::isNotEmpty)?.let { ".$it" }.orEmpty()
             add(
                 ExportItem(
-                    fileName = "${source.displayName}$extension",
+                    fileName = ExportFileNameUtils.buildFileName(
+                        resourceType = resource.type,
+                        context = source.fileNameContext,
+                        extension = sourceFile.extension,
+                        templates = templates,
+                    ),
                     mimeType = resource.mimeType,
                     sourceFile = sourceFile,
                 )

@@ -16,5 +16,8 @@ sealed class SettingsUiIntent {
     data class SetAudioResourceFileNameTemplate(val template: String) : SettingsUiIntent()
     data class SetVideoResourceFileNameTemplate(val template: String) : SettingsUiIntent()
     data class SetMixedResourceFileNameTemplate(val template: String) : SettingsUiIntent()
+    data class SetAudioExportFileNameTemplate(val template: String) : SettingsUiIntent()
+    data class SetVideoExportFileNameTemplate(val template: String) : SettingsUiIntent()
+    data class SetMixedExportFileNameTemplate(val template: String) : SettingsUiIntent()
     data object GoBack : SettingsUiIntent()
 }

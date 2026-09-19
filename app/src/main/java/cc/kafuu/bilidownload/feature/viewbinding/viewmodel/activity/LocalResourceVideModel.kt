@@ -7,9 +7,8 @@ import androidx.lifecycle.MutableLiveData
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.core.viewbinding.CoreViewModel
-import cc.kafuu.bilidownload.common.ext.getSplitExtension
-import cc.kafuu.bilidownload.common.ext.limit
 import cc.kafuu.bilidownload.common.ext.liveData
+import cc.kafuu.bilidownload.common.model.AppModel
 import cc.kafuu.bilidownload.common.model.IAsyncCallback
 import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.common.model.TaskStatus
@@ -19,6 +18,8 @@ import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
 import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
+import cc.kafuu.bilidownload.common.utils.DownloadFileNameUtils
+import cc.kafuu.bilidownload.common.utils.ExportFileNameUtils
 import cc.kafuu.bilidownload.common.utils.FFMpegUtils
 import cc.kafuu.bilidownload.common.utils.FileUtils
 import cc.kafuu.bilidownload.common.storage.ResourcePublishResult
@@ -167,11 +168,21 @@ class LocalResourceVideModel : CoreViewModel() {
         val resource = mResourceLiveData.value ?: return
         val taskDetail = mTaskDetailLiveData.value ?: return
         val file = File(resource.file)
-        val defaultName = "${taskDetail.title} - ${taskDetail.partTitle}".limit(128)
+        val fileName = ExportFileNameUtils.buildFileName(
+            resourceType = resource.type,
+            context = DownloadFileNameUtils.TemplateContext(
+                videoName = taskDetail.title.ifBlank { taskDetail.downloadTask.biliBvid },
+                partName = taskDetail.partTitle.ifBlank {
+                    taskDetail.downloadTask.biliCid.toString()
+                },
+            ),
+            extension = file.extension,
+            templates = AppModel.getExportFileNameTemplates(),
+        )
         sendViewAction(
             ExportResourceAction(
                 file = file,
-                name = "${defaultName}${file.getSplitExtension()}",
+                name = fileName,
                 mimetype = resource.mimeType
             )
         )

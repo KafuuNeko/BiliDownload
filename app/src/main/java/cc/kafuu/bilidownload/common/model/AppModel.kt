@@ -1,6 +1,7 @@
 package cc.kafuu.bilidownload.common.model
 
 import cc.kafuu.bilidownload.common.utils.DownloadFileNameUtils
+import cc.kafuu.bilidownload.common.utils.ExportFileNameUtils
 import com.chibatching.kotpref.KotprefModel
 
 object AppModel : KotprefModel() {
@@ -41,6 +42,18 @@ object AppModel : KotprefModel() {
 
     var mixedResourceFileNameTemplate by stringPref(
         DownloadFileNameUtils.DEFAULT_MIXED_TEMPLATE
+    )
+
+    var audioExportFileNameTemplate by stringPref(ExportFileNameUtils.DEFAULT_TEMPLATE)
+
+    var videoExportFileNameTemplate by stringPref(ExportFileNameUtils.DEFAULT_TEMPLATE)
+
+    var mixedExportFileNameTemplate by stringPref(ExportFileNameUtils.DEFAULT_TEMPLATE)
+
+    fun getExportFileNameTemplates() = ExportFileNameUtils.Templates(
+        audio = audioExportFileNameTemplate,
+        video = videoExportFileNameTemplate,
+        mixed = mixedExportFileNameTemplate,
     )
 
     var downloadPathMode: DownloadPathMode

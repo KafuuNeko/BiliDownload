@@ -112,6 +112,10 @@ private fun SettingsContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            ExportFileNameCard(state, onIntent)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             DownloadSourceCard(state, onIntent)
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -417,6 +421,81 @@ private fun ResourceFileNameCard(
     state: SettingsUiState.Normal,
     onIntent: (SettingsUiIntent) -> Unit
 ) {
+    FileNameSettingsCard(
+        title = stringResource(R.string.settings_resource_file_name),
+        description = stringResource(R.string.settings_resource_file_name_desc),
+    ) {
+        ResourceFileNameTextField(
+            value = state.audioResourceFileNameTemplate,
+            label = stringResource(R.string.settings_resource_file_name_audio),
+            onValueChange = {
+                onIntent(SettingsUiIntent.SetAudioResourceFileNameTemplate(it))
+            }
+        )
+
+        ResourceFileNameTextField(
+            value = state.videoResourceFileNameTemplate,
+            label = stringResource(R.string.settings_resource_file_name_video),
+            onValueChange = {
+                onIntent(SettingsUiIntent.SetVideoResourceFileNameTemplate(it))
+            }
+        )
+
+        ResourceFileNameTextField(
+            value = state.mixedResourceFileNameTemplate,
+            label = stringResource(R.string.settings_resource_file_name_mixed),
+            onValueChange = {
+                onIntent(SettingsUiIntent.SetMixedResourceFileNameTemplate(it))
+            }
+        )
+    }
+}
+
+@Composable
+private fun ExportFileNameCard(
+    state: SettingsUiState.Normal,
+    onIntent: (SettingsUiIntent) -> Unit
+) {
+    FileNameSettingsCard(
+        title = stringResource(R.string.settings_export_file_name),
+        description = stringResource(R.string.settings_export_file_name_desc),
+    ) {
+        val hint = stringResource(R.string.settings_export_file_name_hint)
+        ResourceFileNameTextField(
+            value = state.audioExportFileNameTemplate,
+            label = stringResource(R.string.settings_resource_file_name_audio),
+            hint = hint,
+            onValueChange = {
+                onIntent(SettingsUiIntent.SetAudioExportFileNameTemplate(it))
+            }
+        )
+
+        ResourceFileNameTextField(
+            value = state.videoExportFileNameTemplate,
+            label = stringResource(R.string.settings_resource_file_name_video),
+            hint = hint,
+            onValueChange = {
+                onIntent(SettingsUiIntent.SetVideoExportFileNameTemplate(it))
+            }
+        )
+
+        ResourceFileNameTextField(
+            value = state.mixedExportFileNameTemplate,
+            label = stringResource(R.string.settings_resource_file_name_mixed),
+            hint = hint,
+            onValueChange = {
+                onIntent(SettingsUiIntent.SetMixedExportFileNameTemplate(it))
+            }
+        )
+    }
+}
+
+@Composable
+private fun FileNameSettingsCard(
+    title: String,
+    description: String,
+    content: @Composable () -> Unit,
+) {
     Card(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
@@ -426,7 +505,7 @@ private fun ResourceFileNameCard(
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = stringResource(R.string.settings_resource_file_name),
+                text = title,
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
@@ -438,35 +517,13 @@ private fun ResourceFileNameCard(
             )
 
             Text(
-                text = stringResource(R.string.settings_resource_file_name_desc),
+                text = description,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
             )
 
-            ResourceFileNameTextField(
-                value = state.audioResourceFileNameTemplate,
-                label = stringResource(R.string.settings_resource_file_name_audio),
-                onValueChange = {
-                    onIntent(SettingsUiIntent.SetAudioResourceFileNameTemplate(it))
-                }
-            )
-
-            ResourceFileNameTextField(
-                value = state.videoResourceFileNameTemplate,
-                label = stringResource(R.string.settings_resource_file_name_video),
-                onValueChange = {
-                    onIntent(SettingsUiIntent.SetVideoResourceFileNameTemplate(it))
-                }
-            )
-
-            ResourceFileNameTextField(
-                value = state.mixedResourceFileNameTemplate,
-                label = stringResource(R.string.settings_resource_file_name_mixed),
-                onValueChange = {
-                    onIntent(SettingsUiIntent.SetMixedResourceFileNameTemplate(it))
-                }
-            )
+            content()
 
             Spacer(modifier = Modifier.height(4.dp))
         }
@@ -477,6 +534,7 @@ private fun ResourceFileNameCard(
 private fun ResourceFileNameTextField(
     value: String,
     label: String,
+    hint: String = stringResource(R.string.settings_resource_file_name_hint),
     onValueChange: (String) -> Unit
 ) {
     OutlinedTextField(
@@ -485,7 +543,7 @@ private fun ResourceFileNameTextField(
         singleLine = true,
         label = { Text(text = label) },
         placeholder = {
-            Text(text = stringResource(R.string.settings_resource_file_name_hint))
+            Text(text = hint)
         },
         modifier = Modifier
             .fillMaxWidth()
