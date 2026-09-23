@@ -123,7 +123,6 @@
     <string name="iv_clear_manuscript_search_content_description">清空用户视频搜索</string>
     <string name="success_copy_video_info">您已成功将视频信息拷贝到剪切板</string>
     <string name="video_details_format">标题: %1$s\n描述: %2$s</string>
-    <string name="text_download">下载</string>
     <string name="text_select_the_resource_to_download">选择要下载的资源</string>
     <string name="tv_clear_data">清除数据</string>
     <string name="clear_data_message">警告！此操作将清除所有已完成的下载记录，且无法撤销。请谨慎操作！</string>
@@ -204,7 +203,6 @@
     <string name="batch_delete_confirm_message">确定删除所选的 %d 个下载记录吗？点击删除后将立即删除记录和对应的数据，操作不可撤销。</string>
     <string name="batch_export_progress_title">导出中…</string>
     <string name="batch_export_progress_message">正在导出 %1$d / %2$d</string>
-    <string name="batch_export_success_message">成功导出 %d 个资源</string>
     <string name="batch_export_failed_message">导出失败：%s</string>
     <string name="batch_export_no_resource_message">所选项目中未找到可导出的资源</string>
     <string name="text_select_all">全选</string>
@@ -265,8 +263,16 @@
     <string name="text_download_all_parts">全部加入</string>
     <string name="text_batch_download_result">已加入 %1$d 个下载任务，跳过 %2$d 个。</string>
     <string name="text_download_task_already_active">该项目已有正在进行的下载任务</string>
-    <string name="text_deselect_all">反选</string>
+    <string name="text_deselect_all">取消全选</string>
     <string name="video_stats_views">播放 %1$s 次</string>
     <string name="video_stats_likes">点赞 %1$s 次</string>
     <string name="video_stats_favorites">收藏 %1$s 次</string>
+    <string name="text_download_selected_parts">下载所选</string>
+    <string name="text_download_all_video_parts">下载全部</string>
+    <string name="text_part_selection_count">已选 %1$d / %2$d 项</string>
+    <string name="text_stop_adding_tasks">停止添加</string>
+    <string name="text_part_batch_progress">已处理 %1$d / %2$d · 已加入 %3$d · 跳过 %4$d</string>
+    <string name="text_batch_download_cancelled">已停止添加，已加入的 %1$d 个任务将继续下载。</string>
+    <string name="batch_export_invalid_destination">无法写入此目录，请重新选择可写目录。</string>
+    <string name="batch_export_result">已导出 %1$d 个，跳过 %2$d 个，失败 %3$d 个。</string>
 </resources>

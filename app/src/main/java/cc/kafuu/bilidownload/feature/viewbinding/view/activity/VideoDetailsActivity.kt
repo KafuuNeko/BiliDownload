@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
+import cc.kafuu.bilidownload.common.download.BatchDownloadResolver
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.adapter.VideoPartRVAdapter
 import cc.kafuu.bilidownload.common.core.viewbinding.CoreActivity
@@ -26,8 +27,10 @@ import cc.kafuu.bilidownload.common.network.model.BiliXmlDanmaku
 import cc.kafuu.bilidownload.common.network.model.BccSubtitle
 import cc.kafuu.bilidownload.common.utils.FileUtils
 import cc.kafuu.bilidownload.databinding.ActivityVideoDetailsBinding
+import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.BiliPartDialog
 import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.ConfirmDialog
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity.VideoDetailsViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -65,6 +68,8 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
     private lateinit var mSaveDanmakuLauncher: ActivityResultLauncher<Intent>
     private lateinit var mSaveSubtitleLauncher: ActivityResultLauncher<Intent>
 
+    private var mBatchDialogJob: Job? = null
+
     private var mPendingCoverUrl: String? = null
     private var mPendingFileName: String? = null
 
@@ -88,13 +93,62 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
             mViewDataBinding.videoStats.render(stats ?: VideoStats())
         }
         initList()
+        observePartBatch()
         mViewModel.loadingVideoPartLiveData.observe(this) { part ->
             onItemLoadingStatusChanged(
                 part ?: mViewModel.selectedVideoPartLiveData.value ?: return@observe
             )
-            mViewModel.multipleSelectItemsLiveData.value?.forEach {
+            mViewModel.biliVideoPageListLiveData.value.orEmpty()
+                .filter { mViewModel.partSelectionLiveData.value?.isSelected(it) == true }.forEach {
                 onItemLoadingStatusChanged(it)
             }
+        }
+    }
+
+    /** 根据可重放状态渲染操作栏，并用当前宿主显示规格弹窗。 */
+    private fun observePartBatch() {
+        mViewModel.partSelectionLiveData.observe(this) { state ->
+            mViewDataBinding.tvPartSelectionCount.text = getString(
+                R.string.text_part_selection_count, state.selectedIds.size, state.availableIds.size,
+            )
+            mViewDataBinding.btnPartSelectAll.setText(
+                if (state.allSelected) R.string.text_deselect_all else R.string.text_select_all,
+            )
+        }
+        mViewModel.batchProgressLiveData.observe(this) { progress ->
+            mViewDataBinding.btnCancelPartSelection.setText(
+                if (progress == null) R.string.text_cancel else R.string.text_stop_adding_tasks,
+            )
+            if (progress != null) {
+                mViewDataBinding.tvPartBatchProgress.text = getString(
+                    R.string.text_part_batch_progress, progress.processedCount,
+                    progress.total, progress.addedCount, progress.skippedCount,
+                )
+            }
+        }
+        // 销毁宿主或清除请求时关闭旧弹窗；新宿主仍可重放同一请求。
+        mViewModel.batchStreamRequestLiveData.observe(this) { request ->
+            mBatchDialogJob?.cancel()
+            mBatchDialogJob = request?.let { lifecycleScope.launch { showBatchStreams(it) } }
+        }
+    }
+
+    /** 弹窗仅归当前 Activity 所有，结果按请求 ID 回传以防旧回调污染新批次。 */
+    private suspend fun showBatchStreams(request: VideoDetailsViewModel.BatchStreamRequest) {
+        val dialog = BiliPartDialog.buildDialog(
+            request.request.partTitle ?: getString(R.string.text_select_the_resource_to_download),
+            request.request.dash.video, request.request.dash.getAllAudio(),
+        )
+        try {
+            val result = dialog.showAndWaitResult(
+                this, "DetailBatchStreams_${request.id}", waitWhenInvisible = true,
+            )
+            val streams = (result as? ResultWrapper.Success)?.value?.let {
+                BatchDownloadResolver.StreamSelection(it.videoStream, it.audioStream)
+            }
+            mViewModel.onBatchStreamsSelected(request.id, streams)
+        } finally {
+            dialog.dismissAllowingStateLoss()
         }
     }
 

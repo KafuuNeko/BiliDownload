@@ -1,7 +1,6 @@
 package cc.kafuu.bilidownload.feature.viewbinding.view.fragment
 
 import android.app.AlertDialog
-import android.content.Intent
 import android.os.Bundle
 import android.view.HapticFeedbackConstants
 import android.view.View
@@ -21,6 +20,7 @@ import cc.kafuu.bilidownload.common.utils.DebounceQueue
 import cc.kafuu.bilidownload.databinding.IncludeMultiSelectActionsBinding
 import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.ConfirmDialog
 import cc.kafuu.bilidownload.feature.viewbinding.view.fragment.common.RVFragment
+import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.fragment.HistoryExportUiState
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.fragment.HistoryMultiSelectUiState
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.fragment.HistoryViewModel
 import kotlinx.coroutines.launch
@@ -68,10 +68,8 @@ class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::c
     private val mExportDirLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
-        uri ?: return@registerForActivityResult
-        val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-        requireContext().contentResolver.takePersistableUriPermission(uri, flags)
-        lifecycleScope.launch { mViewModel.executeBatchExport(uri) }
+        // 本次导出使用选择器的临时授权，不把持久化授权当作复制前置条件。
+        mViewModel.onExportDirectorySelected(uri)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -171,10 +169,7 @@ class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::c
             } else {
                 CommonLibs.getString(R.string.text_select_all)
             }
-            binding.btnHistoryDelete.isEnabled = state.hasSelection
-            binding.btnHistoryExport.isEnabled = state.hasSelection
-            binding.btnHistoryDelete.alpha = if (state.hasSelection) 1f else 0.5f
-            binding.btnHistoryExport.alpha = if (state.hasSelection) 1f else 0.5f
+            updateActionAvailability(state)
             renderMultiSelectActions(state)
             mAdapter?.updateMultiSelectState(
                 state.isEnabled,
@@ -182,13 +177,26 @@ class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::c
             )
         }
 
-        mViewModel.batchExportProgressLiveData.observe(viewLifecycleOwner) { progress ->
-            if (progress != null) {
-                showExportProgressDialog(progress.current, progress.total)
+        mViewModel.exportUiStateLiveData.observe(viewLifecycleOwner) { state ->
+            updateActionAvailability(mViewModel.multiSelectUiStateLiveData.value ?: HistoryMultiSelectUiState())
+            if (state is HistoryExportUiState.Exporting) {
+                showExportProgressDialog(state.progress.current, state.progress.total)
             } else {
                 dismissExportProgressDialog()
             }
         }
+    }
+
+    /** 选择目录与复制期间禁止重复导出或删除，按钮状态与业务守卫保持一致。 */
+    private fun updateActionAvailability(state: HistoryMultiSelectUiState) {
+        val binding = mMultiSelectActionsBinding ?: return
+        val idle = mViewModel.exportUiStateLiveData.value == HistoryExportUiState.Idle
+        binding.btnHistorySelectAll.isEnabled = idle
+        binding.btnHistoryClose.isEnabled = idle
+        binding.btnHistoryDelete.isEnabled = state.hasSelection && idle
+        binding.btnHistoryExport.isEnabled = state.hasSelection && idle
+        binding.btnHistoryDelete.alpha = if (binding.btnHistoryDelete.isEnabled) 1f else 0.5f
+        binding.btnHistoryExport.alpha = if (binding.btnHistoryExport.isEnabled) 1f else 0.5f
     }
 
     private fun renderMultiSelectActions(state: HistoryMultiSelectUiState) {
@@ -230,7 +238,9 @@ class DownloadHistoryFragment : RVFragment<HistoryViewModel>(HistoryViewModel::c
     override fun onViewAction(action: ViewAction) {
         when (action) {
             is HistoryViewModel.Companion.RequestExportDirAction -> {
-                mExportDirLauncher.launch(null)
+                if (mViewModel.consumeExportDirectoryRequest(action.requestId)) {
+                    mExportDirLauncher.launch(null)
+                }
             }
             else -> super.onViewAction(action)
         }

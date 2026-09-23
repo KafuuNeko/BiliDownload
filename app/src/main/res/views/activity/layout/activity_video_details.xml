@@ -157,68 +157,99 @@
             </androidx.core.widget.NestedScrollView>
 
             <LinearLayout
-                bindVisible="@{viewModel.multipleSelectModeLiveData}"
+                android:id="@+id/part_selection_actions"
+                bindVisible="@{viewModel.partSelectionLiveData.enabled}"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="@color/view_split_color" />
+                android:layout_margin="10dp"
+                android:background="@drawable/shape_floating_multi_select_bar"
+                android:orientation="vertical"
+                android:padding="8dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:baselineAligned="false"
-                    android:orientation="horizontal"
-                    android:paddingVertical="5dp">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-                    <LinearLayout
+                    <TextView
+                        android:id="@+id/tv_part_selection_count"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:textColor="@color/general_text_color"
+                        android:textSize="@dimen/size_text_common_size" />
+
+                    <TextView
+                        android:id="@+id/btn_part_select_all"
+                        bindEnable="@{viewModel.batchProgressLiveData == null}"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:background="?attr/selectableItemBackground"
                         android:gravity="center"
+                        android:paddingHorizontal="12dp"
+                        android:onClick="@{()->viewModel.onToggleSelectAllParts()}"
+                        android:text="@string/text_select_all"
+                        android:textColor="@color/primary_color" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tv_part_batch_progress"
+                    bindVisible="@{viewModel.batchProgressLiveData != null}"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="8dp"
+                    android:textColor="@color/general_sub_text_color"
+                    android:textSize="@dimen/size_text_card_content" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/btn_download_selected_parts"
+                        bindEnable="@{viewModel.batchProgressLiveData == null &amp;&amp; viewModel.partSelectionLiveData.hasSelection}"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:minHeight="48dp"
+                        android:background="@drawable/shape_button_general"
+                        android:gravity="center"
+                        android:padding="8dp"
                         android:onClick="@{()->viewModel.onDownloadMultipleSelectItems()}"
-                        android:orientation="vertical"
-                        tools:ignore="UseCompoundDrawables">
+                        android:text="@string/text_download_selected_parts"
+                        android:textColor="@color/common_white" />
 
-                        <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:contentDescription="@string/text_download"
-                            android:src="@drawable/ic_download" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/text_download"
-                            android:textColor="@color/general_text_color"
-                            android:textSize="@dimen/size_text_common_size" />
-                    </LinearLayout>
-
-                    <LinearLayout
+                    <TextView
+                        android:id="@+id/btn_download_all_parts"
+                        bindEnable="@{viewModel.batchProgressLiveData == null}"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
                         android:layout_weight="1"
+                        android:minHeight="48dp"
+                        android:background="@drawable/shape_button_action_secondary"
                         android:gravity="center"
-                        android:onClick="@{()->viewModel.onSwitchMultipleSelectMode()}"
-                        android:orientation="vertical"
-                        tools:ignore="UseCompoundDrawables">
+                        android:padding="8dp"
+                        android:onClick="@{()->viewModel.onDownloadAllParts()}"
+                        android:text="@string/text_download_all_video_parts"
+                        android:textColor="@color/general_text_color" />
 
-                        <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:contentDescription="@string/text_cancel"
-                            android:src="@drawable/ic_close" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/text_cancel"
-                            android:textColor="@color/general_text_color"
-                            android:textSize="@dimen/size_text_common_size" />
-                    </LinearLayout>
+                    <TextView
+                        android:id="@+id/btn_cancel_part_selection"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:minHeight="48dp"
+                        android:background="@drawable/shape_button_action_secondary"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:onClick="@{()->viewModel.onCancelPartSelection()}"
+                        android:text="@string/text_cancel"
+                        android:textColor="@color/general_text_color" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

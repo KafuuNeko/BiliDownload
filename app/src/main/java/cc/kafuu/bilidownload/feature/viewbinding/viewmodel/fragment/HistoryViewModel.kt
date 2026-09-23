@@ -3,6 +3,7 @@ package cc.kafuu.bilidownload.feature.viewbinding.viewmodel.fragment
 import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.download.BatchDeleteUseCase
@@ -18,12 +19,18 @@ import cc.kafuu.bilidownload.common.utils.DownloadFileNameUtils
 import cc.kafuu.bilidownload.feature.viewbinding.view.activity.HistoryDetailsActivity
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.common.RVViewModel
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-class HistoryViewModel : RVViewModel() {
+/** 管理下载历史选择和导出快照，目录选择与文件复制拥有明确的互斥状态。 */
+class HistoryViewModel(
+    private val mBatchExportUseCase: BatchExportUseCase = BatchExportUseCase(),
+) : RVViewModel() {
     val centerCrop = CenterCrop()
 
     private val mBatchDeleteUseCase = BatchDeleteUseCase()
-    private val mBatchExportUseCase = BatchExportUseCase()
     private var mDisplayedTasks: List<DownloadTaskWithVideoDetails> = emptyList()
 
     lateinit var latestDownloadTaskLiveData: LiveData<List<DownloadTaskWithVideoDetails>>
@@ -32,13 +39,14 @@ class HistoryViewModel : RVViewModel() {
     private val mMultiSelectUiStateLiveData = MutableLiveData(HistoryMultiSelectUiState())
     val multiSelectUiStateLiveData = mMultiSelectUiStateLiveData.liveData()
 
-    // 批量导出进度
-    private val mBatchExportProgressLiveData =
-        MutableLiveData<BatchExportUseCase.Progress?>(null)
-    val batchExportProgressLiveData = mBatchExportProgressLiveData.liveData()
+    private val mExportUiStateLiveData = MutableLiveData<HistoryExportUiState>(HistoryExportUiState.Idle)
+    val exportUiStateLiveData = mExportUiStateLiveData.liveData()
+    private var mPendingExportSources: List<BatchExportUseCase.Source> = emptyList()
+    private var mNextExportRequestId = 0L
 
     companion object {
-        class RequestExportDirAction : ViewAction()
+        /** 一次系统目录选择；宿主须先按 ID 消费请求，避免 LiveData 在重建时重放。 */
+        class RequestExportDirAction(val requestId: Long) : ViewAction()
     }
 
     fun initData(status: List<TaskStatus>) {
@@ -46,12 +54,13 @@ class HistoryViewModel : RVViewModel() {
         latestDownloadTaskLiveData = DownloadRepository.queryDownloadTasksDetailsLiveData(status)
     }
 
+    /** 展示数据与可选身份使用同一快照，先准备选择状态再通知列表绑定。 */
     fun updateHistoryList(tasks: List<DownloadTaskWithVideoDetails>) {
-        mDisplayedTasks = tasks
-        updateList(tasks.toMutableList())
+        mDisplayedTasks = tasks.toList()
         updateMultiSelectState {
             it.updateAvailableIds(tasks.mapTo(mutableSetOf()) { task -> task.downloadTask.id })
         }
+        updateList(tasks.toMutableList())
     }
 
     fun getStatusIcon(task: DownloadTaskWithVideoDetails) = CommonLibs.getDrawable(
@@ -75,7 +84,9 @@ class HistoryViewModel : RVViewModel() {
         return "${percent ?: 0}%"
     }
 
+    /** 多选时切换当前项，导出期间保持固定批次，普通模式进入资源详情。 */
     fun entryHistoryDetails(task: DownloadTaskWithVideoDetails) {
+        if (isExportBusy()) return
         if (currentMultiSelectState().isEnabled) {
             toggleItemSelection(task.downloadTask.id)
             return
@@ -86,27 +97,36 @@ class HistoryViewModel : RVViewModel() {
         )
     }
 
+    /** 长按统一消费触摸并切换当前任务，防止多选时落回普通点击。 */
     fun onItemLongClick(task: DownloadTaskWithVideoDetails): Boolean {
-        if (currentMultiSelectState().isEnabled) return false
+        if (isExportBusy()) return true
         toggleItemSelection(task.downloadTask.id)
         return true
     }
 
+    /** 空闲时退出多选，选择目录或复制期间保留批次状态。 */
     fun exitMultiSelectMode() {
+        if (isExportBusy()) return
         updateMultiSelectState(HistoryMultiSelectUiState::clearSelection)
     }
 
+    /** 按任务 ID 切换选择；导出期间忽略列表触摸。 */
     fun toggleItemSelection(taskId: Long) {
+        if (isExportBusy()) return
         updateMultiSelectState { it.toggleItem(taskId) }
     }
 
+    /** 空闲时在当前列表的全选与清空之间切换。 */
     fun toggleSelectAll() {
+        if (isExportBusy()) return
         updateMultiSelectState(HistoryMultiSelectUiState::toggleAll)
     }
 
     fun getSelectedCount(): Int = currentMultiSelectState().selectedIds.size
 
+    /** 固定待删除目标；正在选择导出目录或复制时不执行删除。 */
     suspend fun deleteSelectedTasks() {
+        if (isExportBusy()) return
         val selectedIds = currentMultiSelectState().selectedIds
         if (selectedIds.isEmpty()) return
         val targets = mDisplayedTasks.mapNotNull { task ->
@@ -125,60 +145,77 @@ class HistoryViewModel : RVViewModel() {
         exitMultiSelectMode()
     }
 
+    /** 请求目录前固定导出目标，列表刷新不会改变用户已确认的批次。 */
     fun tryBatchExport() {
-        if (!currentMultiSelectState().hasSelection) return
-        sendViewAction(RequestExportDirAction())
-    }
-
-    suspend fun executeBatchExport(treeUri: Uri) {
+        if (isExportBusy()) return
         val selectedIds = currentMultiSelectState().selectedIds
-        if (selectedIds.isEmpty()) return
-        val sources = mDisplayedTasks.mapNotNull { task ->
-            val taskId = task.downloadTask.id
-            if (taskId !in selectedIds) return@mapNotNull null
+        mPendingExportSources = mDisplayedTasks.filter { it.downloadTask.id in selectedIds }.map { task ->
             BatchExportUseCase.Source(
-                taskId = taskId,
+                taskId = task.downloadTask.id,
                 fileNameContext = DownloadFileNameUtils.TemplateContext(
                     videoName = task.title.ifBlank { task.downloadTask.biliBvid },
                     partName = task.partTitle.ifBlank { task.downloadTask.biliCid.toString() },
                 ),
             )
         }
+        if (mPendingExportSources.isEmpty()) return
+        // 进入互斥状态后再发送一次性事件，重复点击不会覆盖导出快照。
+        val requestId = ++mNextExportRequestId
+        mExportUiStateLiveData.value = HistoryExportUiState.SelectingDirectory(requestId)
+        sendViewAction(RequestExportDirAction(requestId))
+    }
 
-        val result = try {
-            mBatchExportUseCase.execute(treeUri, sources) { progress ->
-                mBatchExportProgressLiveData.postValue(progress)
-            }
-        } catch (_: Exception) {
-            BatchExportUseCase.Result.InvalidDestination
-        } finally {
-            mBatchExportProgressLiveData.postValue(null)
+    /** 目录选择事件只交付一次，屏幕旋转后不重复打开系统选择器。 */
+    fun consumeExportDirectoryRequest(requestId: Long): Boolean {
+        val state = mExportUiStateLiveData.value as? HistoryExportUiState.SelectingDirectory ?: return false
+        if (state.requestId != requestId || !state.launchPending) return false
+        mExportUiStateLiveData.value = state.copy(launchPending = false)
+        return true
+    }
+
+    /** 接收系统目录选择或取消；复制属于 ViewModel，旋转不会中断正在导出的文件。 */
+    fun onExportDirectorySelected(treeUri: Uri?) {
+        if (mExportUiStateLiveData.value !is HistoryExportUiState.SelectingDirectory) return
+        val sources = mPendingExportSources
+        mPendingExportSources = emptyList()
+        if (treeUri == null) {
+            mExportUiStateLiveData.value = HistoryExportUiState.Idle
+            return
         }
-
-        when (result) {
-            BatchExportUseCase.Result.NoExportableResources -> popMessage(
-                ToastMessageAction(CommonLibs.getString(R.string.batch_export_no_resource_message))
-            )
-
-            BatchExportUseCase.Result.InvalidDestination -> showBatchExportFailure()
-
-            is BatchExportUseCase.Result.Completed -> {
-                if (result.successCount > 0) {
-                    popMessage(
-                        ToastMessageAction(
-                            CommonLibs.getString(
-                                R.string.batch_export_success_message,
-                                result.successCount,
-                            )
-                        )
-                    )
-                } else {
-                    showBatchExportFailure()
+        mExportUiStateLiveData.value = HistoryExportUiState.Exporting(BatchExportUseCase.Progress(0, sources.size))
+        viewModelScope.launch {
+            try {
+                // 进度切回主线程后再继续，避免完成状态被 IO 线程的迟到 postValue 覆盖。
+                val result = mBatchExportUseCase.execute(treeUri, sources) { progress ->
+                    withContext(Dispatchers.Main.immediate) {
+                        mExportUiStateLiveData.value = HistoryExportUiState.Exporting(progress)
+                    }
                 }
-                exitMultiSelectMode()
+                showExportResult(result)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                showBatchExportFailure()
+            } finally {
+                mExportUiStateLiveData.value = HistoryExportUiState.Idle
             }
         }
     }
+
+    /** 部分成功准确展示跳过和失败数量，完成后清空本次选择。 */
+    private fun showExportResult(result: BatchExportUseCase.Result) {
+        val message = when (result) {
+            BatchExportUseCase.Result.NoExportableResources -> CommonLibs.getString(R.string.batch_export_no_resource_message)
+            BatchExportUseCase.Result.InvalidDestination -> CommonLibs.getString(R.string.batch_export_invalid_destination)
+            is BatchExportUseCase.Result.Completed -> {
+                updateMultiSelectState(HistoryMultiSelectUiState::clearSelection)
+                CommonLibs.getString(R.string.batch_export_result, result.successCount, result.skippedCount, result.failedCount)
+            }
+        }
+        popMessage(ToastMessageAction(message))
+    }
+
+    private fun isExportBusy(): Boolean = mExportUiStateLiveData.value != HistoryExportUiState.Idle
 
     private fun showBatchExportFailure() {
         popMessage(

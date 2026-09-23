@@ -12,6 +12,9 @@ import cc.kafuu.bilidownload.common.model.bili.BiliVideoPartModel
 import cc.kafuu.bilidownload.common.network.IServerCallback
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
@@ -64,6 +67,15 @@ class BatchDownloadUseCase(
         ) : Result
     }
 
+    /** 已完成处理的分 P 数量；跳过数包括解析失败、规格不匹配和已有活动任务。 */
+    data class Progress(
+        val processedCount: Int,
+        val total: Int,
+        val addedCount: Int,
+        val skippedCount: Int,
+    )
+
+    /** 解析列表资源并确定下载范围，按分 P 身份去重后逐项入队。 */
     suspend fun execute(
         sources: List<BiliResourceModel>,
         selectScope: suspend (ScopeSelectionRequest) -> DownloadScope?,
@@ -89,6 +101,23 @@ class BatchDownloadUseCase(
         )
     }
 
+    /**
+     * 使用详情页已取得的分 P 快照建任务，无需再次解析稿件。
+     *
+     * 单项失败计入跳过数；协程取消会停止后续入队，已创建的任务继续由下载服务管理。
+     * [onProgress] 在调用协程内回报已处理数量，首次规格选择取消时返回 [Result.Cancelled]。
+     */
+    suspend fun executeParts(
+        parts: List<BiliVideoPartModel>,
+        selectStreams: suspend (StreamSelectionRequest) -> BatchDownloadResolver.StreamSelection?,
+        onProgress: (Progress) -> Unit = {},
+    ): Result = enqueueParts(
+        parts = parts.distinctBy { it.bvid to it.cid },
+        resolveFailureCount = 0,
+        selectStreams = selectStreams,
+        onProgress = onProgress,
+    )
+
     private suspend fun selectDownloadScope(
         result: BatchDownloadResolver.ResolveResult,
         selectScope: suspend (ScopeSelectionRequest) -> DownloadScope?,
@@ -106,79 +135,67 @@ class BatchDownloadUseCase(
         )
     }
 
+    /** 获取首个可用规格后逐项处理，避免大批次预加载全部播放流及单项失败中断整批。 */
     private suspend fun enqueueParts(
         parts: List<BiliVideoPartModel>,
         resolveFailureCount: Int,
         selectStreams: suspend (
             StreamSelectionRequest
         ) -> BatchDownloadResolver.StreamSelection?,
+        onProgress: (Progress) -> Unit = {},
     ): Result {
-        if (parts.isEmpty()) {
-            return Result.Completed(
-                addedCount = 0,
-                skippedCount = resolveFailureCount,
-                requestedPartCount = 0,
-            )
-        }
-
         var skippedCount = resolveFailureCount
-        var firstPlayableIndex = -1
-        var firstDash: BiliPlayStreamDash? = null
-        for ((index, part) in parts.withIndex()) {
-            when (val result = loadDash(part)) {
-                is ResultWrapper.Success -> {
-                    firstPlayableIndex = index
-                    firstDash = result.value
-                    break
-                }
-
-                is ResultWrapper.Error -> skippedCount++
-            }
-        }
-
-        val selectionDash = firstDash
-            ?: return Result.Completed(
-                addedCount = 0,
-                skippedCount = skippedCount,
-                requestedPartCount = parts.size,
-            )
-        val preferredStreams = selectStreams(
-            StreamSelectionRequest(partTitle = null, dash = selectionDash)
-        ) ?: return Result.Cancelled
-
         var addedCount = 0
-        for (index in firstPlayableIndex until parts.size) {
-            val part = parts[index]
-            val dash = if (index == firstPlayableIndex) {
-                selectionDash
+        var preferred: BatchDownloadResolver.StreamSelection? = null
+        onProgress(Progress(0, parts.size, addedCount, skippedCount))
+
+        // 输入已去重且固定；任何迟到的页面刷新都不改变本批次目标。
+        for ((index, part) in parts.withIndex()) {
+            currentCoroutineContext().ensureActive()
+            val dash = loadAvailableDash(part)
+            if (dash == null) {
+                skippedCount++
             } else {
-                when (val result = loadDash(part)) {
-                    is ResultWrapper.Success -> result.value
-                    is ResultWrapper.Error -> {
-                        skippedCount++
-                        continue
-                    }
+                // 第一个可播放分 P 决定规格，后续仅在配置要求时再次询问。
+                val streams = if (preferred == null) {
+                    selectStreams(StreamSelectionRequest(null, dash))
+                        ?.also { preferred = it } ?: return Result.Cancelled
+                } else {
+                    resolveStreams(part, dash, preferred, selectStreams)
                 }
+                currentCoroutineContext().ensureActive()
+                val created = streams?.let { enqueueIfAvailable(part, it) } ?: false
+                if (created) addedCount++ else skippedCount++
             }
-
-            val streams = resolveStreams(part, dash, preferredStreams, selectStreams)
-            if (streams == null) {
-                skippedCount++
-                continue
-            }
-            val resources = buildDashModels(streams)
-            if (resources.isEmpty()) {
-                skippedCount++
-                continue
-            }
-
-            val taskCreated = runCatching {
-                enqueueDownload(part, resources)
-            }.getOrDefault(false)
-            if (taskCreated) addedCount++ else skippedCount++
+            onProgress(Progress(index + 1, parts.size, addedCount, skippedCount))
         }
-
         return Result.Completed(addedCount, skippedCount, parts.size)
+    }
+
+    /** 将单项网络或解析错误转为跳过，取消始终交给调用方处理。 */
+    private suspend fun loadAvailableDash(part: BiliVideoPartModel): BiliPlayStreamDash? = try {
+        (loadDash(part) as? ResultWrapper.Success)?.value
+            ?.takeIf { !it.video.isNullOrEmpty() || it.getAllAudio().isNotEmpty() }
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (_: Exception) {
+        null
+    }
+
+    /** 只提交含有效资源的任务，保留底层去重结果与取消语义。 */
+    private suspend fun enqueueIfAvailable(
+        part: BiliVideoPartModel,
+        streams: BatchDownloadResolver.StreamSelection,
+    ): Boolean {
+        val resources = buildDashModels(streams)
+        if (resources.isEmpty()) return false
+        return try {
+            enqueueDownload(part, resources)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            false
+        }
     }
 
     private suspend fun resolveStreams(
@@ -227,7 +244,7 @@ class BatchDownloadUseCase(
             part: BiliVideoPartModel
         ): ResultWrapper<BiliPlayStreamDash, String> =
             suspendCancellableCoroutine { continuation ->
-                NetworkManager.biliVideoRepository.requestPlayStreamDash(
+                val call = NetworkManager.biliVideoRepository.requestPlayStreamDash(
                     part.bvid,
                     part.cid,
                     object : IServerCallback<BiliPlayStreamDash> {
@@ -249,6 +266,7 @@ class BatchDownloadUseCase(
                         }
                     }
                 )
+                continuation.invokeOnCancellation { call.cancel() }
             }
 
         private suspend fun enqueuePart(

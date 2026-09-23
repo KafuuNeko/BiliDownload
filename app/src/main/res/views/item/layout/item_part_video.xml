@@ -58,13 +58,13 @@
 
             <ImageView
                 android:id="@+id/iv_danmaku"
-                bindVisible="@{viewModel.loadingVideoPartLiveData != data &amp;&amp; viewModel.downloadingDanmakuPartLiveData != data &amp;&amp; viewModel.downloadingSubtitlePartLiveData != data &amp;&amp; !viewModel.multipleSelectModeLiveData}"
+                bindVisible="@{viewModel.loadingVideoPartLiveData != data &amp;&amp; viewModel.downloadingDanmakuPartLiveData != data &amp;&amp; viewModel.downloadingSubtitlePartLiveData != data &amp;&amp; !viewModel.partSelectionLiveData.enabled}"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_marginStart="5dp"
                 android:layout_marginEnd="5dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="下载弹幕"
+                android:contentDescription="@string/text_download_danmaku"
                 android:onClick="@{()->viewModel.onDownloadDanmaku(data)}"
                 android:padding="2dp"
                 android:src="@drawable/ic_danmaku" />
@@ -79,7 +79,7 @@
 
             <ImageView
                 android:id="@+id/iv_subtitle"
-                bindVisible="@{viewModel.loadingVideoPartLiveData != data &amp;&amp; viewModel.downloadingDanmakuPartLiveData != data &amp;&amp; viewModel.downloadingSubtitlePartLiveData != data &amp;&amp; !viewModel.multipleSelectModeLiveData}"
+                bindVisible="@{viewModel.loadingVideoPartLiveData != data &amp;&amp; viewModel.downloadingDanmakuPartLiveData != data &amp;&amp; viewModel.downloadingSubtitlePartLiveData != data &amp;&amp; !viewModel.partSelectionLiveData.enabled}"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_marginEnd="5dp"
@@ -98,7 +98,7 @@
                 tools:visibility="gone" />
 
             <ImageView
-                bindVisible="@{viewModel.loadingVideoPartLiveData != data &amp;&amp; viewModel.downloadingDanmakuPartLiveData != data &amp;&amp; !viewModel.multipleSelectModeLiveData}"
+                bindVisible="@{viewModel.loadingVideoPartLiveData != data &amp;&amp; viewModel.downloadingDanmakuPartLiveData != data &amp;&amp; !viewModel.partSelectionLiveData.enabled}"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_marginEnd="10dp"
@@ -106,12 +106,12 @@
                 android:src="@drawable/ic_arrow_right" />
 
             <ImageView
-                bindVisible="@{viewModel.loadingVideoPartLiveData != data &amp;&amp; viewModel.downloadingDanmakuPartLiveData != data &amp;&amp; viewModel.multipleSelectModeLiveData}"
+                bindVisible="@{viewModel.loadingVideoPartLiveData != data &amp;&amp; viewModel.downloadingDanmakuPartLiveData != data &amp;&amp; viewModel.partSelectionLiveData.enabled}"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_marginHorizontal="10dp"
                 android:importantForAccessibility="no"
-                android:src="@{viewModel.multipleSelectItemsLiveData.contains(data)?@drawable/ic_checked:@drawable/ic_uncheck}"
+                android:src="@{viewModel.partSelectionLiveData.isSelected(data)?@drawable/ic_checked:@drawable/ic_uncheck}"
                 tools:visibility="gone" />
 
             <ProgressBar

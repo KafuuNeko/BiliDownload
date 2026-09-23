@@ -123,7 +123,6 @@
     <string name="iv_clear_manuscript_search_content_description">Clear user video search</string>
     <string name="success_copy_video_info">You have successfully copied the video information to the clipboard</string>
     <string name="video_details_format">Title: %1$s\nDescription: %2$s</string>
-    <string name="text_download">Download</string>
     <string name="text_select_the_resource_to_download">Select the resource to download</string>
     <string name="tv_clear_data">Clear data</string>
     <string name="clear_data_message">Warning! This operation will clear all completed download records, and it cannot be undone. Please proceed with caution!</string>
@@ -204,7 +203,6 @@
     <string name="batch_delete_confirm_message">Are you sure to delete the selected %d download records? This will immediately remove the records and corresponding data, and this action cannot be undone.</string>
     <string name="batch_export_progress_title">Exporting…</string>
     <string name="batch_export_progress_message">Exporting %1$d / %2$d</string>
-    <string name="batch_export_success_message">Successfully exported %d resources</string>
     <string name="batch_export_failed_message">Export failed: %s</string>
     <string name="batch_export_no_resource_message">No exportable resources found for the selected items</string>
     <string name="text_select_all">Select All</string>
@@ -269,4 +267,12 @@
     <string name="video_stats_views">%1$s views</string>
     <string name="video_stats_likes">%1$s likes</string>
     <string name="video_stats_favorites">%1$s favorites</string>
+    <string name="text_download_selected_parts">Download selected</string>
+    <string name="text_download_all_video_parts">Download all</string>
+    <string name="text_part_selection_count">Selected %1$d / %2$d</string>
+    <string name="text_stop_adding_tasks">Stop adding</string>
+    <string name="text_part_batch_progress">Processed %1$d / %2$d · Added %3$d · Skipped %4$d</string>
+    <string name="text_batch_download_cancelled">Stopped adding. Already added: %1$d; these downloads will continue.</string>
+    <string name="batch_export_invalid_destination">Cannot write to this folder. Please choose another folder.</string>
+    <string name="batch_export_result">Exported %1$d, skipped %2$d, failed %3$d.</string>
 </resources>

@@ -8,13 +8,12 @@ import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.core.viewbinding.CoreViewModel
+import cc.kafuu.bilidownload.common.download.BatchDownloadUseCase
 import cc.kafuu.bilidownload.common.download.BatchDownloadResolver
 import cc.kafuu.bilidownload.common.ext.limit
 import cc.kafuu.bilidownload.common.ext.liveData
 import cc.kafuu.bilidownload.common.manager.AccountManager
 import cc.kafuu.bilidownload.common.manager.DownloadManager
-import cc.kafuu.bilidownload.common.model.AppModel
-import cc.kafuu.bilidownload.common.model.BatchQualityMismatchMode
 import cc.kafuu.bilidownload.common.model.LoadingStatus
 import cc.kafuu.bilidownload.common.model.ResultWrapper
 import cc.kafuu.bilidownload.common.model.action.ViewAction
@@ -40,11 +39,17 @@ import cc.kafuu.bilidownload.common.utils.SubtitleExportUtils
 import cc.kafuu.bilidownload.common.utils.TimeUtils
 import cc.kafuu.bilidownload.feature.viewbinding.view.activity.PersonalDetailsActivity
 import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.BiliPartDialog
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
-class VideoDetailsViewModel : CoreViewModel() {
+/** 管理视频详情、分 P 选择与页面内批量建任务；已入队任务由下载服务继续执行。 */
+class VideoDetailsViewModel(
+    private val mBatchDownloadUseCase: BatchDownloadUseCase = BatchDownloadUseCase(),
+) : CoreViewModel() {
     companion object {
         class SaveCoverAction(
             val coverUrl: String,
@@ -92,13 +97,20 @@ class VideoDetailsViewModel : CoreViewModel() {
     private val mLoadingVideoPartLiveData = MutableLiveData<BiliVideoPartModel?>()
     val loadingVideoPartLiveData = mLoadingVideoPartLiveData.liveData()
 
-    // 是否处于多选模式
-    private val mMultipleSelectModeLiveData = MutableLiveData(false)
-    val multipleSelectModeLiveData = mMultipleSelectModeLiveData.liveData()
+    private val mPartSelectionLiveData = MutableLiveData(VideoPartSelectionUiState())
+    val partSelectionLiveData = mPartSelectionLiveData.liveData()
 
-    // 多选模式下选中的项目
-    private val mMultipleSelectItemsLiveData = MutableLiveData<Set<BiliVideoPartModel>>()
-    val multipleSelectItemsLiveData = mMultipleSelectItemsLiveData.liveData()
+    private var mBatchDownloadJob: Job? = null
+    private val mBatchProgressLiveData = MutableLiveData<BatchDownloadUseCase.Progress?>(null)
+    val batchProgressLiveData = mBatchProgressLiveData.liveData()
+
+    /** 可重放的规格选择请求；ID 用于拒绝页面重建前的迟到结果。 */
+    data class BatchStreamRequest(val id: Long, val request: BatchDownloadUseCase.StreamSelectionRequest)
+
+    private var mNextBatchRequestId = 0L
+    private var mPendingBatchStreams: CompletableDeferred<BatchDownloadResolver.StreamSelection?>? = null
+    private val mBatchStreamRequestLiveData = MutableLiveData<BatchStreamRequest?>(null)
+    val batchStreamRequestLiveData = mBatchStreamRequestLiveData.liveData()
 
     // 最近被改变状态的列表索引
     private val mLatestChangeIndexLiveData = MutableLiveData(-1)
@@ -112,7 +124,9 @@ class VideoDetailsViewModel : CoreViewModel() {
     private val mDownloadingSubtitlePartLiveData = MutableLiveData<BiliVideoPartModel?>()
     val downloadingSubtitlePartLiveData = mDownloadingSubtitlePartLiveData.liveData()
 
+    /** 首次加载番剧分集，配置重建时保留正在处理的列表与选择。 */
     fun initData(media: BiliMediaModel) {
+        if (mBiliResourceModelLiveData.value != null) return
         mLoadingStatusLiveData.value = LoadingStatus.loadingStatus()
         mBiliResourceModelLiveData.value = media
         mVideoStatsLiveData.value = null
@@ -124,7 +138,7 @@ class VideoDetailsViewModel : CoreViewModel() {
                 message: String,
                 data: BiliSeasonData
             ) {
-                mBiliVideoPageListLiveData.postValue(data.episodes.map {
+                updateParts(data.episodes.map {
                     BiliVideoPartModel(
                         bvid = it.bvid,
                         cid = it.cid,
@@ -153,6 +167,7 @@ class VideoDetailsViewModel : CoreViewModel() {
 
     /** 先展示列表快照；详情响应成功后更新为最新统计，接口缺项沿用已有数值。 */
     fun initData(video: BiliVideoModel, stats: VideoStats = video.stats) {
+        if (mBiliResourceModelLiveData.value != null) return
         mLoadingStatusLiveData.value = LoadingStatus.loadingStatus()
         mBiliResourceModelLiveData.value = video
         mVideoStatsLiveData.value = stats.normalized()
@@ -160,7 +175,7 @@ class VideoDetailsViewModel : CoreViewModel() {
             override fun onSuccess(httpCode: Int, code: Int, message: String, data: BiliVideoData) {
                 mVideoStatsLiveData.value = data.stat?.toVideoStats()
                     ?.withFallback(mVideoStatsLiveData.value) ?: mVideoStatsLiveData.value
-                mBiliVideoPageListLiveData.postValue(data.pages.map {
+                updateParts(data.pages.map {
                     BiliVideoPartModel(
                         bvid = video.bvid,
                         cid = it.cid,
@@ -181,26 +196,31 @@ class VideoDetailsViewModel : CoreViewModel() {
         NetworkManager.biliVideoRepository.requestVideoDetail(video.bvid, callback)
     }
 
+    /** 更新详情快照并保留仍有效的选择，先同步可选身份再发布列表。 */
+    private fun updateParts(parts: List<BiliVideoPartModel>) {
+        mPartSelectionLiveData.value = currentPartSelection().updateParts(parts)
+        mBiliVideoPageListLiveData.value = parts
+    }
+
+    /** 返回优先停止继续建任务，其次退出多选；已入队任务不受影响。 */
     fun onBack(): Boolean {
-        if (mMultipleSelectModeLiveData.value == true) {
-            onSwitchMultipleSelectMode()
+        if (mBatchProgressLiveData.value != null) {
+            cancelBatchDownload()
+            return true
+        }
+        if (currentPartSelection().enabled) {
+            clearPartSelection()
             return true
         }
         return false
     }
 
-    @Synchronized
+    /** 多选时切换稳定分 P 身份，普通模式继续使用单项规格选择。 */
     fun onPartSelected(item: BiliVideoPartModel) {
-        if (loadingVideoPartLiveData.value != null) return
-
-        if (mMultipleSelectModeLiveData.value == true) {
-            // 多选模式操作
-            (mMultipleSelectItemsLiveData.value?.toMutableSet() ?: mutableSetOf()).apply {
-                if (contains(item)) remove(item) else add(item)
-            }.also {
-                mMultipleSelectItemsLiveData.value = it
-            }
-            mLatestChangeIndexLiveData.value = mBiliVideoPageListLiveData.value?.indexOf(item)
+        if (loadingVideoPartLiveData.value != null || mBatchProgressLiveData.value != null) return
+        if (currentPartSelection().enabled) {
+            mPartSelectionLiveData.value = currentPartSelection().toggle(item)
+            mLatestChangeIndexLiveData.value = mBiliVideoPageListLiveData.value?.indexOf(item) ?: -1
             return
         }
 
@@ -245,122 +265,100 @@ class VideoDetailsViewModel : CoreViewModel() {
         )
     }
 
-    /**
-     * 用户长按表项
-     */
+    /** 长按进入多选并切换该项；重复长按不会意外关闭整栏。 */
     fun onItemLongClick(item: BiliVideoPartModel): Boolean {
-        onSwitchMultipleSelectMode()
-        if (mMultipleSelectModeLiveData.value == true) {
-            onPartSelected(item)
-        }
+        if (mBatchProgressLiveData.value != null || loadingVideoPartLiveData.value != null) return true
+        mPartSelectionLiveData.value = currentPartSelection().toggle(item)
+        mLatestChangeIndexLiveData.value = -1
         return true
     }
 
-    /**
-     * 切换多选模式
-     */
-    fun onSwitchMultipleSelectMode() {
-        mMultipleSelectModeLiveData.value = !(mMultipleSelectModeLiveData.value ?: false)
-        mMultipleSelectItemsLiveData.value = emptySet()
+    /** 全选当前完整分 P 列表，或清空当前选择。 */
+    fun onToggleSelectAllParts() {
+        if (mBatchProgressLiveData.value != null) return
+        mPartSelectionLiveData.value = currentPartSelection().toggleAll()
         mLatestChangeIndexLiveData.value = -1
     }
 
-    /**
-     * 下载多选选中的项目
-     */
-    fun onDownloadMultipleSelectItems() = viewModelScope.launch {
-        val partList = mMultipleSelectItemsLiveData.value?.toList() ?: return@launch
-        if (partList.isEmpty()) return@launch
-        // 请求所有选中的片段dash
-        val dashList = partList.map {
-            when (val result = loadPartDash(it)) {
-                is ResultWrapper.Error -> {
-                    popMessage(ToastMessageAction(result.error, Toast.LENGTH_SHORT))
-                    return@launch
-                }
-
-                is ResultWrapper.Success -> result.value
-            }
-        }
-        // 首次询问用户下载的资源(使用第一个资源)
-        val (defaultVideoStream, defaultAudioStream) = (popSelectedVideoPartDialog(
-            title = CommonLibs.getString(R.string.text_select_the_resource_to_download),
-            dash = dashList.first()
-        ) as? ResultWrapper.Success)?.value?.let {
-            it.videoStream to it.audioStream
-        } ?: kotlin.run {
-            mLatestChangeIndexLiveData.value = -1
-            return@launch
-        }
-        var addedCount = 0
-        var skippedCount = 0
-        // 处理用户选择的每一个片段
-        partList.forEachIndexed { index, part ->
-            val dash = dashList[index]
-            val selection = resolveBatchStreams(
-                part = part,
-                dash = dash,
-                preferredVideo = defaultVideoStream,
-                preferredAudio = defaultAudioStream
-            )
-            if (selection == null) {
-                skippedCount++
-            } else if (startDownload(
-                    part,
-                    selection.videoStream,
-                    selection.audioStream
-                )
-            ) {
-                addedCount++
-            } else {
-                skippedCount++
-            }
-        }
-        popMessage(
-            ToastMessageAction(
-                CommonLibs.getString(
-                    R.string.text_batch_download_result,
-                    addedCount,
-                    skippedCount
-                ),
-                Toast.LENGTH_LONG
-            )
-        )
-        // 执行完所有操作后，退出多选模式
-        onSwitchMultipleSelectMode()
+    /** 取消按钮在处理中停止后续建任务，空闲时退出多选。 */
+    fun onCancelPartSelection() {
+        if (mBatchProgressLiveData.value != null) cancelBatchDownload() else clearPartSelection()
     }
 
-    private suspend fun resolveBatchStreams(
-        part: BiliVideoPartModel,
-        dash: BiliPlayStreamDash,
-        preferredVideo: BiliPlayStreamResource?,
-        preferredAudio: BiliPlayStreamResource?
-    ): BatchDownloadResolver.StreamSelection? {
-        BatchDownloadResolver.selectExactStreams(
-            preferredVideo,
-            preferredAudio,
-            dash
-        )?.let { return it }
+    /** 按详情原始顺序下载选中项，选择时的点击顺序不改变任务顺序。 */
+    fun onDownloadMultipleSelectItems() {
+        startPartBatch(mBiliVideoPageListLiveData.value.orEmpty().filter(currentPartSelection()::isSelected))
+    }
 
-        return when (AppModel.batchQualityMismatchMode) {
-            BatchQualityMismatchMode.AUTO_FALLBACK ->
-                BatchDownloadResolver.selectCompatibleStreams(
-                    preferredVideo,
-                    preferredAudio,
-                    dash
-                )
+    /** 长按后可直接下载当前全部分 P，无需预先全选。 */
+    fun onDownloadAllParts() {
+        startPartBatch(mBiliVideoPageListLiveData.value.orEmpty())
+    }
 
-            BatchQualityMismatchMode.ASK -> {
-                val result = popSelectedVideoPartDialog(part.name, dash)
-                    as? ResultWrapper.Success ?: return null
-                BatchDownloadResolver.StreamSelection(
-                    result.value.videoStream,
-                    result.value.audioStream
+    /** 固定本批次输入并防止重入，完成后统一发布用例的真实统计。 */
+    private fun startPartBatch(parts: List<BiliVideoPartModel>) {
+        if (parts.isEmpty() || mBatchProgressLiveData.value != null || loadingVideoPartLiveData.value != null) return
+        val snapshot = parts.toList()
+        mBatchProgressLiveData.value = BatchDownloadUseCase.Progress(0, snapshot.size, 0, 0)
+        mBatchDownloadJob = viewModelScope.launch {
+            try {
+                // 规格弹窗以可重放状态交给宿主，旋转不会丢失等待中的批次。
+                val result = mBatchDownloadUseCase.executeParts(
+                    parts = snapshot,
+                    selectStreams = ::selectBatchStreams,
+                    onProgress = { mBatchProgressLiveData.value = it },
                 )
+                if (result is BatchDownloadUseCase.Result.Completed) {
+                    popMessage(ToastMessageAction(CommonLibs.getString(
+                        R.string.text_batch_download_result, result.addedCount, result.skippedCount,
+                    ), Toast.LENGTH_LONG))
+                    clearPartSelection()
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } finally {
+                mBatchProgressLiveData.value = null
             }
-
-            BatchQualityMismatchMode.SKIP -> null
         }
+    }
+
+    /** 取消只停止继续提交，明确告知已经加入的任务仍在下载队列中。 */
+    private fun cancelBatchDownload() {
+        val progress = mBatchProgressLiveData.value ?: return
+        mBatchDownloadJob?.cancel()
+        popMessage(ToastMessageAction(CommonLibs.getString(
+            R.string.text_batch_download_cancelled, progress.addedCount,
+        ), Toast.LENGTH_LONG))
+    }
+
+    /** 等待宿主选流；清理请求时同步通知宿主关闭失效弹窗。 */
+    private suspend fun selectBatchStreams(
+        request: BatchDownloadUseCase.StreamSelectionRequest,
+    ): BatchDownloadResolver.StreamSelection? {
+        val result = CompletableDeferred<BatchDownloadResolver.StreamSelection?>()
+        mPendingBatchStreams = result
+        mBatchStreamRequestLiveData.value = BatchStreamRequest(++mNextBatchRequestId, request)
+        return try {
+            result.await()
+        } finally {
+            mPendingBatchStreams = null
+            mBatchStreamRequestLiveData.value = null
+        }
+    }
+
+    /** 仅接收当前规格请求的结果，取消初始选择会保留多选状态。 */
+    fun onBatchStreamsSelected(requestId: Long, streams: BatchDownloadResolver.StreamSelection?) {
+        if (mBatchStreamRequestLiveData.value?.id != requestId) return
+        mPendingBatchStreams?.complete(streams)
+    }
+
+    private fun currentPartSelection(): VideoPartSelectionUiState =
+        mPartSelectionLiveData.value ?: VideoPartSelectionUiState()
+
+    /** 清空选择并通知复用中的分 P 行同步刷新。 */
+    private fun clearPartSelection() {
+        mPartSelectionLiveData.value = currentPartSelection().clear()
+        mLatestChangeIndexLiveData.value = -1
     }
 
     /**

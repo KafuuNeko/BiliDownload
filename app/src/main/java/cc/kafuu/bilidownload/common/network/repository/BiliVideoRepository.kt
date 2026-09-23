@@ -47,14 +47,15 @@ class BiliVideoRepository(
         ).reduce { acc, flag -> acc or flag }
     }
 
+    /** 请求分 P 播放流，返回原始请求供页面或批量用例在取消时释放网络操作。 */
     fun requestPlayStreamDash(
         bvid: String,
         cid: Long,
         callback: IServerCallback<BiliPlayStreamDash>
-    ) {
-        biliApiService
-            .requestPlayStream(null, bvid, cid, null, FNVAL_FLAGS)
-            .enqueue(callback) { _, data -> data.dash }
+    ): Call<BiliRespond<BiliPlayStreamData>> {
+        return biliApiService.requestPlayStream(null, bvid, cid, null, FNVAL_FLAGS).also { call ->
+            call.enqueue(callback) { _, data -> data.dash }
+        }
     }
 
     fun requestPlayStreamData(
