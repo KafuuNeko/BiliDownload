@@ -25,6 +25,7 @@ import cc.kafuu.bilidownload.common.model.bili.BiliResourceModel
 import cc.kafuu.bilidownload.common.model.bili.BiliUpData
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoPartModel
+import cc.kafuu.bilidownload.common.model.bili.VideoStats
 import cc.kafuu.bilidownload.common.network.IServerCallback
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliXmlDanmaku
@@ -74,6 +75,9 @@ class VideoDetailsViewModel : CoreViewModel() {
     private val mBiliResourceModelLiveData = MutableLiveData<BiliResourceModel>()
     val biliResourceModelLiveData = mBiliResourceModelLiveData.liveData()
 
+    private val mVideoStatsLiveData = MutableLiveData<VideoStats?>(null)
+    val videoStatsLiveData = mVideoStatsLiveData.liveData()
+
     private val mBiliVideoPageListLiveData = MutableLiveData<List<BiliVideoPartModel>>()
     val biliVideoPageListLiveData = mBiliVideoPageListLiveData.liveData()
 
@@ -111,6 +115,7 @@ class VideoDetailsViewModel : CoreViewModel() {
     fun initData(media: BiliMediaModel) {
         mLoadingStatusLiveData.value = LoadingStatus.loadingStatus()
         mBiliResourceModelLiveData.value = media
+        mVideoStatsLiveData.value = null
 
         val callback = object : IServerCallback<BiliSeasonData> {
             override fun onSuccess(
@@ -146,11 +151,15 @@ class VideoDetailsViewModel : CoreViewModel() {
         }
     }
 
-    fun initData(video: BiliVideoModel) {
+    /** 先展示列表快照；详情响应成功后更新为最新统计，接口缺项沿用已有数值。 */
+    fun initData(video: BiliVideoModel, stats: VideoStats = video.stats) {
         mLoadingStatusLiveData.value = LoadingStatus.loadingStatus()
         mBiliResourceModelLiveData.value = video
+        mVideoStatsLiveData.value = stats.normalized()
         val callback = object : IServerCallback<BiliVideoData> {
             override fun onSuccess(httpCode: Int, code: Int, message: String, data: BiliVideoData) {
+                mVideoStatsLiveData.value = data.stat?.toVideoStats()
+                    ?.withFallback(mVideoStatsLiveData.value) ?: mVideoStatsLiveData.value
                 mBiliVideoPageListLiveData.postValue(data.pages.map {
                     BiliVideoPartModel(
                         bvid = video.bvid,

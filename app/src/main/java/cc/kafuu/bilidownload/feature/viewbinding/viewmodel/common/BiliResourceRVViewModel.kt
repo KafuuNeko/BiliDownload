@@ -122,8 +122,10 @@ open class BiliResourceRVViewModel : BiliRVViewModel() {
         mVideoStatsLiveData.value = emptyMap()
     }
 
+    /** 将列表已展示的补齐统计随原稿件传入详情，避免页面打开后先退回未知值。 */
     fun enterDetails(element: BiliVideoModel) {
-        startActivity(VideoDetailsActivity::class.java, VideoDetailsActivity.buildIntent(element))
+        val stats = element.stats.withFallback(mVideoStatsLiveData.value?.get(element.bvid))
+        startActivity(VideoDetailsActivity::class.java, VideoDetailsActivity.buildIntent(element, stats))
     }
 
     fun enterDetails(element: BiliMediaModel) {

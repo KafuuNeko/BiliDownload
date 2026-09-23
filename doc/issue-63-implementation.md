@@ -13,6 +13,7 @@
 - 卡片时长移到封面角标，统计使用原简介行；全部未知时保留简介。宽度不足时优先隐藏收藏，保留播放与点赞。
 - 中文按万/亿、其他语言按 K/M/B 缩写，向下保留最多一位小数；无障碍描述保留完整计数。
 - 使用独立统计快照和局部 payload 刷新，不替换原视频对象，保留多选身份。
+- 点击普通视频进入详情页时携带列表当前显示的统计快照；加载期间展示播放、点赞和收藏数，详情接口返回后更新已有数值，缺项沿用快照。番剧/影视详情不显示这组统计。
 
 本次没有修改数据库、版本号或依赖，也没有增加可选的显示开关或弹幕/评论展示。
 
@@ -25,10 +26,11 @@
 | 可取消的详情统计请求 | [BiliVideoRepository](../app/src/main/java/cc/kafuu/bilidownload/common/network/repository/BiliVideoRepository.kt) |
 | 可见范围调度与页面状态 | [BiliResourceRVFragment](../app/src/main/java/cc/kafuu/bilidownload/feature/viewbinding/view/fragment/common/BiliResourceRVFragment.kt)、[BiliResourceRVViewModel](../app/src/main/java/cc/kafuu/bilidownload/feature/viewbinding/viewmodel/common/BiliResourceRVViewModel.kt) |
 | 卡片、局部更新和数值格式 | [布局](../app/src/main/res/views/item/layout/item_bili_video.xml)、[VideoStatsView](../app/src/main/java/cc/kafuu/bilidownload/feature/viewbinding/view/common/VideoStatsView.kt)、[Adapter](../app/src/main/java/cc/kafuu/bilidownload/common/adapter/BiliResourceRVAdapter.kt)、[VideoCountFormatter](../app/src/main/java/cc/kafuu/bilidownload/common/utils/VideoCountFormatter.kt) |
+| 详情页统计展示与刷新 | [布局](../app/src/main/res/views/activity/layout/activity_video_details.xml)、[VideoDetailsActivity](../app/src/main/java/cc/kafuu/bilidownload/feature/viewbinding/view/activity/VideoDetailsActivity.kt)、[VideoDetailsViewModel](../app/src/main/java/cc/kafuu/bilidownload/feature/viewbinding/viewmodel/activity/VideoDetailsViewModel.kt) |
 
 ## 验证结果
 
-验证日期：2026-09-22。
+初次验证日期：2026-09-22；详情页补充验证日期：2026-09-23。
 
 | 验证 | 结果 |
 | --- | --- |
@@ -39,12 +41,13 @@
 | 最终布局修正后的直接 instrumentation 运行 | 四项再次通过 |
 | 卡片视觉核验 | 中文、320dp、浅色、深色、2 倍字体；未知统计回退简介，零值和多选状态正确，大字体时长不越出封面 |
 | 匿名真实搜索页面 | 统计图标与数字正常显示，长按多选显示已选数量，列表滚动后未观察到崩溃 |
+| 2026-09-23 详情页补充：`:app:connectedDebugAndroidTest`，限定 `VideoStatsCardTest` | Android 16 设备五项通过；详情页用空初始统计与独立快照验证进入后可见播放、点赞、收藏数 |
 
 测试入口：
 
 - [VideoStatsTest](../app/src/test/java/cc/kafuu/bilidownload/VideoStatsTest.kt)：接口映射、零/未知/负数、大数、单位边界、序列化及补缺优先级。
 - [BiliVideoStatsRepositoryTest](../app/src/test/java/cc/kafuu/bilidownload/BiliVideoStatsRepositoryTest.kt)：共享请求、取消、账号失效、LRU/TTL、失败缓存、风控冷却及并发上限。
-- [VideoStatsCardTest](../app/src/androidTest/java/cc/kafuu/bilidownload/VideoStatsCardTest.kt)：Holder 复用、payload 多选身份、窄宽切换和浅深色/大字体渲染。
+- [VideoStatsCardTest](../app/src/androidTest/java/cc/kafuu/bilidownload/VideoStatsCardTest.kt)：Holder 复用、payload 多选身份、窄宽切换、浅深色/大字体渲染和详情页快照展示。
 
 ## 尚未覆盖的环境
 

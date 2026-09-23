@@ -1,6 +1,7 @@
 package cc.kafuu.bilidownload
 
 import android.content.Context
+import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -17,6 +18,7 @@ import cc.kafuu.bilidownload.common.adapter.BiliResourceRVAdapter
 import cc.kafuu.bilidownload.common.adapter.holder.ItemBiliVideoHolder
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.common.model.bili.VideoStats
+import cc.kafuu.bilidownload.feature.viewbinding.view.activity.VideoDetailsActivity
 import cc.kafuu.bilidownload.feature.viewbinding.view.common.VideoStatsView
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.common.BiliResourceRVViewModel
 import org.junit.Assert.assertEquals
@@ -47,6 +49,37 @@ class VideoStatsCardTest {
         holder.binding.executePendingBindings()
         assertFalse(holder.binding.videoStats.isVisible)
         assertTrue(holder.binding.tvDescription.isVisible)
+    }
+
+    @Test
+    fun detail_showsIncomingStatsWhileDetailRequestIsLoading() {
+        val source = BiliVideoModel(
+            title = "示例详情", cover = "", description = "测试详情统计", pubDate = 0,
+            author = "示例作者", bvid = "BV0000000000", duration = "00:01:00",
+        )
+        val snapshot = VideoStats(view = 12345, like = 0, favorite = 678)
+        val intent = VideoDetailsActivity.buildIntent(source, snapshot).apply {
+            setClass(instrumentation.targetContext, VideoDetailsActivity::class.java)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        val activity = instrumentation.startActivitySync(intent) as VideoDetailsActivity
+        try {
+            instrumentation.waitForIdleSync()
+            onMain {
+                val stats = activity.findViewById<VideoStatsView>(R.id.video_stats)
+                assertTrue(
+                    "统计行未显示：attached=${stats.isAttachedToWindow}, " +
+                        "visible=${stats.isVisible}, header=${activity.findViewById<View>(R.id.video_header).isVisible}",
+                    stats.isShown,
+                )
+                assertEquals("1.2万", (stats.getChildAt(0) as TextView).text.toString())
+                assertEquals("0", (stats.getChildAt(1) as TextView).text.toString())
+                assertEquals("678", (stats.getChildAt(2) as TextView).text.toString())
+                assertTrue(stats.getChildAt(2).isShown)
+            }
+        } finally {
+            onMain { activity.finish() }
+        }
     }
 
     @Test

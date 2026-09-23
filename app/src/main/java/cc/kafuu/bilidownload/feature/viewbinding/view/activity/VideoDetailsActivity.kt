@@ -21,6 +21,7 @@ import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
 import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoPartModel
+import cc.kafuu.bilidownload.common.model.bili.VideoStats
 import cc.kafuu.bilidownload.common.network.model.BiliXmlDanmaku
 import cc.kafuu.bilidownload.common.network.model.BccSubtitle
 import cc.kafuu.bilidownload.common.utils.FileUtils
@@ -40,10 +41,13 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
 
         private const val KEY_OBJECT_TYPE = "object_type"
         private const val KEY_OBJECT_INSTANCE = "object_instance"
+        private const val KEY_VIDEO_STATS = "video_stats"
 
-        fun buildIntent(video: BiliVideoModel) = Intent().apply {
+        /** 携带列表当前显示的统计快照，详情请求返回前即可展示。 */
+        fun buildIntent(video: BiliVideoModel, stats: VideoStats = video.stats) = Intent().apply {
             putExtra(KEY_OBJECT_TYPE, BiliVideoModel::class.simpleName)
             putExtra(KEY_OBJECT_INSTANCE, video)
+            putExtra(KEY_VIDEO_STATS, stats)
         }
 
         fun buildIntent(media: BiliMediaModel) = Intent().apply {
@@ -79,6 +83,9 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
         if (!doInitData()) {
             mViewModel.finishActivity()
             return
+        }
+        mViewModel.videoStatsLiveData.observe(this) { stats ->
+            mViewDataBinding.videoStats.render(stats ?: VideoStats())
         }
         initList()
         mViewModel.loadingVideoPartLiveData.observe(this) { part ->
@@ -137,8 +144,10 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
 
     private fun doInitData() = when (intent.getStringExtra(KEY_OBJECT_TYPE)) {
         BiliVideoModel::class.simpleName -> {
+            val video = intent.getSerializableByClass<BiliVideoModel>(KEY_OBJECT_INSTANCE)!!
             mViewModel.initData(
-                intent.getSerializableByClass<BiliVideoModel>(KEY_OBJECT_INSTANCE)!!
+                video,
+                intent.getSerializableByClass<VideoStats>(KEY_VIDEO_STATS) ?: video.stats,
             )
             true
         }

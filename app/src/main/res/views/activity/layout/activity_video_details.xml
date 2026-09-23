@@ -35,14 +35,13 @@
             app:viewModel="@{viewModel}" />
 
         <LinearLayout
-            bindVisible="@{!viewModel.loadingStatusLiveData.visibility}"
+            android:id="@+id/video_header"
             android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/include">
+            app:layout_constraintTop_toBottomOf="@id/include">
 
             <include
                 layout="@layout/include_bilivideo_card"
@@ -54,6 +53,26 @@
                 app:createTime="@{viewModel.biliResourceModelLiveData.pubFormatterDate}"
                 app:onCoverClick="@{() -> viewModel.onCoverClick()}"
                 app:title="@{viewModel.biliResourceModelLiveData.title}" />
+
+            <cc.kafuu.bilidownload.feature.viewbinding.view.common.VideoStatsView
+                android:id="@+id/video_stats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="18dp"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
+                tools:visibility="visible" />
+        </LinearLayout>
+
+        <LinearLayout
+            bindVisible="@{!viewModel.loadingStatusLiveData.visibility}"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/video_header">
 
             <androidx.core.widget.NestedScrollView
                 android:layout_width="match_parent"
