@@ -6,6 +6,7 @@ import cc.kafuu.bilidownload.common.network.NetworkConfig
 import cc.kafuu.bilidownload.common.network.repository.BiliAccountRepository
 import cc.kafuu.bilidownload.common.network.repository.BiliRiskControlRepository
 import cc.kafuu.bilidownload.common.network.repository.BiliSearchRepository
+import cc.kafuu.bilidownload.common.network.repository.BiliVideoStatsRepository
 import cc.kafuu.bilidownload.common.network.repository.BiliVideoRepository
 import cc.kafuu.bilidownload.common.network.service.BiliApiService
 import cc.kafuu.bilidownload.common.network.service.BiliOriginalContentService
@@ -60,6 +61,11 @@ object NetworkManager {
     val biliRiskControlResponse = BiliRiskControlRepository(biliService, biliOriginalContentService)
 
     val biliVideoRepository by lazy { BiliVideoRepository(biliService, biliOriginalContentService) }
+
+    /** 跨列表复用统计与在途请求，账号生命周期负责失效。 */
+    val biliVideoStatsRepository by lazy {
+        BiliVideoStatsRepository(requestStats = biliVideoRepository::requestVideoStats)
+    }
 
     val biliAccountRepository by lazy { BiliAccountRepository(biliService, biliPassportService) }
 

@@ -21,8 +21,14 @@ object AccountManager {
     val cookiesLiveData = MutableLiveData<String?>(null)
     val accountLiveData = MutableLiveData<BiliAccountModel?>(null)
 
+    /** 更新凭据前失效旧身份的统计请求，再发布登录状态并刷新账号信息。 */
     fun updateCookie(cookies: String? = null) {
-        cookiesLiveData.value = cookies ?: getCookieLocalCache() ?: return
+        val nextCookies = cookies ?: getCookieLocalCache() ?: return
+        if (cookiesLiveData.value != nextCookies) {
+            NetworkManager.biliVideoStatsRepository.invalidate()
+        }
+        // 共享缓存已失效后才通知页面，页面据此取消旧订阅并重新读取可见稿件。
+        cookiesLiveData.value = nextCookies
         Log.d(TAG, "updateCookie: ${cookiesLiveData.value}")
         val callback = object : IServerCallback<MyBiliAccountData> {
             override fun onSuccess(
@@ -86,6 +92,8 @@ object AccountManager {
     }
 
     private fun clearAccount(removeLocalCache: Boolean = false) {
+        // 先取消旧身份下的补齐，避免退出后的迟到响应重新填入共享缓存。
+        NetworkManager.biliVideoStatsRepository.invalidate()
         cookiesLiveData.postValue(null)
         accountLiveData.postValue(null)
         if (removeLocalCache) {

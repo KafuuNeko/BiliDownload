@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload.common.network.model
 
+import cc.kafuu.bilidownload.common.model.bili.VideoStats
 import com.google.gson.annotations.SerializedName
 
 data class BiliVideoData(
@@ -18,7 +19,7 @@ data class BiliVideoData(
     @SerializedName("duration") val duration: Long,
     @SerializedName("rights") val rights: BiliVideoRights,
     @SerializedName("owner") val owner: BiliVideoOwner,
-    @SerializedName("stat") val stat: BiliVideoStat,
+    @SerializedName("stat") val stat: BiliVideoStat? = null,
     @SerializedName("dynamic") val dynamic: String,
     @SerializedName("cid") val cid: Long,
     @SerializedName("dimension") val dimension: BiliVideoDimension,
@@ -54,19 +55,23 @@ data class BiliVideoOwner(
     @SerializedName("face") val face: String
 )
 
+/** 详情及列表内嵌统计；可选字段缺失时保留未知状态。 */
 data class BiliVideoStat(
-    @SerializedName("view") val view: Int,
-    @SerializedName("danmaku") val danmaku: Int,
-    @SerializedName("reply") val reply: Int,
-    @SerializedName("favorite") val favorite: Int,
+    @SerializedName("view") val view: Long? = null,
+    @SerializedName("danmaku") val danmaku: Long? = null,
+    @SerializedName("reply") val reply: Long? = null,
+    @SerializedName("favorite") val favorite: Long? = null,
     @SerializedName("coin") val coin: Int,
     @SerializedName("share") val share: Int,
     @SerializedName("now_rank") val nowRank: Int,
     @SerializedName("his_rank") val hisRank: Int,
-    @SerializedName("like") val like: Int,
+    @SerializedName("like") val like: Long? = null,
     @SerializedName("dislike") val dislike: Int,
-    @SerializedName("evaluation") val evaluation: String,
-)
+    @SerializedName("evaluation") val evaluation: String?,
+) {
+    /** 转换为可展示的统计，负数占位值不作为真实计数。 */
+    fun toVideoStats() = VideoStats(view, like, favorite, danmaku, reply).normalized()
+}
 
 data class BiliVideoDimension(
     @SerializedName("width") val width: Int,

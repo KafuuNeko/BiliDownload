@@ -86,6 +86,7 @@ data class BiliSearchTopTList(
     @SerializedName("live_user") val liveUser: Int
 )
 
+/** 视频搜索结果，统计字段可缺失，null 与零具有不同含义。 */
 data class BiliSearchVideoResultData(
     val type: String,
     val id: Long,
@@ -100,11 +101,12 @@ data class BiliSearchVideoResultData(
     val description: String,
     @SerializedName("arcrank") val arcRank: String,
     val pic: String,
-    val play: Int,
-    @SerializedName("video_review") val videoReview: Int,
-    val favorites: Int,
+    val play: Long? = null,
+    @SerializedName("video_review") val videoReview: Long? = null,
+    val favorites: Long? = null,
+    val like: Long? = null,
     val tag: String,
-    val review: Int,
+    val review: Long? = null,
     @SerializedName("pubdate") val pubDate: Long,
     @SerializedName("senddate") val sendDate: Long,
     val duration: String,
@@ -162,7 +164,7 @@ data class BiliSearchManuscriptVideo(
     // 稿件 bvid
     val bvid: String,
     // 视频评论数
-    val comment: Int,
+    val comment: Long? = null,
     // 视频版权类型
     val copyright: String,
     // 投稿时间，时间戳格式
@@ -180,7 +182,7 @@ data class BiliSearchManuscriptVideo(
     // 视频封面 URL
     val pic: String,
     // 视频播放次数
-    val play: Int,
+    val play: Long? = null,
     // 审核相关字段，默认为 0
     val review: Int,
     // 视频的字幕信息，默认为空
@@ -190,7 +192,7 @@ data class BiliSearchManuscriptVideo(
     // 视频分区 ID
     @SerializedName("typeid") val typeId: Long,
     // 视频弹幕数
-    @SerializedName("video_review") val videoReview: Int
+    @SerializedName("video_review") val videoReview: Long? = null
 )
 
 data class BiliSearchManuscriptPage(

@@ -26,7 +26,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
-        android:background="@color/general_item_background_color"
+        app:cardBackgroundColor="@color/general_item_background_color"
         app:cardCornerRadius="@dimen/card_item_corner_radius"
         app:cardElevation="@dimen/card_item_elevation">
 
@@ -51,6 +51,27 @@
                 app:layout_constraintTop_toTopOf="parent"
                 tools:src="@drawable/ic_2233" />
 
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_duration"
+                bindSpannable="@{data.duration}"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="3dp"
+                android:background="@drawable/shape_video_duration"
+                android:gravity="end"
+                android:ellipsize="end"
+                android:maxLines="1"
+                app:autoSizeTextType="uniform"
+                app:autoSizeMinTextSize="7sp"
+                app:autoSizeMaxTextSize="11sp"
+                app:autoSizeStepGranularity="1sp"
+                android:textColor="@color/common_white"
+                android:textSize="@dimen/size_text_card_sub"
+                app:layout_constraintBottom_toBottomOf="@id/iv_video_cover"
+                app:layout_constraintEnd_toEndOf="@id/iv_video_cover"
+                app:layout_constraintStart_toStartOf="@id/iv_video_cover"
+                tools:text="00:03:04" />
+
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/iv_multi_select"
                 android:layout_width="24dp"
@@ -66,7 +87,9 @@
 
             <LinearLayout
                 android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_height="wrap_content"
+                android:minHeight="80dp"
+                android:paddingVertical="4dp"
                 android:gravity="center_vertical"
                 android:orientation="vertical"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -88,36 +111,29 @@
                     android:textStyle="bold"
                     tools:text="【Mili】A Turtle's Heart" />
 
-                <LinearLayout
+                <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:layout_marginTop="8dp"
-                    android:orientation="horizontal">
+                    android:layout_marginTop="8dp">
 
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/tv_duration"
-                        bindSpannable="@{data.duration}"
-                        android:layout_width="wrap_content"
+                    <cc.kafuu.bilidownload.feature.viewbinding.view.common.VideoStatsView
+                        android:id="@+id/video_stats"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:ellipsize="end"
-                        android:maxLines="1"
-                        android:textColor="@color/general_text_color"
-                        android:textSize="@dimen/size_text_card_content"
-                        tools:text="03:04" />
+                        android:visibility="gone" />
 
                     <androidx.appcompat.widget.AppCompatTextView
                         android:id="@+id/tv_description"
                         bindSpannable="@{data.description}"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
                         android:ellipsize="end"
                         android:maxLines="1"
                         android:textColor="@color/general_text_color"
                         android:textSize="@dimen/size_text_card_content"
-                        tools:text="Monday is a rainy day \nAnd I Stay inside letting time pass away" />
-                </LinearLayout>
+                        tools:text="Monday is a rainy day" />
+                </FrameLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"

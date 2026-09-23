@@ -4,25 +4,29 @@ import android.util.Log
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.network.IServerCallback
-import cc.kafuu.bilidownload.common.network.model.BiliDanmakuProtoParser
-import cc.kafuu.bilidownload.common.network.model.BiliHistoryDanmakuIndex
-import cc.kafuu.bilidownload.common.network.model.BiliXmlDanmaku
-import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
-import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
-import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
-import cc.kafuu.bilidownload.common.network.model.BiliVideoData
-import cc.kafuu.bilidownload.common.network.model.BiliSubtitleListContainer
-import cc.kafuu.bilidownload.common.network.model.BccSubtitle
-import cc.kafuu.bilidownload.common.network.service.BiliApiService
-import com.google.gson.Gson
-import cc.kafuu.bilidownload.common.network.service.BiliOriginalContentService
-import cc.kafuu.bilidownload.common.utils.NetworkUtils
-import okhttp3.ResponseBody
-import retrofit2.Call
-import retrofit2.Response
-import com.google.gson.JsonParser
 import cc.kafuu.bilidownload.common.network.NetworkConfig
 import cc.kafuu.bilidownload.common.network.manager.WbiManager
+import cc.kafuu.bilidownload.common.network.model.BccSubtitle
+import cc.kafuu.bilidownload.common.network.model.BiliDanmakuProtoParser
+import cc.kafuu.bilidownload.common.network.model.BiliHistoryDanmakuIndex
+import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
+import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamData
+import cc.kafuu.bilidownload.common.network.model.BiliRespond
+import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
+import cc.kafuu.bilidownload.common.network.model.BiliSubtitleListContainer
+import cc.kafuu.bilidownload.common.network.model.BiliVideoData
+import cc.kafuu.bilidownload.common.network.model.BiliXmlDanmaku
+import cc.kafuu.bilidownload.common.network.service.BiliApiService
+import cc.kafuu.bilidownload.common.network.service.BiliOriginalContentService
+import cc.kafuu.bilidownload.common.utils.NetworkUtils
+import com.google.gson.Gson
+import com.google.gson.JsonParser
+import kotlin.coroutines.resume
+import kotlinx.coroutines.suspendCancellableCoroutine
+import okhttp3.ResponseBody
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class BiliVideoRepository(
     private val biliApiService: BiliApiService,
@@ -68,6 +72,34 @@ class BiliVideoRepository(
             .requestVideoDetail(null, bvid)
             .enqueue(callback) { _, data -> data }
     }
+
+    /** 读取列表缺失的统计；取消挂起调用时同步取消 Retrofit 请求，不弹出页面错误。 */
+    suspend fun requestVideoStats(bvid: String): BiliVideoStatsRepository.Result =
+        suspendCancellableCoroutine { continuation ->
+            val call = biliApiService.requestVideoDetail(bvid = bvid)
+            continuation.invokeOnCancellation { call.cancel() }
+            call.enqueue(object : Callback<BiliRespond<BiliVideoData>> {
+                override fun onResponse(
+                    call: Call<BiliRespond<BiliVideoData>>,
+                    response: Response<BiliRespond<BiliVideoData>>,
+                ) {
+                    val body = response.body()
+                    val stats = (body?.data ?: body?.result)?.stat?.toVideoStats()
+                    val result = if (response.isSuccessful && body?.code == 0 && stats != null) {
+                        BiliVideoStatsRepository.Result.Success(stats)
+                    } else {
+                        BiliVideoStatsRepository.Result.Failure(response.code(), body?.code ?: 0)
+                    }
+                    if (continuation.isActive) continuation.resume(result)
+                }
+
+                override fun onFailure(call: Call<BiliRespond<BiliVideoData>>, error: Throwable) {
+                    if (continuation.isActive) {
+                        continuation.resume(BiliVideoStatsRepository.Result.Failure())
+                    }
+                }
+            })
+        }
 
     fun syncRequestVideoDetail(
         bvid: String,

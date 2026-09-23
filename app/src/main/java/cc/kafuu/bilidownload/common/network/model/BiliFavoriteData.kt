@@ -1,5 +1,6 @@
 package cc.kafuu.bilidownload.common.network.model
 
+import cc.kafuu.bilidownload.common.model.bili.VideoStats
 import com.google.gson.annotations.SerializedName
 
 data class BiliFavoriteListData(
@@ -60,7 +61,8 @@ data class BiliFavoriteMedia(
     @SerializedName("fav_time")
     val favTime: Long,
     // 视频稿件bvid
-    val bvid: String?
+    val bvid: String?,
+    @SerializedName("cnt_info") val countInfo: BiliFavoriteCountInfo? = null,
 )
 
 data class BiliFavoriteUpper(
@@ -68,3 +70,13 @@ data class BiliFavoriteUpper(
     val name: String,
     val face: String
 )
+
+/** 收藏条目的稿件统计；reply 存在占位零，不作为评论总数使用。 */
+data class BiliFavoriteCountInfo(
+    val play: Long? = null,
+    val collect: Long? = null,
+    val danmaku: Long? = null,
+) {
+    /** 收藏夹的 collect 对应视频收藏总数，不是当前账号的收藏状态。 */
+    fun toVideoStats() = VideoStats(view = play, favorite = collect, danmaku = danmaku).normalized()
+}

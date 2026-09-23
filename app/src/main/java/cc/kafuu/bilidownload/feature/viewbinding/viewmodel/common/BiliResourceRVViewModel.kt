@@ -12,8 +12,13 @@ import cc.kafuu.bilidownload.common.model.action.popmessage.ToastMessageAction
 import cc.kafuu.bilidownload.common.model.bili.BiliMediaModel
 import cc.kafuu.bilidownload.common.model.bili.BiliResourceModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
+import cc.kafuu.bilidownload.common.model.bili.VideoStats
+import cc.kafuu.bilidownload.common.network.manager.NetworkManager
+import cc.kafuu.bilidownload.common.network.repository.BiliVideoStatsRepository
 import cc.kafuu.bilidownload.feature.viewbinding.view.activity.VideoDetailsActivity
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /** 管理可下载 B 站资源列表的条目选择和批量下载 UI 状态。 */
@@ -63,6 +68,59 @@ open class BiliResourceRVViewModel : BiliRVViewModel() {
 
     private val mBatchDialogRequestLiveData = MutableLiveData<BatchDialogRequest?>(null)
     val batchDialogRequestLiveData = mBatchDialogRequestLiveData.liveData()
+
+    private val mVideoStatsLiveData = MutableLiveData<Map<String, VideoStats>>(emptyMap())
+    val videoStatsLiveData = mVideoStatsLiveData.liveData()
+    private val mStatsJobs = mutableMapOf<String, Job>()
+    private var mStatsGeneration = 0L
+
+    /**
+     * 为滚动稳定后的可见稿件补齐缺失项，已有完整统计的条目不发请求。
+     * 页面只发布独立快照，保持原视频对象及其多选身份不变。
+     */
+    fun loadVisibleVideoStats(videos: List<BiliVideoModel>) {
+        pauseVideoStatsRequests()
+        val generation = mStatsGeneration
+        val repository = NetworkManager.biliVideoStatsRepository
+        val uniqueVideos = videos.distinctBy { it.bvid }
+        val cached = uniqueVideos.mapNotNull { video ->
+            repository.getCached(video.bvid)?.let { video.bvid to it }
+        }.toMap()
+        val visibleIds = uniqueVideos.map { it.bvid }.toSet()
+        // 过期缓存可以继续展示到新结果到达，但不能用于跳过本次刷新请求。
+        mVideoStatsLiveData.value = mVideoStatsLiveData.value.orEmpty()
+            .filterKeys { it in visibleIds } + cached
+
+        // 缓存和列表字段一起判断完整性，避免为另一入口已经取得的数据重复补齐。
+        uniqueVideos.filter { !it.stats.withFallback(cached[it.bvid]).isComplete }.forEach { video ->
+            val job = viewModelScope.launch(start = CoroutineStart.LAZY) {
+                try {
+                    val result = repository.getStats(video.bvid)
+                    if (generation == mStatsGeneration && result is BiliVideoStatsRepository.Result.Success) {
+                        mVideoStatsLiveData.value = mVideoStatsLiveData.value.orEmpty() +
+                            (video.bvid to result.stats)
+                    }
+                } finally {
+                    if (generation == mStatsGeneration) mStatsJobs.remove(video.bvid)
+                }
+            }
+            mStatsJobs[video.bvid] = job
+            job.start()
+        }
+    }
+
+    /** 滚动、换页或视图暂停时释放补齐订阅，保留已显示快照以免卡片闪烁。 */
+    fun pauseVideoStatsRequests() {
+        mStatsGeneration++
+        mStatsJobs.values.forEach { it.cancel() }
+        mStatsJobs.clear()
+    }
+
+    /** 账号变化时清除页面快照；共享仓库已由账号生命周期同步失效。 */
+    fun clearVideoStats() {
+        pauseVideoStatsRequests()
+        mVideoStatsLiveData.value = emptyMap()
+    }
 
     fun enterDetails(element: BiliVideoModel) {
         startActivity(VideoDetailsActivity::class.java, VideoDetailsActivity.buildIntent(element))

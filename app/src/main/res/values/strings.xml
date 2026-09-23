@@ -266,4 +266,7 @@
     <string name="text_batch_download_result">Added %1$d tasks to the download queue; skipped %2$d.</string>
     <string name="text_download_task_already_active">This item already has an active download task</string>
     <string name="text_deselect_all">Deselect</string>
+    <string name="video_stats_views">%1$s views</string>
+    <string name="video_stats_likes">%1$s likes</string>
+    <string name="video_stats_favorites">%1$s favorites</string>
 </resources>
