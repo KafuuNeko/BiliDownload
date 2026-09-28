@@ -3,7 +3,12 @@ package cc.kafuu.bilidownload.common.manager
 import android.content.Context
 import android.util.Log
 import cc.kafuu.bilidownload.common.CommonLibs
+import cc.kafuu.bilidownload.common.download.DownloadFailure
 import cc.kafuu.bilidownload.common.download.DownloadGroupSnapshot
+import cc.kafuu.bilidownload.common.download.DownloadRetry
+import cc.kafuu.bilidownload.common.download.DownloadSourceSelector
+import cc.kafuu.bilidownload.common.download.ResourceDownloadException
+import cc.kafuu.bilidownload.common.download.ResourceDownloader
 import cc.kafuu.bilidownload.common.model.AppModel
 import cc.kafuu.bilidownload.common.model.DownloadStatus
 import cc.kafuu.bilidownload.common.model.DownloadSourceMode
@@ -22,30 +27,27 @@ import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
 import cc.kafuu.bilidownload.service.DownloadService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
-import okhttp3.Call
+import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.HttpUrl
 import okhttp3.Request
 import org.greenrobot.eventbus.EventBus
 import java.io.File
-import java.io.IOException
-import java.io.RandomAccessFile
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.CopyOnWriteArraySet
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.math.min
-import kotlin.system.measureTimeMillis
 
 /**
  * 一个数据库下载任务对应一个下载组，组内可以有一个或多个
@@ -54,9 +56,7 @@ import kotlin.system.measureTimeMillis
  */
 object DownloadManager {
     private const val TAG = "DownloadManager"
-    private const val BUFFER_SIZE = 128 * 1024
     private const val PROGRESS_INTERVAL_MS = 500L
-    private const val PROBE_TIMEOUT_MS = 3000L
     private const val MAX_CONCURRENT_TASKS = 3
 
     private val mCoroutineScope by lazy { CoroutineScope(Dispatchers.Default + SupervisorJob()) }
@@ -117,7 +117,6 @@ object DownloadManager {
     private fun stopRunningTask(groupId: Long, status: DownloadStatus) {
         mRunningTaskMap[groupId]?.let {
             it.requestedStopStatus = status
-            it.calls.forEach(Call::cancel)
             it.job?.cancel()
             return
         }
@@ -277,77 +276,71 @@ object DownloadManager {
         }
     }
 
+    /** 将全部已选资源映射为候选地址，任何资源缺失都不能把不完整的下载组当作成功。 */
     private suspend fun getDownloadResourceRequests(
         task: DownloadTaskEntity,
         dash: BiliPlayStreamDash
     ): List<ResourceRequest> {
         val resources = (dash.video ?: emptyList()) + dash.getAllAudio()
-        // 数据库里的 DownloadDashEntity 是用户选择的资源；接口返回的是可下载资源列表。
-        // 两边用 dashId + codecId 对齐，保证视频、音频或单资源任务都能准确匹配。
+        // 全部资源匹配后再启动下载，防止只找到音频时误报整个视频任务完成。
         return coroutineScope {
             DownloadRepository.queryDashList(task).map { dashEntity ->
                 async {
-                    resources.find {
+                    val resource = resources.find {
                         it.id == dashEntity.dashId && it.codecId == dashEntity.codecId
-                    }?.selectStreamUrl()?.let { url ->
-                        ResourceRequest(url, dashEntity)
+                    } ?: throw ResourceDownloadException(
+                        DownloadFailure(DownloadFailure.Kind.SOURCE_UNAVAILABLE)
+                    )
+                    ResourceRequest(resource.selectStreamUrls(), dashEntity)
+                }
+            }.awaitAll()
+        }
+    }
+
+    /** 保留所有源作为失败回退；自定义源探测不可用时优先回到接口提供的地址。 */
+    private suspend fun BiliPlayStreamResource.selectStreamUrls(): List<String> {
+        val candidates = getStreamUrls().filter { HttpUrl.parse(it) != null }
+        val selector = DownloadSourceSelector(NetworkManager.downloadClient, ::buildRequest)
+        return when (AppModel.downloadSourceMode) {
+            DownloadSourceMode.AUTO_PROBE -> selector.rank(candidates)
+            DownloadSourceMode.CUSTOM_HOST -> {
+                val host = normalizeCustomHost(AppModel.downloadSourceCustomHost)
+                val custom = host?.let { candidates.mapNotNull { url -> url.replaceHost(it) } }.orEmpty()
+                selector.rank(custom, candidates)
+            }
+            else -> candidates
+        }
+    }
+
+    /** 有界恢复中的地址刷新可取消，仍严格匹配原清晰度和编码，不静默降级。 */
+    private suspend fun refreshResourceUrls(
+        task: DownloadTaskEntity,
+        selected: DownloadDashEntity
+    ): List<String> {
+        val dash = suspendCancellableCoroutine { continuation ->
+            val call = NetworkManager.biliVideoRepository.requestPlayStreamDash(
+                task.biliBvid, task.biliCid,
+                object : IServerCallback<BiliPlayStreamDash> {
+                    override fun onSuccess(httpCode: Int, code: Int, message: String, data: BiliPlayStreamDash) {
+                        if (continuation.isActive) continuation.resume(data)
+                    }
+
+                    override fun onFailure(httpCode: Int, code: Int, message: String) {
+                        if (!continuation.isActive) return
+                        continuation.resumeWithException(ResourceDownloadException(
+                            DownloadFailure(DownloadFailure.Kind.SOURCE_UNAVAILABLE, httpCode),
+                            retryable = httpCode == 0 || httpCode in setOf(408, 429, 500, 502, 503, 504)
+                        ))
                     }
                 }
-            }.awaitAll().filterNotNull()
+            )
+            continuation.invokeOnCancellation { call.cancel() }
         }
-    }
-
-    private suspend fun BiliPlayStreamResource.selectStreamUrl(): String {
-        return when (AppModel.downloadSourceMode) {
-            DownloadSourceMode.AUTO_PROBE -> selectFastestStreamUrl()
-            DownloadSourceMode.CUSTOM_HOST -> selectCustomHostStreamUrl() ?: getStreamUrl()
-            else -> getStreamUrl()
-        }
-    }
-
-    private suspend fun BiliPlayStreamResource.selectFastestStreamUrl(): String {
-        val candidates = getStreamUrls()
-        if (candidates.size <= 1) return candidates.firstOrNull() ?: getStreamUrl()
-
-        val probeResults = coroutineScope {
-            candidates.mapIndexed { index, url ->
-                async(Dispatchers.IO) {
-                    probeStreamUrl(index, url)
-                }
-            }.awaitAll()
-        }
-
-        return probeResults
-            .filter { it.isAvailable }
-            .minWithOrNull(compareBy<ProbeResult> { it.elapsedMs }.thenBy { it.index })
-            ?.url
-            ?: getStreamUrl()
-    }
-
-    private suspend fun BiliPlayStreamResource.selectCustomHostStreamUrl(): String? {
-        val host = normalizeCustomHost(AppModel.downloadSourceCustomHost) ?: return null
-        val candidates = getStreamUrls()
-            .mapNotNull { it.replaceHost(host) }
-            .distinct()
-        if (candidates.isEmpty()) return null
-
-        val probeResults = coroutineScope {
-            candidates.mapIndexed { index, url ->
-                async(Dispatchers.IO) {
-                    probeStreamUrl(index, url)
-                }
-            }.awaitAll()
-        }
-
-        return probeResults
-            .filter { it.isAvailable }
-            .minWithOrNull(compareBy<ProbeResult> { it.elapsedMs }.thenBy { it.index })
-            ?.url
-            .also {
-                if (it == null) {
-                    Log.d(TAG, "Custom download source host is unavailable: $host")
-                }
-            }
+        // 使用原资源身份重新选择候选，刷新结果不能替换为另一种清晰度或编码。
+        val resource = (dash.video.orEmpty() + dash.getAllAudio()).find {
+            it.id == selected.dashId && it.codecId == selected.codecId
+        } ?: throw ResourceDownloadException(DownloadFailure(DownloadFailure.Kind.SOURCE_UNAVAILABLE))
+        return resource.selectStreamUrls()
     }
 
     private fun normalizeCustomHost(host: String): String? {
@@ -366,32 +359,8 @@ object DownloadManager {
             ?.toString()
     }
 
-    private fun probeStreamUrl(index: Int, url: String): ProbeResult {
-        val request = buildProbeRequest(url)
-        val call = NetworkManager.okHttpClient.newCall(request)
-        call.timeout().timeout(PROBE_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-
-        var isAvailable = false
-        val elapsedMs = measureTimeMillis {
-            try {
-                call.execute().use { response ->
-                    isAvailable = response.code() == 200 || response.code() == 206
-                    if (isAvailable) {
-                        response.body()?.byteStream()?.read()
-                    }
-                }
-            } catch (e: Exception) {
-                Log.d(TAG, "Probe stream url failed: ${e.message}")
-            }
-        }
-
-        return ProbeResult(index, url, elapsedMs, isAvailable)
-    }
-
-    private fun buildProbeRequest(url: String): Request {
-        return buildRequest(url, resumeBytes = 0L, rangeHeader = "bytes=0-0")
-    }
-
+    /** 原子登记执行器，立即暂停也必须进入清理路径，释放队列槽位。 */
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Synchronized
     private fun doStartDownload(task: DownloadTaskEntity, requests: List<ResourceRequest>) {
         val groupId = task.id
@@ -412,14 +381,15 @@ object DownloadManager {
 
         val runningTask = RunningTask(task, requests)
         mRunningTaskMap[groupId] = runningTask
-        runningTask.job = mCoroutineScope.launch {
-            DownloadRepository.update(task)
+        // 同一锁内发布 Job；原子启动保证调度前取消也执行 runDownloadGroup 的 finally。
+        runningTask.job = mCoroutineScope.launch(start = CoroutineStart.ATOMIC) {
             runDownloadGroup(runningTask)
         }
 
         Log.d(TAG, "Task [G${task.groupId}] start download")
     }
 
+    /** 资源恢复耗尽后统一发布终态，所有退出路径都释放登记并推进等待队列。 */
     private suspend fun runDownloadGroup(runningTask: RunningTask) {
         val task = runningTask.task
         val progressMap = runningTask.requests.mapIndexed { index, _ ->
@@ -427,9 +397,9 @@ object DownloadManager {
         }.toMap()
         runningTask.progressMap = progressMap
 
-        publishSnapshot(runningTask, progressMap, DownloadStatus.EXECUTING, true)
-
         try {
+            DownloadRepository.update(task)
+            publishSnapshot(runningTask, progressMap, DownloadStatus.EXECUTING, true)
             // 组内资源并行下载：常见场景是视频流和音频流两个文件。
             // coroutineScope 能保证任一子资源失败时，整个下载组一起进入失败/停止流程。
             coroutineScope {
@@ -450,10 +420,12 @@ object DownloadManager {
                 CommonLibs.requireDownloadCacheDir(task.id).deleteRecursively()
                 publishSnapshot(runningTask, progressMap, DownloadStatus.CANCELLED, true)
             } else {
+                val failure = (e as? ResourceDownloadException)?.failure
+                    ?: DownloadFailure(DownloadFailure.Kind.UNKNOWN)
                 if (e !is CancellationException) {
-                    Log.e(TAG, "Task [G${task.id}] download failed", e)
+                    Log.e(TAG, "Task [G${task.id}] failed: kind=${failure.kind}, http=${failure.httpCode}")
                 }
-                publishSnapshot(runningTask, progressMap, DownloadStatus.FAILURE, true)
+                publishSnapshot(runningTask, progressMap, DownloadStatus.FAILURE, true, failure)
             }
         } finally {
             mRunningTaskMap.remove(task.id)
@@ -461,127 +433,59 @@ object DownloadManager {
         }
     }
 
+    /** 下载层完成所有恢复后才返回；已完成的子资源继续复用，避免音视频互相重下。 */
     private suspend fun downloadSingleResource(
         runningTask: RunningTask,
         request: ResourceRequest,
         progress: PartProgress
     ) {
         val outputFile = request.dashEntity.getOutputFile()
-        // 恢复或重试时，如果目标文件已经存在，视为该子资源已完成。
         if (outputFile.exists() && outputFile.length() > 0) {
             progress.downloaded.set(outputFile.length())
             progress.total.set(outputFile.length())
             return
         }
-
         val cacheFile = File(
             CommonLibs.requireDownloadCacheDir(runningTask.task.id),
             "stream-${request.dashEntity.taskId}-${request.dashEntity.dashId}-${request.dashEntity.codecId}.part"
         )
-
-        var resumeBytes = cacheFile.takeIf { it.exists() }?.length() ?: 0L
-        repeat(2) { attempt ->
-            ensureDownloadActive(runningTask)
-            val httpRequest = buildRequest(request.url, resumeBytes)
-            val call = NetworkManager.okHttpClient.newCall(httpRequest)
-            runningTask.calls.add(call)
-            try {
-                call.execute().use { response ->
-                    // 416 通常表示本地 .part 大于服务器当前资源尺寸；删除缓存后从头请求一次。
-                    if (response.code() == 416 && resumeBytes > 0L && attempt == 0) {
-                        cacheFile.delete()
-                        resumeBytes = 0L
-                        return@use
-                    }
-                    if (!response.isSuccessful) {
-                        throw IOException("Unexpected response code ${response.code()}")
-                    }
-
-                    val body = response.body() ?: throw IOException("Empty response body")
-                    val append = resumeBytes > 0L && response.code() == 206
-                    // 如果服务端不支持 Range，会返回 200。此时不能追加旧缓存，只能覆盖重下。
-                    if (resumeBytes > 0L && !append) {
-                        cacheFile.delete()
-                        resumeBytes = 0L
-                    }
-
-                    val startBytes = if (append) resumeBytes else 0L
-                    progress.downloaded.set(startBytes)
-                    body.contentLength().takeIf { it >= 0 }?.let {
-                        progress.total.set(startBytes + it)
-                    }
-
-                    RandomAccessFile(cacheFile, "rw").use { file ->
-                        if (!append) file.setLength(0L)
-                        file.seek(startBytes)
-                        val buffer = ByteArray(BUFFER_SIZE)
-                        val input = body.byteStream()
-                        while (true) {
-                            ensureDownloadActive(runningTask)
-                            val read = input.read(buffer)
-                            if (read == -1) break
-                            file.write(buffer, 0, read)
-                            progress.downloaded.addAndGet(read.toLong())
-                            // 高频 IO 回调会被 publishSnapshot 自己节流，避免列表刷新过密。
-                            publishSnapshot(runningTask, null, DownloadStatus.EXECUTING, false)
-                        }
-                    }
-
-                    val expectedSize = progress.total.get()
-                    // contentLength 可用时做一次完整性校验，避免半截文件进入后续合成流程。
-                    if (expectedSize >= 0 && cacheFile.length() < expectedSize) {
-                        throw IOException("Downloaded file is incomplete")
-                    }
-                    moveFile(cacheFile, outputFile)
-                    progress.downloaded.set(outputFile.length())
-                    progress.total.set(outputFile.length())
-                    return
+        // 重试只更新运行态快照；数据库仍处于下载中，队列槽位不会被重复登记。
+        ResourceDownloader(NetworkManager.downloadClient, ::buildRequest).download(
+            request.urls, cacheFile, outputFile,
+            refreshUrls = { refreshResourceUrls(runningTask.task, request.dashEntity) },
+            onProgress = { downloaded, total ->
+                progress.downloaded.set(downloaded)
+                progress.total.set(total)
+                publishSnapshot(runningTask, null, DownloadStatus.EXECUTING, false)
+            },
+            onRetry = { retry ->
+                progress.retry = retry
+                if (retry != null) {
+                    Log.d(TAG, "Task [G${runningTask.task.id}] retry=${retry.attempt}, " +
+                        "kind=${retry.failure.kind}, http=${retry.failure.httpCode}, " +
+                        "offset=${progress.downloaded.get()}")
                 }
-            } finally {
-                runningTask.calls.remove(call)
+                publishSnapshot(runningTask, null, DownloadStatus.EXECUTING, true)
             }
+        )
+    }
+
+    /** 创建下载和探测共用的请求，Range 与 If-Range 由传输层按检查点设置。 */
+    private fun buildRequest(url: String): Request = Request.Builder()
+        .url(url)
+        .apply {
+            NetworkConfig.DOWNLOAD_HEADERS.forEach { (key, value) -> header(key, value) }
+            AccountManager.cookiesLiveData.value?.let { header("Cookie", it) }
         }
-        throw IOException("Unable to download resource")
-    }
+        .build()
 
-    private fun buildRequest(
-        url: String,
-        resumeBytes: Long,
-        rangeHeader: String? = null
-    ): Request {
-        return Request.Builder()
-            .url(url)
-            .apply {
-                // 复用项目原先下载请求头和登录 Cookie，保证下载接口鉴权行为不变。
-                NetworkConfig.DOWNLOAD_HEADERS.forEach { (key, value) -> header(key, value) }
-                AccountManager.cookiesLiveData.value?.let { header("Cookie", it) }
-                if (rangeHeader != null) {
-                    header("Range", rangeHeader)
-                } else if (resumeBytes > 0L) {
-                    header("Range", "bytes=$resumeBytes-")
-                }
-            }
-            .build()
-    }
-
-    private fun moveFile(source: File, target: File) {
-        target.parentFile?.mkdirs()
-        if (target.exists()) target.delete()
-        if (!source.renameTo(target)) {
-            source.inputStream().use { input ->
-                target.outputStream().use { output ->
-                    input.copyTo(output, BUFFER_SIZE)
-                }
-            }
-            source.delete()
-        }
-    }
-
+    /** 聚合资源进度和恢复信息；仅最终失败携带失败原因，不新增持久化状态。 */
     private fun publishSnapshot(
         runningTask: RunningTask,
         progressMap: Map<Int, PartProgress>?,
         status: DownloadStatus,
-        force: Boolean
+        force: Boolean,
+        failure: DownloadFailure? = null
     ) {
         val now = System.currentTimeMillis()
         if (!force && now - runningTask.lastProgressEventTime.get() < PROGRESS_INTERVAL_MS) return
@@ -607,44 +511,30 @@ object DownloadManager {
             status = status,
             percent = percent,
             currentProgress = currentProgress,
-            fileSize = fileSize
+            fileSize = fileSize,
+            retry = if (status == DownloadStatus.EXECUTING) {
+                progressValues.mapNotNull { it.retry }.maxByOrNull { it.attempt }
+            } else null,
+            failure = failure
         )
         mSnapshotMap[runningTask.task.id] = snapshot
         EventBus.getDefault().post(DownloadStatusChangeEvent(runningTask.task, snapshot, status))
     }
 
-    private fun RunningTask.ensureActive() {
-        job?.ensureActive()
-    }
-
-    private suspend fun ensureDownloadActive(runningTask: RunningTask) {
-        currentCoroutineContext().ensureActive()
-        runningTask.ensureActive()
-    }
-
     private data class ResourceRequest(
-        val url: String,
+        val urls: List<String>,
         val dashEntity: DownloadDashEntity
-    )
-
-    private data class ProbeResult(
-        val index: Int,
-        val url: String,
-        val elapsedMs: Long,
-        val isAvailable: Boolean
     )
 
     /**
      * 下载组运行态。
      *
-     * calls 用于把用户的取消/暂停操作传递到正在阻塞读取的 OkHttp 请求；requestedStopStatus
-     * 用于区分主动暂停/取消和真正的网络失败。
+     * Job 将暂停/取消传播到请求、读取、退避和刷新；requestedStopStatus 区分用户操作与网络失败。
      */
     private class RunningTask(
         val task: DownloadTaskEntity,
         val requests: List<ResourceRequest>
     ) {
-        val calls = CopyOnWriteArraySet<Call>()
         val lastProgressEventTime = AtomicLong(0L)
         @Volatile var job: Job? = null
         @Volatile var requestedStopStatus: DownloadStatus? = null
@@ -659,5 +549,6 @@ object DownloadManager {
     private class PartProgress {
         val downloaded = AtomicLong(0L)
         val total = AtomicLong(-1L)
+        @Volatile var retry: DownloadRetry? = null
     }
 }

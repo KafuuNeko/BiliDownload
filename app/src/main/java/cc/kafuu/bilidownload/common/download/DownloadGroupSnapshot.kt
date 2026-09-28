@@ -13,7 +13,9 @@ data class DownloadGroupSnapshot(
     val status: DownloadStatus,
     val percent: Int,
     val currentProgress: Long,
-    val fileSize: Long
+    val fileSize: Long,
+    val retry: DownloadRetry? = null,
+    val failure: DownloadFailure? = null
 ) {
     val isComplete: Boolean
         get() = status == DownloadStatus.COMPLETED

@@ -94,13 +94,15 @@
 
                     <androidx.appcompat.widget.AppCompatTextView
                         android:id="@+id/tv_downloading_progress"
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
+                        android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
                         android:text="@{viewModel.downloadProgressLiveData}"
                         android:textColor="@color/general_text_color"
                         android:textSize="@dimen/size_text_common_size"
+                        app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toBottomOf="@+id/pb_download_progress"
                         tools:text="128kb/s" />
@@ -173,7 +175,7 @@
                     <androidx.appcompat.widget.AppCompatTextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@{viewModel.downloadDetailsLiveData.downloadTask.status == TaskStatus.PUBLISH_FAILED.code ? @string/text_publish_failed : @string/text_download_failed}"
+                        android:text="@{viewModel.downloadDetailsLiveData.downloadTask.status == TaskStatus.PUBLISH_FAILED.code ? @string/text_publish_failed : viewModel.downloadFailureLiveData}"
                         android:textColor="@color/common_red"
                         android:textSize="@dimen/size_text_common_size" />
 

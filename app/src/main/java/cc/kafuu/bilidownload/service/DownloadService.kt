@@ -269,7 +269,7 @@ class DownloadService : Service() {
         DownloadRepository.update(task.apply {
             status = TaskStatus.DOWNLOAD_FAILED.code
         })
-        mDownloadNotification.notificationDownloadFailed(task)
+        mDownloadNotification.notificationDownloadFailed(task, group.failure)
     }
 
     /**
@@ -489,7 +489,7 @@ class DownloadService : Service() {
                 status = TaskStatus.DOWNLOADING.code
             })
         }
-        mDownloadNotification.updateDownloadProgress(task, group.percent)
+        mDownloadNotification.updateDownloadProgress(task, group.percent, group.retry)
     }
 
     /**

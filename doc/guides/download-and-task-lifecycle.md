@@ -35,6 +35,10 @@
 
 - 保留按任务隔离的 `.part` 缓存。修改续传时覆盖 `206` 追加、`200` 覆盖重下、`416` 缓存失效处理，以及未知长度和响应提前结束的情况。
 - 流 URL 的选择、备用地址和自定义源处理集中在下载层；修改时保留路径、查询参数与必要请求头，避免用字符串拼接破坏地址。
+- `ResourceDownloader` 在资源内部完成自动恢复；同源重试、切源和一次播放地址刷新共用最多 5 次额外尝试，期间保持 `DOWNLOADING`，耗尽预算才发布失败。429/503 的等待提示不得被退避缩短，超过自动等待上限则保留手动恢复。
+- `.part.resume` 保存源地址指纹、强 ETag 和长度，不保存完整 URL。跨地址续传须通过强 ETag 和范围校验；缺少可信检查点、资源版本变化或范围不匹配时安全重下，不拼接身份不明的缓存。
+- 请求取消监听必须持续到正文消费完毕，覆盖连接、读取、退避和地址刷新。不得仅在接收响应头前绑定取消，也不得让一个子资源失败后另一个资源继续阻塞队列。
+- `DownloadSourceSelector` 每个候选最多读取 64 KiB、最多等待 3 秒；样本只能影响候选顺序，不得丢弃所有备用源或将空正文标记为可用。
 - 通过 `FFMpegUtils` 等现有入口处理合成、音频转封装和格式转换。区分容器格式、编码、MIME 与扩展名，不通过改后缀伪装格式转换。
 - FFmpeg 返回成功后仍需确认预期输出可用；失败、取消或输出不完整时不得登记为可用成品。
 - 输入、输出路径正确引用或按参数接口传递，防止空格、引号等字符改变命令含义。
@@ -84,6 +88,6 @@
 
 代码入口：[DownloadManager](../../app/src/main/java/cc/kafuu/bilidownload/common/manager/DownloadManager.kt)、[DownloadService](../../app/src/main/java/cc/kafuu/bilidownload/service/DownloadService.kt)、[服务任务登记](../../app/src/main/java/cc/kafuu/bilidownload/service/DownloadServiceTaskRegistry.kt)、[批量下载用例](../../app/src/main/java/cc/kafuu/bilidownload/common/download/BatchDownloadUseCase.kt)、[下载通知](../../app/src/main/java/cc/kafuu/bilidownload/notification/DownloadNotification.kt)。
 
-现有验证入口：[批量下载测试](../../app/src/test/java/cc/kafuu/bilidownload/BatchDownloadUseCaseTest.kt)、[服务登记测试](../../app/src/test/java/cc/kafuu/bilidownload/DownloadServiceTaskRegistryTest.kt)、[活动状态测试](../../app/src/test/java/cc/kafuu/bilidownload/DownloadTaskStatusPolicyTest.kt)。续传、前台服务和真实资源发布还需按改动选择设备场景，不能以纯 JVM 测试代替。
+现有验证入口：[传输恢复测试](../../app/src/test/java/cc/kafuu/bilidownload/download/ResourceDownloaderTest.kt)、[源探测测试](../../app/src/test/java/cc/kafuu/bilidownload/download/DownloadSourceSelectorTest.kt)、[批量下载测试](../../app/src/test/java/cc/kafuu/bilidownload/BatchDownloadUseCaseTest.kt)、[服务登记测试](../../app/src/test/java/cc/kafuu/bilidownload/DownloadServiceTaskRegistryTest.kt)、[活动状态测试](../../app/src/test/java/cc/kafuu/bilidownload/DownloadTaskStatusPolicyTest.kt)。续传、前台服务和真实资源发布还需按改动选择设备场景，不能以纯 JVM 测试代替。
 
 相关专题：[存储](./storage-and-resource-lifecycle.md)、[网络](./network-and-account.md)、[媒体](./media-and-native.md)、[验证](./testing-and-delivery.md)。

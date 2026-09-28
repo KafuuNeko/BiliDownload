@@ -14,6 +14,7 @@ import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
 import cc.kafuu.bilidownload.common.utils.FileUtils
+import cc.kafuu.bilidownload.common.utils.DownloadFeedbackText
 import cc.kafuu.bilidownload.feature.viewbinding.view.activity.LocalResourceActivity
 import cc.kafuu.bilidownload.service.DownloadService
 import kotlinx.coroutines.runBlocking
@@ -47,6 +48,10 @@ class HistoryDetailsViewModel : CoreViewModel() {
     private val mDownloadProgressLiveData = MutableLiveData("")
     val downloadProgressLiveData = mDownloadProgressLiveData.liveData()
 
+    // 最终失败原因只来自运行态快照，进程重建后使用通用文案。
+    private val mDownloadFailureLiveData = MutableLiveData(CommonLibs.getString(R.string.text_download_failed))
+    val downloadFailureLiveData = mDownloadFailureLiveData.liveData()
+
     // 任务暂停
     private val mDownloadIsStoppedLiveData = MutableLiveData(false)
     val downloadIsStoppedLiveData = mDownloadIsStoppedLiveData.liveData()
@@ -79,7 +84,8 @@ class HistoryDetailsViewModel : CoreViewModel() {
                 FileUtils.formatFileSize(it.currentProgress)
             }
             mDownloadPercentLiveData.postValue(it.percent)
-            mDownloadProgressLiveData.postValue(process)
+            mDownloadProgressLiveData.postValue(it.retry?.let(DownloadFeedbackText::retry) ?: process)
+            mDownloadFailureLiveData.postValue(DownloadFeedbackText.failure(it.failure))
             val status = it.status
             if (status == DownloadStatus.CANCELLED) {
                 finishActivity()

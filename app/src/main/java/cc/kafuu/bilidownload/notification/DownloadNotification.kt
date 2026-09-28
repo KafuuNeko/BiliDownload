@@ -4,7 +4,10 @@ import android.app.Notification
 import android.content.Context
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.CommonLibs
+import cc.kafuu.bilidownload.common.download.DownloadFailure
+import cc.kafuu.bilidownload.common.download.DownloadRetry
 import cc.kafuu.bilidownload.common.room.entity.DownloadTaskEntity
+import cc.kafuu.bilidownload.common.utils.DownloadFeedbackText
 
 class DownloadNotification(context: Context) : NotificationHelper(context) {
 
@@ -41,7 +44,8 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
     private fun showTaskProgressMessageNotification(
         task: DownloadTaskEntity,
         title: CharSequence,
-        percent: Int?
+        percent: Int?,
+        message: String? = null
     ) {
         val id = mNotificationId.getOrPut(task.id) { getNewNotificationId() }
 
@@ -54,7 +58,7 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
         getNotificationBuild(
             R.drawable.ic_downloading,
             title,
-            null,
+            message,
             NotificationNavigation.createTaskPendingIntent(mContext, task.id)
         ).apply {
             setAutoCancel(false)
@@ -64,12 +68,14 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
         }
     }
 
-    fun updateDownloadProgress(task: DownloadTaskEntity, percent: Int?) {
+    /** 复用同一进度通知展示恢复状态，自动重试不会生成额外失败通知。 */
+    fun updateDownloadProgress(task: DownloadTaskEntity, percent: Int?, retry: DownloadRetry? = null) {
         showTaskProgressMessageNotification(
             task,
             CommonLibs.getString(R.string.notification_downloading_title)
                 .format("${task.biliBvid}(${task.id})"),
-            percent
+            percent,
+            retry?.let(DownloadFeedbackText::retry)
         )
     }
 
@@ -100,12 +106,16 @@ class DownloadNotification(context: Context) : NotificationHelper(context) {
         )
     }
 
-    fun notificationDownloadFailed(task: DownloadTaskEntity) {
+    /** 仅在恢复预算耗尽后展示脱敏的失败原因。 */
+    fun notificationDownloadFailed(task: DownloadTaskEntity, failure: DownloadFailure? = null) {
         showTaskMessageNotification(
             task,
             CommonLibs.getString(R.string.notification_download_failed_title),
-            CommonLibs.getString(R.string.notification_download_failed_message)
-                .format("${task.biliBvid}(${task.id})")
+            CommonLibs.getString(
+                R.string.notification_download_failed_reason,
+                "${task.biliBvid}(${task.id})",
+                DownloadFeedbackText.failure(failure)
+            )
         )
     }
 
