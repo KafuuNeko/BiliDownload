@@ -9,7 +9,12 @@ import android.os.IBinder
 import android.util.Log
 import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.constant.DownloadResourceType
+import cc.kafuu.bilidownload.common.download.DownloadFailure
 import cc.kafuu.bilidownload.common.download.DownloadGroupSnapshot
+import cc.kafuu.bilidownload.common.download.DownloadTaskPostProcessor
+import cc.kafuu.bilidownload.common.download.DownloadTaskRecoveryUseCase
+import cc.kafuu.bilidownload.common.download.DownloadTaskRequestRegistry
+import cc.kafuu.bilidownload.common.download.SynthesisRecoveryUseCase
 import cc.kafuu.bilidownload.common.manager.DownloadManager
 import cc.kafuu.bilidownload.common.model.AppModel
 import cc.kafuu.bilidownload.common.model.DownloadStatus
@@ -26,28 +31,46 @@ import cc.kafuu.bilidownload.common.storage.ResourceStorage
 import cc.kafuu.bilidownload.common.utils.DownloadFileNameUtils
 import cc.kafuu.bilidownload.common.utils.FFMpegUtils
 import cc.kafuu.bilidownload.notification.DownloadNotification
+import cc.kafuu.bilidownload.service.DownloadServiceTaskRegistry.Assignment
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import java.io.File
-import java.util.concurrent.Executors
 
+/** 持有唯一任务请求，协调媒体下载及串行后处理，直到任务实际结束才释放前台服务。 */
 class DownloadService : Service() {
     companion object {
         private const val TAG = "DownloadService"
 
         private const val KEY_TASK_ID = "taskId"
+        private const val KEY_REQUEST_TOKEN = "requestToken"
+        private const val KEY_RETRY_ONLY = "retryOnly"
 
-        private val mTaskFinishedExecutor = Executors.newSingleThreadExecutor()
+        private val mPostProcessor = DownloadTaskPostProcessor()
+        private val mRequestRegistry = DownloadTaskRequestRegistry()
+
+        /** 包含服务 Intent 尚未交付、详情同步、排队、下载及后处理的进程内任务身份。 */
+        val inFlightTaskIds: StateFlow<Set<Long>> = mRequestRegistry.taskIds
+
+        /** 服务请求与执行器共同决定任务是否在途，页面过滤不能替代服务侧校验。 */
+        fun isTaskInFlight(taskId: Long): Boolean =
+            mRequestRegistry.contains(taskId) || DownloadManager.containsTaskGroup(taskId)
 
         private fun startService(context: Context, intent: Intent) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -57,26 +80,38 @@ class DownloadService : Service() {
             }
         }
 
-        fun startDownload(context: Context, taskId: Long) {
+        /** 启动新任务或继续中断任务；false 表示已有请求或下载组，未重复启动。 */
+        fun startDownload(context: Context, taskId: Long): Boolean = submitTask(context, taskId, false)
+
+        /** 发出仅允许失败状态的重试请求；true 仅表示服务启动请求已发送。 */
+        fun retryTask(context: Context, taskId: Long): Boolean = submitTask(context, taskId, true)
+
+        /** 先保留唯一身份再发送 Intent，发送失败立即回滚同一次请求。 */
+        private fun submitTask(context: Context, taskId: Long, retryOnly: Boolean): Boolean {
+            if (DownloadManager.containsTaskGroup(taskId)) return false
+            val request = mRequestRegistry.reserve(taskId) ?: return false
             val intent = Intent(context, DownloadService::class.java)
-            intent.putExtra(KEY_TASK_ID, taskId)
-            startService(context, intent)
+                .putExtra(KEY_TASK_ID, taskId)
+                .putExtra(KEY_REQUEST_TOKEN, request.token)
+                .putExtra(KEY_RETRY_ONLY, retryOnly)
+            try {
+                startService(context, intent)
+                return true
+            } catch (error: Exception) {
+                mRequestRegistry.release(request)
+                throw error
+            }
         }
 
+        /** 从持久化活动阶段恢复，已在途任务由公共提交入口跳过。 */
         suspend fun resumeDownload(context: Context) {
-            val intent = Intent(context, DownloadService::class.java)
             DownloadRepository.queryDownloadTaskDetailByTaskId(
                 TaskStatus.DOWNLOADING,
                 TaskStatus.PREPARE,
                 TaskStatus.SYNTHESIS,
                 TaskStatus.PUBLISHING
             ).forEach {
-                val shouldResume = it.status == TaskStatus.PUBLISHING.code ||
-                    (it.groupId != null && !DownloadManager.containsTaskGroup(it.groupId!!))
-                if (shouldResume) {
-                    intent.putExtra(KEY_TASK_ID, it.id)
-                    startService(context, intent)
-                }
+                startDownload(context, it.id)
             }
         }
     }
@@ -85,10 +120,12 @@ class DownloadService : Service() {
 
     // 限制任务进入下载队列前的视频详情同步请求，批量入队时不会同时请求全部稿件。
     private val mAssignmentSemaphore = Semaphore(4)
-    private val mTaskRegistry = DownloadServiceTaskRegistry()
+    private val mTaskRegistry = DownloadServiceTaskRegistry(mRequestRegistry)
+    @Volatile private var mIsDestroyed = false
 
-    private fun finishTask(taskId: Long) {
-        mTaskRegistry.finish(taskId)?.let(::stopSelfResult)
+    /** 仅释放仍属于本次请求的登记，后处理完成前不会停掉前台服务。 */
+    private fun finishTask(assignment: Assignment) {
+        mTaskRegistry.finish(assignment)?.let(::stopSelfResult)
     }
 
     private lateinit var mDownloadNotification: DownloadNotification
@@ -107,88 +144,81 @@ class DownloadService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         EventBus.getDefault().unregister(this)
+        mIsDestroyed = true
         mServiceScope.cancel()
+        // 已交给独立下载执行器的任务没有准备协程；释放服务身份，执行器仍负责自身去重。
+        mTaskRegistry.snapshot().filter { it.handedToDownloader }.forEach(::finishTask)
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val entityId = intent?.getLongExtra(KEY_TASK_ID, -1L)
         if (entityId == null || entityId == -1L) {
             return super.onStartCommand(intent, flags, startId)
         }
-        if (!mTaskRegistry.tryRegister(entityId, startId)) {
-            Log.d(TAG, "Task [T$entityId] is already assigned, skip duplicate start")
+        // 进程重建后可能没有内存请求记录，按 Intent 身份重新登记；旧令牌不能冒领新请求。
+        val token = intent.getLongExtra(KEY_REQUEST_TOKEN, -1L)
+        val assignment = mTaskRegistry.tryRegister(entityId, token, startId)
+        if (assignment == null) {
+            Log.d(TAG, "Task [T$entityId] start is duplicate or stale")
+            mTaskRegistry.stopIdIfIdle()?.let(::stopSelfResult)
             return super.onStartCommand(intent, flags, startId)
         }
-        Log.d(TAG, "onStartCommand: $entityId")
-        mServiceScope.launch {
-            try {
-                mAssignmentSemaphore.withPermit {
-                    assigningTask(entityId)
-                }
-            } catch (e: Exception) {
-                finishTask(entityId)
-                Log.e(TAG, e.message ?: "Unknown error")
-            }
-        }
+        val retryOnly = intent.getBooleanExtra(KEY_RETRY_ONLY, false)
+        // 原子启动保证服务刚销毁时也执行 finally，不留下永久在途身份。
+        mServiceScope.launch(start = CoroutineStart.ATOMIC) { assigningTask(assignment, retryOnly) }
         return super.onStartCommand(intent, flags, startId)
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    /**
-     * 分配下载任务
-     * @param taskId 下载任务ID
-     * */
-    private suspend fun assigningTask(taskId: Long) {
-        val taskEntity = DownloadRepository.getDownloadTaskByTaskId(taskId)
-            ?: throw IllegalStateException("Task [T$taskId] get download task entity failed")
-
-        if (
-            taskEntity.status == TaskStatus.PUBLISHING.code ||
-            taskEntity.status == TaskStatus.PUBLISH_FAILED.code
-        ) {
-            try {
-                publishTaskResources(taskEntity)
-            } catch (e: Exception) {
-                Log.e(TAG, "Task [T$taskId] publishing crashed", e)
-                runCatching {
-                    DownloadRepository.update(taskEntity.apply {
-                        status = TaskStatus.PUBLISH_FAILED.code
-                    })
+    /** 在原持久态上选择恢复阶段，只有执行器接管后才等待下载终态释放登记。 */
+    private suspend fun assigningTask(assignment: Assignment, retryOnly: Boolean) {
+        val useCase = DownloadTaskRecoveryUseCase(
+            loadTask = { taskId ->
+                DownloadRepository.getDownloadTaskByTaskId(taskId)?.also { assignment.task = it }
+            },
+            isDownloading = { task ->
+                DownloadManager.containsTaskGroup(task.id) ||
+                    task.groupId?.let(DownloadManager::containsTaskGroup) == true
+            },
+            download = ::prepareDownload,
+            synthesize = { task ->
+                mPostProcessor.execute {
+                    SynthesisRecoveryUseCase(runSynthesis = { onDownloadCompleted(it, true) }).execute(task)
                 }
-            } finally {
-                finishTask(taskId)
+            },
+            publish = { task -> mPostProcessor.execute { publishTaskResources(task) } },
+            onFailure = ::onRecoveryFailed,
+        )
+        try {
+            // 前置请求保持既有并发上限，后处理在挂起期间也持有共享互斥锁。
+            val result = mAssignmentSemaphore.withPermit {
+                useCase.execute(assignment.request.taskId, retryOnly)
             }
-            return
+            assignment.handedToDownloader = result == DownloadTaskRecoveryUseCase.Result.HANDED_TO_DOWNLOADER
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            Log.e(TAG, "Task [T${assignment.request.taskId}] recovery failed")
+        } finally {
+            if (!assignment.handedToDownloader || mIsDestroyed) finishTask(assignment)
         }
-
-        // 如果此任务处于合成状态，则可能是因为此任务在合成执行过程中应用退出导致合成中断
-        if (taskEntity.status == TaskStatus.SYNTHESIS.code) {
-            // 清理资源
-            DownloadRepository.deleteDownloadTaskMixedResource(taskId)
-            // 重新走任务下载完成流程
-            onDownloadCompleted(taskEntity, true)
-            finishTask(taskId)
-            return
-        }
-
-        if (taskEntity.groupId?.let { DownloadManager.containsTaskGroup(it) } == true) {
-            finishTask(taskId)
-            return
-        }
-
-        // 尝试保存视频信息和请求下载
-        doSaveVideoDetails(taskEntity)
-
-        // 开始请求下载
-        DownloadManager.requestDownload(taskEntity)
     }
 
-    /**
-     * 尝试保存视频信息
-     * previous: [assigningTask]
-     * 1. 请求获取视频详情；2. 根据获取到的数据更新数据库；
-     * */
+    /** 同步详情时保留原失败状态；删除或改变阶段的任务不再交给媒体执行器。 */
+    private suspend fun prepareDownload(task: DownloadTaskEntity): Boolean = withContext(Dispatchers.IO) {
+        doSaveVideoDetails(task)
+        currentCoroutineContext().ensureActive()
+        val current = DownloadRepository.getDownloadTaskByTaskId(task.id) ?: return@withContext false
+        if (DownloadTaskRecoveryUseCase.phaseFor(current.status) != DownloadTaskRecoveryUseCase.Phase.DOWNLOAD) {
+            return@withContext false
+        }
+        DownloadManager.requestDownload(task)
+        true
+    }
+
+    /** 获取详情失败时只清理尚未建立有效信息的新任务，不重置或删除失败任务缓存。 */
     private suspend fun doSaveVideoDetails(task: DownloadTaskEntity) {
         NetworkManager.biliVideoRepository.syncRequestVideoDetail(task.biliBvid) { responseCode, returnCode, message ->
             mDownloadNotification.notificationGetVideoDetailsFailed(
@@ -200,14 +230,25 @@ class DownloadService : Service() {
             if (task.status == TaskStatus.PREPARE.code) {
                 mServiceScope.launch { DownloadRepository.deleteDownloadTask(task.id) }
             }
-            Log.e(
-                TAG,
-                "Task [T${task.id}] get video details failed, responseCode: $responseCode, returnCode: $returnCode, message: $message"
-            )
+            Log.e(TAG, "Task [T${task.id}] details failed, http=$responseCode, code=$returnCode")
         }?.let {
             // 更新数据库中的视频信息
             BiliVideoRepository.doInsertOrUpdateVideoDetails(it, task.biliCid)
         } ?: throw IllegalStateException("Task [T${task.id}] get video details failed")
+    }
+
+    /** 保存实际失败阶段并提供通用脱敏反馈，缺失记录不被重建。 */
+    private suspend fun onRecoveryFailed(task: DownloadTaskEntity, phase: DownloadTaskRecoveryUseCase.Phase) {
+        if (DownloadRepository.getDownloadTaskByTaskId(task.id) == null) return
+        DownloadRepository.update(task.apply { status = phase.failureStatus.code })
+        when (phase) {
+            DownloadTaskRecoveryUseCase.Phase.DOWNLOAD -> mDownloadNotification.notificationDownloadFailed(
+                task, DownloadFailure(DownloadFailure.Kind.SOURCE_UNAVAILABLE)
+            )
+            DownloadTaskRecoveryUseCase.Phase.SYNTHESIS -> mDownloadNotification.notificationSynthesisFailed(task)
+            DownloadTaskRecoveryUseCase.Phase.PUBLISH -> mDownloadNotification.notificationPublishFailed(task, "")
+        }
+        Log.e(TAG, "Task [T${task.id}] recovery failed, phase=$phase")
     }
 
 
@@ -215,19 +256,18 @@ class DownloadService : Service() {
      * 请求下载资源失败事件 */
     @Subscribe(threadMode = ThreadMode.POSTING)
     fun onRequestFailedEvent(event: DownloadRequestFailedEvent) {
+        val assignment = mTaskRegistry.find(event.task.id) ?: return
         mServiceScope.launch {
-            try {
-                DownloadRepository.update(event.task.apply {
-                    status = TaskStatus.DOWNLOAD_FAILED.code
-                })
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to persist request failure for task T${event.task.id}", e)
-            } finally {
-                mDownloadNotification.notificationRequestFailed(
-                    event.task,
-                    event.httpCode, event.code, event.message
-                )
-                finishTask(event.task.id)
+            assignment.eventMutex.withLock {
+                if (!mTaskRegistry.owns(assignment, event.task)) return@withLock
+                try {
+                    DownloadRepository.update(event.task.apply { status = TaskStatus.DOWNLOAD_FAILED.code })
+                    mDownloadNotification.notificationRequestFailed(
+                        event.task, event.httpCode, event.code, event.message
+                    )
+                } finally {
+                    finishTask(assignment)
+                }
             }
         }
     }
@@ -236,27 +276,39 @@ class DownloadService : Service() {
      * 下载状态改变事件 */
     @Subscribe(threadMode = ThreadMode.POSTING)
     fun onDownloadStatusChangeEvent(event: DownloadStatusChangeEvent) {
-        Log.d(
-            TAG,
-            "Task [G${event.group.id}, T${event.task.id}] status change, status: ${event.status}"
-        )
+        val assignment = mTaskRegistry.find(event.task.id) ?: return
         mServiceScope.launch {
-            when (event.status) {
-                DownloadStatus.COMPLETED -> mTaskFinishedExecutor.execute {
-                    runBlocking { onDownloadCompleted(event.task) }
+            // 同一请求的状态事件串行消费，结束后到达的进度不能覆盖最终状态。
+            assignment.eventMutex.withLock {
+                if (!mTaskRegistry.owns(assignment, event.task)) return@withLock
+                try {
+                    when (event.status) {
+                        DownloadStatus.COMPLETED -> completeDownloadedTask(event.task)
+                        DownloadStatus.FAILURE -> onDownloadFailed(event.task, event.group)
+                        DownloadStatus.EXECUTING -> onDownloadExecuting(event.task, event.group)
+                        DownloadStatus.CANCELLED -> onDownloadCancelled(event.task, event.group)
+                        DownloadStatus.STOPPED -> onDownloadStopped(event.task, event.group)
+                        else -> Unit
+                    }
+                } finally {
+                    if (event.status.isEndStatus || event.status == DownloadStatus.STOPPED) {
+                        mDownloadNotification.updateDownloadProgress(event.task, null)
+                        finishTask(assignment)
+                    }
                 }
+            }
+        }
+    }
 
-                DownloadStatus.FAILURE -> onDownloadFailed(event.task, event.group)
-                DownloadStatus.EXECUTING -> onDownloadExecuting(event.task, event.group)
-                DownloadStatus.CANCELLED -> onDownloadCancelled(event.task, event.group)
-                DownloadStatus.STOPPED -> onDownloadStopped(event.task, event.group)
-                else -> Unit
-            }
-            // 是终止态
-            if (event.status.isEndStatus) {
-                mDownloadNotification.updateDownloadProgress(event.task, null)
-                finishTask(event.task.id)
-            }
+    /** 下载完成后串行处理合成和发布，服务身份一直保留到后处理返回。 */
+    private suspend fun completeDownloadedTask(task: DownloadTaskEntity) = mPostProcessor.execute {
+        try {
+            onDownloadCompleted(task)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            onRecoveryFailed(task, DownloadTaskRecoveryUseCase.phaseFor(task.status)
+                ?: DownloadTaskRecoveryUseCase.Phase.DOWNLOAD)
         }
     }
 
@@ -505,7 +557,6 @@ class DownloadService : Service() {
      * from [onDownloadStatusChangeEvent] */
     private fun onDownloadStopped(task: DownloadTaskEntity, group: DownloadGroupSnapshot) {
         mDownloadNotification.updateDownloadProgress(task, null)
-        finishTask(task.id)
     }
 
     /**
