@@ -74,10 +74,11 @@ class MediaPlayerActivity : CoreCompActivity() {
         initializePlayer(intent)
     }
 
+    /** 将外部新请求作为一次新的播放，保存参数以供后续页面重建绑定。 */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        initializePlayer(intent)
+        initializePlayer(intent, restartPlayback = true)
     }
 
     override fun onStart() {
@@ -137,13 +138,20 @@ class MediaPlayerActivity : CoreCompActivity() {
         }
     }
 
-    private fun initializePlayer(intent: Intent) {
+    /**
+     * 解析宿主参数并交给 ViewModel 判断是否复用播放会话；缺少文件路径时关闭无效页面。
+     *
+     * @param restartPlayback 仅外部新 Intent 设为 true，onCreate 的重新绑定保持默认值。
+     */
+    private fun initializePlayer(intent: Intent, restartPlayback: Boolean = false) {
         val filePath = intent.getStringExtra(KEY_FILE_PATH) ?: run { finish(); return }
         val title = intent.getStringExtra(KEY_TITLE) ?: ""
         val mimeType = intent.getStringExtra(KEY_MIME_TYPE) ?: "video/*"
         val contentUri = intent.getStringExtra(KEY_CONTENT_URI)
         mViewModel.emit(
-            MediaPlayerUiIntent.Init(applicationContext, filePath, title, mimeType, contentUri)
+            MediaPlayerUiIntent.Init(
+                applicationContext, filePath, title, mimeType, contentUri, restartPlayback,
+            )
         )
     }
 

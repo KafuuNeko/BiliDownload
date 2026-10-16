@@ -1,6 +1,5 @@
 package cc.kafuu.bilidownload.feature.compose.viewmodel.mediaplayer
 
-import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
@@ -16,6 +15,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 
+/**
+ * 在视频页面的 ViewModel 生命周期内持有播放器及进度任务，页面重建时复用播放会话。
+ *
+ * 播放器操作由主线程处理，仅在 [onCleared] 中释放；Activity 负责窗口和画中画状态。
+ */
 class MediaPlayerViewModel :
     CoreCompViewModelWithEvent<MediaPlayerUiIntent, MediaPlayerUiState, MediaPlayerUiEvent>(
         MediaPlayerUiState.None
@@ -68,8 +72,21 @@ class MediaPlayerViewModel :
         }
     }
 
+    /**
+     * 绑定已有媒体会话，或为新的播放请求准备媒体并从头播放。
+     *
+     * 同一 URI 的页面重建保留进度、倍速、暂停及错误状态，不重复准备播放器。
+     * 显式新请求仍可重新打开同一 URI，以支持重新播放或重试失败的资源。
+     *
+     * @param intent 播放参数，contentUri 优先于文件路径；仅使用其中的 applicationContext。
+     */
     @UiIntentObserver(MediaPlayerUiIntent.Init::class)
     fun onInit(intent: MediaPlayerUiIntent.Init) {
+        // 重建只重新绑定视图，不将仍由 ViewModel 持有的会话当作一次新的播放请求。
+        val uri = intent.contentUri?.let(Uri::parse) ?: Uri.fromFile(File(intent.filePath))
+        if (!intent.restartPlayback && mPlayer?.currentMediaItem?.localConfiguration?.uri == uri) return
+
+        // 切换或重新打开媒体时重置会话状态，播放器实例及监听器仍由当前 ViewModel 复用。
         stopProgressUpdate()
         cancelAutoHide()
         mSelectedPlaybackSpeed = 1.0f
@@ -90,7 +107,7 @@ class MediaPlayerViewModel :
             player = player,
         ).setup()
 
-        val uri = intent.contentUri?.let(Uri::parse) ?: Uri.fromFile(File(intent.filePath))
+        // 先发布新媒体的展示状态，让准备资源时的播放器回调能够更新对应界面。
         val mediaItem = MediaItem.fromUri(uri)
         player.setMediaItem(mediaItem)
         player.prepare()

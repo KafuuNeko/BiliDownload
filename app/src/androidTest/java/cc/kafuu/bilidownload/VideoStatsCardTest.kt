@@ -18,6 +18,7 @@ import cc.kafuu.bilidownload.common.adapter.BiliResourceRVAdapter
 import cc.kafuu.bilidownload.common.adapter.holder.ItemBiliVideoHolder
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.common.model.bili.VideoStats
+import cc.kafuu.bilidownload.common.utils.VideoCountFormatter
 import cc.kafuu.bilidownload.feature.viewbinding.view.activity.VideoDetailsActivity
 import cc.kafuu.bilidownload.feature.viewbinding.view.common.VideoStatsView
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.common.BiliResourceRVViewModel
@@ -72,7 +73,9 @@ class VideoStatsCardTest {
                         "visible=${stats.isVisible}, header=${activity.findViewById<View>(R.id.video_header).isVisible}",
                     stats.isShown,
                 )
-                assertEquals("1.2万", (stats.getChildAt(0) as TextView).text.toString())
+                // Activity 使用设备语言；此用例验证快照传递，不要求设备预先切成中文。
+                assertEquals(VideoCountFormatter.format(12345, stats.resources.configuration.locales[0]),
+                    (stats.getChildAt(0) as TextView).text.toString())
                 assertEquals("0", (stats.getChildAt(1) as TextView).text.toString())
                 assertEquals("678", (stats.getChildAt(2) as TextView).text.toString())
                 assertTrue(stats.getChildAt(2).isShown)

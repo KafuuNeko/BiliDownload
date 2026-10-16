@@ -11,7 +11,9 @@ import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamResource
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamSegmentBase
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CancellationException
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BatchDownloadUseCaseTest {
@@ -173,6 +175,88 @@ class BatchDownloadUseCaseTest {
 
         assertEquals(BatchDownloadUseCase.Result.Cancelled, result)
         assertEquals(0, enqueueCount)
+    }
+
+    /** 全部分 P 使用固定身份去重，并逐项回报新增与跳过，不因单项异常中断。 */
+    @Test
+    fun executeParts_deduplicatesAndReportsPartialFailures() = runBlocking {
+        val progress = mutableListOf<BatchDownloadUseCase.Progress>()
+        val submitted = mutableListOf<Long>()
+        val useCase = BatchDownloadUseCase(
+            resolveSources = { error("详情快照不应再次解析稿件") },
+            loadDash = {
+                if (it.cid == 2L) throw IllegalStateException("不可播放")
+                ResultWrapper.Success(dash(listOf(resource(80, 7, "part-${it.cid}"))))
+            },
+            mismatchModeProvider = { BatchQualityMismatchMode.SKIP },
+            enqueueDownload = { current, _ ->
+                submitted += current.cid
+                if (current.cid == 3L) throw IllegalStateException("入队失败")
+                current.cid != 4L
+            },
+        )
+        val result = useCase.executeParts(
+            listOf(part(1), part(1), part(2), part(3), part(4), part(5)),
+            selectStreams = { BatchDownloadResolver.StreamSelection(it.dash.video?.first(), null) },
+            onProgress = { progress += it },
+        )
+        assertEquals(BatchDownloadUseCase.Result.Completed(2, 3, 5), result)
+        assertEquals(listOf(1L, 3L, 4L, 5L), submitted)
+        assertEquals((0..5).toList(), progress.map { it.processedCount })
+        assertEquals(BatchDownloadUseCase.Progress(5, 5, 2, 3), progress.last())
+    }
+
+    /** 大批次仅用首个可播放分 P 选择规格，后续按顺序执行且不丢项。 */
+    @Test
+    fun executeParts_handles170PartsWithOneStreamSelection() = runBlocking {
+        val parts = (1L..170L).map(::part)
+        val submitted = mutableListOf<Long>()
+        var selections = 0
+        val useCase = BatchDownloadUseCase(
+            loadDash = { ResultWrapper.Success(dash(listOf(resource(80, 7, "part-${it.cid}")))) },
+            enqueueDownload = { current, _ -> submitted += current.cid; true },
+        )
+        val result = useCase.executeParts(parts, selectStreams = {
+            selections++
+            BatchDownloadResolver.StreamSelection(it.dash.video?.first(), null)
+        })
+        assertEquals(BatchDownloadUseCase.Result.Completed(170, 0, 170), result)
+        assertEquals(parts.map { it.cid }, submitted)
+        assertEquals(1, selections)
+    }
+
+    /** 中途取消不吞成普通跳过，已经提交的任务保持原身份且后续项不再处理。 */
+    @Test
+    fun executeParts_propagatesCancellationAndStopsLaterSubmissions() = runBlocking {
+        val submitted = mutableListOf<Long>()
+        val useCase = BatchDownloadUseCase(
+            loadDash = {
+                if (it.cid == 2L) throw CancellationException("cancelled")
+                ResultWrapper.Success(dash(listOf(resource(80, 7, "playable"))))
+            },
+            enqueueDownload = { current, _ -> submitted += current.cid; true },
+        )
+        var cancelled = false
+        try {
+            useCase.executeParts(listOf(part(1), part(2), part(3)), selectStreams = {
+                BatchDownloadResolver.StreamSelection(it.dash.video?.first(), null)
+            })
+        } catch (_: CancellationException) {
+            cancelled = true
+        }
+        assertTrue(cancelled)
+        assertEquals(listOf(1L), submitted)
+    }
+
+    /** 空播放流应跳过，避免空资源列表被视为用户确认的有效下载任务。 */
+    @Test
+    fun executeParts_skipsEmptyStreamsWithoutPrompting() = runBlocking {
+        val useCase = BatchDownloadUseCase(
+            loadDash = { ResultWrapper.Success(dash(emptyList())) },
+            enqueueDownload = { _, _ -> error("不应创建空资源任务") },
+        )
+        val result = useCase.executeParts(listOf(part(1)), selectStreams = { error("不应显示空规格") })
+        assertEquals(BatchDownloadUseCase.Result.Completed(0, 1, 1), result)
     }
 
     private fun resolvedResult(parts: List<BiliVideoPartModel>) =

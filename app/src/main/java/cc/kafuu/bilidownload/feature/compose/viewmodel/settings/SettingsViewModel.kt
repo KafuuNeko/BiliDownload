@@ -106,6 +106,7 @@ class SettingsViewModel :
         refreshState()
     }
 
+    /** 持久化后续音频导出的命名模板并刷新设置展示，已导出的文件不重新命名。 */
     @UiIntentObserver(SettingsUiIntent.SetAudioExportFileNameTemplate::class)
     fun onSetAudioExportFileNameTemplate(
         intent: SettingsUiIntent.SetAudioExportFileNameTemplate
@@ -114,6 +115,7 @@ class SettingsViewModel :
         refreshState()
     }
 
+    /** 持久化后续视频导出的命名模板并刷新设置展示，空白模板由导出命名工具回退。 */
     @UiIntentObserver(SettingsUiIntent.SetVideoExportFileNameTemplate::class)
     fun onSetVideoExportFileNameTemplate(
         intent: SettingsUiIntent.SetVideoExportFileNameTemplate
@@ -122,6 +124,7 @@ class SettingsViewModel :
         refreshState()
     }
 
+    /** 持久化后续合成资源导出的命名模板并刷新设置展示，不改变下载资源的原始文件名。 */
     @UiIntentObserver(SettingsUiIntent.SetMixedExportFileNameTemplate::class)
     fun onSetMixedExportFileNameTemplate(
         intent: SettingsUiIntent.SetMixedExportFileNameTemplate
