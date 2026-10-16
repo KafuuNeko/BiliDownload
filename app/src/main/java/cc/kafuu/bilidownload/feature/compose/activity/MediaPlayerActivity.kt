@@ -96,11 +96,13 @@ class MediaPlayerActivity : CoreCompActivity() {
         }
     }
 
+    /**
+     * 页面真正不可见时暂停视频，覆盖系统关闭小窗时尚未清除 PiP 标记的情况。
+     *
+     * 可见小窗仅使页面进入 onPause，不会因此停止播放；配置重建继续由 ViewModel 保留会话。
+     */
     override fun onStop() {
-        val isCurrentlyInPictureInPictureMode = Build.VERSION.SDK_INT >=
-            Build.VERSION_CODES.O &&
-            (mIsInPictureInPictureMode || isInPictureInPictureMode)
-        if (!isChangingConfigurations && !isCurrentlyInPictureInPictureMode) {
+        if (!isChangingConfigurations) {
             mViewModel.emit(MediaPlayerUiIntent.Pause)
         }
         super.onStop()

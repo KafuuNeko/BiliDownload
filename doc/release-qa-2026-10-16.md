@@ -7,8 +7,9 @@
 **已修复本轮确认的功能回归和 KDoc 缺口，已执行的自动化 QA 全部通过。** 尚未覆盖的平台与线上场景仍需按文末清单验收。
 
 - **P2 / 已修复：视频播放页重建丢失进度、倍速和暂停状态。** 该回归由 `a580688` 引入，现已修复，并通过文件路径、Content URI 及新 Intent 场景复测。
+- **P2 / 已修复：关闭系统小窗后仍在后台播放。** 用户真机验收发现后，在 API 35 模拟器复现；修复后关闭小窗停止播放，恢复全屏和配置重建继续保留会话。
 - 重点审计的 `2.3.7.foss` 之后代码，在本轮覆盖的下载恢复、备用源、分阶段恢复、全部分 P、批量导出和统计展示场景中，未发现其他已证实的功能回归。这不代表未覆盖的平台及线上场景已通过。
-- JVM 测试 **121/121 通过**；Android 设备测试 **22/22 通过**；Debug、四 ABI Release 及测试 APK 构建成功；Lint **0 errors / 87 warnings**。
+- JVM 测试 **121/121 通过**；Android 设备测试 **25/25 通过**；Debug、四 ABI Release 及测试 APK 构建成功；Lint **0 errors / 87 warnings**。
 - 当前 `versionName=2.3.7.foss`、`versionCode=20307` 符合“QA 通过后再迭代”的安排，不作为缺陷。生产改动限于播放器会话绑定与审计指出的文档契约；版本、签名和数据库结构未变，未触发发布。
 
 ## 审计范围与环境
@@ -40,7 +41,17 @@
 
 **修复实现：** 初始化意图增加默认关闭的 `restartPlayback`。页面重建时，ViewModel 根据实际播放 URI 识别已有会话并保留播放器、进度、倍速、暂停及错误状态；`onNewIntent()` 明确请求重新播放，并保存新的 Activity Intent，确保后续重建绑定最新媒体。即使新请求 URI 与当前相同，也能重新打开资源或从播放错误中重试。播放器仍仅由 ViewModel 持有和释放。
 
-**验收：** [ReleaseQaTest](../app/src/androidTest/java/cc/kafuu/bilidownload/ReleaseQaTest.kt) 保留原回归断言，并扩展到文件路径及 Content URI；增加不同媒体新 Intent 切换后再次重建、错误状态重建后同 URI 重试、暂停后返回关闭三项测试。上述测试及画中画、后台音频均通过，[最终设备日志](../build/qa-fix-instrumentation-final.log)为 `OK (22 tests)`。
+**验收：** [ReleaseQaTest](../app/src/androidTest/java/cc/kafuu/bilidownload/ReleaseQaTest.kt) 保留原回归断言，并扩展到文件路径及 Content URI；增加不同媒体新 Intent 切换后再次重建、错误状态重建后同 URI 重试、暂停后返回关闭三项测试。上述测试及画中画、后台音频均通过，[最新设备日志](../build/qa-pip-fix-instrumentation.log)为 `OK (25 tests)`。
+
+### QA-02 · P2 · 系统关闭小窗后继续后台播放（已修复）
+
+**发现与复现：** 用户真机验收发现视频返回进入小窗、再关闭小窗后，声音仍在播放且失去控制入口。新增有声合成视频测试，在 API 35 模拟器通过系统标准画中画关闭动作复现：小窗已关闭，原播放器仍为播放状态，等待 10 秒仍未停止。[修复前日志](../build/qa-pip-before-fix.log)保留该失败，恢复全屏的对照测试通过。
+
+**根因：** [MediaPlayerActivity.onStop](../app/src/main/java/cc/kafuu/bilidownload/feature/compose/activity/MediaPlayerActivity.kt) 原来同时检查页面和缓存的画中画标记。系统关闭小窗时调用 `onStop()`，这些标记可能仍为 true，导致跳过暂停；页面停止后又未必立即销毁，ViewModel 持有的播放器因而继续播放。此前设备用例仅验证进入小窗后继续播放，未覆盖系统关闭动作。
+
+**修复：** 页面进入 `onStop()` 时，除配置重建外统一发送暂停意图。可见画中画只进入 `onPause()`，继续播放；恢复全屏也保留原会话。播放器仍由 ViewModel 持有并在清理时释放，不依赖小窗标记判断页面是否真正可见。生命周期依据见 [Android 官方画中画说明](https://developer.android.com/develop/ui/views/picture-in-picture#continuing_video_playback_while_in_pip)。
+
+**验证：** [PictureInPictureLifecycleTest](../app/src/androidTest/java/cc/kafuu/bilidownload/PictureInPictureLifecycleTest.kt) 新增 3 项：系统关闭后停止播放且进度不再推进、系统恢复全屏后继续原进度及倍速、播放中的配置重建保留会话。测试通过标准无障碍动作调用真实系统画中画控制器；未直接调用 Activity 的 `finish()`，也不依赖菜单语言或固定坐标。关闭与全屏动作的系统实现见 [AOSP](https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android15-release/libs/WindowManager/Shell/src/com/android/wm/shell/pip/phone/PipAccessibilityInteractionConnection.java)。3 项新增测试及原有 22 项设备测试全部通过；用户反馈问题的厂商真机仍需复测关闭路径。
 
 ## 重点提交审查
 
@@ -60,9 +71,9 @@
 
 | 检查 | 结果 | 证据 |
 | --- | --- | --- |
-| JVM 全量测试 | 21 个测试类，121 项通过，0 失败 / 错误 / 跳过 | [HTML 报告](../app/build/reports/tests/testDebugUnitTest/index.html)、[修复后构建日志](../build/qa-fix-final-build.log) |
-| Android 设备测试 | 22 项运行，全部通过 | [修复后设备日志](../build/qa-fix-instrumentation-final.log) |
-| Debug / Release / 测试 APK | 构建成功，四种目标 ABI 均有产物 | [修复后构建与 Lint 日志](../build/qa-fix-final-build.log) |
+| JVM 全量测试 | 21 个测试类，121 项通过，0 失败 / 错误 / 跳过 | [HTML 报告](../app/build/reports/tests/testDebugUnitTest/index.html)、[修复后构建日志](../build/qa-pip-fix-build.log) |
+| Android 设备测试 | 25 项运行，全部通过 | [修复后设备日志](../build/qa-pip-fix-instrumentation.log) |
+| Debug / Release / 测试 APK | 构建成功，四种目标 ABI 均有产物 | [修复后构建日志](../build/qa-pip-fix-build.log)、[最终测试 APK 与 Lint 日志](../build/qa-pip-final-test-build.log) |
 | Lint Debug | 0 errors / 87 warnings | [Lint 文本](../app/build/reports/lint-results-debug.txt)、[Lint HTML](../app/build/reports/lint-results-debug.html) |
 | APK 元数据与 ZIP 对齐 | 四包的应用 ID、版本、minSdk 24、targetSdk 37 和单一 ABI 正确；`zipalign -c -P 16` 全通过 | [修复后包检查记录](../build/qa-fix-package-verification.log) |
 | 64 位原生库 ELF 对齐 | arm64-v8a、x86_64 各 12 个 `.so` 的 LOAD 段对齐均为 `0x4000`（16 KiB） | [ELF 检查记录](../build/qa-native-alignment.csv) |
@@ -76,6 +87,7 @@
 - 应用上下文及公共存储 4 项：媒体发布到 Movies/Video 集合、删除释放有效载荷、检查点落库失败保留源文件且可再次发布。
 - 统计卡片 5 项：快照传递、回收后清除旧统计、已知 0 展示、多选状态不被 payload 破坏、宽度变化及浅深色/大字体。
 - 审计与修复累计新增 11 项：导出 5 项，画中画 1 项，后台音频 1 项，播放器重建 1 项，新 Intent 与错误恢复 2 项，正常返回 1 项，均通过。
+- 用户真机验收反馈后，再补 3 项画中画关闭、恢复全屏和播放中重建测试，均通过。
 
 画中画使用真实本地视频，确认返回后进入 PiP 且仍在播放；后台音频使用合成 AAC，确认页面进入后台后 MediaController 仍为播放状态且进度继续增长。静音合成音频及无窗口模拟器不能证明扬声器音质、蓝牙或耳机路由。
 
@@ -93,11 +105,12 @@ Lint 警告中包括依赖版本建议 37 项、未使用资源 20 项、默认 
 
 ## 本轮测试改动
 
-审计与修复累计新增 **18 项 JVM + 11 项设备测试**，生产修复见 QA-01：
+审计与修复累计新增 **18 项 JVM + 14 项设备测试**，生产修复见 QA-01、QA-02：
 
 - [DownloadRecoveryQaTest.kt](../app/src/test/java/cc/kafuu/bilidownload/download/DownloadRecoveryQaTest.kt)：14 项阶段恢复、资格过滤、取消传播、部分失败计数、合成前置校验与源文件保护。
 - [BatchDownloadUseCaseTest.kt](../app/src/test/java/cc/kafuu/bilidownload/BatchDownloadUseCaseTest.kt)：新增 4 项全部分 P 测试，包含 170 项、去重、空资源及取消。
 - [ReleaseQaTest.kt](../app/src/androidTest/java/cc/kafuu/bilidownload/ReleaseQaTest.kt)：11 项平台测试，QA-01 的进度、倍速和暂停断言完整保留，修复后通过；另验证播放器实例被复用。
+- [PictureInPictureLifecycleTest.kt](../app/src/androidTest/java/cc/kafuu/bilidownload/PictureInPictureLifecycleTest.kt)：3 项系统画中画生命周期测试，以 60 秒有声合成视频验证关闭后的播放停止及可见会话的保留。
 - [QaExportDirectory.kt](../app/src/androidTest/java/androidx/documentfile/provider/QaExportDirectory.kt)：仅用于测试 APK，以真实文件模拟 SAF 常用扩展名行为；源 URI 通过真实 ContentResolver 读取。该适配器不验证 DocumentsUI 授权或所有第三方文档提供器。
 
 同时修正既有测试的环境假设：
@@ -126,7 +139,7 @@ git diff --check 2.3.5.foss..HEAD
 git diff --check
 ```
 
-设备命令适用于本轮 x86_64 模拟器。以 runner 最后的测试汇总判断成功，不能只看 adb 命令退出码；修复后已确认 `OK (22 tests)`。首次依赖未缓存时去掉 `--offline`。
+设备命令适用于本轮 x86_64 模拟器。以 runner 最后的测试汇总判断成功，不能只看 adb 命令退出码；修复后已确认 `OK (25 tests)`。首次依赖未缓存时去掉 `--offline`。
 
 ## 发布前剩余验收
 
