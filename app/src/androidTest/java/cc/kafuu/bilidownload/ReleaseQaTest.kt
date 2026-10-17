@@ -17,6 +17,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import cc.kafuu.bilidownload.common.constant.DownloadResourceType
 import cc.kafuu.bilidownload.common.download.BatchExportUseCase
+import cc.kafuu.bilidownload.common.download.ResourceExportUseCase
 import cc.kafuu.bilidownload.common.room.entity.DownloadResourceEntity
 import cc.kafuu.bilidownload.common.utils.DownloadFileNameUtils
 import cc.kafuu.bilidownload.common.utils.ExportFileNameUtils
@@ -117,6 +118,44 @@ class ReleaseQaTest {
         val result = exporter { emptyList() }.execute(Uri.EMPTY, listOf(target(1), target(2))) {}
         assertEquals(BatchExportUseCase.Result.NoExportableResources, result)
         assertTrue(destination.listFiles()!!.isEmpty())
+    }
+
+    /** 合并后的移动导出同时保留 URI 回退和模板命名，并在副本核验后删除源资源。 */
+    @Test fun batchExport_moveReadsContentUriAndDeletesOnlyExportedSource() = runBlocking {
+        val original = source("source.mp4", "complete media")
+        val uri = checkNotNull(FileUtils.resolveReadUri(context, File(original.file)))
+        val published = original.copy(file = File(root, "missing.mp4").path, contentUri = uri.toString())
+        val cleanup = ResourceExportUseCase { resource ->
+            assertEquals(published, resource)
+            assertEquals("complete media", File(destination, "Video - Part.mp4").readText())
+            File(original.file).delete()
+        }
+        val result = exporter(cleanup) { id -> if (id == 1L) listOf(published) else emptyList() }
+            .execute(Uri.EMPTY, listOf(target(1), target(2)), deleteSourceAfterExport = true) {}
+        assertEquals(BatchExportUseCase.Result.Completed(1, 2, skippedCount = 1, deletedSourceCount = 1), result)
+        assertFalse(File(original.file).exists())
+        assertEquals("complete media", destination.listFiles()!!.single().readText())
+    }
+
+    /** 删除失败不丢弃已核验的副本，并独立统计清理失败与导出失败。 */
+    @Test fun batchExport_moveRetainsBothCopiesWhenCleanupFails() = runBlocking {
+        val original = source("source.mp4", "complete media")
+        val result = exporter(ResourceExportUseCase { false }) { listOf(original) }
+            .execute(Uri.EMPTY, listOf(target(1)), deleteSourceAfterExport = true) {}
+        assertEquals(BatchExportUseCase.Result.Completed(1, 1, sourceDeleteFailureCount = 1), result)
+        assertEquals("complete media", File(original.file).readText())
+        assertEquals("complete media", destination.listFiles()!!.single().readText())
+    }
+
+    /** 无法创建目标副本时保留源资源，不允许清理阶段运行。 */
+    @Test fun batchExport_movePreservesSourceWhenDestinationDisappears() = runBlocking {
+        val original = source("source.mp4", "complete media")
+        val result = exporter(ResourceExportUseCase { error("Source must be retained") }) {
+            assertTrue(destination.delete())
+            listOf(original)
+        }.execute(Uri.EMPTY, listOf(target(1)), deleteSourceAfterExport = true) {}
+        assertEquals(BatchExportUseCase.Result.Completed(0, 1), result)
+        assertEquals("complete media", File(original.file).readText())
     }
 
     /** 文件路径与 Content URI 均应在重建时复用播放器，完整保留暂停的播放会话。 */
@@ -380,10 +419,14 @@ class ReleaseQaTest {
         }
     }
 
-    private fun exporter(query: suspend (Long) -> List<DownloadResourceEntity>) = BatchExportUseCase(
+    private fun exporter(
+        resourceExportUseCase: ResourceExportUseCase = ResourceExportUseCase { error("Source must be retained") },
+        query: suspend (Long) -> List<DownloadResourceEntity>,
+    ) = BatchExportUseCase(
         contextProvider = { context }, queryResources = query,
         templatesProvider = { ExportFileNameUtils.Templates() },
         directoryProvider = { _, _ -> QaExportDirectory(DocumentFile.fromFile(destination)) },
+        resourceExportUseCase = resourceExportUseCase,
     )
 
     private fun target(id: Long) = BatchExportUseCase.Source(

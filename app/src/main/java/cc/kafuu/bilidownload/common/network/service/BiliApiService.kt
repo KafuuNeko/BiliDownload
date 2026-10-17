@@ -46,11 +46,17 @@ interface BiliApiService {
         @Query("bvid") bvid: String? = null
     ): Call<BiliRespond<BiliVideoData>>
 
+    @GET
+    fun requestVideoDetail(@Url fullUrl: String?): Call<BiliRespond<BiliVideoData>>
+
     @GET("pgc/view/web/season")
     fun requestSeasonDetail(
         @Query("season_id") seasonId: Long? = null,
         @Query("ep_id") epId: Long? = null
     ): Call<BiliRespond<BiliSeasonData>>
+
+    @GET
+    fun requestSeasonDetail(@Url fullUrl: String?): Call<BiliRespond<BiliSeasonData>>
 
     @GET("x/member/web/account")
     fun requestMyAccount(): Call<BiliRespond<MyBiliAccountData>>

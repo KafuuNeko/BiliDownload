@@ -17,6 +17,7 @@ import cc.kafuu.bilidownload.common.room.dto.DownloadTaskWithVideoDetails
 import cc.kafuu.bilidownload.common.room.repository.DownloadRepository
 import cc.kafuu.bilidownload.common.utils.DownloadFileNameUtils
 import cc.kafuu.bilidownload.feature.viewbinding.view.activity.HistoryDetailsActivity
+import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.ExportOptionsDialog
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.common.RVViewModel
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import kotlinx.coroutines.CancellationException
@@ -41,7 +42,12 @@ class HistoryViewModel(
 
     private val mExportUiStateLiveData = MutableLiveData<HistoryExportUiState>(HistoryExportUiState.Idle)
     val exportUiStateLiveData = mExportUiStateLiveData.liveData()
-    private var mPendingExportSources: List<BatchExportUseCase.Source> = emptyList()
+    private data class PendingExport(
+        val sources: List<BatchExportUseCase.Source>,
+        val deleteSourceAfterExport: Boolean,
+    )
+
+    private var mPendingExport: PendingExport? = null
     private var mNextExportRequestId = 0L
 
     companion object {
@@ -149,7 +155,7 @@ class HistoryViewModel(
     fun tryBatchExport() {
         if (isExportBusy()) return
         val selectedIds = currentMultiSelectState().selectedIds
-        mPendingExportSources = mDisplayedTasks.filter { it.downloadTask.id in selectedIds }.map { task ->
+        val sources = mDisplayedTasks.filter { it.downloadTask.id in selectedIds }.map { task ->
             BatchExportUseCase.Source(
                 taskId = task.downloadTask.id,
                 fileNameContext = DownloadFileNameUtils.TemplateContext(
@@ -158,11 +164,16 @@ class HistoryViewModel(
                 ),
             )
         }
-        if (mPendingExportSources.isEmpty()) return
-        // 进入互斥状态后再发送一次性事件，重复点击不会覆盖导出快照。
-        val requestId = ++mNextExportRequestId
-        mExportUiStateLiveData.value = HistoryExportUiState.SelectingDirectory(requestId)
-        sendViewAction(RequestExportDirAction(requestId))
+        if (sources.isEmpty()) return
+        popDialog(ExportOptionsDialog(), success = {
+            val options = it as? ExportOptionsDialog.Result ?: return@popDialog
+            if (isExportBusy()) return@popDialog
+            mPendingExport = PendingExport(sources, options.deleteSourceAfterExport)
+            // 进入互斥状态后再发送一次性事件，重复点击不会覆盖导出快照。
+            val requestId = ++mNextExportRequestId
+            mExportUiStateLiveData.value = HistoryExportUiState.SelectingDirectory(requestId)
+            sendViewAction(RequestExportDirAction(requestId))
+        })
     }
 
     /** 目录选择事件只交付一次，屏幕旋转后不重复打开系统选择器。 */
@@ -176,22 +187,24 @@ class HistoryViewModel(
     /** 接收系统目录选择或取消；复制属于 ViewModel，旋转不会中断正在导出的文件。 */
     fun onExportDirectorySelected(treeUri: Uri?) {
         if (mExportUiStateLiveData.value !is HistoryExportUiState.SelectingDirectory) return
-        val sources = mPendingExportSources
-        mPendingExportSources = emptyList()
+        val request = mPendingExport ?: return
+        mPendingExport = null
         if (treeUri == null) {
             mExportUiStateLiveData.value = HistoryExportUiState.Idle
             return
         }
-        mExportUiStateLiveData.value = HistoryExportUiState.Exporting(BatchExportUseCase.Progress(0, sources.size))
+        mExportUiStateLiveData.value = HistoryExportUiState.Exporting(BatchExportUseCase.Progress(0, request.sources.size))
         viewModelScope.launch {
             try {
                 // 进度切回主线程后再继续，避免完成状态被 IO 线程的迟到 postValue 覆盖。
-                val result = mBatchExportUseCase.execute(treeUri, sources) { progress ->
+                val result = mBatchExportUseCase.execute(
+                    treeUri, request.sources, request.deleteSourceAfterExport,
+                ) { progress ->
                     withContext(Dispatchers.Main.immediate) {
                         mExportUiStateLiveData.value = HistoryExportUiState.Exporting(progress)
                     }
                 }
-                showExportResult(result)
+                showExportResult(result, request.deleteSourceAfterExport)
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
@@ -203,13 +216,21 @@ class HistoryViewModel(
     }
 
     /** 部分成功准确展示跳过和失败数量，完成后清空本次选择。 */
-    private fun showExportResult(result: BatchExportUseCase.Result) {
+    private fun showExportResult(result: BatchExportUseCase.Result, deleteSourceAfterExport: Boolean) {
         val message = when (result) {
             BatchExportUseCase.Result.NoExportableResources -> CommonLibs.getString(R.string.batch_export_no_resource_message)
             BatchExportUseCase.Result.InvalidDestination -> CommonLibs.getString(R.string.batch_export_invalid_destination)
             is BatchExportUseCase.Result.Completed -> {
                 updateMultiSelectState(HistoryMultiSelectUiState::clearSelection)
-                CommonLibs.getString(R.string.batch_export_result, result.successCount, result.skippedCount, result.failedCount)
+                if (deleteSourceAfterExport) {
+                    CommonLibs.getString(
+                        R.string.batch_export_move_result_message,
+                        result.successCount, result.skippedCount, result.failedCount,
+                        result.deletedSourceCount, result.sourceDeleteFailureCount,
+                    )
+                } else {
+                    CommonLibs.getString(R.string.batch_export_result, result.successCount, result.skippedCount, result.failedCount)
+                }
             }
         }
         popMessage(ToastMessageAction(message))

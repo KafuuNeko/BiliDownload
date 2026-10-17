@@ -6,7 +6,6 @@ import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.lifecycle.lifecycleScope
 import cc.kafuu.bilidownload.BR
 import cc.kafuu.bilidownload.R
 import cc.kafuu.bilidownload.common.core.viewbinding.CoreActivity
@@ -20,7 +19,6 @@ import cc.kafuu.bilidownload.feature.compose.activity.MediaPlayerActivity
 import cc.kafuu.bilidownload.feature.compose.activity.MusicPlayerActivity
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity.LocalResourceVideModel
 import java.io.File
-import kotlinx.coroutines.launch
 
 class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalResourceVideModel>(
     LocalResourceVideModel::class.java,
@@ -48,10 +46,9 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
         }
         setImmersionStatusBar()
         val contracts = ActivityResultContracts.StartActivityForResult()
-        mCreateDocumentLauncher = registerForActivityResult(contracts) {
-            if (it.resultCode == RESULT_OK && it.data != null) {
-                lifecycleScope.launch { mViewModel.exportResource(it.data?.data ?: return@launch) }
-            }
+        mCreateDocumentLauncher = registerForActivityResult(contracts) { result ->
+            val uri = if (result.resultCode == RESULT_OK) result.data?.data else null
+            mViewModel.exportResource(uri)
         }
     }
 
@@ -87,10 +84,18 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
         is LocalResourceVideModel.Companion.OpenResourceAction -> onOpenResource(action)
         is LocalResourceVideModel.Companion.ExportResourceAction -> onExportResource(action)
         is LocalResourceVideModel.Companion.PlayResourceAction -> onPlayResource(action)
+        is LocalResourceVideModel.Companion.ResourceMovedAction -> {
+            Toast.makeText(this, action.message, Toast.LENGTH_LONG).show()
+            finish()
+        }
         else -> super.onViewAction(action)
     }
 
     private fun onExportResource(action: LocalResourceVideModel.Companion.ExportResourceAction) {
+        if (!action.file.isFile) {
+            mViewModel.exportResource(null)
+            return
+        }
         FileUtils.tryExportFile(action.file, action.name, action.mimetype, mCreateDocumentLauncher)
     }
 
