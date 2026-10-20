@@ -156,10 +156,11 @@ object FileUtils {
         createDocumentLauncher: ActivityResultLauncher<Intent>
     ) {
         if (!file.exists()) return
+        // 调用方可能直接使用标题，系统创建文档前统一清理，避免非法字符导致创建失败。
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = mimetype
-            putExtra(Intent.EXTRA_TITLE, name)
+            putExtra(Intent.EXTRA_TITLE, DownloadFileNameUtils.sanitizeFileName(name))
         }
         createDocumentLauncher.launch(intent)
     }
@@ -236,9 +237,11 @@ object FileUtils {
         return MessageDigest.isEqual(expectedDigest, digest.digest())
     }
 
-    /** 返回目标目录中尚未被占用的显示文件名，并保留原扩展名。 */
+    /** 返回目标目录中尚未被占用的显示文件名；写入文档提供方前再次清理并保留原扩展名。 */
     fun resolveUniqueDocumentName(parent: DocumentFile, desiredName: String): String {
-        return DownloadFileNameUtils.resolveUniqueFileName(desiredName) {
+        return DownloadFileNameUtils.resolveUniqueFileName(
+            DownloadFileNameUtils.sanitizeFileName(desiredName),
+        ) {
             parent.findFile(it) != null
         }
     }

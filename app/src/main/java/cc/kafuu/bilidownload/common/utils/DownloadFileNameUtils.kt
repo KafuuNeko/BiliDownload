@@ -15,6 +15,8 @@ object DownloadFileNameUtils {
 
     private const val DEFAULT_FALLBACK_BASE_NAME = "resource"
     private const val MAX_FILE_NAME_BYTES = 240
+    // 媒体扩展名只占少量字节；为主名称及冲突序号保留空间，避免异常扩展名耗尽总预算。
+    private const val MAX_EXTENSION_BYTES = 32
     private val illegalFileNameCharsRegex = Regex("""[\\/:*?"<>|\u0000-\u001F]""")
     private val whitespaceRegex = Regex("""\s+""")
     private val duplicateUnderscoreRegex = Regex("""_+""")
@@ -35,6 +37,31 @@ object DownloadFileNameUtils {
         val baseName = renderBaseName(template, context, fallbackBaseName)
         val safeExtension = sanitizeExtension(extension)
         return buildFileNameWithSuffix(baseName, safeExtension, "")
+    }
+
+    /**
+     * 清理调用方提供的完整文件名，作为写入文件系统或 SAF 文档提供方前的最后一道防线。
+     *
+     * 按最后一个点拆分主名称与扩展名，主名称中的非法字符替换为下划线，扩展名中的非法字符
+     * 与空白直接移除。扩展名最多保留 32 个 UTF-8 字节，完整名称最多 240 字节，截取时保留
+     * 完整 Unicode 码点；扩展名清理后为空时不追加点。该方法不检查重名，也不创建文件。
+     *
+     * @param fileName 待落盘的显示名称，可包含扩展名。
+     * @param fallbackBaseName 清理后没有有效主名称时使用的回退名称。
+     * @return 可安全交给文件系统或文档提供方的文件名。
+     */
+    fun sanitizeFileName(
+        fileName: String,
+        fallbackBaseName: String = DEFAULT_FALLBACK_BASE_NAME,
+    ): String {
+        val dotIndex = fileName.lastIndexOf('.')
+        val baseName = if (dotIndex > 0) fileName.substring(0, dotIndex) else fileName
+        val extension = if (dotIndex > 0) fileName.substring(dotIndex + 1) else ""
+        return buildFileNameWithSuffix(
+            baseName = sanitizeBaseName(baseName).ifBlank { sanitizeBaseName(fallbackBaseName) },
+            extension = sanitizeExtension(extension),
+            suffix = "",
+        )
     }
 
     fun buildUniqueFile(
@@ -128,13 +155,15 @@ object DownloadFileNameUtils {
             .trimFileNameSeparators()
     }
 
+    /** 清除扩展名中的受限字符并限制字节数，避免主名称或重名序号失去可用空间。 */
     private fun sanitizeExtension(value: String): String {
-        return value
+        val sanitized = value
             .trim()
             .trimStart('.')
             .replace(illegalFileNameCharsRegex, "")
             .replace(whitespaceRegex, "")
             .trimFileNameSeparators()
+        return truncateUtf8(sanitized, MAX_EXTENSION_BYTES)
     }
 
     private fun buildFileNameWithSuffix(

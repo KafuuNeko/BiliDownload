@@ -4,6 +4,7 @@ import cc.kafuu.bilidownload.common.constant.DownloadResourceType
 import cc.kafuu.bilidownload.common.utils.DownloadFileNameUtils
 import cc.kafuu.bilidownload.common.utils.ExportFileNameUtils
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -107,5 +108,39 @@ class ExportFileNameUtilsTest {
 
         assertEquals("测🎵".repeat(33) + "测.mp4", fileName)
         assertTrue(fileName.toByteArray(Charsets.UTF_8).size <= 240)
+    }
+
+    /** 单项与批量导出共用此入口，标题中的每个受限字符都必须被替换。 */
+    @Test
+    fun buildFileName_replacesEveryCharacterReportedInIssue73() {
+        listOf('\\', '/', ':', '*', '?', '"', '<', '>', '|').forEach { illegal ->
+            val fileName = ExportFileNameUtils.buildFileName(
+                resourceType = DownloadResourceType.MIXED,
+                context = DownloadFileNameUtils.TemplateContext(
+                    videoName = "标题${illegal}后",
+                    partName = "P${illegal}1",
+                ),
+                extension = "mp4",
+                templates = ExportFileNameUtils.Templates(mixed = "{VideoName} - {PartName}"),
+            )
+
+            assertFalse("$illegal should not remain in $fileName", fileName.contains(illegal))
+            assertEquals("标题_后 - P_1.mp4", fileName)
+        }
+    }
+
+    @Test
+    fun buildFileName_replacesAllIllegalCharactersTogether() {
+        val fileName = ExportFileNameUtils.buildFileName(
+            resourceType = DownloadResourceType.MIXED,
+            context = DownloadFileNameUtils.TemplateContext(
+                videoName = """a\/:*?"<>|b""",
+                partName = "P1",
+            ),
+            extension = "mp4",
+            templates = ExportFileNameUtils.Templates(mixed = "{VideoName} - {PartName}"),
+        )
+
+        assertEquals("a_b - P1.mp4", fileName)
     }
 }

@@ -35,6 +35,7 @@ import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.network.model.BiliSubtitleListContainer
 import cc.kafuu.bilidownload.common.network.model.BccSubtitle
 import cc.kafuu.bilidownload.common.utils.DanmakuExportUtils
+import cc.kafuu.bilidownload.common.utils.DownloadFileNameUtils
 import cc.kafuu.bilidownload.common.utils.SubtitleExportUtils
 import cc.kafuu.bilidownload.common.utils.TimeUtils
 import cc.kafuu.bilidownload.feature.viewbinding.view.activity.PersonalDetailsActivity
@@ -787,13 +788,13 @@ class VideoDetailsViewModel(
             else -> ".jpg"
         }
 
-        // 使用 bv 号作为默认文件名
+        // 使用 bv 号作为默认文件名；缺失时按标题生成，仍须清理非法字符后才能创建文档。
         val fileName = if (bvid != null) {
             "${bvid}$extension"
         } else {
             // 如果没有 bvid，使用标题
             val resource = mBiliResourceModelLiveData.value ?: return
-            "${resource.title.limit(100)}$extension"
+            DownloadFileNameUtils.sanitizeFileName("${resource.title.limit(100)}$extension")
         }
 
         sendViewAction(SaveCoverAction(coverUrl, fileName))

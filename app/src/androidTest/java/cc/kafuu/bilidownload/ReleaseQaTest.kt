@@ -120,6 +120,35 @@ class ReleaseQaTest {
         assertTrue(destination.listFiles()!!.isEmpty())
     }
 
+    /** 标题中的受限字符必须在真实文件导出前替换，不能交给文档提供方决定。 */
+    @Test fun batchExport_sanitizesIllegalTitleCharactersForIssue73() = runBlocking {
+        val illegalChars = listOf('\\', '/', ':', '*', '?', '"', '<', '>', '|')
+        val illegalTitle = DownloadFileNameUtils.TemplateContext(
+            videoName = "标题${illegalChars.joinToString("")}后",
+            partName = "P1",
+        )
+        val original = source("source.mp4", "complete media")
+        val result = exporter { listOf(original) }
+            .execute(Uri.EMPTY, listOf(BatchExportUseCase.Source(1, illegalTitle))) {}
+        assertEquals(BatchExportUseCase.Result.Completed(1, 1), result)
+        val exported = destination.listFiles()!!.single()
+        illegalChars.forEach { illegal ->
+            assertFalse("$illegal should not remain in ${exported.name}", exported.name.contains(illegal))
+        }
+        assertEquals("标题_后 - P1.mp4", exported.name)
+        assertEquals("complete media", exported.readText())
+    }
+
+    /** SAF 边界再次清理调用方名称，防止不经过模板的导出入口重新写入非法字符。 */
+    @Test fun resolveUniqueDocumentName_sanitizesNameBeforeDocumentCreation() {
+        val directory = QaExportDirectory(DocumentFile.fromFile(destination))
+        val name = FileUtils.resolveUniqueDocumentName(
+            directory,
+            """A\/:*?"<>|B.mp4""",
+        )
+        assertEquals("A_B.mp4", name)
+    }
+
     /** 合并后的移动导出同时保留 URI 回退和模板命名，并在副本核验后删除源资源。 */
     @Test fun batchExport_moveReadsContentUriAndDeletesOnlyExportedSource() = runBlocking {
         val original = source("source.mp4", "complete media")
