@@ -7,6 +7,13 @@ import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException
 
+/**
+ * 为 B 站请求补充当前 Cookie 和通用头，并按接口路径选择 User-Agent。
+ *
+ * 只处理请求头与安全诊断信息，不生成业务签名；响应体仍由调用方消费和关闭。
+ *
+ * @param getLatestCookies 每次拦截时读取账号凭据，缺失时尝试取得访客 Cookie。
+ */
 class BiliInterceptor(
     private val getLatestCookies: () -> String?
 ) : Interceptor {
@@ -27,15 +34,15 @@ class BiliInterceptor(
         )
     }
 
+    // 只缓存该拦截器实例取得的访客 Cookie，不能用于替代每次读取的账号凭据。
     private var mCachedCookies: String? = null
 
     /**
-     * 拦截发出的网络请求，对请求进行处理，添加必要的签名、Cookie和HTTP头部信息。
+     * 在当前请求上附加账号或访客 Cookie，并保留通用头的按路径 User-Agent 策略。
      *
-     * 此拦截器主要完成以下几项任务：
-     * 1. 从原始请求的URL中提取查询参数，并使用这些参数生成请求的签名。
-     * 2. 如果存在最新的Cookie，将其添加到请求头中。
-     * 3. 添加标准的HTTP头部信息，如`User-Agent`、`Accept`、`Accept-Language`、`Origin`和`Referer`。
+     * - 在 OkHttp 请求线程运行，访客 Cookie 的首次获取可能同步访问移动站点。
+     * - 日志只保留方法、路径和 HTTP 状态；完整 URL、请求头或响应对象可能暴露凭据。
+     * - 真实请求与响应继续交给原调用链，不能在此提前消费业务响应体。
      *
      * @param chain 拦截器链，用于获取原始请求和继续执行下一个拦截器。
      * @return Response 返回经过处理的请求的响应。
@@ -44,7 +51,7 @@ class BiliInterceptor(
         val original = chain.request()
         val path = original.url().encodedPath()
         val request = original.newBuilder().apply {
-            // 获取最新cookie，若是不存在则访问网站获取默认cookie
+            // 先读当前身份，避免切换账号后继续使用缓存；只有缺少账号 Cookie 才回退到访客 Cookie。
             getLatestCookies()?.let {
                 addHeader("Cookie", it)
             } ?: getDefaultCookiesByBili()?.let {
@@ -59,13 +66,15 @@ class BiliInterceptor(
             }
         }.build()
 
-        Log.d(TAG, "Ready request: $request, cookie: ${request.headers()["Cookie"]}")
+        // 不输出 Request/Response 本身，查询参数中可能带有临时鉴权签名。
+        Log.d(TAG, "Request: ${original.method()} $path")
 
         return chain.proceed(request).also {
-            Log.d(TAG, "End of request: $it")
+            Log.d(TAG, "Response: path=$path, http=${it.code()}")
         }
     }
 
+    /** 按接口兼容规则选择 UA，其他请求沿用通用配置，不改写业务 URL 或签名参数。 */
     private fun pickUserAgent(path: String): String {
         val defaultUa = NetworkConfig.GENERAL_HEADERS["User-Agent"] ?: OKHTTP_USER_AGENT
         if (OKHTTP_UA_PATH_PREFIXES.any { path.startsWith(it) }) return OKHTTP_USER_AGENT
@@ -73,10 +82,16 @@ class BiliInterceptor(
         return defaultUa
     }
 
+    /**
+     * 同步获取并缓存访客 Cookie；网络 IO 失败时保留 null，允许后续请求再次尝试。
+     *
+     * 独立客户端不安装当前拦截器，避免获取 Cookie 时递归进入相同流程。
+     * 请求只需要 Set-Cookie 头，仍须关闭整个响应体以释放连接；缓存内容不得写入日志。
+     */
     private fun getDefaultCookiesByBili(): String? {
         // @formatter:off
         if (mCachedCookies == null) {
-            val client = OkHttpClient.Builder().build() // 创建一个新的客户端实例
+            val client = OkHttpClient.Builder().build() // 不复用带当前拦截器的业务客户端，避免递归。
             val request = Request.Builder().url(NetworkConfig.BILI_MOBILE_URL).apply {
                 NetworkConfig.GENERAL_HEADERS.forEach { (key, value) ->
                     addHeader(key, value)
@@ -85,9 +100,11 @@ class BiliInterceptor(
                 header("Accept-Encoding", "gzip, deflate, br, zstd")
             }.build()
             try {
-                val response = client.newCall(request).execute() // 同步调用
-                mCachedCookies = response.headers("Set-Cookie").joinToString("; ")
-                Log.d(TAG, "Refreshed code: ${response.code()} default cookies: $mCachedCookies")
+                // 不读取正文也要关闭响应，否则初始化请求会占用连接及底层资源。
+                client.newCall(request).execute().use { response ->
+                    mCachedCookies = response.headers("Set-Cookie").joinToString("; ")
+                    Log.d(TAG, "Default cookies refreshed, http=${response.code()}")
+                }
             } catch (e: IOException) {
                 Log.e(TAG, "Failed to fetch cookies from ${NetworkConfig.BILI_MOBILE_URL}", e)
             }

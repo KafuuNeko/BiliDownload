@@ -2,7 +2,6 @@ package cc.kafuu.bilidownload.feature.viewbinding.view.activity
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
-import android.util.Log
 import android.webkit.CookieManager
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
@@ -18,16 +17,18 @@ import cc.kafuu.bilidownload.databinding.ActivityLoginBinding
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity.LoginViewModel
 
 
+/**
+ * 承载 WebView 登录，导航回移动站点时将 Cookie 交给账号管理器校验。
+ *
+ * 页面只观察账号模型决定何时结束，不把拿到 Cookie 或网页加载完成当作登录成功。
+ */
 class LoginActivity : CoreActivity<ActivityLoginBinding, LoginViewModel>(
     LoginViewModel::class.java,
     R.layout.activity_login,
     BR.viewModel
 ) {
 
-    companion object {
-        private const val TAG = "LoginActivity"
-    }
-
+    /** 先清理 WebView 的旧 Cookie，再加载登录页面；账号资料发布后结束当前宿主。 */
     override fun initViews() {
         setImmersionStatusBar()
         CookieManager.getInstance().removeAllCookies {
@@ -38,6 +39,7 @@ class LoginActivity : CoreActivity<ActivityLoginBinding, LoginViewModel>(
         }
     }
 
+    /** 为站点登录启用必要的 JavaScript，并安装导航交接与进度回调。 */
     @SuppressLint("SetJavaScriptEnabled")
     private fun WebView.initWeb() {
         webViewClient = webViewClient()
@@ -52,14 +54,15 @@ class LoginActivity : CoreActivity<ActivityLoginBinding, LoginViewModel>(
         loadUrl(NetworkConfig.LOGIN_URL)
     }
 
+    /** 接管移动站点的登录跳转，其余地址由 WebView 正常处理；导航过程不记录 Cookie。 */
     private fun webViewClient() = object : WebViewClient() {
         override fun shouldOverrideUrlLoading(
             view: WebView,
             request: WebResourceRequest?
         ) = CookieManager.getInstance().getCookie(NetworkConfig.BILI_MAIN_URL).let { cookies ->
             val requestUrl = request?.url?.host ?: return false
-            Log.d(TAG, "shouldOverrideUrlLoading: request: ${requestUrl}, $cookies")
             if (requestUrl == "m.bilibili.com") {
+                // 只把凭据传给账号校验入口；完整 Cookie 不得进入导航调试日志。
                 AccountManager.updateCookie(cookies)
                 true
             } else false

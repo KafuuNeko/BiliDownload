@@ -199,6 +199,36 @@ class DownloadRecoveryQaTest {
         resources.forEach { assertEquals("source", java.io.File(it.file).readText()) }
     }
 
+    /** 合成成功并删源后进程中断时，已提交尺寸的成品应继续发布，不能因源缺失永久失败。 */
+    @Test fun synthesis_committedOutputResumesAfterSourceDeletion() = runBlocking {
+        val task = task(1, TaskStatus.SYNTHESIS)
+        val output = temporary.newFile().apply { writeText("complete mixed media") }
+        val resource = DownloadResourceEntity(
+            taskId = 1, type = DownloadResourceType.MIXED, name = "QA mixed", mimeType = "video/mp4",
+            storageSizeBytes = output.length(), creationTime = 0, file = output.path,
+        )
+        val steps = mutableListOf<String>()
+        synthesis(task, listOf(resource), steps).execute(task)
+        assertEquals(listOf("finish"), steps)
+        assertEquals("complete mixed media", output.readText())
+    }
+
+    /** 预登记成品或被截断的成品不能冒充完成，仍应使用有效源重新合成。 */
+    @Test fun synthesis_incompleteOutputDoesNotSkipSynthesis() = runBlocking {
+        val sources = sources()
+        val output = temporary.newFile().apply { writeText("partial") }
+        for (size in listOf(0L, output.length() + 1)) {
+            val resource = DownloadResourceEntity(
+                taskId = 1, type = DownloadResourceType.MIXED, name = "QA partial", mimeType = "video/mp4",
+                storageSizeBytes = size, creationTime = 0, file = output.path,
+            )
+            val steps = mutableListOf<String>()
+            val task = task(1, TaskStatus.SYNTHESIS_FAILED)
+            synthesis(task, sources + resource, steps).execute(task)
+            assertEquals(listOf("clear", "save", "synthesize"), steps)
+        }
+    }
+
     private fun recovery(
         task: DownloadTaskEntity?, phases: MutableList<String>, downloading: Boolean = false,
     ) = DownloadTaskRecoveryUseCase(
@@ -212,6 +242,7 @@ class DownloadRecoveryQaTest {
         clearResult: Boolean = true,
     ) = SynthesisRecoveryUseCase(
         runSynthesis = { steps += "synthesize" },
+        finishCompletedSynthesis = { steps += "finish" },
         loadDash = { listOf(
             DownloadDashEntity(80, task.id, 7, DashType.VIDEO, "video/mp4", "avc1"),
             DownloadDashEntity(30280, task.id, 0, DashType.AUDIO, "audio/mp4", "mp4a"),

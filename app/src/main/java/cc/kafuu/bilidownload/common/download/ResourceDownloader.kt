@@ -98,7 +98,12 @@ internal class ResourceDownloader(
         }
     }
 
-    /** 验证范围、编码和资源版本；错误响应不能污染已经落盘的前缀。 */
+    /**
+     * 在写入正文前验证 HTTP 状态、范围、编码和资源版本，避免错误响应污染已落盘的前缀。
+     *
+     * 服务端错误包含未注册的 5xx，统一交给上层共享重试预算决定换源或终止；
+     * 此处只描述失败，不自行重试或刷新地址，避免形成绕过取消与次数上限的嵌套循环。
+     */
     private fun responsePlan(
         response: Response,
         offset: Long,
@@ -112,7 +117,8 @@ internal class ResourceDownloader(
         if (response.code() != 200 && response.code() != 206) {
             throw ResourceDownloadException(
                 DownloadFailure(DownloadFailure.Kind.HTTP, response.code()),
-                response.code() in RETRYABLE_HTTP_CODES,
+                // 不能只枚举常见 5xx：CDN 的非标准状态同样需要有界换源，错误正文不能成为媒体。
+                response.code() in 500..599 || response.code() in RETRYABLE_HTTP_CODES,
                 DownloadRetryPolicy.retryAfterMillis(response.header("Retry-After"))
             )
         }
@@ -259,6 +265,6 @@ internal class ResourceDownloader(
     companion object {
         private const val BUFFER_SIZE = 128 * 1024
         private val CONTENT_RANGE = Regex("bytes ([0-9]+)-([0-9]+)/([0-9]+)")
-        private val RETRYABLE_HTTP_CODES = setOf(403, 404, 408, 429, 500, 502, 503, 504)
+        private val RETRYABLE_HTTP_CODES = setOf(403, 404, 408, 429)
     }
 }

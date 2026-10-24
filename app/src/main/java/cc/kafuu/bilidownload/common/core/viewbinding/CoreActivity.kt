@@ -1,6 +1,7 @@
 package cc.kafuu.bilidownload.common.core.viewbinding
 
 import android.app.Activity
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -121,32 +122,37 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
     }
 
     /**
-     * 设置沉浸式状态栏
-     * 为防止状态栏与标题重合
-     * 设置页面标题控件需设置：android:fitsSystemWindows="true"
+     * 设置透明沉浸式状态栏，并依据当前资源配置选择可读的图标颜色。
+     *
+     * 页面标题区域仍须自行处理系统栏留白，例如设置 android:fitsSystemWindows="true"，
+     * 不能把状态栏透明当作已经避免内容重叠。主题切换后的页面初始化应重新调用本方法。
+     *
+     * LIGHT_STATUS_BARS 表示使用深色图标，夜间必须清除此标记，而不是根据常量名称将其开启。
      */
     protected fun setImmersionStatusBar() {
         if (window == null) {
             return
         }
+        val isNightMode = resources.configuration.uiMode and
+            Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            // Android 11+
+            // Android 11 以上只修改状态栏图标相关位，不覆盖其他系统栏的外观标记。
             val insetsController = window.insetsController
             insetsController?.let {
                 it.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                 window.statusBarColor = ContextCompat.getColor(this, R.color.common_transparent)
                 it.setSystemBarsAppearance(
-                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
+                    if (isNightMode) 0 else WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
                     WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
                 )
             }
         } else {
-            // 旧版本
+            // 旧版保留沉浸布局标记，仅按日夜配置决定是否叠加深色状态栏图标。
             val decorView = window.decorView
             decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                     or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR)  // 添加这一行来设置状态栏文字为深色
+                    or if (isNightMode) 0 else View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR)
             window.statusBarColor = ContextCompat.getColor(this, R.color.common_transparent)
         }
     }

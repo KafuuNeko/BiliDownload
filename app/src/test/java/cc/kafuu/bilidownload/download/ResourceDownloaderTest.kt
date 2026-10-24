@@ -177,6 +177,41 @@ class ResourceDownloaderTest {
         }
     }
 
+    /** CDN 未注册的 5xx 仍属于服务端失败，应轮换备用源且不能把错误正文当作成品。 */
+    @Test fun unrecognizedServerError_usesBackupBeforeRefreshing() = runBlocking {
+        for (code in listOf(567, 599)) {
+            output.delete()
+            retries.clear()
+            DownloadTestServer { response("server error", code) }.use { primary ->
+                DownloadTestServer { response("verified backup") }.use { backup ->
+                    download(listOf(primary.url, backup.url), refresh = { error("Unexpected refresh") })
+                    assertEquals("verified backup", output.readText())
+                    assertEquals(1, primary.requests.size)
+                    assertEquals(1, backup.requests.size)
+                    assertEquals(code, retries.single().failure.httpCode)
+                }
+            }
+        }
+    }
+
+    /** 非标准服务端错误同样受既有恢复预算约束，不能无限重试或刷新。 */
+    @Test fun unrecognizedServerError_stopsWithinSharedBudget() = runBlocking {
+        val refreshes = AtomicInteger()
+        DownloadTestServer { response(code = 567) }.use { server ->
+            val error = failure {
+                download(listOf(server.url), refresh = {
+                    refreshes.incrementAndGet()
+                    listOf(server.url)
+                })
+            }
+            assertEquals(567, error.failure.httpCode)
+            assertEquals(6, server.requests.size)
+            assertEquals(1, refreshes.get())
+            assertEquals(listOf(1, 2, 3, 4, 5), retries.map { it.attempt })
+            assertFalse(output.exists())
+        }
+    }
+
     @Test fun exhaustedAddresses_refreshOnceWithoutChangingResourceSelection() = runBlocking {
         val refreshes = AtomicInteger()
         DownloadTestServer { response(code = 403) }.use { stale ->

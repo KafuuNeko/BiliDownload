@@ -53,7 +53,12 @@ import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import java.io.File
 
-/** 持有唯一任务请求，协调媒体下载及串行后处理，直到任务实际结束才释放前台服务。 */
+/**
+ * 持有唯一任务请求，协调媒体下载及串行后处理，直到任务实际结束才释放前台服务。
+ *
+ * 下载字节完成与任务完成是两个阶段；合成、可选删源、转封装和公共发布结束前继续持有任务身份。
+ * 恢复任务复用同一后处理出口，避免已有成品因重新执行合成或过早释放服务而丢失发布机会。
+ */
 class DownloadService : Service() {
     companion object {
         private const val TAG = "DownloadService"
@@ -185,7 +190,11 @@ class DownloadService : Service() {
             download = ::prepareDownload,
             synthesize = { task ->
                 mPostProcessor.execute {
-                    SynthesisRecoveryUseCase(runSynthesis = { onDownloadCompleted(it, true) }).execute(task)
+                    // 恢复用例先识别已提交成品，再决定重合成或直接补齐后处理；两条路径共享同一把锁。
+                    SynthesisRecoveryUseCase(
+                        runSynthesis = { onDownloadCompleted(it, true) },
+                        finishCompletedSynthesis = ::finishRecoveredSynthesis,
+                    ).execute(task)
                 }
             },
             publish = { task -> mPostProcessor.execute { publishTaskResources(task) } },
@@ -325,8 +334,13 @@ class DownloadService : Service() {
     }
 
     /**
-     * 完成下载操作
-     * from [onDownloadStatusChangeEvent]
+     * 把下载完成或经校验可重合成的任务推进到媒体后处理阶段。
+     *
+     * 调用方须处于 mPostProcessor 的串行边界内。先登记源资源，双流任务先持久化合成状态，
+     * 成功后再统一进入转封装与发布；这里只在合成失败时直接保存失败状态。
+     *
+     * @param task 原任务对象，阶段提交可能同步更新其 status。
+     * @param isResume 是否来自恢复入口；为 true 时允许重新进入合成，由恢复用例负责前置资源核验。
      * */
     private suspend fun onDownloadCompleted(
         task: DownloadTaskEntity,
@@ -337,7 +351,7 @@ class DownloadService : Service() {
         } ?: return
         val dashEntityList = DownloadRepository.queryDashList(task)
 
-        // 如果来源不是任务恢复则检查当前的状态是否为正在合成或者完成状态，若是则不执行
+        // 正常下载回调不能重复处理正在合成或已完成的任务；显式恢复已提前做过阶段与资源核验。
         if (!isResume &&
             (currentStatus == TaskStatus.SYNTHESIS || currentStatus == TaskStatus.COMPLETED)
         ) {
@@ -348,7 +362,7 @@ class DownloadService : Service() {
             return
         }
 
-        // 如果当前任务处于正在下载状态，则将Dash资源注册
+        // 首次下载完成时登记工作文件；恢复已有任务则沿用资源记录，不创建重复源记录。
         val registeredSourceResources = if (currentStatus == TaskStatus.DOWNLOADING) {
             dashEntityList.map { DownloadRepository.registerResource(task, it) }
         } else {
@@ -362,7 +376,7 @@ class DownloadService : Service() {
                 }
         }
 
-        // 取得Dash资源执行合并操作
+        // 优先使用已登记的源路径，兼容工作文件名变化；缺少登记时才使用 Dash 路径回退。
         val videoDash = dashEntityList.find { it.type == DashType.VIDEO }
         val audioDash = dashEntityList.find { it.type == DashType.AUDIO }
         val videoResourceFile = sourceResources.find {
@@ -389,16 +403,42 @@ class DownloadService : Service() {
         }
 
         if (finalStatus == TaskStatus.COMPLETED) {
-            tryAutoRemuxAudioResources(
-                task = task,
-                skipSourceResources = isMergedMediaTask && AppModel.deleteSourceFilesAfterMerge
-            )
-            publishTaskResources(task)
+            // 合成执行成功只代表媒体成品就绪，最终 COMPLETED 必须由后续发布出口决定。
+            finishDownloadedResources(task, isMergedMediaTask)
             return
         }
 
-        // 更新记录为最终状态
+        // 当前未进入发布出口，保存的是本次合成失败状态，保留源文件供后续恢复。
         DownloadRepository.update(task.apply { status = finalStatus.code })
+    }
+
+    /**
+     * 复用恢复用例已核验的合成输出，补齐可能中断的源清理和发布流程。
+     *
+     * 不能再次清理 MIXED 或进入 FFmpeg 合成，否则源已按设置删除时会失去唯一有效成品。
+     * 剩余源文件删除失败只记录错误并保留失败记录，成品仍继续交给后处理出口。
+     */
+    private suspend fun finishRecoveredSynthesis(task: DownloadTaskEntity) {
+        if (AppModel.deleteSourceFilesAfterMerge) {
+            if (!DownloadRepository.deleteDownloadTaskSourceResources(task.id)) {
+                Log.e(TAG, "Unable to delete one or more source resources for task ${task.id}")
+            }
+        }
+        finishDownloadedResources(task, isMergedMediaTask = true)
+    }
+
+    /**
+     * 为正常完成和合成恢复提供相同的转封装、发布出口，由发布结果提交最终任务状态。
+     *
+     * 已选择合成后删源的双流任务跳过源音频转封装；其余资源沿用当前偏好和存储策略。
+     * 方法运行在调用方持有的串行后处理边界内，不另行启动脱离服务生命周期的后台任务。
+     */
+    private suspend fun finishDownloadedResources(task: DownloadTaskEntity, isMergedMediaTask: Boolean) {
+        tryAutoRemuxAudioResources(
+            task = task,
+            skipSourceResources = isMergedMediaTask && AppModel.deleteSourceFilesAfterMerge,
+        )
+        publishTaskResources(task)
     }
 
     /**
@@ -560,8 +600,10 @@ class DownloadService : Service() {
     }
 
     /**
-     * @brief 尝试合成视频
-     * 如果视频合成成功后自动登记资源
+     * 预登记独立输出后同步合成，成功时提交成品尺寸，再按偏好清理音视频源。
+     *
+     * 非零尺寸的持久化记录是恢复用例识别完成输出的检查点，必须先于删源提交。
+     * 原生失败时只清理本次预登记输出，不能触碰仍用于重试的源资源。
      * */
     private suspend fun tryMergeVideo(
         task: DownloadTaskEntity,
@@ -594,7 +636,7 @@ class DownloadService : Service() {
             outputFile.path
         )
         if (isSuccess) {
-            // 合成成功，更新登记资源尺寸
+            // 先落库实际尺寸再删源；中断后恢复用例才能区分已完成成品与预登记的半成品。
             resourceEntity.copy(
                 storageSizeBytes = outputFile.length(),
             ).run {

@@ -81,12 +81,23 @@ class PictureInPictureLifecycleTest {
             performSystemPipAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_DISMISS)
             waitUntil("Playback continued after closing the system PiP window") {
                 var stopped = false
-                instrumentation.runOnMainSync { stopped = !player.isPlaying }
+                instrumentation.runOnMainSync { stopped = !player.playWhenReady && !player.isPlaying }
                 stopped
             }
 
-            // 继续观察媒体时钟，避免仅在切换瞬间短暂停顿却又恢复后台播放。
+            // 暂停回调与音频时钟最终位置异步到达，先等位置稳定，再严格验证后续不再推进。
             var stoppedPositionMs = 0L
+            var previousPositionMs = -1L
+            var stableSinceMs = SystemClock.elapsedRealtime()
+            waitUntil("Playback position did not settle after closing PiP") {
+                var positionMs = 0L
+                instrumentation.runOnMainSync { positionMs = player.currentPosition }
+                if (positionMs != previousPositionMs) {
+                    previousPositionMs = positionMs
+                    stableSinceMs = SystemClock.elapsedRealtime()
+                }
+                SystemClock.elapsedRealtime() - stableSinceMs >= 250L
+            }
             instrumentation.runOnMainSync { stoppedPositionMs = player.currentPosition }
             SystemClock.sleep(500)
             instrumentation.runOnMainSync {
@@ -105,10 +116,20 @@ class PictureInPictureLifecycleTest {
 
             // 使用真实系统全屏动作，区分页面恢复可见与用户关闭小窗。
             performSystemPipAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_EXPAND)
-            waitUntil("PiP did not return to a playing full-screen activity") {
-                var expanded = false
-                scenario.onActivity { expanded = !it.isInPictureInPictureMode && player.isPlaying }
-                expanded
+            var playbackState = ""
+            try {
+                waitUntil("PiP did not return to a playing full-screen activity") {
+                    var expanded = false
+                    scenario.onActivity {
+                        expanded = !it.isInPictureInPictureMode && player.isPlaying
+                        playbackState = "pip=${it.isInPictureInPictureMode}, playing=${player.isPlaying}, " +
+                            "ready=${player.playWhenReady}, state=${player.playbackState}, " +
+                            "suppression=${player.playbackSuppressionReason}, position=${player.currentPosition}"
+                    }
+                    expanded
+                }
+            } catch (error: AssertionError) {
+                throw AssertionError("PiP expansion failed: $playbackState", error)
             }
             scenario.onActivity {
                 val state = ViewModelProvider(it)[MediaPlayerViewModel::class.java]
@@ -196,6 +217,8 @@ class PictureInPictureLifecycleTest {
 
     /** 调用系统小窗提供的标准动作，等待窗口注册完成后再操作真实 PiP 控制器。 */
     private fun performSystemPipAction(action: AccessibilityNodeInfo.AccessibilityAction) {
+        // 系统已注册小窗节点时入场动画仍可能在执行，等待界面空闲后再发出关闭或展开动作。
+        instrumentation.uiAutomation.waitForIdle(500L, 5_000L)
         waitUntil("System PiP action was not available: ${action.id}") {
             instrumentation.uiAutomation.windows.any { window ->
                 if (!window.isInPictureInPictureMode) return@any false

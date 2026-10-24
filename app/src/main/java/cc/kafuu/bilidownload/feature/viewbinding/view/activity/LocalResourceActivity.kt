@@ -20,6 +20,11 @@ import cc.kafuu.bilidownload.feature.compose.activity.MusicPlayerActivity
 import cc.kafuu.bilidownload.feature.viewbinding.viewmodel.activity.LocalResourceVideModel
 import java.io.File
 
+/**
+ * 展示已登记资源并承载系统文件选择、播放器与外部应用跳转。
+ *
+ * ViewModel 固定导出来源和清理选择，宿主只负责取得目标 URI；不能因旧路径失效而忽略有效公共 URI。
+ */
 class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalResourceVideModel>(
     LocalResourceVideModel::class.java,
     R.layout.activity_local_resource,
@@ -28,9 +33,11 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
     companion object {
         private const val KEY_TASK_ENTITY_ID = "task_entity_id"
         private const val KEY_RESOURCE_ID = "resource_id"
+        /** 仅传递持久化身份，进入页面后通过观察数据库取得最新路径和 URI。 */
         fun buildIntent(resource: DownloadResourceEntity) =
             buildIntent(resource.taskId, resource.id)
 
+        /** 构造指定任务下资源的页面参数；无效的缺省身份在页面初始化时拒绝。 */
         fun buildIntent(taskId: Long, resourceId: Long) = Intent().apply {
             putExtra(KEY_TASK_ENTITY_ID, taskId)
             putExtra(KEY_RESOURCE_ID, resourceId)
@@ -56,6 +63,7 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
         initObserver()
     }
 
+    /** 校验入口身份并观察资源、任务和元数据；三者就绪前保留加载或错误界面。 */
     private fun initObserver(): Boolean {
         val downloadEntityId = intent.getLongExtra(KEY_TASK_ENTITY_ID, -1)
         val resourceId = intent.getLongExtra(KEY_RESOURCE_ID, -1)
@@ -65,6 +73,7 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
             return false
         }
 
+        // 以数据库记录为来源，公共发布或转换导致地址变化后重新探测，不沿用旧路径快照。
         DownloadRepository.queryResourceLiveDataById(resourceId).observe(this) {
             it?.let { mViewModel.updateResourceEntity(it) }
         }
@@ -73,6 +82,7 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
             it?.let { mViewModel.updateTaskDetails(it) }
         }
 
+        // 各数据独立返回，任何一项变化都重新判断页面是否已具备可操作的完整详情。
         mViewModel.taskDetailLiveData.observe(this) { mViewModel.checkLoaded() }
         mViewModel.resourceLiveData.observe(this) { mViewModel.checkLoaded() }
         mViewModel.localMediaDetailLiveData.observe(this) { mViewModel.checkLoaded() }
@@ -91,12 +101,19 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
         else -> super.onViewAction(action)
     }
 
+    /**
+     * 打开目标选择器前再次核验路径/URI，来源失效时向模型回传取消结果以释放待导出状态。
+     *
+     * 即使此处成功，权限和资源仍可能在选择器打开期间改变，实际复制时必须重新打开来源。
+     */
     private fun onExportResource(action: LocalResourceVideModel.Companion.ExportResourceAction) {
-        if (!action.file.isFile) {
+        if (FileUtils.resolveReadUri(this, action.file, action.contentUri) == null) {
             mViewModel.exportResource(null)
             return
         }
-        FileUtils.tryExportFile(action.file, action.name, action.mimetype, mCreateDocumentLauncher)
+        FileUtils.tryExportFile(
+            action.file, action.name, action.mimetype, mCreateDocumentLauncher, action.contentUri,
+        )
     }
 
     private fun onOpenResource(action: LocalResourceVideModel.Companion.OpenResourceAction) {
