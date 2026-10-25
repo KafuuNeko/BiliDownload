@@ -283,7 +283,7 @@
     <string name="download_failure_source">无法刷新所选资源，请检查网络、登录状态及视频是否可用。</string>
     <string name="notification_download_failed_reason">%1$s：%2$s</string>
     <string name="export_options_message">接下来选择导出位置。勾选后，仅删除成功导出的源文件及其本地资源记录，保留下载历史。</string>
-    <string name="export_delete_source_option">导出成功后删除源文件（类似剪切）</string>
+    <string name="export_delete_source_option">导出成功后删除源文件</string>
     <string name="export_source_deleted_message">资源已导出并删除源文件：%s</string>
     <string name="export_source_delete_failed_message">资源已导出，但源文件清理失败，请检查本地资源。</string>
     <string name="batch_export_move_result_message">成功导出 %1$d 个资源，跳过 %2$d 个，%3$d 个导出失败；已删除 %4$d 个源文件，%5$d 个源文件清理失败。</string>

@@ -283,7 +283,7 @@
     <string name="download_failure_source">Unable to refresh the selected stream. Check your connection, login and video availability.</string>
     <string name="notification_download_failed_reason">%1$s: %2$s</string>
     <string name="export_options_message">Choose an export location next. When enabled, only successfully exported source files and their local resource records are deleted. Download history is kept.</string>
-    <string name="export_delete_source_option">Delete source after successful export (like Cut)</string>
+    <string name="export_delete_source_option">Delete source after successful export</string>
     <string name="export_source_deleted_message">Exported and deleted source: %s</string>
     <string name="export_source_delete_failed_message">Resource exported, but source cleanup failed. Please check local resources.</string>
     <string name="batch_export_move_result_message">Exported %1$d resources, skipped %2$d, failed %3$d; deleted %4$d sources, failed to delete %5$d sources.</string>
