@@ -17,22 +17,26 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.io.File
 import java.io.IOException
 
 /** 发布前验证恢复阶段、批量部分失败与源文件保留，不访问账号或正式数据库。 */
 class DownloadRecoveryQaTest {
-    @get:Rule val temporary = TemporaryFolder()
+    @get:Rule
+    val temporary = TemporaryFolder()
 
     /** 失败任务从其原阶段恢复，保留 taskId、分 P 身份及持久化状态。 */
-    @Test fun failedTasks_resumeOnlyTheirOriginalPhase() = runBlocking {
+    @Test
+    fun failedTasks_resumeOnlyTheirOriginalPhase() = runBlocking {
         for ((status, expected) in listOf(
             TaskStatus.DOWNLOAD_FAILED to "download",
             TaskStatus.SYNTHESIS_FAILED to "synthesis",
             TaskStatus.PUBLISH_FAILED to "publish",
         )) {
-            val task = task(1, status)
+            val task = task(id = 1, status = status)
             val phases = mutableListOf<String>()
-            val result = recovery(task, phases).execute(task.id, retryOnly = true)
+            val result =
+                recovery(task = task, phases = phases).execute(taskId = task.id, retryOnly = true)
             assertEquals(listOf(expected), phases)
             assertEquals(
                 if (status == TaskStatus.DOWNLOAD_FAILED) DownloadTaskRecoveryUseCase.Result.HANDED_TO_DOWNLOADER
@@ -46,75 +50,114 @@ class DownloadRecoveryQaTest {
     }
 
     /** 专用重试命令只接受失败状态，拒绝完成、活动及未知状态。 */
-    @Test fun retryOnly_rejectsCompletedActiveAndUnknownStates() = runBlocking {
+    @Test
+    fun retryOnly_rejectsCompletedActiveAndUnknownStates() = runBlocking {
         for (status in listOf(0, 1, 2, 3, 4, 999)) {
             val phases = mutableListOf<String>()
-            val task = task(1, TaskStatus.PREPARE).apply { this.status = status }
-            assertEquals(DownloadTaskRecoveryUseCase.Result.SKIPPED, recovery(task, phases).execute(1, true))
+            val task = task(id = 1, status = TaskStatus.PREPARE).apply { this.status = status }
+            assertEquals(
+                DownloadTaskRecoveryUseCase.Result.SKIPPED,
+                recovery(task = task, phases = phases).execute(taskId = 1, retryOnly = true)
+            )
             assertTrue(phases.isEmpty())
         }
     }
 
     /** 普通恢复入口可继续被中断的活动阶段，不重新创建任务。 */
-    @Test fun interruptedActiveTasks_resumeWithoutCreatingAnotherTask() = runBlocking {
+    @Test
+    fun interruptedActiveTasks_resumeWithoutCreatingAnotherTask() = runBlocking {
         for ((status, expected) in listOf(
             TaskStatus.PREPARE to "download", TaskStatus.DOWNLOADING to "download",
             TaskStatus.SYNTHESIS to "synthesis", TaskStatus.PUBLISHING to "publish",
         )) {
             val phases = mutableListOf<String>()
-            recovery(task(1, status), phases).execute(1, false)
+            recovery(task = task(id = 1, status = status), phases = phases).execute(
+                taskId = 1,
+                retryOnly = false
+            )
             assertEquals(listOf(expected), phases)
         }
     }
 
     /** 已删除或仍在下载器中执行的任务不重复接管。 */
-    @Test fun missingAndInFlightTasks_doNotResume() = runBlocking {
+    @Test
+    fun missingAndInFlightTasks_doNotResume() = runBlocking {
         val phases = mutableListOf<String>()
-        assertEquals(DownloadTaskRecoveryUseCase.Result.SKIPPED, recovery(null, phases).execute(1, true))
-        val useCase = recovery(task(1, TaskStatus.DOWNLOAD_FAILED), phases, downloading = true)
-        assertEquals(DownloadTaskRecoveryUseCase.Result.SKIPPED, useCase.execute(1, true))
+        assertEquals(
+            DownloadTaskRecoveryUseCase.Result.SKIPPED,
+            recovery(task = null, phases = phases).execute(taskId = 1, retryOnly = true)
+        )
+        val useCase = recovery(
+            task = task(id = 1, status = TaskStatus.DOWNLOAD_FAILED),
+            phases = phases,
+            downloading = true
+        )
+        assertEquals(
+            DownloadTaskRecoveryUseCase.Result.SKIPPED,
+            useCase.execute(taskId = 1, retryOnly = true)
+        )
         assertTrue(phases.isEmpty())
     }
 
     /** 合成已推进到发布后发生异常，失败归属保持发布阶段。 */
-    @Test fun publishFailureAfterSynthesis_keepsTheAdvancedFailurePhase() = runBlocking {
-        val task = task(1, TaskStatus.SYNTHESIS_FAILED)
+    @Test
+    fun publishFailureAfterSynthesis_keepsTheAdvancedFailurePhase() = runBlocking {
+        val task = task(id = 1, status = TaskStatus.SYNTHESIS_FAILED)
         var failedPhase: DownloadTaskRecoveryUseCase.Phase? = null
         val useCase = DownloadTaskRecoveryUseCase(
             download = { error("Unexpected download") },
-            synthesize = { it.status = TaskStatus.PUBLISHING.code; throw IOException("publish") },
+            synthesize = {
+                it.status = TaskStatus.PUBLISHING.code
+                throw IOException("publish")
+            },
             publish = { error("Unexpected direct publish") },
             onFailure = { _, phase -> failedPhase = phase },
             loadTask = { task }, isDownloading = { false },
         )
-        assertEquals(DownloadTaskRecoveryUseCase.Result.FINISHED, useCase.execute(1, true))
+        assertEquals(
+            DownloadTaskRecoveryUseCase.Result.FINISHED,
+            useCase.execute(taskId = 1, retryOnly = true)
+        )
         assertEquals(DownloadTaskRecoveryUseCase.Phase.PUBLISH, failedPhase)
     }
 
     /** 取消向调用方传播，不写入业务失败状态。 */
-    @Test fun recoveryCancellation_doesNotBecomeFailure() = runBlocking {
+    @Test
+    fun recoveryCancellation_doesNotBecomeFailure() = runBlocking {
         var failureReported = false
         val useCase = DownloadTaskRecoveryUseCase(
             download = { throw CancellationException("cancelled") },
-            synthesize = {}, publish = {}, onFailure = { _, _ -> failureReported = true },
-            loadTask = { task(1, TaskStatus.DOWNLOAD_FAILED) }, isDownloading = { false },
+            synthesize = {},
+            publish = {},
+            onFailure = { _, _ -> failureReported = true },
+            loadTask = { task(id = 1, status = TaskStatus.DOWNLOAD_FAILED) },
+            isDownloading = { false },
         )
-        expectCancellation { useCase.execute(1, true) }
+        expectCancellation { useCase.execute(taskId = 1, retryOnly = true) }
         assertFalse(failureReported)
     }
 
     /** 下载器拒绝接管时返回跳过，允许服务释放本次登记。 */
-    @Test fun rejectedDownload_doesNotRetainServiceOwnership() = runBlocking {
+    @Test
+    fun rejectedDownload_doesNotRetainServiceOwnership() = runBlocking {
         val useCase = DownloadTaskRecoveryUseCase(
-            download = { false }, synthesize = {}, publish = {}, onFailure = { _, _ -> },
-            loadTask = { task(1, TaskStatus.DOWNLOAD_FAILED) }, isDownloading = { false },
+            download = { false },
+            synthesize = {},
+            publish = {},
+            onFailure = { _, _ -> },
+            loadTask = { task(id = 1, status = TaskStatus.DOWNLOAD_FAILED) },
+            isDownloading = { false },
         )
-        assertEquals(DownloadTaskRecoveryUseCase.Result.SKIPPED, useCase.execute(1, true))
+        assertEquals(
+            DownloadTaskRecoveryUseCase.Result.SKIPPED,
+            useCase.execute(taskId = 1, retryOnly = true)
+        )
     }
 
     /** 批次去重并区分跳过与提交失败，不提前修改持久化任务状态。 */
-    @Test fun batch_deduplicatesAndCountsPartialSubmissionWithoutMutatingTasks() = runBlocking {
-        val tasks = (1L..6L).associateWith { task(it, TaskStatus.DOWNLOAD_FAILED) }
+    @Test
+    fun batch_deduplicatesAndCountsPartialSubmissionWithoutMutatingTasks() = runBlocking {
+        val tasks = (1L..6L).associateWith { task(id = it, status = TaskStatus.DOWNLOAD_FAILED) }
         tasks.getValue(2).status = TaskStatus.COMPLETED.code
         val submitted = mutableListOf<Long>()
         val progress = mutableListOf<BatchRetryUseCase.Progress>()
@@ -123,108 +166,178 @@ class DownloadRecoveryQaTest {
             loadTask = { tasks[it] }, isInFlight = { it == 3L },
             submitRetry = { id ->
                 if (id == 4L) throw IOException("submission failed")
-                if (id == 5L) false else { submitted += id; true }
+                if (id == 5L) false else {
+                    submitted += id
+                    true
+                }
             },
         )
-        val result = useCase.execute(listOf(1, 1, 2, 3, 4, 5, 6, 7)) { progress += it }
-        assertEquals(BatchRetryUseCase.Result(2, 4, 1), result)
+        val result = useCase.execute(taskIds = listOf(1, 1, 2, 3, 4, 5, 6, 7)) { progress += it }
+        assertEquals(
+            BatchRetryUseCase.Result(
+                submittedCount = 2,
+                skippedCount = 4,
+                failedCount = 1
+            ), result
+        )
         assertEquals(listOf(1L, 6L), submitted)
-        assertEquals((0..7).map { BatchRetryUseCase.Progress(it, 7) }, progress)
+        assertEquals(
+            (0..7).map { BatchRetryUseCase.Progress(processedCount = it, total = 7) },
+            progress
+        )
         assertEquals(TaskStatus.DOWNLOAD_FAILED.code, tasks.getValue(1).status)
     }
 
     /** 每次提交前重新读取资格，跳过在批次执行期间已经完成的任务。 */
-    @Test fun batch_rechecksEachTaskAfterEarlierSubmission() = runBlocking {
-        val tasks = (1L..2L).associateWith { task(it, TaskStatus.DOWNLOAD_FAILED) }
+    @Test
+    fun batch_rechecksEachTaskAfterEarlierSubmission() = runBlocking {
+        val tasks = (1L..2L).associateWith { task(id = it, status = TaskStatus.DOWNLOAD_FAILED) }
         val submitted = mutableListOf<Long>()
         val useCase = BatchRetryUseCase(
             loadTask = { tasks[it] }, isInFlight = { false },
-            submitRetry = { id -> submitted += id; tasks.getValue(2).status = TaskStatus.COMPLETED.code; true },
+            submitRetry = { id ->
+                submitted += id
+                tasks.getValue(2).status = TaskStatus.COMPLETED.code
+                true
+            },
         )
-        assertEquals(BatchRetryUseCase.Result(1, 1, 0), useCase.execute(listOf(1, 2)))
+        assertEquals(
+            BatchRetryUseCase.Result(
+                submittedCount = 1,
+                skippedCount = 1,
+                failedCount = 0
+            ), useCase.execute(taskIds = listOf(1, 2))
+        )
         assertEquals(listOf(1L), submitted)
     }
 
     /** 取消后停止后续提交，保留此前已交给后台的任务身份。 */
-    @Test fun batchCancellation_stopsFurtherSubmissions() = runBlocking {
+    @Test
+    fun batchCancellation_stopsFurtherSubmissions() = runBlocking {
         val submitted = mutableListOf<Long>()
         val useCase = BatchRetryUseCase(
-            loadTask = { task(it, TaskStatus.DOWNLOAD_FAILED) }, isInFlight = { false },
-            submitRetry = { id -> if (id == 2L) throw CancellationException("cancelled"); submitted += id; true },
+            loadTask = { task(id = it, status = TaskStatus.DOWNLOAD_FAILED) },
+            isInFlight = { false },
+            submitRetry = { id ->
+                if (id == 2L) throw CancellationException("cancelled")
+                submitted += id
+                true
+            },
         )
-        expectCancellation { useCase.execute(listOf(1, 2, 3)) }
+        expectCancellation { useCase.execute(taskIds = listOf(1, 2, 3)) }
         assertEquals(listOf(1L), submitted)
     }
 
     /** 空批次不查询或提交任务，结果计数保持为零。 */
-    @Test fun batchEmptyInput_isAnEmptySuccessfulSubmission() = runBlocking {
+    @Test
+    fun batchEmptyInput_isAnEmptySuccessfulSubmission() = runBlocking {
         val useCase = BatchRetryUseCase(
-            loadTask = { error("Unexpected query") }, isInFlight = { false }, submitRetry = { false },
+            loadTask = { error("Unexpected query") },
+            isInFlight = { false },
+            submitRetry = { false },
         )
-        assertEquals(BatchRetryUseCase.Result(0, 0, 0), useCase.execute(emptyList()))
+        assertEquals(
+            BatchRetryUseCase.Result(
+                submittedCount = 0,
+                skippedCount = 0,
+                failedCount = 0
+            ), useCase.execute(taskIds = emptyList())
+        )
     }
 
     /** 源资源有效时才清理旧成品并进入合成，处理期间保留原输入内容。 */
-    @Test fun synthesis_validatesSourcesBeforeCleaningAndPreservesOriginalInputs() = runBlocking {
-        val task = task(1, TaskStatus.SYNTHESIS_FAILED)
+    @Test
+    fun synthesis_validatesSourcesBeforeCleaningAndPreservesOriginalInputs() = runBlocking {
+        val task = task(id = 1, status = TaskStatus.SYNTHESIS_FAILED)
         val resources = sources()
         val steps = mutableListOf<String>()
-        synthesis(task, resources, steps).execute(task)
+        synthesis(task = task, resources = resources, steps = steps).execute(task = task)
         assertEquals(listOf("clear", "save", "synthesize"), steps)
         assertEquals(TaskStatus.SYNTHESIS.code, task.status)
-        resources.forEach { assertEquals("source", java.io.File(it.file).readText()) }
+        resources.forEach { assertEquals("source", File(it.file).readText()) }
     }
 
     /** 缺少必需资源或文件为空时，不清理已有输出也不推进任务状态。 */
-    @Test fun synthesis_missingOrEmptySource_doesNotDeleteExistingOutput() = runBlocking {
+    @Test
+    fun synthesis_missingOrEmptySource_doesNotDeleteExistingOutput() = runBlocking {
         val resources = sources()
-        java.io.File(resources.last().file).writeText("")
+        File(resources.last().file).writeText("")
         for (input in listOf(resources, resources.take(1))) {
-            val task = task(1, TaskStatus.SYNTHESIS_FAILED)
+            val task = task(id = 1, status = TaskStatus.SYNTHESIS_FAILED)
             val steps = mutableListOf<String>()
-            expectIoFailure { synthesis(task, input, steps).execute(task) }
+            expectIoFailure {
+                synthesis(
+                    task = task,
+                    resources = input,
+                    steps = steps
+                ).execute(task = task)
+            }
             assertTrue(steps.isEmpty())
             assertEquals(TaskStatus.SYNTHESIS_FAILED.code, task.status)
         }
     }
 
     /** 清理旧成品失败时保留输入和失败状态，不继续合成。 */
-    @Test fun synthesis_cleanupFailure_preservesFailureStateAndInputs() = runBlocking {
-        val task = task(1, TaskStatus.SYNTHESIS_FAILED)
+    @Test
+    fun synthesis_cleanupFailure_preservesFailureStateAndInputs() = runBlocking {
+        val task = task(id = 1, status = TaskStatus.SYNTHESIS_FAILED)
         val resources = sources()
         val steps = mutableListOf<String>()
-        expectIoFailure { synthesis(task, resources, steps, clearResult = false).execute(task) }
+        expectIoFailure {
+            synthesis(
+                task = task,
+                resources = resources,
+                steps = steps,
+                clearResult = false
+            ).execute(task = task)
+        }
         assertEquals(listOf("clear"), steps)
         assertEquals(TaskStatus.SYNTHESIS_FAILED.code, task.status)
-        resources.forEach { assertEquals("source", java.io.File(it.file).readText()) }
+        resources.forEach { assertEquals("source", File(it.file).readText()) }
     }
 
     /** 合成成功并删源后进程中断时，已提交尺寸的成品应继续发布，不能因源缺失永久失败。 */
-    @Test fun synthesis_committedOutputResumesAfterSourceDeletion() = runBlocking {
-        val task = task(1, TaskStatus.SYNTHESIS)
+    @Test
+    fun synthesis_committedOutputResumesAfterSourceDeletion() = runBlocking {
+        val task = task(id = 1, status = TaskStatus.SYNTHESIS)
         val output = temporary.newFile().apply { writeText("complete mixed media") }
         val resource = DownloadResourceEntity(
-            taskId = 1, type = DownloadResourceType.MIXED, name = "QA mixed", mimeType = "video/mp4",
-            storageSizeBytes = output.length(), creationTime = 0, file = output.path,
+            taskId = 1,
+            type = DownloadResourceType.MIXED,
+            name = "QA mixed",
+            mimeType = "video/mp4",
+            storageSizeBytes = output.length(),
+            creationTime = 0,
+            file = output.path,
         )
         val steps = mutableListOf<String>()
-        synthesis(task, listOf(resource), steps).execute(task)
+        synthesis(task = task, resources = listOf(resource), steps = steps).execute(task = task)
         assertEquals(listOf("finish"), steps)
         assertEquals("complete mixed media", output.readText())
     }
 
     /** 预登记成品或被截断的成品不能冒充完成，仍应使用有效源重新合成。 */
-    @Test fun synthesis_incompleteOutputDoesNotSkipSynthesis() = runBlocking {
+    @Test
+    fun synthesis_incompleteOutputDoesNotSkipSynthesis() = runBlocking {
         val sources = sources()
         val output = temporary.newFile().apply { writeText("partial") }
         for (size in listOf(0L, output.length() + 1)) {
             val resource = DownloadResourceEntity(
-                taskId = 1, type = DownloadResourceType.MIXED, name = "QA partial", mimeType = "video/mp4",
-                storageSizeBytes = size, creationTime = 0, file = output.path,
+                taskId = 1,
+                type = DownloadResourceType.MIXED,
+                name = "QA partial",
+                mimeType = "video/mp4",
+                storageSizeBytes = size,
+                creationTime = 0,
+                file = output.path,
             )
             val steps = mutableListOf<String>()
-            val task = task(1, TaskStatus.SYNTHESIS_FAILED)
-            synthesis(task, sources + resource, steps).execute(task)
+            val task = task(id = 1, status = TaskStatus.SYNTHESIS_FAILED)
+            synthesis(
+                task = task,
+                resources = sources + resource,
+                steps = steps
+            ).execute(task = task)
             assertEquals(listOf("clear", "save", "synthesize"), steps)
         }
     }
@@ -232,44 +345,79 @@ class DownloadRecoveryQaTest {
     private fun recovery(
         task: DownloadTaskEntity?, phases: MutableList<String>, downloading: Boolean = false,
     ) = DownloadTaskRecoveryUseCase(
-        download = { phases += "download"; true }, synthesize = { phases += "synthesis" },
+        download = {
+            phases += "download"
+            true
+        },
+        synthesize = { phases += "synthesis" },
         publish = { phases += "publish" }, onFailure = { _, _ -> error("Unexpected failure") },
         loadTask = { task }, isDownloading = { downloading },
     )
 
     private fun synthesis(
-        task: DownloadTaskEntity, resources: List<DownloadResourceEntity>, steps: MutableList<String>,
+        task: DownloadTaskEntity,
+        resources: List<DownloadResourceEntity>,
+        steps: MutableList<String>,
         clearResult: Boolean = true,
     ) = SynthesisRecoveryUseCase(
         runSynthesis = { steps += "synthesize" },
         finishCompletedSynthesis = { steps += "finish" },
-        loadDash = { listOf(
-            DownloadDashEntity(80, task.id, 7, DashType.VIDEO, "video/mp4", "avc1"),
-            DownloadDashEntity(30280, task.id, 0, DashType.AUDIO, "audio/mp4", "mp4a"),
-        ) },
-        loadResources = { resources }, clearMixedResources = { steps += "clear"; clearResult },
+        loadDash = {
+            listOf(
+                DownloadDashEntity(
+                    dashId = 80,
+                    taskId = task.id,
+                    codecId = 7,
+                    type = DashType.VIDEO,
+                    mimeType = "video/mp4",
+                    codecs = "avc1"
+                ),
+                DownloadDashEntity(
+                    dashId = 30280,
+                    taskId = task.id,
+                    codecId = 0,
+                    type = DashType.AUDIO,
+                    mimeType = "audio/mp4",
+                    codecs = "mp4a"
+                ),
+            )
+        },
+        loadResources = { resources },
+        clearMixedResources = {
+            steps += "clear"
+            clearResult
+        },
         saveTask = { steps += "save" },
     )
 
-    private fun sources() = listOf(DownloadResourceType.VIDEO, DownloadResourceType.AUDIO).map { type ->
-        val file = temporary.newFile().apply { writeText("source") }
-        DownloadResourceEntity(
-            taskId = 1, type = type, name = "QA source", mimeType = "video/mp4",
-            storageSizeBytes = file.length(), creationTime = 0, file = file.path,
-        )
-    }
+    private fun sources() =
+        listOf(DownloadResourceType.VIDEO, DownloadResourceType.AUDIO).map { type ->
+            val file = temporary.newFile().apply { writeText("source") }
+            DownloadResourceEntity(
+                taskId = 1, type = type, name = "QA source", mimeType = "video/mp4",
+                storageSizeBytes = file.length(), creationTime = 0, file = file.path,
+            )
+        }
 
     private fun task(id: Long, status: TaskStatus) = DownloadTaskEntity(
         id = id, biliBvid = "BV1xx411c7mD", biliCid = 10, status = status.code,
     )
 
     private suspend fun expectCancellation(block: suspend () -> Unit) {
-        try { block() } catch (_: CancellationException) { return }
+        try {
+            block()
+        } catch (_: CancellationException) {
+            return
+        }
         throw AssertionError("Expected cancellation")
     }
 
     private suspend fun expectIoFailure(block: suspend () -> Unit) {
-        try { block() } catch (_: IOException) { return }
+        try {
+            block()
+        } catch (_: IOException) {
+            return
+        }
         throw AssertionError("Expected source or cleanup failure")
     }
 }

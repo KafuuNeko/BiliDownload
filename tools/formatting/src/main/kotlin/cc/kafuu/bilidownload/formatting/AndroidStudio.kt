@@ -25,20 +25,21 @@ internal class AndroidStudio private constructor(
             // 显式配置只校验指定目录，避免配置错误时静默使用另一套 IDE。
             val explicitHome = configuredHome ?: System.getenv("ANDROID_STUDIO_HOME")
             val homes = if (explicitHome != null) {
-                listOf(normalizeHome(Path.of(explicitHome)))
+                listOf(normalizeHome(home = Path.of(explicitHome)))
             } else {
-                defaultHomes().map(::normalizeHome).distinct().filter { launcher(it) != null }
+                defaultHomes().map(::normalizeHome).distinct()
+                    .filter { launcher(home = it) != null }
             }
-            val matching = homes.filter { build(it) == expectedBuild }
+            val matching = homes.filter { build(home = it) == expectedBuild }
             require(matching.size == 1) {
                 "Install Android Studio $expectedBuild and set ANDROID_STUDIO_HOME or -PandroidStudioHome to its installation. " +
-                    "Found: ${homes.joinToString { "$it (${build(it) ?: "unavailable"})" }}"
+                    "Found: ${homes.joinToString { "$it (${build(home = it) ?: "unavailable"})" }}"
             }
             val home = matching.single()
             // 安装包的启动器与 JBR 配套使用，保证本机和 CI 的格式化引擎一致。
             return AndroidStudio(
                 home,
-                requireNotNull(launcher(home)) { "No Android Studio launcher in $home" },
+                requireNotNull(launcher(home = home)) { "No Android Studio launcher in $home" },
                 expectedBuild
             )
         }

@@ -25,22 +25,35 @@ internal class SourceFiles(
                         .map { it.removePrefix("\uFEFF").trim() }
                         .filter { it.isNotEmpty() }
 
-                options.all -> git("ls-files", "--cached", "--others", "--exclude-standard", "-z")
+                options.all -> git(
+                    arguments = arrayOf(
+                        "ls-files",
+                        "--cached",
+                        "--others",
+                        "--exclude-standard",
+                        "-z"
+                    )
+                )
+
                 options.base != null -> {
                     // 把用户传入的引用先解析成提交，后续 diff 只使用已验证的哈希。
                     val commit = gitText(
-                        "rev-parse",
-                        "--verify",
-                        "--end-of-options",
-                        "${options.base}^{commit}"
+                        arguments = arrayOf(
+                            "rev-parse",
+                            "--verify",
+                            "--end-of-options",
+                            "${options.base}^{commit}"
+                        )
                     ).trim()
                     git(
-                        "diff",
-                        "--name-only",
-                        "--diff-filter=ACMR",
-                        "-z",
-                        "$commit...HEAD",
-                        "--"
+                        arguments = arrayOf(
+                            "diff",
+                            "--name-only",
+                            "--diff-filter=ACMR",
+                            "-z",
+                            "$commit...HEAD",
+                            "--"
+                        )
                     ) + dirty()
                 }
 
@@ -54,12 +67,28 @@ internal class SourceFiles(
 
     private fun dirty(): List<String> {
         val tracked =
-            if (runGit("rev-parse", "--verify", "HEAD").first == 0) {
-                git("diff", "--name-only", "--diff-filter=ACMR", "-z", "HEAD", "--")
+            if (runGit(arguments = arrayOf("rev-parse", "--verify", "HEAD")).first == 0) {
+                git(
+                    arguments = arrayOf(
+                        "diff",
+                        "--name-only",
+                        "--diff-filter=ACMR",
+                        "-z",
+                        "HEAD",
+                        "--"
+                    )
+                )
             } else {
-                git("ls-files", "--cached", "-z")
+                git(arguments = arrayOf("ls-files", "--cached", "-z"))
             }
-        return tracked + git("ls-files", "--others", "--exclude-standard", "-z")
+        return tracked + git(
+            arguments = arrayOf(
+                "ls-files",
+                "--others",
+                "--exclude-standard",
+                "-z"
+            )
+        )
     }
 
     private fun resolve(
@@ -79,10 +108,10 @@ internal class SourceFiles(
     }
 
     private fun git(vararg arguments: String): List<String> =
-        gitText(*arguments).split('\u0000').filter { it.isNotEmpty() }
+        gitText(arguments = arrayOf(*arguments)).split('\u0000').filter { it.isNotEmpty() }
 
     private fun gitText(vararg arguments: String): String {
-        val (exit, output) = runGit(*arguments)
+        val (exit, output) = runGit(arguments = arrayOf(*arguments))
         check(exit == 0) { "Git failed (${arguments.first()}): ${output.trim()}" }
         return output
     }

@@ -46,6 +46,7 @@ interface BiliApiService {
         @Query("bvid") bvid: String? = null
     ): Call<BiliRespond<BiliVideoData>>
 
+    /** 使用调用方已完成 WBI 签名的完整视频详情地址，避免重复编码查询参数。 */
     @GET
     fun requestVideoDetail(@Url fullUrl: String?): Call<BiliRespond<BiliVideoData>>
 
@@ -55,6 +56,7 @@ interface BiliApiService {
         @Query("ep_id") epId: Long? = null
     ): Call<BiliRespond<BiliSeasonData>>
 
+    /** 使用调用方已完成 WBI 签名的完整番剧详情地址。 */
     @GET
     fun requestSeasonDetail(@Url fullUrl: String?): Call<BiliRespond<BiliSeasonData>>
 

@@ -74,7 +74,10 @@ class ExportFileNameUtilsTest {
     fun buildFileName_sanitizesTemplateAndTitles() {
         val fileName = ExportFileNameUtils.buildFileName(
             resourceType = DownloadResourceType.VIDEO,
-            context = DownloadFileNameUtils.TemplateContext("Video/Name", "Part:2"),
+            context = DownloadFileNameUtils.TemplateContext(
+                videoName = "Video/Name",
+                partName = "Part:2"
+            ),
             extension = "mp4",
             templates = ExportFileNameUtils.Templates(video = "目录/{PartName}?{VideoName}"),
         )
@@ -101,7 +104,10 @@ class ExportFileNameUtilsTest {
     fun buildFileName_truncatesChineseAndEmojiWithoutSplittingCodePoints() {
         val fileName = ExportFileNameUtils.buildFileName(
             resourceType = DownloadResourceType.MIXED,
-            context = DownloadFileNameUtils.TemplateContext("测🎵".repeat(100), "P1"),
+            context = DownloadFileNameUtils.TemplateContext(
+                videoName = "测🎵".repeat(100),
+                partName = "P1"
+            ),
             extension = "mp4",
             templates = ExportFileNameUtils.Templates(mixed = "{VideoName}"),
         )

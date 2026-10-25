@@ -40,8 +40,8 @@ internal class ResourceDownloader(
         onProgress: (Long, Long) -> Unit,
         onRetry: (DownloadRetry?) -> Unit
     ) = withContext(Dispatchers.IO) {
-        val sources = Sources(urls)
-        val checkpoint = DownloadCheckpoint(cache)
+        val sources = Sources(urls = urls)
+        val checkpoint = DownloadCheckpoint(part = cache)
         var retry = 0
         while (true) {
             currentCoroutineContext().ensureActive()
@@ -49,20 +49,32 @@ internal class ResourceDownloader(
                 // 地址刷新也消耗一次尝试，避免刷新失败与媒体重试形成嵌套无限循环。
                 if (sources.needsRefresh) {
                     sources.beginRefresh()
-                    sources.replace(refreshUrls())
+                    sources.replace(urls = refreshUrls())
                 }
                 onRetry(null)
-                transfer(sources.current(), cache, checkpoint, onProgress)
+                transfer(
+                    url = sources.current(),
+                    cache = cache,
+                    checkpoint = checkpoint,
+                    onProgress = onProgress
+                )
                 currentCoroutineContext().ensureActive()
-                publish(cache, output)
+                publish(cache = cache, output = output)
                 onProgress(output.length(), output.length())
                 break
             } catch (error: IOException) {
                 currentCoroutineContext().ensureActive()
-                val failure = classify(error)
-                val waitMillis = retryPolicy.delayMillis(failure, ++retry) ?: throw failure
-                onRetry(DownloadRetry(retry, retryPolicy.maxRetries, failure.failure))
-                sources.failed(failure)
+                val failure = classify(error = error)
+                val waitMillis =
+                    retryPolicy.delayMillis(error = failure, retry = ++retry) ?: throw failure
+                onRetry(
+                    DownloadRetry(
+                        attempt = retry,
+                        maxRetries = retryPolicy.maxRetries,
+                        failure = failure.failure
+                    )
+                )
+                sources.failed(error = failure)
                 waitBeforeRetry(waitMillis)
             }
         }
@@ -75,10 +87,11 @@ internal class ResourceDownloader(
         checkpoint: DownloadCheckpoint,
         onProgress: (Long, Long) -> Unit
     ) {
-        val key = DownloadCheckpoint.sourceKey(url)
+        val key = DownloadCheckpoint.sourceKey(url = url)
         var identity = checkpoint.read()
         if (cache.length() > 0 && (identity == null ||
-                (identity.sourceKey != key && identity.etag == null))) {
+                (identity.sourceKey != key && identity.etag == null))
+        ) {
             checkpoint.reset()
             identity = null
         }
@@ -91,10 +104,21 @@ internal class ResourceDownloader(
         }.build()
         // 网络调用和正文读取共享取消监听；文件 IO 在独立的 storage 边界内分类。
         client.newCall(request).consumeResponse { response ->
-            val plan = responsePlan(response, offset, identity, checkpoint)
+            val plan = responsePlan(
+                response = response,
+                offset = offset,
+                previous = identity,
+                checkpoint = checkpoint
+            )
             if (!plan.append) checkpoint.reset()
-            checkpoint.write(DownloadCheckpoint.Identity(key, plan.etag, plan.total))
-            writeBody(response, cache, plan, onProgress)
+            checkpoint.write(
+                identity = DownloadCheckpoint.Identity(
+                    sourceKey = key,
+                    etag = plan.etag,
+                    total = plan.total
+                )
+            )
+            writeBody(response = response, cache = cache, plan = plan, onProgress = onProgress)
         }
     }
 
@@ -116,17 +140,27 @@ internal class ResourceDownloader(
         }
         if (response.code() != 200 && response.code() != 206) {
             throw ResourceDownloadException(
-                DownloadFailure(DownloadFailure.Kind.HTTP, response.code()),
+                failure = DownloadFailure(
+                    kind = DownloadFailure.Kind.HTTP,
+                    httpCode = response.code()
+                ),
                 // 不能只枚举常见 5xx：CDN 的非标准状态同样需要有界换源，错误正文不能成为媒体。
-                response.code() in 500..599 || response.code() in RETRYABLE_HTTP_CODES,
-                DownloadRetryPolicy.retryAfterMillis(response.header("Retry-After"))
+                retryable = response.code() in 500..599 || response.code() in RETRYABLE_HTTP_CODES,
+                retryAfterMillis = DownloadRetryPolicy.retryAfterMillis(value = response.header("Retry-After"))
             )
         }
         val body = response.body() ?: throw invalidResponse()
         val encoding = response.header("Content-Encoding")
-        if (encoding != null && !encoding.equals("identity", true)) throw invalidResponse()
-        val etag = DownloadCheckpoint.strongEtag(response.header("ETag"))
-        if (response.code() == 200) return ResponsePlan(false, 0, body.contentLength(), etag)
+        val hasUnsupportedEncoding =
+            encoding != null && !encoding.equals("identity", ignoreCase = true)
+        if (hasUnsupportedEncoding) throw invalidResponse()
+        val etag = DownloadCheckpoint.strongEtag(value = response.header("ETag"))
+        if (response.code() == 200) return ResponsePlan(
+            append = false,
+            offset = 0,
+            total = body.contentLength(),
+            etag = etag
+        )
 
         // 206 必须明确对应请求偏移及总长度，不能仅依据状态码追加。
         val range = CONTENT_RANGE.matchEntire(response.header("Content-Range").orEmpty())
@@ -134,17 +168,19 @@ internal class ResourceDownloader(
         val end = range?.groupValues?.get(2)?.toLongOrNull()
         val total = range?.groupValues?.get(3)?.toLongOrNull()
         if (start != offset || end == null || total == null || end < offset || end >= total ||
-            (body.contentLength() >= 0 && body.contentLength() != end - offset + 1)) {
+            (body.contentLength() >= 0 && body.contentLength() != end - offset + 1)
+        ) {
             checkpoint.reset()
             throw invalidResponse()
         }
         if (offset > 0 && previous != null &&
             ((previous.total >= 0 && previous.total != total) ||
-                (previous.etag != null && previous.etag != etag))) {
+                (previous.etag != null && previous.etag != etag))
+        ) {
             checkpoint.reset()
             throw invalidResponse()
         }
-        return ResponsePlan(offset > 0, offset, total, etag)
+        return ResponsePlan(append = offset > 0, offset = offset, total = total, etag = etag)
     }
 
     /** 流式写入并检查总长度；读取异常保留前缀，磁盘错误不进入网络恢复。 */
@@ -211,15 +247,20 @@ internal class ResourceDownloader(
 
     private fun classify(error: IOException): ResourceDownloadException =
         error as? ResourceDownloadException ?: ResourceDownloadException(
-            DownloadFailure(DownloadFailure.Kind.NETWORK),
-            error !is SSLHandshakeException && error !is SSLPeerUnverifiedException
+            failure = DownloadFailure(kind = DownloadFailure.Kind.NETWORK),
+            retryable = error !is SSLHandshakeException && error !is SSLPeerUnverifiedException
         )
 
     private fun invalidResponse() = ResourceDownloadException(
-        DownloadFailure(DownloadFailure.Kind.INVALID_RESPONSE), retryable = true
+        failure = DownloadFailure(kind = DownloadFailure.Kind.INVALID_RESPONSE), retryable = true
     )
 
-    private data class ResponsePlan(val append: Boolean, val offset: Long, val total: Long, val etag: String?)
+    private data class ResponsePlan(
+        val append: Boolean,
+        val offset: Long,
+        val total: Long,
+        val etag: String?
+    )
 
     /** 单次资源调用的候选游标，HTTP 错误直接换源，网络中断先在原源续传一次。 */
     private class Sources(urls: List<String>) {
@@ -231,15 +272,17 @@ internal class ResourceDownloader(
             private set
 
         /** 空候选集合是明确的资源不可用，不能在恢复循环内空转。 */
-        fun current(): String = candidates.getOrNull(index) ?: throw ResourceDownloadException(
-            DownloadFailure(DownloadFailure.Kind.SOURCE_UNAVAILABLE)
-        )
+        fun current(): String =
+            candidates.getOrNull(index = index) ?: throw ResourceDownloadException(
+                failure = DownloadFailure(kind = DownloadFailure.Kind.SOURCE_UNAVAILABLE)
+            )
 
         /** 原源恢复失败后推进候选，完整轮换结束时最多安排一次刷新。 */
         fun failed(error: ResourceDownloadException) {
             if (++failures < 2 && error.failure.kind in setOf(
                     DownloadFailure.Kind.NETWORK, DownloadFailure.Kind.INVALID_RESPONSE
-                )) return
+                )
+            ) return
             failures = 0
             index++
             if (index < candidates.size) return

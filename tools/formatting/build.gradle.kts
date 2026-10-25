@@ -59,8 +59,8 @@ fun registerFormattingTask(
     if (providers.gradleProperty("formatAll").orNull == "true") args("--all")
 }
 
-registerFormattingTask("formatApply", "apply")
-registerFormattingTask("formatCheck", "check")
+registerFormattingTask(name = "formatApply", mode = "apply")
+registerFormattingTask(name = "formatCheck", mode = "check")
 
 tasks.test {
     systemProperty("bilidownload.repository", repositoryRoot.absolutePath)

@@ -13,6 +13,7 @@ class ResourceExportUseCase(
     private val deleteResource: suspend (DownloadResourceEntity) -> Boolean =
         DownloadRepository::deleteResource,
 ) {
+    /** 区分副本未保存、已导出、源清理成功和源清理失败，清理失败时副本仍有效。 */
     enum class Result {
         EXPORT_FAILED,
         EXPORTED,
@@ -29,6 +30,7 @@ class ResourceExportUseCase(
         deleteSourceAfterExport: Boolean = false,
         copyToDestination: suspend () -> Boolean,
     ): Result = withContext(Dispatchers.IO) {
+        // 先等待目标关闭和内容核验；失败或取消都不能进入源资源清理阶段。
         currentCoroutineContext().ensureActive()
         val exported = try {
             copyToDestination()
@@ -40,6 +42,7 @@ class ResourceExportUseCase(
         if (!exported) return@withContext Result.EXPORT_FAILED
         if (!deleteSourceAfterExport) return@withContext Result.EXPORTED
 
+        // 已成功保存的副本不因清理失败而撤销，取消仍向上传播。
         currentCoroutineContext().ensureActive()
         val deleted = try {
             deleteResource(resource)

@@ -29,6 +29,7 @@ export ANDROID_STUDIO_HOME="/opt/android-studio"
 
 - `.idea/codeStyles/Project.xml` 保存代码样式，`codeStyleConfig.xml` 将编辑器设为使用项目样式；命令行显式读取同一份 XML。
 - Kotlin 使用 Android Studio 的 Kotlin 官方预设，保留已有换行；`.editorconfig` 管理编码、行尾与缩进。
+- `.gitattributes` 固定 Kotlin 源码的 LF 行尾。工具先将临时副本中的 CRLF 统一为 LF，再调用原生引擎，兼容 Windows 的既有检出；原始快照保留到批次验证成功后才写回。
 - 格式化等同于原生 `Reformat Code` 的排版操作。导入清理由编辑器的 `Optimize imports` 单独执行，代码清理由 `Code cleanup` 单独执行。
 - 编辑器中的 `Do not keep line breaks` 保持未勾选。需要调整排版时，在 AS 的项目 Code Style 中修改并保存项目配置。
 - 跨平台使用固定的 IDE 构建与内置 Kotlin 插件，避免不同版本产生不同结果。
@@ -97,7 +98,7 @@ Linux / macOS：
 
 ## 检查与维护
 
-- 原生引擎在临时副本上批量格式化，保留相对路径及各级 `.editorconfig`，以原生 `-dry` 检查输出是否稳定；需要继续排版时最多执行四轮，未收敛则失败。
+- 原生引擎在临时副本上批量格式化，保留相对路径及各级 `.editorconfig`；每轮比较排版前后字节，结果相同才确认稳定，最多执行四轮，未收敛则失败。稳定性检查保留 `.kts` 的脚本上下文，兼容含顶层调用的 Gradle 脚本。
 - IDE 的配置、缓存、日志和用户插件目录独立，可与正在使用的 Android Studio 同时运行。
 - 非零退出、跳过文件、处理数量不符和稳定性检查失败均会中止，不写回源码。
 - `formatCheck` 只报告副本与原文的差异；有差异时返回失败，不修改源码。

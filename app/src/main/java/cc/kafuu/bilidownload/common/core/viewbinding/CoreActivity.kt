@@ -56,14 +56,14 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        ActivityStackManager.pushActivity(this)
+        ActivityStackManager.pushActivity(activity = this)
         mViewDataBinding = DataBindingUtil.setContentView(this, layoutId)
         mViewModel = ViewModelProvider(this)[vmClass]
         if (viewModelId != 0) {
             mViewDataBinding.setVariable(viewModelId, mViewModel)
         }
         mViewDataBinding.lifecycleOwner = this
-        mViewActionListener = ViewActionListener(this, this)
+        mViewActionListener = ViewActionListener(lifecycleOwner = this, availableActivity = this)
         initViewAction()
         initViews()
     }
@@ -74,7 +74,7 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
     override fun onStop() {
         super.onStop()
         if (isFinishing) {
-            ActivityStackManager.removeActivity(this)
+            ActivityStackManager.removeActivity(activity = this)
         }
     }
 
@@ -84,7 +84,7 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
      * @param activityResult 可选的 [ActivityResult] 对象，包含了返回结果的信息。
      */
     fun finishActivity(activityResult: ActivityResult? = null) {
-        mViewModel.finishActivity(activityResult)
+        mViewModel.finishActivity(activityResult = activityResult)
     }
 
     /**
@@ -97,7 +97,7 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
         }
 
         mViewModel.viewActionLiveData.observe(this) {
-            onViewAction(it)
+            onViewAction(action = it)
         }
     }
 
@@ -105,7 +105,7 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
      * 有新的ViewAction事件时触发此函数
      */
     protected open fun onViewAction(action: ViewAction) {
-        mViewActionListener.onViewAction(action)
+        mViewActionListener.onViewAction(action = action)
     }
 
     /**
@@ -117,7 +117,7 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
         val window = window
         if (window != null) {
             window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-            window.statusBarColor = CommonLibs.getColor(color)
+            window.statusBarColor = CommonLibs.getColor(color = color)
         }
     }
 
@@ -133,26 +133,30 @@ abstract class CoreActivity<V : ViewDataBinding, VM : CoreViewModel>(
         if (window == null) {
             return
         }
-        val isNightMode = resources.configuration.uiMode and
-            Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+        val currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+        val isNightMode = currentNightMode == Configuration.UI_MODE_NIGHT_YES
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             // Android 11 以上只修改状态栏图标相关位，不覆盖其他系统栏的外观标记。
             val insetsController = window.insetsController
-            insetsController?.let {
-                it.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            insetsController?.let { controller ->
+                controller.systemBarsBehavior =
+                    WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                 window.statusBarColor = ContextCompat.getColor(this, R.color.common_transparent)
-                it.setSystemBarsAppearance(
-                    if (isNightMode) 0 else WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
+                val lightStatusBarAppearance =
+                    if (isNightMode) 0 else WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                controller.setSystemBarsAppearance(
+                    lightStatusBarAppearance,
                     WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
                 )
             }
         } else {
             // 旧版保留沉浸布局标记，仅按日夜配置决定是否叠加深色状态栏图标。
             val decorView = window.decorView
+            val lightStatusBarFlag = if (isNightMode) 0 else View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
             decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    or if (isNightMode) 0 else View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR)
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or lightStatusBarFlag)
             window.statusBarColor = ContextCompat.getColor(this, R.color.common_transparent)
         }
     }

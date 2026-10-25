@@ -30,11 +30,11 @@ object NetworkUtils {
     fun parseCookies(cookieHeader: String?): Map<String, String> {
         return cookieHeader?.split(";")
             ?.map { it.trim() }
-            ?.mapNotNull {
-                val separator = it.indexOf('=')
+            ?.mapNotNull { cookie ->
+                val separator = cookie.indexOf('=')
                 if (separator <= 0) return@mapNotNull null
-                val name = it.substring(0, separator).trim()
-                val value = it.substring(separator + 1).trim()
+                val name = cookie.substring(0, separator).trim()
+                val value = cookie.substring(separator + 1).trim()
                 if (name.isNotEmpty() && value.isNotEmpty()) name to value else null
             }?.toMap() ?: hashMapOf()
     }
@@ -42,10 +42,10 @@ object NetworkUtils {
     /** 判断文本中是否包含符合当前正则规则的地址片段，不验证域名可达性或业务支持范围。 */
     fun containsUrl(text: String): Boolean {
         val urlPattern = ("((http|https)://)?(www.)?" +
-                "[a-zA-Z0-9@:%._\\+~#?&//=]" +
-                "{2,256}\\.[a-z]" +
-                "{2,6}\\b([-a-zA-Z0-9@:%" +
-                "._\\+~#?&//=]*)")
+            "[a-zA-Z0-9@:%._\\+~#?&//=]" +
+            "{2,256}\\.[a-z]" +
+            "{2,6}\\b([-a-zA-Z0-9@:%" +
+            "._\\+~#?&//=]*)")
         val regex = Regex(urlPattern)
         return regex.containsMatchIn(text)
     }
@@ -61,17 +61,26 @@ object NetworkUtils {
         }.build()
     ).enqueue(object : Callback {
         override fun onFailure(call: Call, e: IOException) {
-            callback.onFailure(0, 0, e.message ?: "Unknown error")
+            callback.onFailure(httpCode = 0, code = 0, message = e.message ?: "Unknown error")
         }
 
         @Throws(IOException::class)
         override fun onResponse(call: Call, response: Response) {
             if (response.code() != 200) {
-                callback.onFailure(response.code(), 0, "Response code: ${response.code()}")
+                callback.onFailure(
+                    httpCode = response.code(),
+                    code = 0,
+                    message = "Response code: ${response.code()}"
+                )
                 return
             }
             val location = response.request().url().toString()
-            callback.onSuccess(response.code(), 0, "success", location)
+            callback.onSuccess(
+                httpCode = response.code(),
+                code = 0,
+                message = "success",
+                data = location
+            )
         }
     })
 
@@ -87,11 +96,11 @@ object NetworkUtils {
     fun decompressDeflate(body: ResponseBody): String {
         val compressed = body.use { it.bytes() }
         return try {
-            inflate(compressed, raw = false)
+            inflate(compressed = compressed, raw = false)
         } catch (_: DataFormatException) {
             // raw 格式必须从空缓冲区重试，不能拼接首次解码的部分结果。
             try {
-                inflate(compressed, raw = true)
+                inflate(compressed = compressed, raw = true)
             } catch (error: DataFormatException) {
                 throw IOException("Invalid deflate response", error)
             }
@@ -111,7 +120,7 @@ object NetworkUtils {
             // 每种格式独占输入和输出状态，防止失败尝试的部分文本混入后续结果。
             inflater.setInput(compressed)
             val output = ByteArrayOutputStream()
-            val buffer = ByteArray(8192)
+            val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
             while (!inflater.finished()) {
                 val count = inflater.inflate(buffer)
                 if (count > 0) {

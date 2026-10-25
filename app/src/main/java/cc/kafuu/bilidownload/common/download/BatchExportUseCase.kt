@@ -85,12 +85,18 @@ class BatchExportUseCase(
         var skippedCount = 0
         var deletedSourceCount = 0
         var sourceDeleteFailureCount = 0
-        onProgress(Progress(0, targets.size))
+        onProgress(Progress(current = 0, total = targets.size))
 
         // 每项在处理时重新校验可读来源；其他任务的删除或发布不会使整批提前退出。
         targets.forEachIndexed { index, source ->
             currentCoroutineContext().ensureActive()
-            when (exportSource(context, directory, source, templates, deleteSourceAfterExport)) {
+            when (exportSource(
+                context = context,
+                directory = directory,
+                source = source,
+                templates = templates,
+                deleteSourceAfterExport = deleteSourceAfterExport
+            )) {
                 ExportOutcome.SUCCESS -> successCount++
                 ExportOutcome.SKIPPED -> skippedCount++
                 ExportOutcome.FAILED -> Unit
@@ -98,15 +104,22 @@ class BatchExportUseCase(
                     successCount++
                     deletedSourceCount++
                 }
+
                 ExportOutcome.SOURCE_DELETE_FAILED -> {
                     successCount++
                     sourceDeleteFailureCount++
                 }
             }
-            onProgress(Progress(index + 1, targets.size))
+            onProgress(Progress(current = index + 1, total = targets.size))
         }
         if (skippedCount == targets.size) Result.NoExportableResources
-        else Result.Completed(successCount, targets.size, skippedCount, deletedSourceCount, sourceDeleteFailureCount)
+        else Result.Completed(
+            successCount = successCount,
+            total = targets.size,
+            skippedCount = skippedCount,
+            deletedSourceCount = deletedSourceCount,
+            sourceDeleteFailureCount = sourceDeleteFailureCount,
+        )
     }
 
     /** 单项查询或复制失败记入失败数，后续任务仍可继续，取消则向上传播。 */
@@ -117,12 +130,20 @@ class BatchExportUseCase(
         templates: ExportFileNameUtils.Templates,
         deleteSourceAfterExport: Boolean,
     ): ExportOutcome = try {
-        val item = buildExportItem(context, source, templates)
+        val item = buildExportItem(context = context, source = source, templates = templates)
         if (item == null) {
             ExportOutcome.SKIPPED
         } else {
-            val result = resourceExportUseCase.execute(item.resource, deleteSourceAfterExport) {
-                copyItem(context, directory, item, verifyContents = deleteSourceAfterExport)
+            val result = resourceExportUseCase.execute(
+                resource = item.resource,
+                deleteSourceAfterExport = deleteSourceAfterExport
+            ) {
+                copyItem(
+                    context = context,
+                    directory = directory,
+                    item = item,
+                    verifyContents = deleteSourceAfterExport
+                )
             }
             when (result) {
                 ResourceExportUseCase.Result.EXPORTED -> ExportOutcome.SUCCESS
@@ -153,13 +174,24 @@ class BatchExportUseCase(
         // 路径失效不代表公共资源丢失，读取入口同时检查持久化的 MediaStore URI。
         for (resource in resources) {
             val file = File(resource.file)
-            val uri = FileUtils.resolveReadUri(context, file, resource.contentUri) ?: continue
+            val uri = FileUtils.resolveReadUri(
+                context = context,
+                file = file,
+                contentUri = resource.contentUri
+            ) ?: continue
             val extension = file.extension.ifBlank {
-                MimeTypeUtils.getExtensionFromMimeType(resource.mimeType).orEmpty()
+                MimeTypeUtils.getExtensionFromMimeType(mimeType = resource.mimeType).orEmpty()
             }
             return ExportItem(
-                ExportFileNameUtils.buildFileName(resource.type, source.fileNameContext, extension, templates),
-                resource.mimeType, uri, resource,
+                fileName = ExportFileNameUtils.buildFileName(
+                    resourceType = resource.type,
+                    context = source.fileNameContext,
+                    extension = extension,
+                    templates = templates,
+                ),
+                mimeType = resource.mimeType,
+                sourceUri = uri,
+                resource = resource,
             )
         }
         return null
@@ -175,25 +207,32 @@ class BatchExportUseCase(
         var target: DocumentFile? = null
         var completed = false
         try {
-            val name = FileUtils.resolveUniqueDocumentName(directory, item.fileName)
+            val name =
+                FileUtils.resolveUniqueDocumentName(parent = directory, desiredName = item.fileName)
             target = directory.createFile(item.mimeType, name) ?: return false
             val resolver = context.contentResolver
             val digest = if (verifyContents) MessageDigest.getInstance("SHA-256") else null
             resolver.openInputStream(item.sourceUri)?.use { input ->
-                val output = resolver.openOutputStream(target.uri, "w") ?: throw IOException("无法打开目标")
-                output.use {
+                val output =
+                    resolver.openOutputStream(target.uri, "w") ?: throw IOException("无法打开目标")
+                output.use { destination ->
                     val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
                     while (true) {
                         currentCoroutineContext().ensureActive()
                         val count = input.read(buffer)
                         if (count < 0) break
-                        it.write(buffer, 0, count)
+                        destination.write(buffer, 0, count)
                         digest?.update(buffer, 0, count)
                     }
                 }
             } ?: throw IOException("无法打开源资源")
             // content URI 与文件路径使用相同核验规则，不能因路径缺失跳过删除前的校验。
-            if (digest != null && !verifyCopy(context, target.uri, digest.digest())) return false
+            if (digest != null && !verifyCopy(
+                    context = context,
+                    uri = target.uri,
+                    expectedDigest = digest.digest()
+                )
+            ) return false
             completed = true
             return true
         } catch (cancelled: CancellationException) {
@@ -210,11 +249,11 @@ class BatchExportUseCase(
     private suspend fun verifyCopy(context: Context, uri: Uri, expectedDigest: ByteArray): Boolean {
         val digest = MessageDigest.getInstance("SHA-256")
         val input = context.contentResolver.openInputStream(uri) ?: return false
-        input.use {
+        input.use { source ->
             val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
             while (true) {
                 currentCoroutineContext().ensureActive()
-                val count = it.read(buffer)
+                val count = source.read(buffer)
                 if (count < 0) break
                 digest.update(buffer, 0, count)
             }

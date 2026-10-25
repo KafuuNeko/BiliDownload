@@ -29,50 +29,50 @@ class FormattingScopeTest {
             Path.of(System.getProperty("bilidownload.repository"), ".editorconfig"),
             mRoot.resolve(".editorconfig")
         )
-        write(".gitignore", "**/build/\n")
-        write("Main.kt", "val value = 1\n")
-        write("Deleted.kt", "val removed = 1\n")
-        git("init")
+        write(name = ".gitignore", source = "**/build/\n")
+        write(name = "Main.kt", source = "val value = 1\n")
+        write(name = "Deleted.kt", source = "val removed = 1\n")
+        git(arguments = arrayOf("init"))
         commit()
     }
 
     @Test
     fun defaultsToModifiedStagedAndUntrackedSources() {
-        write("Main.kt", "val value=2\n")
-        write("Staged.kt", "val staged=1\n")
-        git("add", "Staged.kt")
-        write("新 文件.kt", "val fresh=1\n")
-        write("Readme.md", "not Kotlin")
-        write("nested/build/Generated.kt", "invalid generated source")
+        write(name = "Main.kt", source = "val value=2\n")
+        write(name = "Staged.kt", source = "val staged=1\n")
+        git(arguments = arrayOf("add", "Staged.kt"))
+        write(name = "新 文件.kt", source = "val fresh=1\n")
+        write(name = "Readme.md", source = "not Kotlin")
+        write(name = "nested/build/Generated.kt", source = "invalid generated source")
         Files.delete(mRoot.resolve("Deleted.kt"))
         assertEquals(setOf("Main.kt", "Staged.kt", "新 文件.kt"), selected())
     }
 
     @Test
     fun includesCommittedBranchChangesWhenBaseIsGiven() {
-        val base = git("rev-parse", "HEAD").trim()
-        write("Committed.kt", "val committed = 1\n")
+        val base = git(arguments = arrayOf("rev-parse", "HEAD")).trim()
+        write(name = "Committed.kt", source = "val committed = 1\n")
         commit()
-        write("Dirty.kt", "val dirty=1\n")
+        write(name = "Dirty.kt", source = "val dirty=1\n")
         assertEquals(setOf("Committed.kt", "Dirty.kt"), selected(base = base))
     }
 
     @Test
     fun includesRenamedSourceAtItsNewPath() {
-        git("mv", "Main.kt", "Renamed.kt")
+        git(arguments = arrayOf("mv", "Main.kt", "Renamed.kt"))
         assertEquals(setOf("Renamed.kt"), selected())
     }
 
     @Test
     fun supportsFileListsAndExplicitPathsWithSpaces() {
-        write("新 文件.kt", "val fresh=1\n")
-        write("Comma,Name.kt", "val comma=1\n")
-        write("selected.txt", "新 文件.kt\nComma,Name.kt\n")
+        write(name = "新 文件.kt", source = "val fresh=1\n")
+        write(name = "Comma,Name.kt", source = "val comma=1\n")
+        write(name = "selected.txt", source = "新 文件.kt\nComma,Name.kt\n")
         val options = FormattingOptions(root = mRoot, mode = "check", filesFrom = "selected.txt")
         assertEquals(
             setOf("新 文件.kt", "Comma,Name.kt"),
-            SourceFiles(mRoot)
-                .select(options)
+            SourceFiles(root = mRoot)
+                .select(options = options)
                 .map { it.fileName.toString() }
                 .toSet(),
         )
@@ -91,39 +91,52 @@ class FormattingScopeTest {
         }
         expectFailure { selected(files = "../Outside.kt") }
         expectFailure { selected(files = "Missing.kt") }
-        write("build/Generated.kt", "val generated = 1")
+        write(name = "build/Generated.kt", source = "val generated = 1")
         expectFailure { selected(files = "build/Generated.kt") }
-        expectFailure { FormattingOptions.parse(arrayOf("--unknown")) }
+        expectFailure { FormattingOptions.parse(arguments = arrayOf("--unknown")) }
     }
 
     @Test
     fun checkIsReadOnlyAndApplyIsLimitedToExplicitScope() {
         val before = "val value=2\n"
-        write("Main.kt", before)
-        write("Other.kt", before)
+        write(name = "Main.kt", source = before)
+        write(name = "Other.kt", source = before)
         val messages = mutableListOf<String>()
         val options = FormattingOptions(root = mRoot, mode = "check", files = "Main.kt")
         val formatter =
             SourceFormatter { _, sources -> sources.map { "val value = 2\n".toByteArray(UTF_8) } }
-        assertEquals(1, runFormatting(options, messages::add, formatter))
+        assertEquals(
+            1,
+            runFormatting(options = options, report = messages::add, formatter = formatter)
+        )
         assertEquals(before, Files.readString(mRoot.resolve("Main.kt")))
-        assertEquals(0, runFormatting(options.copy(mode = "apply"), messages::add, formatter))
+        assertEquals(
+            0,
+            runFormatting(
+                options = options.copy(mode = "apply"),
+                report = messages::add,
+                formatter = formatter
+            )
+        )
         assertEquals("val value = 2\n", Files.readString(mRoot.resolve("Main.kt")))
         assertEquals(before, Files.readString(mRoot.resolve("Other.kt")))
-        assertEquals(0, runFormatting(options, messages::add, formatter))
+        assertEquals(
+            0,
+            runFormatting(options = options, report = messages::add, formatter = formatter)
+        )
         assertTrue(messages.any { it.contains("need formatting") })
     }
 
     @Test
     fun validationFailureDoesNotWriteAnySelectedSource() {
         val before = "val value=2\n"
-        write("Main.kt", before)
+        write(name = "Main.kt", source = before)
         val options = FormattingOptions(root = mRoot, mode = "apply", files = "Main.kt")
         expectFailure {
             runFormatting(
-                options,
-                {},
-                SourceFormatter { _, _ -> error("Native formatter failed") })
+                options = options,
+                report = {},
+                formatter = SourceFormatter { _, _ -> error("Native formatter failed") })
         }
         assertEquals(before, Files.readString(mRoot.resolve("Main.kt")))
     }
@@ -131,14 +144,14 @@ class FormattingScopeTest {
     @Test
     fun concurrentChangesPreventTheEntireBatchFromBeingWritten() {
         val before = "val value=2\n"
-        write("Main.kt", before)
-        write("Other.kt", before)
+        write(name = "Main.kt", source = before)
+        write(name = "Other.kt", source = before)
         val options = FormattingOptions(root = mRoot, mode = "apply", files = "Main.kt,Other.kt")
         val formatter = SourceFormatter { _, sources ->
-            write("Other.kt", "val edited = 3\n")
+            write(name = "Other.kt", source = "val edited = 3\n")
             sources.map { "val value = 2\n".toByteArray(UTF_8) }
         }
-        expectFailure { runFormatting(options, {}, formatter) }
+        expectFailure { runFormatting(options = options, report = {}, formatter = formatter) }
         assertEquals(before, Files.readString(mRoot.resolve("Main.kt")))
         assertEquals("val edited = 3\n", Files.readString(mRoot.resolve("Other.kt")))
     }
@@ -149,7 +162,7 @@ class FormattingScopeTest {
         val bytes = byteArrayOf(0x76, 0x61, 0x6c, 0x20, 0xFF.toByte())
         Files.write(path, bytes)
         val options = FormattingOptions(root = mRoot, mode = "apply", files = "Invalid.kt")
-        expectFailure { runFormatting(options, {}) }
+        expectFailure { runFormatting(options = options, report = {}) }
         assertTrue(bytes.contentEquals(Files.readAllBytes(path)))
     }
 
@@ -170,13 +183,20 @@ class FormattingScopeTest {
         files: String? = null,
         base: String? = null,
     ): Set<String> =
-        SourceFiles(mRoot)
-            .select(FormattingOptions(root = mRoot, mode = "check", files = files, base = base))
+        SourceFiles(root = mRoot)
+            .select(
+                options = FormattingOptions(
+                    root = mRoot,
+                    mode = "check",
+                    files = files,
+                    base = base
+                )
+            )
             .map {
                 mRoot
                     .relativize(it)
                     .toString()
-                    .replace('\\', '/')
+                    .replace(oldChar = '\\', newChar = '/')
             }.toSet()
 
     private fun write(
@@ -189,15 +209,17 @@ class FormattingScopeTest {
     }
 
     private fun commit() {
-        git("add", ".")
+        git(arguments = arrayOf("add", "."))
         git(
-            "-c",
-            "user.name=Formatter Test",
-            "-c",
-            "user.email=formatter@example.invalid",
-            "commit",
-            "-m",
-            "fixture"
+            arguments = arrayOf(
+                "-c",
+                "user.name=Formatter Test",
+                "-c",
+                "user.email=formatter@example.invalid",
+                "commit",
+                "-m",
+                "fixture"
+            )
         )
     }
 

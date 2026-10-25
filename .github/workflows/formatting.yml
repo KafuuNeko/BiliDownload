@@ -6,6 +6,7 @@ on:
       - "**/*.kt"
       - "**/*.kts"
       - ".editorconfig"
+      - ".gitattributes"
       - ".idea/codeStyles/**"
       - "tools/formatting/**"
       - "gradle/wrapper/**"

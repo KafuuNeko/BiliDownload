@@ -26,16 +26,17 @@ import java.io.File
  * ViewModel 固定导出来源和清理选择，宿主只负责取得目标 URI；不能因旧路径失效而忽略有效公共 URI。
  */
 class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalResourceVideModel>(
-    LocalResourceVideModel::class.java,
-    R.layout.activity_local_resource,
-    BR.viewModel
+    vmClass = LocalResourceVideModel::class.java,
+    layoutId = R.layout.activity_local_resource,
+    viewModelId = BR.viewModel
 ) {
     companion object {
         private const val KEY_TASK_ENTITY_ID = "task_entity_id"
         private const val KEY_RESOURCE_ID = "resource_id"
+
         /** 仅传递持久化身份，进入页面后通过观察数据库取得最新路径和 URI。 */
         fun buildIntent(resource: DownloadResourceEntity) =
-            buildIntent(resource.taskId, resource.id)
+            buildIntent(taskId = resource.taskId, resourceId = resource.id)
 
         /** 构造指定任务下资源的页面参数；无效的缺省身份在页面初始化时拒绝。 */
         fun buildIntent(taskId: Long, resourceId: Long) = Intent().apply {
@@ -55,7 +56,7 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
         val contracts = ActivityResultContracts.StartActivityForResult()
         mCreateDocumentLauncher = registerForActivityResult(contracts) { result ->
             val uri = if (result.resultCode == RESULT_OK) result.data?.data else null
-            mViewModel.exportResource(uri)
+            mViewModel.exportResource(uri = uri)
         }
     }
 
@@ -74,13 +75,14 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
         }
 
         // 以数据库记录为来源，公共发布或转换导致地址变化后重新探测，不沿用旧路径快照。
-        DownloadRepository.queryResourceLiveDataById(resourceId).observe(this) {
-            it?.let { mViewModel.updateResourceEntity(it) }
+        DownloadRepository.queryResourceLiveDataById(resourceId = resourceId).observe(this) {
+            it?.let { mViewModel.updateResourceEntity(resource = it) }
         }
 
-        DownloadRepository.queryDownloadTaskDetailByTaskId(downloadEntityId).observe(this) {
-            it?.let { mViewModel.updateTaskDetails(it) }
-        }
+        DownloadRepository.queryDownloadTaskDetailByTaskId(entityId = downloadEntityId)
+            .observe(this) {
+                it?.let { mViewModel.updateTaskDetails(details = it) }
+            }
 
         // 各数据独立返回，任何一项变化都重新判断页面是否已具备可操作的完整详情。
         mViewModel.taskDetailLiveData.observe(this) { mViewModel.checkLoaded() }
@@ -91,14 +93,15 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
     }
 
     override fun onViewAction(action: ViewAction) = when (action) {
-        is LocalResourceVideModel.Companion.OpenResourceAction -> onOpenResource(action)
-        is LocalResourceVideModel.Companion.ExportResourceAction -> onExportResource(action)
-        is LocalResourceVideModel.Companion.PlayResourceAction -> onPlayResource(action)
+        is LocalResourceVideModel.Companion.OpenResourceAction -> onOpenResource(action = action)
+        is LocalResourceVideModel.Companion.ExportResourceAction -> onExportResource(action = action)
+        is LocalResourceVideModel.Companion.PlayResourceAction -> onPlayResource(action = action)
         is LocalResourceVideModel.Companion.ResourceMovedAction -> {
             Toast.makeText(this, action.message, Toast.LENGTH_LONG).show()
             finish()
         }
-        else -> super.onViewAction(action)
+
+        else -> super.onViewAction(action = action)
     }
 
     /**
@@ -107,22 +110,31 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
      * 即使此处成功，权限和资源仍可能在选择器打开期间改变，实际复制时必须重新打开来源。
      */
     private fun onExportResource(action: LocalResourceVideModel.Companion.ExportResourceAction) {
-        if (FileUtils.resolveReadUri(this, action.file, action.contentUri) == null) {
-            mViewModel.exportResource(null)
+        if (FileUtils.resolveReadUri(
+                context = this,
+                file = action.file,
+                contentUri = action.contentUri
+            ) == null
+        ) {
+            mViewModel.exportResource(uri = null)
             return
         }
         FileUtils.tryExportFile(
-            action.file, action.name, action.mimetype, mCreateDocumentLauncher, action.contentUri,
+            file = action.file,
+            name = action.name,
+            mimetype = action.mimetype,
+            createDocumentLauncher = mCreateDocumentLauncher,
+            contentUri = action.contentUri,
         )
     }
 
     private fun onOpenResource(action: LocalResourceVideModel.Companion.OpenResourceAction) {
         val opened = FileUtils.tryOpenFileWithOtherApp(
-            this,
-            action.title,
-            action.file,
-            action.mimetype,
-            action.contentUri
+            context = this,
+            title = action.title,
+            file = action.file,
+            mimetype = action.mimetype,
+            contentUri = action.contentUri
         )
         if (!opened) {
             Toast.makeText(this, R.string.no_external_player_message, Toast.LENGTH_SHORT).show()
@@ -131,29 +143,29 @@ class LocalResourceActivity : CoreActivity<ActivityLocalResourceBinding, LocalRe
 
     private fun onPlayResource(action: LocalResourceVideModel.Companion.PlayResourceAction) {
         val playbackUri = FileUtils.resolveReadUri(
-            this,
-            File(action.filePath),
-            action.contentUri
+            context = this,
+            file = File(action.filePath),
+            contentUri = action.contentUri
         )?.toString()
         if (playbackUri == null) {
             Toast.makeText(this, R.string.no_external_player_message, Toast.LENGTH_SHORT).show()
             return
         }
-        val intent = if (MimeTypeUtils.isAudioMimeType(action.mimetype)) {
+        val intent = if (MimeTypeUtils.isAudioMimeType(mimeType = action.mimetype)) {
             MusicPlayerActivity.buildIntent(
-                action.filePath,
-                action.title,
-                action.mimetype,
-                playbackUri
+                filePath = action.filePath,
+                title = action.title,
+                mimeType = action.mimetype,
+                contentUri = playbackUri
             ).apply {
                 setClass(this@LocalResourceActivity, MusicPlayerActivity::class.java)
             }
         } else {
             MediaPlayerActivity.buildIntent(
-                action.filePath,
-                action.title,
-                action.mimetype,
-                playbackUri
+                filePath = action.filePath,
+                title = action.title,
+                mimeType = action.mimetype,
+                contentUri = playbackUri
             ).apply {
                 setClass(this@LocalResourceActivity, MediaPlayerActivity::class.java)
             }

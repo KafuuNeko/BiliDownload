@@ -26,6 +26,7 @@ object AccountManager {
 
     /** 当前内存凭据；发布非空值早于账号校验完成，观察者不能据此认定登录成功。 */
     val cookiesLiveData = MutableLiveData<String?>(null)
+
     /** 已取得的账号展示模型；null 表示当前资料不可用，不单独证明服务端退出是否成功。 */
     val accountLiveData = MutableLiveData<BiliAccountModel?>(null)
 
@@ -50,7 +51,7 @@ object AccountManager {
                 message: String,
                 data: MyBiliAccountData
             ) {
-                requestAccountFace(data.mid)
+                requestAccountFace(mid = data.mid)
             }
 
             override fun onFailure(httpCode: Int, code: Int, message: String) {
@@ -58,7 +59,7 @@ object AccountManager {
                 Log.e(TAG, "onFailure: httpCode=$httpCode, code=$code, message=$message")
             }
         }
-        NetworkManager.biliAccountRepository.requestMyAccountData(callback)
+        NetworkManager.biliAccountRepository.requestMyAccountData(callback = callback)
     }
 
     /**
@@ -74,15 +75,15 @@ object AccountManager {
                 message: String,
                 data: JsonObject
             ) {
-                clearAccount(true)
+                clearAccount(removeLocalCache = true)
             }
 
             override fun onFailure(httpCode: Int, code: Int, message: String) {
                 Log.e(TAG, "onFailure: httpCode=$httpCode, code=$code, message=$message")
             }
         }
-        NetworkUtils.parseCookies(cookiesLiveData.value)["bili_jct"]?.let {
-            NetworkManager.biliAccountRepository.requestLogout(it, callback)
+        NetworkUtils.parseCookies(cookieHeader = cookiesLiveData.value)["bili_jct"]?.let {
+            NetworkManager.biliAccountRepository.requestLogout(biliCSRF = it, callback = callback)
         }
     }
 
@@ -96,7 +97,7 @@ object AccountManager {
                 data: BiliAccountData
             ) {
                 updateCookieLocalCache()
-                accountLiveData.postValue(BiliAccountModel.create(data))
+                accountLiveData.postValue(BiliAccountModel.create(data = data))
             }
 
             override fun onFailure(httpCode: Int, code: Int, message: String) {
@@ -105,7 +106,7 @@ object AccountManager {
             }
 
         }
-        NetworkManager.biliAccountRepository.requestAccountData(mid, callback)
+        NetworkManager.biliAccountRepository.requestAccountData(mid = mid, callback = callback)
     }
 
     /** 清理共享账号状态；默认保留持久缓存，只有明确退出成功时同时移除缓存。 */

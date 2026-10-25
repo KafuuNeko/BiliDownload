@@ -17,6 +17,7 @@ import cc.kafuu.bilidownload.common.download.DownloadTaskRequestRegistry
 import cc.kafuu.bilidownload.common.download.SynthesisRecoveryUseCase
 import cc.kafuu.bilidownload.common.manager.DownloadManager
 import cc.kafuu.bilidownload.common.model.AppModel
+import cc.kafuu.bilidownload.common.model.DownloadPathMode
 import cc.kafuu.bilidownload.common.model.DownloadStatus
 import cc.kafuu.bilidownload.common.model.TaskStatus
 import cc.kafuu.bilidownload.common.model.event.DownloadRequestFailedEvent
@@ -75,7 +76,7 @@ class DownloadService : Service() {
 
         /** 服务请求与执行器共同决定任务是否在途，页面过滤不能替代服务侧校验。 */
         fun isTaskInFlight(taskId: Long): Boolean =
-            mRequestRegistry.contains(taskId) || DownloadManager.containsTaskGroup(taskId)
+            mRequestRegistry.contains(taskId = taskId) || DownloadManager.containsTaskGroup(groupId = taskId)
 
         private fun startService(context: Context, intent: Intent) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -86,24 +87,26 @@ class DownloadService : Service() {
         }
 
         /** 启动新任务或继续中断任务；false 表示已有请求或下载组，未重复启动。 */
-        fun startDownload(context: Context, taskId: Long): Boolean = submitTask(context, taskId, false)
+        fun startDownload(context: Context, taskId: Long): Boolean =
+            submitTask(context = context, taskId = taskId, retryOnly = false)
 
         /** 发出仅允许失败状态的重试请求；true 仅表示服务启动请求已发送。 */
-        fun retryTask(context: Context, taskId: Long): Boolean = submitTask(context, taskId, true)
+        fun retryTask(context: Context, taskId: Long): Boolean =
+            submitTask(context = context, taskId = taskId, retryOnly = true)
 
         /** 先保留唯一身份再发送 Intent，发送失败立即回滚同一次请求。 */
         private fun submitTask(context: Context, taskId: Long, retryOnly: Boolean): Boolean {
-            if (DownloadManager.containsTaskGroup(taskId)) return false
-            val request = mRequestRegistry.reserve(taskId) ?: return false
+            if (DownloadManager.containsTaskGroup(groupId = taskId)) return false
+            val request = mRequestRegistry.reserve(taskId = taskId) ?: return false
             val intent = Intent(context, DownloadService::class.java)
                 .putExtra(KEY_TASK_ID, taskId)
                 .putExtra(KEY_REQUEST_TOKEN, request.token)
                 .putExtra(KEY_RETRY_ONLY, retryOnly)
             try {
-                startService(context, intent)
+                startService(context = context, intent = intent)
                 return true
             } catch (error: Exception) {
-                mRequestRegistry.release(request)
+                mRequestRegistry.release(request = request)
                 throw error
             }
         }
@@ -111,12 +114,14 @@ class DownloadService : Service() {
         /** 从持久化活动阶段恢复，已在途任务由公共提交入口跳过。 */
         suspend fun resumeDownload(context: Context) {
             DownloadRepository.queryDownloadTaskDetailByTaskId(
-                TaskStatus.DOWNLOADING,
-                TaskStatus.PREPARE,
-                TaskStatus.SYNTHESIS,
-                TaskStatus.PUBLISHING
+                statuses = arrayOf(
+                    TaskStatus.DOWNLOADING,
+                    TaskStatus.PREPARE,
+                    TaskStatus.SYNTHESIS,
+                    TaskStatus.PUBLISHING
+                )
             ).forEach {
-                startDownload(context, it.id)
+                startDownload(context = context, taskId = it.id)
             }
         }
     }
@@ -125,19 +130,21 @@ class DownloadService : Service() {
 
     // 限制任务进入下载队列前的视频详情同步请求，批量入队时不会同时请求全部稿件。
     private val mAssignmentSemaphore = Semaphore(4)
-    private val mTaskRegistry = DownloadServiceTaskRegistry(mRequestRegistry)
-    @Volatile private var mIsDestroyed = false
+    private val mTaskRegistry = DownloadServiceTaskRegistry(requests = mRequestRegistry)
+
+    @Volatile
+    private var mIsDestroyed = false
 
     /** 仅释放仍属于本次请求的登记，后处理完成前不会停掉前台服务。 */
     private fun finishTask(assignment: Assignment) {
-        mTaskRegistry.finish(assignment)?.let(::stopSelfResult)
+        mTaskRegistry.finish(assignment = assignment)?.let(::stopSelfResult)
     }
 
     private lateinit var mDownloadNotification: DownloadNotification
 
     @SuppressLint("ForegroundServiceType")
     override fun onCreate() {
-        mDownloadNotification = DownloadNotification(this)
+        mDownloadNotification = DownloadNotification(context = this)
 
         EventBus.getDefault().register(this)
         startForeground(
@@ -163,7 +170,8 @@ class DownloadService : Service() {
         }
         // 进程重建后可能没有内存请求记录，按 Intent 身份重新登记；旧令牌不能冒领新请求。
         val token = intent.getLongExtra(KEY_REQUEST_TOKEN, -1L)
-        val assignment = mTaskRegistry.tryRegister(entityId, token, startId)
+        val assignment =
+            mTaskRegistry.tryRegister(taskId = entityId, token = token, startId = startId)
         if (assignment == null) {
             Log.d(TAG, "Task [T$entityId] start is duplicate or stale")
             mTaskRegistry.stopIdIfIdle()?.let(::stopSelfResult)
@@ -171,7 +179,12 @@ class DownloadService : Service() {
         }
         val retryOnly = intent.getBooleanExtra(KEY_RETRY_ONLY, false)
         // 原子启动保证服务刚销毁时也执行 finally，不留下永久在途身份。
-        mServiceScope.launch(start = CoroutineStart.ATOMIC) { assigningTask(assignment, retryOnly) }
+        mServiceScope.launch(start = CoroutineStart.ATOMIC) {
+            assigningTask(
+                assignment = assignment,
+                retryOnly = retryOnly
+            )
+        }
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -181,10 +194,11 @@ class DownloadService : Service() {
     private suspend fun assigningTask(assignment: Assignment, retryOnly: Boolean) {
         val useCase = DownloadTaskRecoveryUseCase(
             loadTask = { taskId ->
-                DownloadRepository.getDownloadTaskByTaskId(taskId)?.also { assignment.task = it }
+                DownloadRepository.getDownloadTaskByTaskId(id = taskId)
+                    ?.also { assignment.task = it }
             },
             isDownloading = { task ->
-                DownloadManager.containsTaskGroup(task.id) ||
+                DownloadManager.containsTaskGroup(groupId = task.id) ||
                     task.groupId?.let(DownloadManager::containsTaskGroup) == true
             },
             download = ::prepareDownload,
@@ -192,70 +206,89 @@ class DownloadService : Service() {
                 mPostProcessor.execute {
                     // 恢复用例先识别已提交成品，再决定重合成或直接补齐后处理；两条路径共享同一把锁。
                     SynthesisRecoveryUseCase(
-                        runSynthesis = { onDownloadCompleted(it, true) },
+                        runSynthesis = { task ->
+                            onDownloadCompleted(
+                                task = task,
+                                isResume = true
+                            )
+                        },
                         finishCompletedSynthesis = ::finishRecoveredSynthesis,
-                    ).execute(task)
+                    ).execute(task = task)
                 }
             },
-            publish = { task -> mPostProcessor.execute { publishTaskResources(task) } },
+            publish = { task -> mPostProcessor.execute { publishTaskResources(task = task) } },
             onFailure = ::onRecoveryFailed,
         )
         try {
             // 前置请求保持既有并发上限，后处理在挂起期间也持有共享互斥锁。
             val result = mAssignmentSemaphore.withPermit {
-                useCase.execute(assignment.request.taskId, retryOnly)
+                useCase.execute(taskId = assignment.request.taskId, retryOnly = retryOnly)
             }
-            assignment.handedToDownloader = result == DownloadTaskRecoveryUseCase.Result.HANDED_TO_DOWNLOADER
+            assignment.handedToDownloader =
+                result == DownloadTaskRecoveryUseCase.Result.HANDED_TO_DOWNLOADER
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {
             Log.e(TAG, "Task [T${assignment.request.taskId}] recovery failed")
         } finally {
-            if (!assignment.handedToDownloader || mIsDestroyed) finishTask(assignment)
+            if (!assignment.handedToDownloader || mIsDestroyed) finishTask(assignment = assignment)
         }
     }
 
     /** 同步详情时保留原失败状态；删除或改变阶段的任务不再交给媒体执行器。 */
-    private suspend fun prepareDownload(task: DownloadTaskEntity): Boolean = withContext(Dispatchers.IO) {
-        doSaveVideoDetails(task)
-        currentCoroutineContext().ensureActive()
-        val current = DownloadRepository.getDownloadTaskByTaskId(task.id) ?: return@withContext false
-        if (DownloadTaskRecoveryUseCase.phaseFor(current.status) != DownloadTaskRecoveryUseCase.Phase.DOWNLOAD) {
-            return@withContext false
+    private suspend fun prepareDownload(task: DownloadTaskEntity): Boolean =
+        withContext(Dispatchers.IO) {
+            doSaveVideoDetails(task = task)
+            currentCoroutineContext().ensureActive()
+            val current =
+                DownloadRepository.getDownloadTaskByTaskId(id = task.id) ?: return@withContext false
+            if (DownloadTaskRecoveryUseCase.phaseFor(status = current.status) != DownloadTaskRecoveryUseCase.Phase.DOWNLOAD) {
+                return@withContext false
+            }
+            DownloadManager.requestDownload(task = task)
+            true
         }
-        DownloadManager.requestDownload(task)
-        true
-    }
 
     /** 获取详情失败时只清理尚未建立有效信息的新任务，不重置或删除失败任务缓存。 */
     private suspend fun doSaveVideoDetails(task: DownloadTaskEntity) {
-        NetworkManager.biliVideoRepository.syncRequestVideoDetail(task.biliBvid) { responseCode, returnCode, message ->
+        NetworkManager.biliVideoRepository.syncRequestVideoDetail(bvid = task.biliBvid) { responseCode, returnCode, message ->
             mDownloadNotification.notificationGetVideoDetailsFailed(
-                task,
-                responseCode, returnCode, message
+                task = task,
+                responseCode = responseCode, returnCode = returnCode, message = message
             )
             // 如果无法获取视频详情，且这个任务还在准备阶段则直接删除任务
             // 因为没有对应获取视频详情失败的STATUS（也不需要）
             if (task.status == TaskStatus.PREPARE.code) {
-                mServiceScope.launch { DownloadRepository.deleteDownloadTask(task.id) }
+                mServiceScope.launch { DownloadRepository.deleteDownloadTask(taskId = task.id) }
             }
             Log.e(TAG, "Task [T${task.id}] details failed, http=$responseCode, code=$returnCode")
         }?.let {
             // 更新数据库中的视频信息
-            BiliVideoRepository.doInsertOrUpdateVideoDetails(it, task.biliCid)
+            BiliVideoRepository.doInsertOrUpdateVideoDetails(biliVideoData = it, cid = task.biliCid)
         } ?: throw IllegalStateException("Task [T${task.id}] get video details failed")
     }
 
     /** 保存实际失败阶段并提供通用脱敏反馈，缺失记录不被重建。 */
-    private suspend fun onRecoveryFailed(task: DownloadTaskEntity, phase: DownloadTaskRecoveryUseCase.Phase) {
-        if (DownloadRepository.getDownloadTaskByTaskId(task.id) == null) return
-        DownloadRepository.update(task.apply { status = phase.failureStatus.code })
+    private suspend fun onRecoveryFailed(
+        task: DownloadTaskEntity,
+        phase: DownloadTaskRecoveryUseCase.Phase
+    ) {
+        if (DownloadRepository.getDownloadTaskByTaskId(id = task.id) == null) return
+        DownloadRepository.update(downloadTask = task.apply { status = phase.failureStatus.code })
         when (phase) {
             DownloadTaskRecoveryUseCase.Phase.DOWNLOAD -> mDownloadNotification.notificationDownloadFailed(
-                task, DownloadFailure(DownloadFailure.Kind.SOURCE_UNAVAILABLE)
+                task = task,
+                failure = DownloadFailure(kind = DownloadFailure.Kind.SOURCE_UNAVAILABLE)
             )
-            DownloadTaskRecoveryUseCase.Phase.SYNTHESIS -> mDownloadNotification.notificationSynthesisFailed(task)
-            DownloadTaskRecoveryUseCase.Phase.PUBLISH -> mDownloadNotification.notificationPublishFailed(task, "")
+
+            DownloadTaskRecoveryUseCase.Phase.SYNTHESIS -> mDownloadNotification.notificationSynthesisFailed(
+                task = task
+            )
+
+            DownloadTaskRecoveryUseCase.Phase.PUBLISH -> mDownloadNotification.notificationPublishFailed(
+                task = task,
+                reason = ""
+            )
         }
         Log.e(TAG, "Task [T${task.id}] recovery failed, phase=$phase")
     }
@@ -265,17 +298,22 @@ class DownloadService : Service() {
      * 请求下载资源失败事件 */
     @Subscribe(threadMode = ThreadMode.POSTING)
     fun onRequestFailedEvent(event: DownloadRequestFailedEvent) {
-        val assignment = mTaskRegistry.find(event.task.id) ?: return
+        val assignment = mTaskRegistry.find(taskId = event.task.id) ?: return
         mServiceScope.launch {
             assignment.eventMutex.withLock {
-                if (!mTaskRegistry.owns(assignment, event.task)) return@withLock
+                if (!mTaskRegistry.owns(assignment = assignment, task = event.task)) return@withLock
                 try {
-                    DownloadRepository.update(event.task.apply { status = TaskStatus.DOWNLOAD_FAILED.code })
+                    DownloadRepository.update(downloadTask = event.task.apply {
+                        status = TaskStatus.DOWNLOAD_FAILED.code
+                    })
                     mDownloadNotification.notificationRequestFailed(
-                        event.task, event.httpCode, event.code, event.message
+                        task = event.task,
+                        httpCode = event.httpCode,
+                        code = event.code,
+                        message = event.message
                     )
                 } finally {
-                    finishTask(assignment)
+                    finishTask(assignment = assignment)
                 }
             }
         }
@@ -285,24 +323,43 @@ class DownloadService : Service() {
      * 下载状态改变事件 */
     @Subscribe(threadMode = ThreadMode.POSTING)
     fun onDownloadStatusChangeEvent(event: DownloadStatusChangeEvent) {
-        val assignment = mTaskRegistry.find(event.task.id) ?: return
+        val assignment = mTaskRegistry.find(taskId = event.task.id) ?: return
         mServiceScope.launch {
             // 同一请求的状态事件串行消费，结束后到达的进度不能覆盖最终状态。
             assignment.eventMutex.withLock {
-                if (!mTaskRegistry.owns(assignment, event.task)) return@withLock
+                if (!mTaskRegistry.owns(assignment = assignment, task = event.task)) return@withLock
                 try {
                     when (event.status) {
-                        DownloadStatus.COMPLETED -> completeDownloadedTask(event.task)
-                        DownloadStatus.FAILURE -> onDownloadFailed(event.task, event.group)
-                        DownloadStatus.EXECUTING -> onDownloadExecuting(event.task, event.group)
-                        DownloadStatus.CANCELLED -> onDownloadCancelled(event.task, event.group)
-                        DownloadStatus.STOPPED -> onDownloadStopped(event.task, event.group)
+                        DownloadStatus.COMPLETED -> completeDownloadedTask(task = event.task)
+                        DownloadStatus.FAILURE -> onDownloadFailed(
+                            task = event.task,
+                            group = event.group
+                        )
+
+                        DownloadStatus.EXECUTING -> onDownloadExecuting(
+                            task = event.task,
+                            group = event.group
+                        )
+
+                        DownloadStatus.CANCELLED -> onDownloadCancelled(
+                            task = event.task,
+                            group = event.group
+                        )
+
+                        DownloadStatus.STOPPED -> onDownloadStopped(
+                            task = event.task,
+                            group = event.group
+                        )
+
                         else -> Unit
                     }
                 } finally {
                     if (event.status.isEndStatus || event.status == DownloadStatus.STOPPED) {
-                        mDownloadNotification.updateDownloadProgress(event.task, null)
-                        finishTask(assignment)
+                        mDownloadNotification.updateDownloadProgress(
+                            task = event.task,
+                            percent = null
+                        )
+                        finishTask(assignment = assignment)
                     }
                 }
             }
@@ -312,12 +369,14 @@ class DownloadService : Service() {
     /** 下载完成后串行处理合成和发布，服务身份一直保留到后处理返回。 */
     private suspend fun completeDownloadedTask(task: DownloadTaskEntity) = mPostProcessor.execute {
         try {
-            onDownloadCompleted(task)
+            onDownloadCompleted(task = task)
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {
-            onRecoveryFailed(task, DownloadTaskRecoveryUseCase.phaseFor(task.status)
-                ?: DownloadTaskRecoveryUseCase.Phase.DOWNLOAD)
+            onRecoveryFailed(
+                task = task, phase = DownloadTaskRecoveryUseCase.phaseFor(status = task.status)
+                    ?: DownloadTaskRecoveryUseCase.Phase.DOWNLOAD
+            )
         }
     }
 
@@ -327,10 +386,10 @@ class DownloadService : Service() {
      * from [onDownloadStatusChangeEvent]
      * */
     private suspend fun onDownloadFailed(task: DownloadTaskEntity, group: DownloadGroupSnapshot) {
-        DownloadRepository.update(task.apply {
+        DownloadRepository.update(downloadTask = task.apply {
             status = TaskStatus.DOWNLOAD_FAILED.code
         })
-        mDownloadNotification.notificationDownloadFailed(task, group.failure)
+        mDownloadNotification.notificationDownloadFailed(task = task, failure = group.failure)
     }
 
     /**
@@ -346,10 +405,11 @@ class DownloadService : Service() {
         task: DownloadTaskEntity,
         isResume: Boolean = false
     ) {
-        val currentStatus = DownloadRepository.getDownloadTaskByTaskId(task.id)?.status?.let { c ->
-            TaskStatus.entries.find { it.code == c }
-        } ?: return
-        val dashEntityList = DownloadRepository.queryDashList(task)
+        val currentStatus =
+            DownloadRepository.getDownloadTaskByTaskId(id = task.id)?.status?.let { c ->
+                TaskStatus.entries.find { it.code == c }
+            } ?: return
+        val dashEntityList = DownloadRepository.queryDashList(entity = task)
 
         // 正常下载回调不能重复处理正在合成或已完成的任务；显式恢复已提前做过阶段与资源核验。
         if (!isResume &&
@@ -364,12 +424,17 @@ class DownloadService : Service() {
 
         // 首次下载完成时登记工作文件；恢复已有任务则沿用资源记录，不创建重复源记录。
         val registeredSourceResources = if (currentStatus == TaskStatus.DOWNLOADING) {
-            dashEntityList.map { DownloadRepository.registerResource(task, it) }
+            dashEntityList.map {
+                DownloadRepository.registerResource(
+                    downloadTaskEntity = task,
+                    downloadDashEntity = it
+                )
+            }
         } else {
             emptyList()
         }
         val sourceResources = registeredSourceResources.ifEmpty {
-            DownloadRepository.queryResourcesForExport(task.id)
+            DownloadRepository.queryResourcesForExport(taskId = task.id)
                 .filter {
                     it.type == DownloadResourceType.VIDEO ||
                         it.type == DownloadResourceType.AUDIO
@@ -390,13 +455,15 @@ class DownloadService : Service() {
         val finalStatus = if (dashEntityList.size == 2 && videoDash != null && audioDash != null) {
             isMergedMediaTask = true
             // 立即更新状态为正在合成
-            DownloadRepository.update(task.apply { status = TaskStatus.SYNTHESIS.code })
+            DownloadRepository.update(downloadTask = task.apply {
+                status = TaskStatus.SYNTHESIS.code
+            })
             // 执行音视频合成逻辑
             doMergeMediaTask(
                 task = task,
                 videoDash = videoDash,
-                videoSourceFile = videoResourceFile ?: resolveDashOutputFile(videoDash),
-                audioSourceFile = audioResourceFile ?: resolveDashOutputFile(audioDash)
+                videoSourceFile = videoResourceFile ?: resolveDashOutputFile(dash = videoDash),
+                audioSourceFile = audioResourceFile ?: resolveDashOutputFile(dash = audioDash)
             )
         } else {
             TaskStatus.COMPLETED
@@ -404,12 +471,12 @@ class DownloadService : Service() {
 
         if (finalStatus == TaskStatus.COMPLETED) {
             // 合成执行成功只代表媒体成品就绪，最终 COMPLETED 必须由后续发布出口决定。
-            finishDownloadedResources(task, isMergedMediaTask)
+            finishDownloadedResources(task = task, isMergedMediaTask = isMergedMediaTask)
             return
         }
 
         // 当前未进入发布出口，保存的是本次合成失败状态，保留源文件供后续恢复。
-        DownloadRepository.update(task.apply { status = finalStatus.code })
+        DownloadRepository.update(downloadTask = task.apply { status = finalStatus.code })
     }
 
     /**
@@ -420,11 +487,11 @@ class DownloadService : Service() {
      */
     private suspend fun finishRecoveredSynthesis(task: DownloadTaskEntity) {
         if (AppModel.deleteSourceFilesAfterMerge) {
-            if (!DownloadRepository.deleteDownloadTaskSourceResources(task.id)) {
+            if (!DownloadRepository.deleteDownloadTaskSourceResources(taskId = task.id)) {
                 Log.e(TAG, "Unable to delete one or more source resources for task ${task.id}")
             }
         }
-        finishDownloadedResources(task, isMergedMediaTask = true)
+        finishDownloadedResources(task = task, isMergedMediaTask = true)
     }
 
     /**
@@ -433,12 +500,15 @@ class DownloadService : Service() {
      * 已选择合成后删源的双流任务跳过源音频转封装；其余资源沿用当前偏好和存储策略。
      * 方法运行在调用方持有的串行后处理边界内，不另行启动脱离服务生命周期的后台任务。
      */
-    private suspend fun finishDownloadedResources(task: DownloadTaskEntity, isMergedMediaTask: Boolean) {
+    private suspend fun finishDownloadedResources(
+        task: DownloadTaskEntity,
+        isMergedMediaTask: Boolean
+    ) {
         tryAutoRemuxAudioResources(
             task = task,
             skipSourceResources = isMergedMediaTask && AppModel.deleteSourceFilesAfterMerge,
         )
-        publishTaskResources(task)
+        publishTaskResources(task = task)
     }
 
     /**
@@ -452,27 +522,34 @@ class DownloadService : Service() {
             task.status == TaskStatus.PUBLISH_FAILED.code
         if (
             !isPublishingRetry &&
-            AppModel.downloadPathMode == cc.kafuu.bilidownload.common.model.DownloadPathMode.INTERNAL
+            AppModel.downloadPathMode == DownloadPathMode.INTERNAL
         ) {
-            DownloadRepository.update(task.apply { status = TaskStatus.COMPLETED.code })
-            mDownloadNotification.notificationDownloadCompleted(task)
+            DownloadRepository.update(downloadTask = task.apply {
+                status = TaskStatus.COMPLETED.code
+            })
+            mDownloadNotification.notificationDownloadCompleted(task = task)
             return
         }
 
-        DownloadRepository.update(task.apply { status = TaskStatus.PUBLISHING.code })
-        val result = DownloadRepository.publishResourcesIfNeeded(task.id, forcePublish = true)
+        DownloadRepository.update(downloadTask = task.apply { status = TaskStatus.PUBLISHING.code })
+        val result =
+            DownloadRepository.publishResourcesIfNeeded(taskId = task.id, forcePublish = true)
         if (result.isSuccess) {
-            DownloadRepository.update(task.apply { status = TaskStatus.COMPLETED.code })
-            mDownloadNotification.notificationDownloadCompleted(task)
+            DownloadRepository.update(downloadTask = task.apply {
+                status = TaskStatus.COMPLETED.code
+            })
+            mDownloadNotification.notificationDownloadCompleted(task = task)
             return
         }
 
-        DownloadRepository.update(task.apply { status = TaskStatus.PUBLISH_FAILED.code })
+        DownloadRepository.update(downloadTask = task.apply {
+            status = TaskStatus.PUBLISH_FAILED.code
+        })
         val failureSummary = result.failures.joinToString { failure ->
             "resource ${failure.resourceId}: ${failure.reason}"
         }
         Log.e(TAG, "Task [T${task.id}] publishing failed: $failureSummary")
-        mDownloadNotification.notificationPublishFailed(task, failureSummary)
+        mDownloadNotification.notificationPublishFailed(task = task, reason = failureSummary)
     }
 
     /**
@@ -484,18 +561,21 @@ class DownloadService : Service() {
     ) {
         if (!AppModel.autoRemuxAudioAfterDownload || skipSourceResources) return
 
-        DownloadRepository.queryResourcesForExport(task.id)
+        DownloadRepository.queryResourcesForExport(taskId = task.id)
             .filter { it.type == DownloadResourceType.AUDIO }
-            .forEach { tryAutoRemuxAudioResource(it) }
+            .forEach { tryAutoRemuxAudioResource(resource = it) }
     }
 
     private suspend fun tryAutoRemuxAudioResource(resource: DownloadResourceEntity) {
         val sourceFile = File(resource.file)
         if (!sourceFile.exists() || sourceFile.length() <= 0L) return
 
-        val remuxFormat = FFMpegUtils.detectAudioRemuxFormat(sourceFile.path) ?: return
+        val remuxFormat = FFMpegUtils.detectAudioRemuxFormat(sourceFile = sourceFile.path) ?: return
         if (sourceFile.extension.equals(remuxFormat.suffix, ignoreCase = true)) {
-            updateAudioResourceMimeTypeIfNeeded(resource, remuxFormat.mimeType)
+            updateAudioResourceMimeTypeIfNeeded(
+                resource = resource,
+                mimeType = remuxFormat.mimeType
+            )
             return
         }
 
@@ -528,14 +608,14 @@ class DownloadService : Service() {
                 file = targetFile.path,
                 contentUri = null
             )
-            DownloadRepository.updateOrInsertResource(remuxedResource)
-            if (!ResourceStorage.delete(resource)) {
-                DownloadRepository.updateOrInsertResource(resource)
-                ResourceStorage.deleteFile(targetFile, remuxFormat.mimeType)
+            DownloadRepository.updateOrInsertResource(entity = remuxedResource)
+            if (!ResourceStorage.delete(resource = resource)) {
+                DownloadRepository.updateOrInsertResource(entity = resource)
+                ResourceStorage.deleteFile(file = targetFile, mimeType = remuxFormat.mimeType)
                 Log.e(TAG, "Delete original audio file failed: ${sourceFile.path}")
             }
         } catch (e: Exception) {
-            ResourceStorage.deleteFile(targetFile, remuxFormat.mimeType)
+            ResourceStorage.deleteFile(file = targetFile, mimeType = remuxFormat.mimeType)
             Log.e(TAG, "Update remuxed audio resource failed", e)
         }
     }
@@ -545,7 +625,7 @@ class DownloadService : Service() {
         mimeType: String
     ) {
         if (resource.mimeType.equals(mimeType, ignoreCase = true)) return
-        DownloadRepository.updateOrInsertResource(resource.copy(mimeType = mimeType))
+        DownloadRepository.updateOrInsertResource(entity = resource.copy(mimeType = mimeType))
     }
 
     /**
@@ -559,44 +639,60 @@ class DownloadService : Service() {
     ): TaskStatus {
         // 如果合成失败将在一百毫秒后重新将尝试合成，如果再次失败则音视频合成失败
         repeat(2) {
-            if (tryMergeVideo(task, videoDash, videoSourceFile, audioSourceFile)) {
+            if (tryMergeVideo(
+                    task = task,
+                    videoDash = videoDash,
+                    videoSourceFile = videoSourceFile,
+                    audioSourceFile = audioSourceFile
+                )
+            ) {
                 return TaskStatus.COMPLETED
             }
             delay(100)
         }
-        mDownloadNotification.notificationSynthesisFailed(task)
+        mDownloadNotification.notificationSynthesisFailed(task = task)
         return TaskStatus.SYNTHESIS_FAILED
     }
 
     /**
      * 下载任务执行中...
      * from [onDownloadStatusChangeEvent]*/
-    private suspend fun onDownloadExecuting(task: DownloadTaskEntity, group: DownloadGroupSnapshot) {
+    private suspend fun onDownloadExecuting(
+        task: DownloadTaskEntity,
+        group: DownloadGroupSnapshot
+    ) {
         Log.d(
             TAG,
             "Task [G${group.id}, T${task.id}] status change, percent: ${group.percent}%"
         )
         if (task.status != TaskStatus.DOWNLOADING.code) {
-            DownloadRepository.update(task.apply {
+            DownloadRepository.update(downloadTask = task.apply {
                 status = TaskStatus.DOWNLOADING.code
             })
         }
-        mDownloadNotification.updateDownloadProgress(task, group.percent, group.retry)
+        mDownloadNotification.updateDownloadProgress(
+            task = task,
+            percent = group.percent,
+            retry = group.retry
+        )
     }
 
     /**
      * 下载任务被取消
      * from [onDownloadStatusChangeEvent] */
-    private suspend fun onDownloadCancelled(task: DownloadTaskEntity, group: DownloadGroupSnapshot) {
-        DownloadRepository.deleteDownloadTask(task.id)
-        mDownloadNotification.notificationDownloadCancel(task)
+    private suspend fun onDownloadCancelled(
+        task: DownloadTaskEntity,
+        group: DownloadGroupSnapshot
+    ) {
+        DownloadRepository.deleteDownloadTask(taskId = task.id)
+        mDownloadNotification.notificationDownloadCancel(task = task)
     }
 
     /**
      * 下载任务被暂停
      * from [onDownloadStatusChangeEvent] */
     private fun onDownloadStopped(task: DownloadTaskEntity, group: DownloadGroupSnapshot) {
-        mDownloadNotification.updateDownloadProgress(task, null)
+        mDownloadNotification.updateDownloadProgress(task = task, percent = null)
     }
 
     /**
@@ -631,25 +727,25 @@ class DownloadService : Service() {
         )
         // 尝试合成
         val isSuccess = FFMpegUtils.mergeMedia(
-            videoSourceFile.path,
-            audioSourceFile.path,
-            outputFile.path
+            input1 = videoSourceFile.path,
+            input2 = audioSourceFile.path,
+            output = outputFile.path
         )
         if (isSuccess) {
             // 先落库实际尺寸再删源；中断后恢复用例才能区分已完成成品与预登记的半成品。
             resourceEntity.copy(
                 storageSizeBytes = outputFile.length(),
             ).run {
-                DownloadRepository.updateOrInsertResource(this)
+                DownloadRepository.updateOrInsertResource(entity = this)
             }
             if (AppModel.deleteSourceFilesAfterMerge) {
-                if (!DownloadRepository.deleteDownloadTaskSourceResources(task.id)) {
+                if (!DownloadRepository.deleteDownloadTaskSourceResources(taskId = task.id)) {
                     Log.e(TAG, "Unable to delete one or more source resources for task ${task.id}")
                 }
             }
         } else {
             // 如果合成失败则清理合成输出资源
-            if (!DownloadRepository.deleteResource(resourceEntity)) {
+            if (!DownloadRepository.deleteResource(resource = resourceEntity)) {
                 Log.e(TAG, "Unable to clean failed merge output: ${outputFile.path}")
             }
         }

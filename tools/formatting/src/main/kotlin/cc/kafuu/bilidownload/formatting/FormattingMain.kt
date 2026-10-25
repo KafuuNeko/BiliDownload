@@ -11,7 +11,10 @@ import kotlin.system.exitProcess
 fun main(arguments: Array<String>) {
     val exit =
         try {
-            runFormatting(FormattingOptions.parse(arguments), ::println)
+            runFormatting(
+                options = FormattingOptions.parse(arguments = arguments),
+                report = ::println
+            )
         } catch (exception: Exception) {
             System.err.println("Formatting failed: ${exception.message}")
             2
@@ -30,10 +33,13 @@ fun main(arguments: Array<String>) {
 internal fun runFormatting(
     options: FormattingOptions,
     report: (String) -> Unit,
-    formatter: SourceFormatter = AndroidStudioFormatter(options.studioHome, report),
+    formatter: SourceFormatter = AndroidStudioFormatter(
+        mStudioHome = options.studioHome,
+        mReport = report
+    ),
 ): Int {
     val root = options.root.toRealPath()
-    val paths = SourceFiles(root).select(options)
+    val paths = SourceFiles(root = root).select(options = options)
     if (paths.isEmpty()) {
         report("No Kotlin sources selected.")
         return 0
@@ -42,13 +48,13 @@ internal fun runFormatting(
     // UTF-8 解码不允许替换坏字节；任何文件失败时，其他文件也不应被提前写入。
     val sources = paths.map { path ->
         val bytes = Files.readAllBytes(path)
-        validateUtf8(bytes)
-        SourceSnapshot(path, bytes)
+        validateUtf8(bytes = bytes)
+        SourceSnapshot(path = path, before = bytes)
     }
-    val formatted = formatter.format(root, sources)
+    val formatted = formatter.format(root = root, sources = sources)
     check(formatted.size == sources.size) { "Formatter did not return every selected source" }
     val changes = sources.zip(formatted).mapNotNull { (source, result) ->
-        validateUtf8(result)
+        validateUtf8(bytes = result)
         if (source.before.contentEquals(result)) return@mapNotNull null
         SourceChange(
             path = source.path,
@@ -58,7 +64,8 @@ internal fun runFormatting(
     }
     // 检查模式到此结束，只有应用模式可以进入写入阶段。
     changes.forEach { change ->
-        val relativePath = root.relativize(change.path).toString().replace('\\', '/')
+        val relativePath =
+            root.relativize(change.path).toString().replace(oldChar = '\\', newChar = '/')
         report(relativePath)
     }
     if (options.mode == "check") {

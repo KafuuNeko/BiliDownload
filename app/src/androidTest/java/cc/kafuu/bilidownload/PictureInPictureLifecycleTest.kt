@@ -43,7 +43,8 @@ class PictureInPictureLifecycleTest {
     private var originalAccessibilityFlags = 0
 
     /** 准备独立音视频，并允许测试通过无障碍节点操作系统小窗。 */
-    @Before fun createFixtures() {
+    @Before
+    fun createFixtures() {
         originalPipEnabled = AppModel.pictureInPicturePlaybackEnabled
         originalAccessibilityFlags = instrumentation.uiAutomation.serviceInfo.flags
         AppModel.pictureInPicturePlaybackEnabled = true
@@ -55,16 +56,22 @@ class PictureInPictureLifecycleTest {
         directory = File(context.getExternalFilesDir(null), "resources/qa-pip-${System.nanoTime()}")
         assertTrue(directory.mkdirs())
         video = File(directory, "qa-with-audio.mp4")
-        val session = FFmpegKit.executeWithArguments(arrayOf(
-            "-y", "-f", "lavfi", "-i", "color=c=blue:s=160x90:r=10",
-            "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=16000",
-            "-t", "60", "-c:v", "mpeg4", "-c:a", "aac", video.path,
-        ))
-        assertTrue("Unable to create QA media: ${session.returnCode}", ReturnCode.isSuccess(session.returnCode))
+        val session = FFmpegKit.executeWithArguments(
+            arrayOf(
+                "-y", "-f", "lavfi", "-i", "color=c=blue:s=160x90:r=10",
+                "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=16000",
+                "-t", "60", "-c:v", "mpeg4", "-c:a", "aac", video.path,
+            )
+        )
+        assertTrue(
+            "Unable to create QA media: ${session.returnCode}",
+            ReturnCode.isSuccess(session.returnCode)
+        )
     }
 
     /** 还原测试前的偏好与自动化标记，仅清理本用例创建的媒体。 */
-    @After fun removeFixtures() {
+    @After
+    fun removeFixtures() {
         AppModel.pictureInPicturePlaybackEnabled = originalPipEnabled
         instrumentation.uiAutomation.serviceInfo = instrumentation.uiAutomation.serviceInfo.apply {
             flags = originalAccessibilityFlags
@@ -73,15 +80,18 @@ class PictureInPictureLifecycleTest {
     }
 
     /** 执行系统关闭动作后，小窗消失且原播放器停止推进，不能残留无入口的后台播放。 */
-    @Test fun closingSystemPipWindowStopsPlayback() {
+    @Test
+    fun closingSystemPipWindowStopsPlayback() {
         ActivityScenario.launch<MediaPlayerActivity>(videoIntent()).use { scenario ->
-            val player = enterPictureInPicture(scenario)
+            val player = enterPictureInPicture(scenario = scenario)
 
             // 标准关闭动作与系统关闭按钮调用相同的 PiP 退出流程，而非直接 finish 应用页面。
-            performSystemPipAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_DISMISS)
-            waitUntil("Playback continued after closing the system PiP window") {
+            performSystemPipAction(action = AccessibilityNodeInfo.AccessibilityAction.ACTION_DISMISS)
+            waitUntil(message = "Playback continued after closing the system PiP window") {
                 var stopped = false
-                instrumentation.runOnMainSync { stopped = !player.playWhenReady && !player.isPlaying }
+                instrumentation.runOnMainSync {
+                    stopped = !player.playWhenReady && !player.isPlaying
+                }
                 stopped
             }
 
@@ -89,7 +99,7 @@ class PictureInPictureLifecycleTest {
             var stoppedPositionMs = 0L
             var previousPositionMs = -1L
             var stableSinceMs = SystemClock.elapsedRealtime()
-            waitUntil("Playback position did not settle after closing PiP") {
+            waitUntil(message = "Playback position did not settle after closing PiP") {
                 var positionMs = 0L
                 instrumentation.runOnMainSync { positionMs = player.currentPosition }
                 if (positionMs != previousPositionMs) {
@@ -108,23 +118,25 @@ class PictureInPictureLifecycleTest {
     }
 
     /** 小窗恢复全屏继续同一播放会话，不能把退出 PiP 的所有情况都当作关闭处理。 */
-    @Test fun expandingSystemPipWindowPreservesPlayback() {
+    @Test
+    fun expandingSystemPipWindowPreservesPlayback() {
         ActivityScenario.launch<MediaPlayerActivity>(videoIntent()).use { scenario ->
-            val player = enterPictureInPicture(scenario)
+            val player = enterPictureInPicture(scenario = scenario)
             var positionBeforeExpandMs = 0L
             instrumentation.runOnMainSync { positionBeforeExpandMs = player.currentPosition }
 
             // 使用真实系统全屏动作，区分页面恢复可见与用户关闭小窗。
-            performSystemPipAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_EXPAND)
+            performSystemPipAction(action = AccessibilityNodeInfo.AccessibilityAction.ACTION_EXPAND)
             var playbackState = ""
             try {
-                waitUntil("PiP did not return to a playing full-screen activity") {
+                waitUntil(message = "PiP did not return to a playing full-screen activity") {
                     var expanded = false
                     scenario.onActivity {
                         expanded = !it.isInPictureInPictureMode && player.isPlaying
-                        playbackState = "pip=${it.isInPictureInPictureMode}, playing=${player.isPlaying}, " +
-                            "ready=${player.playWhenReady}, state=${player.playbackState}, " +
-                            "suppression=${player.playbackSuppressionReason}, position=${player.currentPosition}"
+                        playbackState =
+                            "pip=${it.isInPictureInPictureMode}, playing=${player.isPlaying}, " +
+                                "ready=${player.playWhenReady}, state=${player.playbackState}, " +
+                                "suppression=${player.playbackSuppressionReason}, position=${player.currentPosition}"
                     }
                     expanded
                 }
@@ -142,13 +154,15 @@ class PictureInPictureLifecycleTest {
     }
 
     /** 真正不可见时的暂停不能误伤配置重建中仍应继续的播放会话。 */
-    @Test fun recreatingPlayingVideoPreservesPlayback() {
+    @Test
+    fun recreatingPlayingVideoPreservesPlayback() {
         ActivityScenario.launch<MediaPlayerActivity>(videoIntent()).use { scenario ->
             lateinit var player: Player
-            waitUntil("Video did not start before recreation") {
+            waitUntil(message = "Video did not start before recreation") {
                 var playing = false
                 scenario.onActivity {
-                    val state = ViewModelProvider(it)[MediaPlayerViewModel::class.java].uiStateFlow.value
+                    val state =
+                        ViewModelProvider(it)[MediaPlayerViewModel::class.java].uiStateFlow.value
                     if (state is MediaPlayerUiState.Playing) {
                         player = state.player
                         playing = player.isPlaying
@@ -161,9 +175,9 @@ class PictureInPictureLifecycleTest {
             scenario.onActivity {
                 player.seekTo(5_000L)
                 ViewModelProvider(it)[MediaPlayerViewModel::class.java]
-                    .onSetPlaybackSpeed(MediaPlayerUiIntent.SetPlaybackSpeed(1.5f))
+                    .onSetPlaybackSpeed(intent = MediaPlayerUiIntent.SetPlaybackSpeed(speed = 1.5f))
             }
-            waitUntil("Video did not resume after seeking") {
+            waitUntil(message = "Video did not resume after seeking") {
                 var playing = false
                 instrumentation.runOnMainSync { playing = player.isPlaying }
                 playing
@@ -183,10 +197,11 @@ class PictureInPictureLifecycleTest {
     /** 等待真实播放开始，再经应用返回操作进入仍在播放的可见小窗。 */
     private fun enterPictureInPicture(scenario: ActivityScenario<MediaPlayerActivity>): Player {
         lateinit var player: Player
-        waitUntil("Video did not start") {
+        waitUntil(message = "Video did not start") {
             var playing = false
             scenario.onActivity {
-                val state = ViewModelProvider(it)[MediaPlayerViewModel::class.java].uiStateFlow.value
+                val state =
+                    ViewModelProvider(it)[MediaPlayerViewModel::class.java].uiStateFlow.value
                 if (state is MediaPlayerUiState.Playing) {
                     player = state.player
                     playing = player.isPlaying
@@ -199,15 +214,15 @@ class PictureInPictureLifecycleTest {
         scenario.onActivity {
             player.seekTo(5_000L)
             ViewModelProvider(it)[MediaPlayerViewModel::class.java]
-                .onSetPlaybackSpeed(MediaPlayerUiIntent.SetPlaybackSpeed(1.5f))
+                .onSetPlaybackSpeed(intent = MediaPlayerUiIntent.SetPlaybackSpeed(speed = 1.5f))
         }
-        waitUntil("Video did not resume after seeking") {
+        waitUntil(message = "Video did not resume after seeking") {
             var playing = false
             instrumentation.runOnMainSync { playing = player.isPlaying }
             playing
         }
         scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
-        waitUntil("Video did not enter PiP while playing") {
+        waitUntil(message = "Video did not enter PiP while playing") {
             var inPip = false
             scenario.onActivity { inPip = it.isInPictureInPictureMode && player.isPlaying }
             inPip
@@ -219,7 +234,7 @@ class PictureInPictureLifecycleTest {
     private fun performSystemPipAction(action: AccessibilityNodeInfo.AccessibilityAction) {
         // 系统已注册小窗节点时入场动画仍可能在执行，等待界面空闲后再发出关闭或展开动作。
         instrumentation.uiAutomation.waitForIdle(500L, 5_000L)
-        waitUntil("System PiP action was not available: ${action.id}") {
+        waitUntil(message = "System PiP action was not available: ${action.id}") {
             instrumentation.uiAutomation.windows.any { window ->
                 if (!window.isInPictureInPictureMode) return@any false
                 val root = window.root ?: return@any false
@@ -239,8 +254,13 @@ class PictureInPictureLifecycleTest {
     }
 
     /** 构造当前夹具的视频播放入口，沿用应用的 singleTask 路由。 */
-    private fun videoIntent() = MediaPlayerActivity.buildIntent(video.path, "QA PiP with audio", "video/mp4").apply {
-        setClass(context, MediaPlayerActivity::class.java)
-        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    }
+    private fun videoIntent() =
+        MediaPlayerActivity.buildIntent(
+            filePath = video.path,
+            title = "QA PiP with audio",
+            mimeType = "video/mp4"
+        ).apply {
+            setClass(context, MediaPlayerActivity::class.java)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
 }

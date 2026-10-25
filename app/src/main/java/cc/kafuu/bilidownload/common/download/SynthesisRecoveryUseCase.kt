@@ -50,9 +50,12 @@ class SynthesisRecoveryUseCase(
 
         // 预登记但没有提交尺寸的输出可能是半成品，必须保留原先的源校验和重新合成路径。
         val dash = loadDash(task)
-        if (dash.none { it.type == DashType.VIDEO } || dash.none { it.type == DashType.AUDIO } ||
-            !hasSource(resources, DownloadResourceType.VIDEO) ||
-            !hasSource(resources, DownloadResourceType.AUDIO)) {
+        val hasRequiredDash =
+            dash.any { it.type == DashType.VIDEO } && dash.any { it.type == DashType.AUDIO }
+        if (!hasRequiredDash ||
+            !hasSource(resources = resources, type = DownloadResourceType.VIDEO) ||
+            !hasSource(resources = resources, type = DownloadResourceType.AUDIO)
+        ) {
             throw IOException("Synthesis source is unavailable")
         }
         currentCoroutineContext().ensureActive()

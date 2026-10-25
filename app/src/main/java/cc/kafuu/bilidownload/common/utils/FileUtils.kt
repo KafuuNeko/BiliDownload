@@ -60,7 +60,7 @@ object FileUtils {
         mimetype: String,
         contentUri: String? = null
     ) {
-        val uri = resolveReadUri(context, file, contentUri) ?: return
+        val uri = resolveReadUri(context = context, file = file, contentUri = contentUri) ?: return
 
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = mimetype
@@ -92,7 +92,8 @@ object FileUtils {
         contentUri: String? = null
     ): Boolean {
         return try {
-            val uri = resolveReadUri(context, file, contentUri) ?: return false
+            val uri = resolveReadUri(context = context, file = file, contentUri = contentUri)
+                ?: return false
 
             val intent = Intent(Intent.ACTION_VIEW).apply {
                 setDataAndType(uri, mimetype)
@@ -123,7 +124,7 @@ object FileUtils {
      */
     fun resolveReadUri(context: Context, file: File, contentUri: String? = null): Uri? {
         contentUri?.let(Uri::parse)
-            ?.takeIf { it.scheme == "content" && canReadUri(context, it) }
+            ?.takeIf { it.scheme == "content" && canReadUri(context = context, uri = it) }
             ?.let { return it }
 
         if (!file.isFile) return null
@@ -173,7 +174,7 @@ object FileUtils {
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = mimetype
-            putExtra(Intent.EXTRA_TITLE, DownloadFileNameUtils.sanitizeFileName(name))
+            putExtra(Intent.EXTRA_TITLE, DownloadFileNameUtils.sanitizeFileName(fileName = name))
         }
         createDocumentLauncher.launch(intent)
     }
@@ -202,24 +203,29 @@ object FileUtils {
     ): Boolean {
         return try {
             val digest = MessageDigest.getInstance("SHA-256")
-            openSourceInput(context, sourceFile, sourceContentUri).use { input ->
+            openSourceInput(
+                context = context,
+                file = sourceFile,
+                contentUri = sourceContentUri
+            ).use { input ->
                 val sourceStat = Os.fstat(input.fd)
                 // 普通复制也先识别可读目标的文件身份，避免选择同一资源的另一个 URI 时清空源。
-                if (isSameSource(context, uri, sourceStat)) return false
+                if (isSameSource(context = context, uri = uri, source = sourceStat)) return false
                 if (!verifyContents) {
                     // 明确要求截断旧目标，避免覆盖较长文件时残留尾部；只写提供器仍可走此分支。
                     val output = context.contentResolver.openOutputStream(uri, "wt") ?: return false
-                    output.use { copyStream(input, it) }
+                    output.use { copyStream(inputStream = input, outputStream = it) }
                     return true
                 }
 
                 // 先以不截断的方式打开并比较文件标识，防止不同 URI 实际指向同一个源文件。
-                val descriptor = context.contentResolver.openFileDescriptor(uri, "rw") ?: return false
+                val descriptor =
+                    context.contentResolver.openFileDescriptor(uri, "rw") ?: return false
                 ParcelFileDescriptor.AutoCloseOutputStream(descriptor).use { output ->
                     val targetStat = Os.fstat(descriptor.fileDescriptor)
-                    if (sourceStat.st_dev == targetStat.st_dev && sourceStat.st_ino == targetStat.st_ino) {
-                        return false
-                    }
+                    val isSourceAlias =
+                        sourceStat.st_dev == targetStat.st_dev && sourceStat.st_ino == targetStat.st_ino
+                    if (isSourceAlias) return false
                     output.channel.truncate(0)
                     val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
                     var copiedBytes = 0L
@@ -231,14 +237,13 @@ object FileUtils {
                         copiedBytes += count
                     }
                     // 普通文件核对复制前后长度；管道来源不能依赖 st_size 或随机访问能力。
-                    if (OsConstants.S_ISREG(sourceStat.st_mode) &&
-                        (copiedBytes != sourceStat.st_size || input.channel.size() != copiedBytes)) {
-                        return false
-                    }
+                    val sourceLengthChanged = OsConstants.S_ISREG(sourceStat.st_mode) &&
+                        (copiedBytes != sourceStat.st_size || input.channel.size() != copiedBytes)
+                    if (sourceLengthChanged) return false
                 }
             }
             // 输出描述符关闭后重新读取目标，不能只相信提供器报告的长度或写入成功返回值。
-            verifyUriContents(context, uri, digest.digest())
+            verifyUriContents(context = context, uri = uri, expectedDigest = digest.digest())
         } catch (e: Exception) {
             e.printStackTrace()
             false
@@ -251,12 +256,18 @@ object FileUtils {
      * 返回流接管 URI 描述符的所有权，调用方必须使用 use 关闭；不要求旧路径与 URI 同时有效。
      * URI 提供器可能返回管道，因此后续复制不能对所有来源都假设支持 seek 或具有可靠长度。
      */
-    private fun openSourceInput(context: Context, file: File, contentUri: String?): FileInputStream {
+    private fun openSourceInput(
+        context: Context,
+        file: File,
+        contentUri: String?
+    ): FileInputStream {
         val uri = contentUri?.let(Uri::parse)?.takeIf { it.scheme == "content" }
-        val descriptor = uri?.let {
-            runCatching { context.contentResolver.openFileDescriptor(it, "r") }.getOrNull()
+        val descriptor = uri?.let { sourceUri ->
+            runCatching { context.contentResolver.openFileDescriptor(sourceUri, "r") }.getOrNull()
         }
-        return descriptor?.let { ParcelFileDescriptor.AutoCloseInputStream(it) } ?: FileInputStream(file)
+        return descriptor?.let { ParcelFileDescriptor.AutoCloseInputStream(it) } ?: FileInputStream(
+            file
+        )
     }
 
     /**
@@ -265,21 +276,22 @@ object FileUtils {
      * 返回 false 也可能表示提供器不支持读取，而非已经证明两者不同；普通复制保留只写兼容性，
      * 核验复制还必须在非截断的读写描述符上再次检查，不能省略第二道保护。
      */
-    private fun isSameSource(context: Context, uri: Uri, source: StructStat): Boolean = runCatching {
-        context.contentResolver.openFileDescriptor(uri, "r")?.use {
-            val target = Os.fstat(it.fileDescriptor)
-            source.st_dev == target.st_dev && source.st_ino == target.st_ino
-        } ?: false
-    }.getOrDefault(false)
+    private fun isSameSource(context: Context, uri: Uri, source: StructStat): Boolean =
+        runCatching {
+            context.contentResolver.openFileDescriptor(uri, "r")?.use { descriptor ->
+                val target = Os.fstat(descriptor.fileDescriptor)
+                source.st_dev == target.st_dev && source.st_ino == target.st_ino
+            } ?: false
+        }.getOrDefault(false)
 
     /** 回读整个目标并比较摘要，不依赖提供器的长度元数据；无法核验时上层须保留源文件。 */
     private fun verifyUriContents(context: Context, uri: Uri, expectedDigest: ByteArray): Boolean {
         val digest = MessageDigest.getInstance("SHA-256")
         val input = context.contentResolver.openInputStream(uri) ?: return false
-        input.use {
+        input.use { source ->
             val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
             while (true) {
-                val count = it.read(buffer)
+                val count = source.read(buffer)
                 if (count < 0) break
                 digest.update(buffer, 0, count)
             }
@@ -290,7 +302,7 @@ object FileUtils {
     /** 返回目标目录中尚未被占用的显示文件名；写入文档提供方前再次清理并保留原扩展名。 */
     fun resolveUniqueDocumentName(parent: DocumentFile, desiredName: String): String {
         return DownloadFileNameUtils.resolveUniqueFileName(
-            DownloadFileNameUtils.sanitizeFileName(desiredName),
+            desiredName = DownloadFileNameUtils.sanitizeFileName(fileName = desiredName),
         ) {
             parent.findFile(it) != null
         }
@@ -311,31 +323,32 @@ object FileUtils {
      * @param tempFile 临时文件
      * @return 成功返回true，失败返回false
      */
-    suspend fun downloadImageToFile(url: String, tempFile: File): Boolean = withContext(Dispatchers.IO) {
-        try {
-            val request = Request.Builder().apply {
-                url(url)
-                get()
-                NetworkConfig.GENERAL_HEADERS.forEach { (key, value) -> addHeader(key, value) }
-                AccountManager.cookiesLiveData.value?.let { addHeader("Cookie", it) }
-            }.build()
+    suspend fun downloadImageToFile(url: String, tempFile: File): Boolean =
+        withContext(Dispatchers.IO) {
+            try {
+                val request = Request.Builder().apply {
+                    url(url)
+                    get()
+                    NetworkConfig.GENERAL_HEADERS.forEach { (key, value) -> addHeader(key, value) }
+                    AccountManager.cookiesLiveData.value?.let { addHeader("Cookie", it) }
+                }.build()
 
-            val response = NetworkManager.okHttpClient.newCall(request).execute()
-            if (!response.isSuccessful) {
-                return@withContext false
-            }
-
-            response.body()?.let { body ->
-                tempFile.outputStream().use { outputStream ->
-                    body.byteStream().use { inputStream ->
-                        copyStream(inputStream, outputStream)
-                    }
+                val response = NetworkManager.okHttpClient.newCall(request).execute()
+                if (!response.isSuccessful) {
+                    return@withContext false
                 }
-                true
-            } ?: false
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
+
+                response.body()?.let { body ->
+                    tempFile.outputStream().use { outputStream ->
+                        body.byteStream().use { inputStream ->
+                            copyStream(inputStream = inputStream, outputStream = outputStream)
+                        }
+                    }
+                    true
+                } ?: false
+            } catch (e: Exception) {
+                e.printStackTrace()
+                false
+            }
         }
-    }
 }

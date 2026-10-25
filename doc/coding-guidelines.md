@@ -91,7 +91,7 @@ ViewModel ──> UseCase / Manager / Repository ──> 网络、Room、存储�
 
 - Kotlin 排版通过[自动代码格式化](./guides/code-formatting.md)调用 Android Studio 原生格式化器与本仓库项目代码样式，统一缩进、折行、括号、尾逗号及声明间距。
 - 名称表达业务角色和单位；通过显式 import 使用简短类型名，名称冲突优先使用语义清晰的别名。
-- 容易混淆的参数在 API 支持时使用具名实参；复杂条件按业务含义分解，优先提前返回，保持主要流程清晰。
+- 业务 API、模型构造和多参数回调在语言支持时使用具名实参；复杂条件按业务含义分解，优先提前返回，保持主要流程清晰。
 - Lambda、调用链和作用域函数应明确接收者、数据流与返回目标；Compose 参数和 DataBinding 表达式保持简洁。
 - 交付前依次执行 `formatApply`、同范围的 `formatCheck`，再由 AI 审计命名、参数、条件、作用域、求值顺序及业务行为；审计修改 Kotlin 代码后重新完成这套流程。验证规则见[验证与交付](./guides/testing-and-delivery.md)。
 

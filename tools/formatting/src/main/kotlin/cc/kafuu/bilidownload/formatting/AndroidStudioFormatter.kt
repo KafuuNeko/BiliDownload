@@ -15,7 +15,7 @@ internal class AndroidStudioFormatter(
 ) : SourceFormatter {
     /** 复制源码及各级 EditorConfig，最多排版四轮，稳定后返回结果并清理临时工作区。 */
     override fun format(root: Path, sources: List<SourceSnapshot>): List<ByteArray> {
-        val studio = AndroidStudio.locate(root, mStudioHome)
+        val studio = AndroidStudio.locate(root = root, configuredHome = mStudioHome)
         val workspace = Files.createTempDirectory("bilidownload-as-format-")
         try {
             // 保留仓库相对路径与逐级配置，使副本的样式解析与编辑器保持一致。
@@ -27,14 +27,22 @@ internal class AndroidStudioFormatter(
                 val relative = root.relativize(source.path)
                 val copy = copies.resolve(relative)
                 Files.createDirectories(copy.parent)
-                Files.write(copy, source.before)
-                copyEditorConfigs(root, relative.parent, copies)
+                // Windows 的既有检出可能保留 CRLF；先按 Kotlin 行尾约定统一副本，原文仍由快照保护。
+                Files.writeString(
+                    copy,
+                    source.before.toString(UTF_8).replace(oldValue = "\r\n", newValue = "\n"),
+                    UTF_8
+                )
+                copyEditorConfigs(root = root, parent = relative.parent, copies = copies)
             }
             val properties = workspace.resolve("idea.properties")
-            writeProperties(properties, workspace)
+            writeProperties(path = properties, workspace = workspace)
             mReport("Android Studio ${studio.build}: formatting ${sources.size} Kotlin source(s).")
 
-            // 原生引擎可能需要多轮排版；只有只读检查确认稳定后，才返回可写回的副本。
+            // 使用同一真实文件验证固定点，保留 Gradle 脚本上下文，避免 -dry 的普通 Kotlin 副本误报。
+            var previous =
+                sources.map { Files.readAllBytes(copies.resolve(root.relativize(it.path))) }
+            var unstablePaths = emptyList<Path>()
             repeat(4) {
                 runNative(
                     studio = studio,
@@ -43,22 +51,17 @@ internal class AndroidStudioFormatter(
                     settings = settings,
                     copies = copies,
                     count = sources.size,
-                    dry = false,
                 )
-                val stable = runNative(
-                    studio = studio,
-                    workspace = workspace,
-                    properties = properties,
-                    settings = settings,
-                    copies = copies,
-                    count = sources.size,
-                    dry = true,
-                )
-                if (stable) {
-                    return sources.map { Files.readAllBytes(copies.resolve(root.relativize(it.path))) }
-                }
+                val formatted =
+                    sources.map { Files.readAllBytes(copies.resolve(root.relativize(it.path))) }
+                unstablePaths = sources.indices.filter { index ->
+                    !previous[index].contentEquals(formatted[index])
+                }.map { index -> sources[index].path }
+                if (unstablePaths.isEmpty()) return formatted
+                previous = formatted
             }
-            error("Android Studio formatting did not stabilize after 4 passes")
+            val pendingFiles = unstablePaths.joinToString { root.relativize(it).toString() }
+            error("Android Studio formatting did not stabilize after 4 passes: $pendingFiles")
         } finally {
             Files.walk(workspace)
                 .use { paths -> paths.sorted(Comparator.reverseOrder()).forEach(Files::delete) }
@@ -99,7 +102,6 @@ internal class AndroidStudioFormatter(
     /**
      * 在隔离配置下启动原生引擎，并核对实际处理数量与退出状态。
      *
-     * @return 排版或稳定性检查通过时返回 true，检查确认仍需排版时返回 false。
      * @throws IllegalStateException 当进程超时、失败或处理数量不符时抛出。
      */
     private fun runNative(
@@ -109,11 +111,18 @@ internal class AndroidStudioFormatter(
         settings: Path,
         copies: Path,
         count: Int,
-        dry: Boolean,
-    ): Boolean {
+    ) {
         val args =
-            listOf("-s", settings.toString(), "-charset", "UTF-8", "-r", "-m", "*.kt,*.kts") +
-                (if (dry) listOf("-d") else emptyList()) + copies.toString()
+            listOf(
+                "-s",
+                settings.toString(),
+                "-charset",
+                "UTF-8",
+                "-r",
+                "-m",
+                "*.kt,*.kts",
+                copies.toString()
+            )
         val builder = ProcessBuilder(studio.command + args).directory(workspace.toFile())
         builder.environment().apply {
             put("STUDIO_PROPERTIES", properties.toString())
@@ -134,25 +143,14 @@ internal class AndroidStudioFormatter(
             check(process.waitFor(5, TimeUnit.MINUTES)) { "Android Studio formatter timed out" }
             val stdout = output.get()
             val stderr = errors.get()
-            // dry 模式的退出码 1 只表示仍需排版时才可重试，其他失败直接中止整个批次。
-            val operation = if (dry) "checked" else "formatted"
+            // 跳过文件和非零退出都不能当作成功，稳定性由调用方在同一路径上比较字节。
             val processed =
-                Regex("(?m)^(\\d+) file\\(s\\) $operation\\.\\r?$").find(stdout)?.groupValues?.get(1)
+                Regex("(?m)^(\\d+) file\\(s\\) formatted\\.\\r?$").find(stdout)?.groupValues?.get(1)
                     ?.toInt()
-            val wellFormed = Regex("(?m)^(\\d+) file\\(s\\) are well formed\\.\\r?$")
-                .find(stdout)?.groupValues?.get(1)?.toInt()
-            val pending =
-                dry && process.exitValue() == 1 && wellFormed != null && wellFormed in 0 until count
-            val validExit = if (dry) {
-                (process.exitValue() == 0 && wellFormed == count) || pending
-            } else {
-                process.exitValue() == 0
-            }
-            check(validExit && processed == count) {
-                "Android Studio formatter ${if (dry) "stability check" else "execution"} failed: " +
+            check(process.exitValue() == 0 && processed == count) {
+                "Android Studio formatter execution failed: " +
                     "exit=${process.exitValue()}, processed=$processed/$count\n$stdout\n$stderr"
             }
-            return !pending
         } finally {
             if (process.isAlive) process.destroyForcibly().waitFor()
         }

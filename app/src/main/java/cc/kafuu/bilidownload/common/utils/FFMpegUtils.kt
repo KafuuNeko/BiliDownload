@@ -32,16 +32,16 @@ object FFMpegUtils {
 
     /** 同步探测首个音频流的编码，返回匹配的无损封装；探测失败或编码不支持时返回 null。 */
     fun detectAudioRemuxFormat(sourceFile: String): AudioRemuxFormat? {
-        val mediaDetail = getMediaInfo(sourceFile) ?: return null
+        val mediaDetail = getMediaInfo(filePath = sourceFile) ?: return null
         return when (mediaDetail.audioCodec?.lowercase()) {
-            "aac" -> AudioRemuxFormat("aac", "audio/aac", "adts")
-            "flac" -> AudioRemuxFormat("flac", "audio/flac", "flac")
-            "mp3" -> AudioRemuxFormat("mp3", "audio/mpeg", "mp3")
-            "opus" -> AudioRemuxFormat("opus", "audio/opus", "opus")
-            "vorbis" -> AudioRemuxFormat("ogg", "audio/ogg", "ogg")
-            "ac3" -> AudioRemuxFormat("ac3", "audio/ac3", "ac3")
-            "eac3" -> AudioRemuxFormat("eac3", "audio/eac3", "eac3")
-            "alac" -> AudioRemuxFormat("m4a", "audio/mp4", "mp4")
+            "aac" -> AudioRemuxFormat(suffix = "aac", mimeType = "audio/aac", muxer = "adts")
+            "flac" -> AudioRemuxFormat(suffix = "flac", mimeType = "audio/flac", muxer = "flac")
+            "mp3" -> AudioRemuxFormat(suffix = "mp3", mimeType = "audio/mpeg", muxer = "mp3")
+            "opus" -> AudioRemuxFormat(suffix = "opus", mimeType = "audio/opus", muxer = "opus")
+            "vorbis" -> AudioRemuxFormat(suffix = "ogg", mimeType = "audio/ogg", muxer = "ogg")
+            "ac3" -> AudioRemuxFormat(suffix = "ac3", mimeType = "audio/ac3", muxer = "ac3")
+            "eac3" -> AudioRemuxFormat(suffix = "eac3", mimeType = "audio/eac3", muxer = "eac3")
+            "alac" -> AudioRemuxFormat(suffix = "m4a", mimeType = "audio/mp4", muxer = "mp4")
             else -> null
         }
     }
@@ -58,10 +58,12 @@ object FFMpegUtils {
         format: AudioRemuxFormat
     ): Boolean {
         // 显式选择首个音频流和 muxer，避免目标后缀或文件名中的引号改变处理方式。
-        val session = FFmpegKit.executeWithArguments(arrayOf(
-            "-y", "-i", sourceFile, "-map", "0:a:0", "-vn",
-            "-c:a", "copy", "-f", format.muxer, targetFile,
-        ))
+        val session = FFmpegKit.executeWithArguments(
+            arrayOf(
+                "-y", "-i", sourceFile, "-map", "0:a:0", "-vn",
+                "-c:a", "copy", "-f", format.muxer, targetFile,
+            )
+        )
         val outputFile = File(targetFile)
         val isSuccess = ReturnCode.isSuccess(session.returnCode) &&
             outputFile.exists() &&
@@ -94,19 +96,27 @@ object FFMpegUtils {
         contentUri: String? = null,
     ): FFmpegSession {
         // SAF 输入在这里解析；编码相同只复制码流，避免不必要的有损重编码。
-        val arguments = mutableListOf("-i", resolveMediaInput(sourceFile, contentUri))
-        videoCodec?.let {
-            arguments += listOf("-c:v", if (it.first != it.second) it.second.fullName else "copy")
+        val arguments =
+            mutableListOf("-i", resolveMediaInput(filePath = sourceFile, contentUri = contentUri))
+        videoCodec?.let { (sourceCodec, targetCodec) ->
+            arguments += listOf(
+                "-c:v",
+                if (sourceCodec != targetCodec) targetCodec.fullName else "copy"
+            )
         }
-        audioCodec?.let {
-            arguments += listOf("-c:a", if (it.first != it.second) it.second.fullName else "copy")
+        audioCodec?.let { (sourceCodec, targetCodec) ->
+            arguments += listOf(
+                "-c:a",
+                if (sourceCodec != targetCodec) targetCodec.fullName else "copy"
+            )
         }
         arguments += targetFile
         // 退出码与有效输出共同决定成功，不能把空文件当作可登记资源。
-        return FFmpegKit.executeWithArgumentsAsync(arguments.toTypedArray(),
-            { onComplete(ReturnCode.isSuccess(it.returnCode) && File(targetFile).length() > 0L) },
-            { Log.d(TAG, it.message) },
-            { onProgress(it.time) }
+        return FFmpegKit.executeWithArgumentsAsync(
+            arguments.toTypedArray(),
+            { session -> onComplete(ReturnCode.isSuccess(session.returnCode) && File(targetFile).length() > 0L) },
+            { log -> Log.d(TAG, log.message) },
+            { statistics -> onProgress(statistics.time) }
         )
     }
 
@@ -117,10 +127,12 @@ object FFMpegUtils {
      * 返回成功前核对退出码和非空输出；此处不提交下载状态，也不决定何时删除音视频源文件。
      */
     fun mergeMedia(input1: String, input2: String, output: String): Boolean {
-        val session = FFmpegKit.executeWithArguments(arrayOf(
-            "-i", input1, "-i", input2, "-c:v", "copy", "-c:a", "copy",
-            "-strict", "experimental", output,
-        ))
+        val session = FFmpegKit.executeWithArguments(
+            arrayOf(
+                "-i", input1, "-i", input2, "-c:v", "copy", "-c:a", "copy",
+                "-strict", "experimental", output,
+            )
+        )
         return ReturnCode.isSuccess(session.returnCode) && File(output).length() > 0L
     }
 
@@ -135,19 +147,19 @@ object FFMpegUtils {
      */
     fun getMediaInfo(filePath: String, callback: IAsyncCallback<LocalMediaDetail, Exception>) {
         // 原生命令成功仍可能返回不完整的结构，解析失败须走同一失败出口。
-        FFprobeKit.executeWithArgumentsAsync(buildMediaInfoArguments(filePath)) { session ->
+        FFprobeKit.executeWithArgumentsAsync(buildMediaInfoArguments(input = filePath)) { session ->
             val output = session.output
             Log.d(TAG, "getMediaInfo: $output")
             if (ReturnCode.isSuccess(session.returnCode)) {
                 val detail = try {
-                    parseMediaInfo(filePath, output)
+                    parseMediaInfo(filePath = filePath, output = output)
                 } catch (error: Exception) {
-                    callback.onFailure(error)
+                    callback.onFailure(exception = error)
                     return@executeWithArgumentsAsync
                 }
-                callback.onSuccess(detail)
+                callback.onSuccess(data = detail)
             } else {
-                callback.onFailure(Exception("Failed to get media info, return code: ${session.returnCode}"))
+                callback.onFailure(exception = Exception("Failed to get media info, return code: ${session.returnCode}"))
             }
         }
     }
@@ -158,16 +170,22 @@ object FFMpegUtils {
      * 探测、权限或解析异常均返回 null；详情中的 path 保留传入路径，不能据此推断旧路径仍可读取。
      * 本方法只读取输入，不登记资源，也不延长 URI 授权的有效期。
      */
-    fun getMediaInfo(filePath: String, contentUri: String? = null): LocalMediaDetail? = runCatching {
-        val session = FFprobeKit.executeWithArguments(
-            buildMediaInfoArguments(resolveMediaInput(filePath, contentUri)),
-        )
-        if (!ReturnCode.isSuccess(session.returnCode)) {
-            Log.d(TAG, "getMediaInfo failed, return code: ${session.returnCode}")
-            return@runCatching null
-        }
-        parseMediaInfo(filePath, session.output)
-    }.onFailure { Log.e(TAG, "Unable to read media info", it) }.getOrNull()
+    fun getMediaInfo(filePath: String, contentUri: String? = null): LocalMediaDetail? =
+        runCatching {
+            val session = FFprobeKit.executeWithArguments(
+                buildMediaInfoArguments(
+                    input = resolveMediaInput(
+                        filePath = filePath,
+                        contentUri = contentUri
+                    )
+                ),
+            )
+            if (!ReturnCode.isSuccess(session.returnCode)) {
+                Log.d(TAG, "getMediaInfo failed, return code: ${session.returnCode}")
+                return@runCatching null
+            }
+            parseMediaInfo(filePath = filePath, output = session.output)
+        }.onFailure { Log.e(TAG, "Unable to read media info", it) }.getOrNull()
 
     /**
      * 通过公共解析规则优先选择可读 URI，再转换为 FFmpegKit 的 SAF 只读输入地址。
@@ -178,7 +196,11 @@ object FFMpegUtils {
     private fun resolveMediaInput(filePath: String, contentUri: String?): String {
         if (contentUri.isNullOrBlank()) return filePath
         val context = CommonLibs.requireContext()
-        val uri = FileUtils.resolveReadUri(context, File(filePath), contentUri) ?: return filePath
+        val uri = FileUtils.resolveReadUri(
+            context = context,
+            file = File(filePath),
+            contentUri = contentUri
+        ) ?: return filePath
         return FFmpegKitConfig.getSafParameterForRead(context, uri)
     }
 
@@ -195,7 +217,7 @@ object FFMpegUtils {
         val streams = jsonObject.getAsJsonArray("streams")
 
         val durationInSeconds = format.get("duration")?.asDouble ?: 0.0
-        val formattedDuration = TimeUtils.formatDuration(durationInSeconds)
+        val formattedDuration = TimeUtils.formatDuration(durationInSeconds = durationInSeconds)
 
         var videoCodec: String? = null
         var resolution: String? = null
@@ -211,7 +233,7 @@ object FFMpegUtils {
                 videoCodec = stream.get("codec_name")?.asString
                 resolution = "${stream.get("width")?.asInt}x${stream.get("height")?.asInt}"
                 frameRate = stream.get("r_frame_rate")?.asString?.let {
-                    val fps = TimeUtils.evalFrameRate(it)
+                    val fps = TimeUtils.evalFrameRate(frameRate = it)
                     "${String.format("%.4f", fps)} fps"
                 }
             } else if (codecType == "audio" && audioCodec == null) {

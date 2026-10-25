@@ -19,6 +19,7 @@ class BiliInterceptor(
 ) : Interceptor {
     companion object {
         private const val TAG = "BiliInterceptor"
+
         // B 站的 WAF/风控对浏览器 User-Agent 在 /x/web-interface/view 等接口上
         // 触发 412 风险拦截，但对 okhttp 客户端 User-Agent 不拦截；
         // 相反 /x/player/playurl 对 okhttp UA 会被拦截，需要保留浏览器 UA。
@@ -59,7 +60,7 @@ class BiliInterceptor(
             }
             NetworkConfig.GENERAL_HEADERS.forEach { (key, value) ->
                 if (key == "User-Agent") {
-                    addHeader(key, pickUserAgent(path))
+                    addHeader(key, pickUserAgent(path = path))
                 } else {
                     addHeader(key, value)
                 }
@@ -69,8 +70,8 @@ class BiliInterceptor(
         // 不输出 Request/Response 本身，查询参数中可能带有临时鉴权签名。
         Log.d(TAG, "Request: ${original.method()} $path")
 
-        return chain.proceed(request).also {
-            Log.d(TAG, "Response: path=$path, http=${it.code()}")
+        return chain.proceed(request).also { response ->
+            Log.d(TAG, "Response: path=$path, http=${response.code()}")
         }
     }
 
@@ -89,14 +90,16 @@ class BiliInterceptor(
      * 请求只需要 Set-Cookie 头，仍须关闭整个响应体以释放连接；缓存内容不得写入日志。
      */
     private fun getDefaultCookiesByBili(): String? {
-        // @formatter:off
         if (mCachedCookies == null) {
             val client = OkHttpClient.Builder().build() // 不复用带当前拦截器的业务客户端，避免递归。
             val request = Request.Builder().url(NetworkConfig.BILI_MOBILE_URL).apply {
                 NetworkConfig.GENERAL_HEADERS.forEach { (key, value) ->
                     addHeader(key, value)
                 }
-                header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
+                header(
+                    "Accept",
+                    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
+                )
                 header("Accept-Encoding", "gzip, deflate, br, zstd")
             }.build()
             try {
@@ -109,7 +112,6 @@ class BiliInterceptor(
                 Log.e(TAG, "Failed to fetch cookies from ${NetworkConfig.BILI_MOBILE_URL}", e)
             }
         }
-        // @formatter:on
         return mCachedCookies
     }
 

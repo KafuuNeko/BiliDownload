@@ -63,7 +63,7 @@ class LoginActivity : CoreActivity<ActivityLoginBinding, LoginViewModel>(
             val requestUrl = request?.url?.host ?: return false
             if (requestUrl == "m.bilibili.com") {
                 // 只把凭据传给账号校验入口；完整 Cookie 不得进入导航调试日志。
-                AccountManager.updateCookie(cookies)
+                AccountManager.updateCookie(cookies = cookies)
                 true
             } else false
         }

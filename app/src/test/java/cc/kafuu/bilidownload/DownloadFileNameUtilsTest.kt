@@ -91,7 +91,10 @@ class DownloadFileNameUtilsTest {
 
             assertEquals("A_B - C_D.mp4", file.name)
             listOf('\\', '/', ':', '*', '?', '"', '<', '>', '|').forEach { illegal ->
-                assertFalse("$illegal should not remain in ${file.name}", file.name.contains(illegal))
+                assertFalse(
+                    "$illegal should not remain in ${file.name}",
+                    file.name.contains(illegal)
+                )
             }
         } finally {
             directory.deleteRecursively()
@@ -104,11 +107,17 @@ class DownloadFileNameUtilsTest {
 
         assertEquals(
             "Available.mp4",
-            DownloadFileNameUtils.resolveUniqueFileName("Available.mp4", existingNames::contains),
+            DownloadFileNameUtils.resolveUniqueFileName(
+                desiredName = "Available.mp4",
+                nameExists = existingNames::contains
+            ),
         )
         assertEquals(
             "Name(3).mp4",
-            DownloadFileNameUtils.resolveUniqueFileName("Name.mp4", existingNames::contains),
+            DownloadFileNameUtils.resolveUniqueFileName(
+                desiredName = "Name.mp4",
+                nameExists = existingNames::contains
+            ),
         )
     }
 
@@ -118,11 +127,17 @@ class DownloadFileNameUtilsTest {
 
         assertEquals(
             "Video.Part(1).mp4",
-            DownloadFileNameUtils.resolveUniqueFileName("Video.Part.mp4", existingNames::contains),
+            DownloadFileNameUtils.resolveUniqueFileName(
+                desiredName = "Video.Part.mp4",
+                nameExists = existingNames::contains
+            ),
         )
         assertEquals(
             "Video(1)",
-            DownloadFileNameUtils.resolveUniqueFileName("Video", existingNames::contains),
+            DownloadFileNameUtils.resolveUniqueFileName(
+                desiredName = "Video",
+                nameExists = existingNames::contains
+            ),
         )
     }
 
@@ -133,8 +148,8 @@ class DownloadFileNameUtilsTest {
 
         repeat(12) { index ->
             val fileName = DownloadFileNameUtils.resolveUniqueFileName(
-                desiredName,
-                existingNames::contains,
+                desiredName = desiredName,
+                nameExists = existingNames::contains,
             )
 
             assertTrue(fileName.toByteArray(Charsets.UTF_8).size <= 240)
@@ -148,7 +163,7 @@ class DownloadFileNameUtilsTest {
     @Test
     fun sanitizeFileName_replacesEveryIllegalCharacterAndKeepsExtension() {
         listOf('\\', '/', ':', '*', '?', '"', '<', '>', '|').forEach { illegal ->
-            val fileName = DownloadFileNameUtils.sanitizeFileName("前${illegal}后.mp4")
+            val fileName = DownloadFileNameUtils.sanitizeFileName(fileName = "前${illegal}后.mp4")
 
             assertEquals("前_后.mp4", fileName)
         }
@@ -158,16 +173,16 @@ class DownloadFileNameUtilsTest {
     fun sanitizeFileName_collapsesReplacedCharactersAndFallsBackForEmptyNames() {
         assertEquals(
             "a_b.mp4",
-            DownloadFileNameUtils.sanitizeFileName("""a\/:*?"<>|b.mp4"""),
+            DownloadFileNameUtils.sanitizeFileName(fileName = """a\/:*?"<>|b.mp4"""),
         )
-        assertEquals("resource.mp4", DownloadFileNameUtils.sanitizeFileName("...mp4"))
-        assertEquals("Title.mp4", DownloadFileNameUtils.sanitizeFileName("Title..mp4"))
-        assertEquals("resource", DownloadFileNameUtils.sanitizeFileName("///"))
+        assertEquals("resource.mp4", DownloadFileNameUtils.sanitizeFileName(fileName = "...mp4"))
+        assertEquals("Title.mp4", DownloadFileNameUtils.sanitizeFileName(fileName = "Title..mp4"))
+        assertEquals("resource", DownloadFileNameUtils.sanitizeFileName(fileName = "///"))
     }
 
     @Test
     fun sanitizeFileName_limitsUtf8LengthWithoutBreakingExtension() {
-        val fileName = DownloadFileNameUtils.sanitizeFileName("测🎵".repeat(100) + ".mp4")
+        val fileName = DownloadFileNameUtils.sanitizeFileName(fileName = "测🎵".repeat(100) + ".mp4")
 
         assertTrue(fileName.toByteArray(Charsets.UTF_8).size <= 240)
         assertTrue(fileName.endsWith(".mp4"))
@@ -176,21 +191,22 @@ class DownloadFileNameUtilsTest {
     /** 扩展名中的路径分隔符、受限字符和控制字符也必须清理。 */
     @Test
     fun sanitizeFileName_removesIllegalCharactersFromExtension() {
-        val illegalChars = listOf('\\', '/', ':', '*', '?', '"', '<', '>', '|') + ('\u0000'..'\u001F')
+        val illegalChars =
+            listOf('\\', '/', ':', '*', '?', '"', '<', '>', '|') + ('\u0000'..'\u001F')
         illegalChars.forEach { illegal ->
             assertEquals(
                 "Title.mp4",
-                DownloadFileNameUtils.sanitizeFileName("Title.m${illegal}p4"),
+                DownloadFileNameUtils.sanitizeFileName(fileName = "Title.m${illegal}p4"),
             )
         }
-        assertEquals("Title.mp4", DownloadFileNameUtils.sanitizeFileName("Title. m p4 "))
+        assertEquals("Title.mp4", DownloadFileNameUtils.sanitizeFileName(fileName = "Title. m p4 "))
     }
 
     /** 扩展名清理为空时省略点，主名称为空时仍须使用回退名称。 */
     @Test
     fun sanitizeFileName_omitsExtensionWhenOnlyInvalidCharactersRemain() {
-        assertEquals("Title", DownloadFileNameUtils.sanitizeFileName("Title.?/\u0000 "))
-        assertEquals("resource", DownloadFileNameUtils.sanitizeFileName("...?/\u0000 "))
+        assertEquals("Title", DownloadFileNameUtils.sanitizeFileName(fileName = "Title.?/\u0000 "))
+        assertEquals("resource", DownloadFileNameUtils.sanitizeFileName(fileName = "...?/\u0000 "))
     }
 
     /** 超长扩展名不能挤掉有效主名称，输出仍须能够创建并回读。 */
@@ -205,10 +221,13 @@ class DownloadFileNameUtilsTest {
             )
             // 截断结果既须保留有效扩展名，也须能作为实际文件名称创建和回读。
             cases.forEach { (extension, expectedExtension) ->
-                val fileName = DownloadFileNameUtils.sanitizeFileName("Title.$extension")
+                val fileName = DownloadFileNameUtils.sanitizeFileName(fileName = "Title.$extension")
 
                 assertEquals("Title.$expectedExtension", fileName)
-                assertEquals(fileName, fileName.toByteArray(Charsets.UTF_8).toString(Charsets.UTF_8))
+                assertEquals(
+                    fileName,
+                    fileName.toByteArray(Charsets.UTF_8).toString(Charsets.UTF_8)
+                )
                 val file = File(directory, fileName).apply { writeText("complete media") }
                 assertEquals("complete media", file.readText())
             }
@@ -222,7 +241,8 @@ class DownloadFileNameUtilsTest {
     fun fileNameBuilders_keepExtensionWithinBudgetWhenResolvingCollisions() {
         val extension = "x".repeat(300)
         val expectedExtension = "x".repeat(32)
-        val longContext = DownloadFileNameUtils.TemplateContext("测🎵".repeat(100), "P1")
+        val longContext =
+            DownloadFileNameUtils.TemplateContext(videoName = "测🎵".repeat(100), partName = "P1")
         val fileName = DownloadFileNameUtils.buildFileName(
             template = "{VideoName}", context = longContext,
             extension = extension, fallbackBaseName = "resource",
@@ -231,16 +251,23 @@ class DownloadFileNameUtilsTest {
         assertTrue(fileName.endsWith(".$expectedExtension"))
         assertEquals(
             "Title.$expectedExtension",
-            DownloadFileNameUtils.resolveUniqueFileName("Title.$extension") { false },
+            DownloadFileNameUtils.resolveUniqueFileName(desiredName = "Title.$extension") { false },
         )
 
         // 连续占用名称并跨过个位序号，验证预算同时包含主名称、序号和扩展名。
         val existingNames = mutableSetOf(fileName)
         repeat(12) { index ->
-            val uniqueName = DownloadFileNameUtils.resolveUniqueFileName(fileName, existingNames::contains)
+            val uniqueName =
+                DownloadFileNameUtils.resolveUniqueFileName(
+                    desiredName = fileName,
+                    nameExists = existingNames::contains
+                )
             assertTrue(uniqueName.toByteArray(Charsets.UTF_8).size <= 240)
             assertTrue(uniqueName.endsWith("(${index + 1}).$expectedExtension"))
-            assertEquals(uniqueName, uniqueName.toByteArray(Charsets.UTF_8).toString(Charsets.UTF_8))
+            assertEquals(
+                uniqueName,
+                uniqueName.toByteArray(Charsets.UTF_8).toString(Charsets.UTF_8)
+            )
             assertTrue(existingNames.add(uniqueName))
         }
     }
@@ -252,8 +279,13 @@ class DownloadFileNameUtilsTest {
         try {
             val extension = "x".repeat(300)
             val expectedExtension = "x".repeat(32)
-            val existing = File(directory, "Title.$expectedExtension").apply { writeText("existing") }
-            val output = DownloadFileNameUtils.buildUniqueFile(directory, "Title", extension)
+            val existing =
+                File(directory, "Title.$expectedExtension").apply { writeText("existing") }
+            val output = DownloadFileNameUtils.buildUniqueFile(
+                directory = directory,
+                baseName = "Title",
+                extension = extension
+            )
 
             assertEquals("Title (1).$expectedExtension", output.name)
             output.writeText("new media")

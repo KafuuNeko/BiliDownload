@@ -106,10 +106,14 @@ class VideoDetailsViewModel(
     val batchProgressLiveData = mBatchProgressLiveData.liveData()
 
     /** 可重放的规格选择请求；ID 用于拒绝页面重建前的迟到结果。 */
-    data class BatchStreamRequest(val id: Long, val request: BatchDownloadUseCase.StreamSelectionRequest)
+    data class BatchStreamRequest(
+        val id: Long,
+        val request: BatchDownloadUseCase.StreamSelectionRequest
+    )
 
     private var mNextBatchRequestId = 0L
-    private var mPendingBatchStreams: CompletableDeferred<BatchDownloadResolver.StreamSelection?>? = null
+    private var mPendingBatchStreams: CompletableDeferred<BatchDownloadResolver.StreamSelection?>? =
+        null
     private val mBatchStreamRequestLiveData = MutableLiveData<BatchStreamRequest?>(null)
     val batchStreamRequestLiveData = mBatchStreamRequestLiveData.liveData()
 
@@ -139,7 +143,7 @@ class VideoDetailsViewModel(
                 message: String,
                 data: BiliSeasonData
             ) {
-                updateParts(data.episodes.map {
+                updateParts(parts = data.episodes.map {
                     BiliVideoPartModel(
                         bvid = it.bvid,
                         cid = it.cid,
@@ -158,11 +162,14 @@ class VideoDetailsViewModel(
         }
         if (media.seasonId != 0L) {
             NetworkManager.biliVideoRepository.requestSeasonDetailBySeasonId(
-                media.seasonId,
-                callback
+                seasonId = media.seasonId,
+                callback = callback
             )
         } else {
-            NetworkManager.biliVideoRepository.requestSeasonDetailByEpId(media.mediaId, callback)
+            NetworkManager.biliVideoRepository.requestSeasonDetailByEpId(
+                epId = media.mediaId,
+                callback = callback
+            )
         }
     }
 
@@ -175,16 +182,17 @@ class VideoDetailsViewModel(
         val callback = object : IServerCallback<BiliVideoData> {
             override fun onSuccess(httpCode: Int, code: Int, message: String, data: BiliVideoData) {
                 mVideoStatsLiveData.value = data.stat?.toVideoStats()
-                    ?.withFallback(mVideoStatsLiveData.value) ?: mVideoStatsLiveData.value
-                updateParts(data.pages.map {
+                    ?.withFallback(fallback = mVideoStatsLiveData.value)
+                    ?: mVideoStatsLiveData.value
+                updateParts(parts = data.pages.map {
                     BiliVideoPartModel(
                         bvid = video.bvid,
                         cid = it.cid,
                         name = it.part,
-                        remark = TimeUtils.formatSecondTime(it.duration)
+                        remark = TimeUtils.formatSecondTime(seconds = it.duration)
                     )
                 })
-                mBiliUpDataLiveData.value = BiliUpData.from(data.owner)
+                mBiliUpDataLiveData.value = BiliUpData.from(owner = data.owner)
                 mLoadingStatusLiveData.value = LoadingStatus.doneStatus()
             }
 
@@ -194,12 +202,15 @@ class VideoDetailsViewModel(
                 )
             }
         }
-        NetworkManager.biliVideoRepository.requestVideoDetail(video.bvid, callback)
+        NetworkManager.biliVideoRepository.requestVideoDetail(
+            bvid = video.bvid,
+            callback = callback
+        )
     }
 
     /** 更新详情快照并保留仍有效的选择，先同步可选身份再发布列表。 */
     private fun updateParts(parts: List<BiliVideoPartModel>) {
-        mPartSelectionLiveData.value = currentPartSelection().updateParts(parts)
+        mPartSelectionLiveData.value = currentPartSelection().updateParts(parts = parts)
         mBiliVideoPageListLiveData.value = parts
     }
 
@@ -220,7 +231,7 @@ class VideoDetailsViewModel(
     fun onPartSelected(item: BiliVideoPartModel) {
         if (loadingVideoPartLiveData.value != null || mBatchProgressLiveData.value != null) return
         if (currentPartSelection().enabled) {
-            mPartSelectionLiveData.value = currentPartSelection().toggle(item)
+            mPartSelectionLiveData.value = currentPartSelection().toggle(part = item)
             mLatestChangeIndexLiveData.value = mBiliVideoPageListLiveData.value?.indexOf(item) ?: -1
             return
         }
@@ -228,13 +239,16 @@ class VideoDetailsViewModel(
         mSelectedVideoPartLiveData.value = item
 
         viewModelScope.launch {
-            when (val result = loadPartDash(item)) {
+            when (val result = loadPartDash(item = item)) {
                 is ResultWrapper.Error -> popMessage(
-                    ToastMessageAction(result.error, Toast.LENGTH_SHORT)
+                    message = ToastMessageAction(
+                        content = result.error,
+                        duration = Toast.LENGTH_SHORT
+                    )
                 )
 
                 is ResultWrapper.Success -> onSelectPartLoaded(
-                    item, result.value
+                    part = item, dash = result.value
                 )
             }
         }
@@ -248,20 +262,20 @@ class VideoDetailsViewModel(
         dash: BiliPlayStreamDash
     ) = viewModelScope.launch {
         val result = popSelectedVideoPartDialog(
-            part.name, dash
+            title = part.name, dash = dash
         ) as? ResultWrapper.Success ?: return@launch
         val taskCreated = startDownload(
-            part,
-            result.value.videoStream,
-            result.value.audioStream
+            part = part,
+            videoStream = result.value.videoStream,
+            audioStream = result.value.audioStream
         )
         popMessage(
-            ToastMessageAction(
-                CommonLibs.getString(
-                    if (taskCreated) R.string.text_added_download_queue
+            message = ToastMessageAction(
+                content = CommonLibs.getString(
+                    id = if (taskCreated) R.string.text_added_download_queue
                     else R.string.text_download_task_already_active
                 ),
-                Toast.LENGTH_SHORT
+                duration = Toast.LENGTH_SHORT
             )
         )
     }
@@ -269,7 +283,7 @@ class VideoDetailsViewModel(
     /** 长按进入多选并切换该项；重复长按不会意外关闭整栏。 */
     fun onItemLongClick(item: BiliVideoPartModel): Boolean {
         if (mBatchProgressLiveData.value != null || loadingVideoPartLiveData.value != null) return true
-        mPartSelectionLiveData.value = currentPartSelection().toggle(item)
+        mPartSelectionLiveData.value = currentPartSelection().toggle(part = item)
         mLatestChangeIndexLiveData.value = -1
         return true
     }
@@ -288,19 +302,27 @@ class VideoDetailsViewModel(
 
     /** 按详情原始顺序下载选中项，选择时的点击顺序不改变任务顺序。 */
     fun onDownloadMultipleSelectItems() {
-        startPartBatch(mBiliVideoPageListLiveData.value.orEmpty().filter(currentPartSelection()::isSelected))
+        startPartBatch(
+            parts = mBiliVideoPageListLiveData.value.orEmpty()
+                .filter(currentPartSelection()::isSelected)
+        )
     }
 
     /** 长按后可直接下载当前全部分 P，无需预先全选。 */
     fun onDownloadAllParts() {
-        startPartBatch(mBiliVideoPageListLiveData.value.orEmpty())
+        startPartBatch(parts = mBiliVideoPageListLiveData.value.orEmpty())
     }
 
     /** 固定本批次输入并防止重入，完成后统一发布用例的真实统计。 */
     private fun startPartBatch(parts: List<BiliVideoPartModel>) {
         if (parts.isEmpty() || mBatchProgressLiveData.value != null || loadingVideoPartLiveData.value != null) return
         val snapshot = parts.toList()
-        mBatchProgressLiveData.value = BatchDownloadUseCase.Progress(0, snapshot.size, 0, 0)
+        mBatchProgressLiveData.value = BatchDownloadUseCase.Progress(
+            processedCount = 0,
+            total = snapshot.size,
+            addedCount = 0,
+            skippedCount = 0
+        )
         mBatchDownloadJob = viewModelScope.launch {
             try {
                 // 规格弹窗以可重放状态交给宿主，旋转不会丢失等待中的批次。
@@ -310,9 +332,17 @@ class VideoDetailsViewModel(
                     onProgress = { mBatchProgressLiveData.value = it },
                 )
                 if (result is BatchDownloadUseCase.Result.Completed) {
-                    popMessage(ToastMessageAction(CommonLibs.getString(
-                        R.string.text_batch_download_result, result.addedCount, result.skippedCount,
-                    ), Toast.LENGTH_LONG))
+                    popMessage(
+                        message = ToastMessageAction(
+                            content = CommonLibs.getString(
+                                id = R.string.text_batch_download_result,
+                                args = arrayOf(
+                                    result.addedCount,
+                                    result.skippedCount
+                                ),
+                            ), duration = Toast.LENGTH_LONG
+                        )
+                    )
                     clearPartSelection()
                 }
             } catch (cancelled: CancellationException) {
@@ -327,9 +357,14 @@ class VideoDetailsViewModel(
     private fun cancelBatchDownload() {
         val progress = mBatchProgressLiveData.value ?: return
         mBatchDownloadJob?.cancel()
-        popMessage(ToastMessageAction(CommonLibs.getString(
-            R.string.text_batch_download_cancelled, progress.addedCount,
-        ), Toast.LENGTH_LONG))
+        popMessage(
+            message = ToastMessageAction(
+                content = CommonLibs.getString(
+                    id = R.string.text_batch_download_cancelled,
+                    args = arrayOf(progress.addedCount),
+                ), duration = Toast.LENGTH_LONG
+            )
+        )
     }
 
     /** 等待宿主选流；清理请求时同步通知宿主关闭失效弹窗。 */
@@ -338,7 +373,8 @@ class VideoDetailsViewModel(
     ): BatchDownloadResolver.StreamSelection? {
         val result = CompletableDeferred<BatchDownloadResolver.StreamSelection?>()
         mPendingBatchStreams = result
-        mBatchStreamRequestLiveData.value = BatchStreamRequest(++mNextBatchRequestId, request)
+        mBatchStreamRequestLiveData.value =
+            BatchStreamRequest(id = ++mNextBatchRequestId, request = request)
         return try {
             result.await()
         } finally {
@@ -375,15 +411,19 @@ class VideoDetailsViewModel(
                 data: BiliPlayStreamDash
             ) {
                 mLoadingVideoPartLiveData.postValue(null)
-                runCatching { co.resume(ResultWrapper.Success(data)) }
+                runCatching { co.resume(ResultWrapper.Success(value = data)) }
             }
 
             override fun onFailure(httpCode: Int, code: Int, message: String) {
                 mLoadingVideoPartLiveData.postValue(null)
-                runCatching { co.resume(ResultWrapper.Error(message)) }
+                runCatching { co.resume(ResultWrapper.Error(error = message)) }
             }
         }
-        NetworkManager.biliVideoRepository.requestPlayStreamDash(item.bvid, item.cid, callback)
+        NetworkManager.biliVideoRepository.requestPlayStreamDash(
+            bvid = item.bvid,
+            cid = item.cid,
+            callback = callback
+        )
     }
 
     /**
@@ -395,15 +435,15 @@ class VideoDetailsViewModel(
     ) = suspendCancellableCoroutine { co ->
         popDialog(
             dialog = BiliPartDialog.buildDialog(
-                title, dash.video, dash.getAllAudio()
+                title = title, videoResources = dash.video, audioResources = dash.getAllAudio()
             ),
             success = {
                 runCatching {
-                    co.resume(ResultWrapper.Success(it as BiliPartDialog.Companion.Result))
+                    co.resume(ResultWrapper.Success(value = it as BiliPartDialog.Companion.Result))
                 }
             },
             failed = {
-                runCatching { co.resume(ResultWrapper.Error(it)) }
+                runCatching { co.resume(ResultWrapper.Error(error = it)) }
             }
         )
     }
@@ -418,17 +458,17 @@ class VideoDetailsViewModel(
     ): Boolean {
         val resources = mutableListOf<BiliDashModel>().apply {
             videoStream?.let { res ->
-                add(BiliDashModel.create(DashType.VIDEO, res))
+                add(BiliDashModel.create(dashType = DashType.VIDEO, resource = res))
             }
             audioStream?.let { res ->
-                add(BiliDashModel.create(DashType.AUDIO, res))
+                add(BiliDashModel.create(dashType = DashType.AUDIO, resource = res))
             }
         }
         return DownloadManager.startDownload(
-            CommonLibs.requireContext(),
-            part.bvid,
-            part.cid,
-            resources
+            context = CommonLibs.requireContext(),
+            bvid = part.bvid,
+            cid = part.cid,
+            resources = resources
         )
     }
 
@@ -437,26 +477,28 @@ class VideoDetailsViewModel(
         val isSuccess = CommonLibs.copyToClipboard(
             label = resource.title,
             text = CommonLibs.getString(
-                R.string.video_details_format,
-                resource.title,
-                resource.description
+                id = R.string.video_details_format,
+                args = arrayOf(
+                    resource.title,
+                    resource.description
+                )
             )
         )
         if (isSuccess) {
-            popMessage(ToastMessageAction(CommonLibs.getString(R.string.success_copy_video_info)))
+            popMessage(message = ToastMessageAction(content = CommonLibs.getString(id = R.string.success_copy_video_info)))
         }
         return isSuccess
     }
 
     fun onClickUp() {
         if (AccountManager.accountLiveData.value == null) {
-            popMessage(ToastMessageAction(CommonLibs.getString(R.string.please_login_to_your_account_first)))
+            popMessage(message = ToastMessageAction(content = CommonLibs.getString(id = R.string.please_login_to_your_account_first)))
             return
         }
         val mid = mBiliUpDataLiveData.value?.mid ?: return
         startActivity(
-            PersonalDetailsActivity::class.java,
-            PersonalDetailsActivity.buildIntent(mid)
+            targetClass = PersonalDetailsActivity::class.java,
+            targetIntent = PersonalDetailsActivity.buildIntent(mid = mid)
         )
     }
 
@@ -466,15 +508,15 @@ class VideoDetailsViewModel(
      */
     fun onDownloadDanmaku(part: BiliVideoPartModel) {
         if (AccountManager.accountLiveData.value == null) {
-            popMessage(ToastMessageAction(CommonLibs.getString(R.string.please_login_to_your_account_first)))
+            popMessage(message = ToastMessageAction(content = CommonLibs.getString(id = R.string.please_login_to_your_account_first)))
             return
         }
         if (mDownloadingDanmakuPartLiveData.value != null) {
-            popMessage(ToastMessageAction(CommonLibs.getString(R.string.danmaku_downloading_message)))
+            popMessage(message = ToastMessageAction(content = CommonLibs.getString(id = R.string.danmaku_downloading_message)))
             return
         }
         // 发送确认对话框 ViewAction
-        sendViewAction(ShowDownloadDanmakuConfirmAction(part))
+        sendViewAction(action = ShowDownloadDanmakuConfirmAction(part = part))
     }
 
     /**
@@ -487,13 +529,18 @@ class VideoDetailsViewModel(
 
             try {
                 // 请求弹幕数据
-                when (val result = requestDanmakuData(part)) {
+                when (val result = requestDanmakuData(part = part)) {
                     is ResultWrapper.Error -> {
-                        popMessage(ToastMessageAction(result.error, Toast.LENGTH_SHORT))
+                        popMessage(
+                            message = ToastMessageAction(
+                                content = result.error,
+                                duration = Toast.LENGTH_SHORT
+                            )
+                        )
                     }
 
                     is ResultWrapper.Success -> {
-                        exportDanmakuToCsv(part, result.value)
+                        exportDanmakuToCsv(part = part, danmakuList = result.value)
                     }
                 }
             } finally {
@@ -519,7 +566,7 @@ class VideoDetailsViewModel(
                     data: List<BiliXmlDanmaku>
                 ) {
                     runCatching {
-                        co.resume(ResultWrapper.Success(data))
+                        co.resume(ResultWrapper.Success(value = data))
                     }
                 }
 
@@ -527,9 +574,9 @@ class VideoDetailsViewModel(
                     runCatching {
                         co.resume(
                             ResultWrapper.Error(
-                                CommonLibs.getString(
-                                    R.string.danmaku_fetch_failed_message,
-                                    message
+                                error = CommonLibs.getString(
+                                    id = R.string.danmaku_fetch_failed_message,
+                                    args = arrayOf(message)
                                 )
                             )
                         )
@@ -540,10 +587,16 @@ class VideoDetailsViewModel(
             // 根据登录状态选择不同的API
             if (isLoggedIn) {
                 // 已登录：使用全量弹幕下载
-                NetworkManager.biliVideoRepository.requestFullDanmaku(part.cid, callback)
+                NetworkManager.biliVideoRepository.requestFullDanmaku(
+                    cid = part.cid,
+                    callback = callback
+                )
             } else {
                 // 未登录：使用实时弹幕API（最多600条）
-                NetworkManager.biliVideoRepository.requestDanmakuXmlData(part.cid, callback)
+                NetworkManager.biliVideoRepository.requestDanmakuXmlData(
+                    cid = part.cid,
+                    callback = callback
+                )
             }
         }
 
@@ -553,24 +606,24 @@ class VideoDetailsViewModel(
     private fun exportDanmakuToCsv(part: BiliVideoPartModel, danmakuList: List<BiliXmlDanmaku>) {
         if (danmakuList.isEmpty()) {
             popMessage(
-                ToastMessageAction(
-                    CommonLibs.getString(R.string.danmaku_no_danmaku_message),
-                    Toast.LENGTH_SHORT
+                message = ToastMessageAction(
+                    content = CommonLibs.getString(id = R.string.danmaku_no_danmaku_message),
+                    duration = Toast.LENGTH_SHORT
                 )
             )
             return
         }
         try {
             // 发送ViewAction到Activity，让用户选择保存路径
-            sendViewAction(ExportDanmakuAction(danmakuList))
+            sendViewAction(action = ExportDanmakuAction(danmakuList = danmakuList))
         } catch (e: Exception) {
             e.printStackTrace()
             popMessage(
-                ToastMessageAction(
-                    CommonLibs.getString(
-                        R.string.danmaku_export_exception_message,
-                        e.message ?: ""
-                    ), Toast.LENGTH_SHORT
+                message = ToastMessageAction(
+                    content = CommonLibs.getString(
+                        id = R.string.danmaku_export_exception_message,
+                        args = arrayOf(e.message ?: "")
+                    ), duration = Toast.LENGTH_SHORT
                 )
             )
         }
@@ -584,32 +637,35 @@ class VideoDetailsViewModel(
             try {
                 val context = CommonLibs.requireContext()
                 val success = context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                    DanmakuExportUtils.exportToCsv(danmakuList, outputStream)
+                    DanmakuExportUtils.exportToCsv(
+                        danmakuList = danmakuList,
+                        outputStream = outputStream
+                    )
                 } ?: false
 
                 if (success) {
                     popMessage(
-                        ToastMessageAction(
-                            CommonLibs.getString(R.string.danmaku_export_success_message),
-                            Toast.LENGTH_SHORT
+                        message = ToastMessageAction(
+                            content = CommonLibs.getString(id = R.string.danmaku_export_success_message),
+                            duration = Toast.LENGTH_SHORT
                         )
                     )
                 } else {
                     popMessage(
-                        ToastMessageAction(
-                            CommonLibs.getString(R.string.danmaku_export_failed_message),
-                            Toast.LENGTH_SHORT
+                        message = ToastMessageAction(
+                            content = CommonLibs.getString(id = R.string.danmaku_export_failed_message),
+                            duration = Toast.LENGTH_SHORT
                         )
                     )
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
                 popMessage(
-                    ToastMessageAction(
-                        CommonLibs.getString(
-                            R.string.danmaku_export_exception_message,
-                            e.message ?: ""
-                        ), Toast.LENGTH_SHORT
+                    message = ToastMessageAction(
+                        content = CommonLibs.getString(
+                            id = R.string.danmaku_export_exception_message,
+                            args = arrayOf(e.message ?: "")
+                        ), duration = Toast.LENGTH_SHORT
                     )
                 )
             }
@@ -622,14 +678,14 @@ class VideoDetailsViewModel(
      */
     fun onDownloadSubtitle(part: BiliVideoPartModel) {
         if (AccountManager.accountLiveData.value == null) {
-            popMessage(ToastMessageAction(CommonLibs.getString(R.string.please_login_to_your_account_first)))
+            popMessage(message = ToastMessageAction(content = CommonLibs.getString(id = R.string.please_login_to_your_account_first)))
             return
         }
         if (mDownloadingSubtitlePartLiveData.value != null) {
-            popMessage(ToastMessageAction(CommonLibs.getString(R.string.subtitle_downloading_message)))
+            popMessage(message = ToastMessageAction(content = CommonLibs.getString(id = R.string.subtitle_downloading_message)))
             return
         }
-        sendViewAction(ShowDownloadSubtitleConfirmAction(part))
+        sendViewAction(action = ShowDownloadSubtitleConfirmAction(part = part))
     }
 
     /**
@@ -640,34 +696,55 @@ class VideoDetailsViewModel(
             mDownloadingSubtitlePartLiveData.value = part
             try {
                 // 1. 请求字幕列表
-                val container = requestSubtitleList(part)
+                val container = requestSubtitleList(part = part)
                 if (container is ResultWrapper.Error) {
-                    popMessage(ToastMessageAction(container.error, Toast.LENGTH_SHORT))
+                    popMessage(
+                        message = ToastMessageAction(
+                            content = container.error,
+                            duration = Toast.LENGTH_SHORT
+                        )
+                    )
                     return@launch
                 }
 
                 val listData = (container as ResultWrapper.Success).value
                 val subtitles = listData.data?.subtitle?.subtitles
                 if (subtitles.isNullOrEmpty()) {
-                    popMessage(ToastMessageAction(CommonLibs.getString(R.string.subtitle_no_subtitle_message), Toast.LENGTH_SHORT))
+                    popMessage(
+                        message = ToastMessageAction(
+                            content = CommonLibs.getString(id = R.string.subtitle_no_subtitle_message),
+                            duration = Toast.LENGTH_SHORT
+                        )
+                    )
                     return@launch
                 }
-                
+
                 // 优先选择中文(zh-CN)，其次选第一个
                 val targetSubtitle = subtitles.find { it.lan == "zh-CN" } ?: subtitles.first()
                 val subtitleUrl = targetSubtitle.subtitleUrl
-                
+
                 // 2. 请求BCC字幕数据
-                when (val result = requestBccSubtitleData(subtitleUrl)) {
+                when (val result = requestBccSubtitleData(url = subtitleUrl)) {
                     is ResultWrapper.Error -> {
-                        popMessage(ToastMessageAction(result.error, Toast.LENGTH_SHORT))
+                        popMessage(
+                            message = ToastMessageAction(
+                                content = result.error,
+                                duration = Toast.LENGTH_SHORT
+                            )
+                        )
                     }
+
                     is ResultWrapper.Success -> {
                         val bccSubtitle = result.value
                         if (bccSubtitle.body.isNullOrEmpty()) {
-                            popMessage(ToastMessageAction(CommonLibs.getString(R.string.subtitle_no_subtitle_message), Toast.LENGTH_SHORT))
+                            popMessage(
+                                message = ToastMessageAction(
+                                    content = CommonLibs.getString(id = R.string.subtitle_no_subtitle_message),
+                                    duration = Toast.LENGTH_SHORT
+                                )
+                            )
                         } else {
-                            sendViewAction(ExportSubtitleAction(bccSubtitle))
+                            sendViewAction(action = ExportSubtitleAction(bccSubtitle = bccSubtitle))
                         }
                     }
                 }
@@ -677,25 +754,37 @@ class VideoDetailsViewModel(
         }
     }
 
-    private suspend fun requestSubtitleList(part: BiliVideoPartModel) = suspendCancellableCoroutine { co ->
-        val callback = object : IServerCallback<BiliSubtitleListContainer> {
-            override fun onSuccess(
-                httpCode: Int,
-                code: Int,
-                message: String,
-                data: BiliSubtitleListContainer
-            ) {
-                runCatching { co.resume(ResultWrapper.Success(data)) }
-            }
+    private suspend fun requestSubtitleList(part: BiliVideoPartModel) =
+        suspendCancellableCoroutine { co ->
+            val callback = object : IServerCallback<BiliSubtitleListContainer> {
+                override fun onSuccess(
+                    httpCode: Int,
+                    code: Int,
+                    message: String,
+                    data: BiliSubtitleListContainer
+                ) {
+                    runCatching { co.resume(ResultWrapper.Success(value = data)) }
+                }
 
-            override fun onFailure(httpCode: Int, code: Int, message: String) {
-                runCatching {
-                    co.resume(ResultWrapper.Error(CommonLibs.getString(R.string.subtitle_fetch_failed_message, message)))
+                override fun onFailure(httpCode: Int, code: Int, message: String) {
+                    runCatching {
+                        co.resume(
+                            ResultWrapper.Error(
+                                error = CommonLibs.getString(
+                                    id = R.string.subtitle_fetch_failed_message,
+                                    args = arrayOf(message)
+                                )
+                            )
+                        )
+                    }
                 }
             }
+            NetworkManager.biliVideoRepository.requestSubtitleList(
+                cid = part.cid,
+                bvid = part.bvid,
+                callback = callback
+            )
         }
-        NetworkManager.biliVideoRepository.requestSubtitleList(part.cid, part.bvid, callback)
-    }
 
     private suspend fun requestBccSubtitleData(url: String) = suspendCancellableCoroutine { co ->
         val callback = object : IServerCallback<BccSubtitle> {
@@ -705,16 +794,23 @@ class VideoDetailsViewModel(
                 message: String,
                 data: BccSubtitle
             ) {
-                runCatching { co.resume(ResultWrapper.Success(data)) }
+                runCatching { co.resume(ResultWrapper.Success(value = data)) }
             }
 
             override fun onFailure(httpCode: Int, code: Int, message: String) {
                 runCatching {
-                    co.resume(ResultWrapper.Error(CommonLibs.getString(R.string.subtitle_fetch_failed_message, message)))
+                    co.resume(
+                        ResultWrapper.Error(
+                            error = CommonLibs.getString(
+                                id = R.string.subtitle_fetch_failed_message,
+                                args = arrayOf(message)
+                            )
+                        )
+                    )
                 }
             }
         }
-        NetworkManager.biliVideoRepository.requestSubtitleData(url, callback)
+        NetworkManager.biliVideoRepository.requestSubtitleData(url = url, callback = callback)
     }
 
     /**
@@ -725,33 +821,33 @@ class VideoDetailsViewModel(
             try {
                 val context = CommonLibs.requireContext()
                 val success = context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                    SubtitleExportUtils.exportToSrt(bccSubtitle, outputStream)
+                    SubtitleExportUtils.exportToSrt(bcc = bccSubtitle, outputStream = outputStream)
                     true
                 } ?: false
 
                 if (success) {
                     popMessage(
-                        ToastMessageAction(
-                            CommonLibs.getString(R.string.subtitle_export_success_message),
-                            Toast.LENGTH_SHORT
+                        message = ToastMessageAction(
+                            content = CommonLibs.getString(id = R.string.subtitle_export_success_message),
+                            duration = Toast.LENGTH_SHORT
                         )
                     )
                 } else {
                     popMessage(
-                        ToastMessageAction(
-                            CommonLibs.getString(R.string.subtitle_export_failed_message),
-                            Toast.LENGTH_SHORT
+                        message = ToastMessageAction(
+                            content = CommonLibs.getString(id = R.string.subtitle_export_failed_message),
+                            duration = Toast.LENGTH_SHORT
                         )
                     )
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
                 popMessage(
-                    ToastMessageAction(
-                        CommonLibs.getString(
-                            R.string.subtitle_export_exception_message,
-                            e.message ?: ""
-                        ), Toast.LENGTH_SHORT
+                    message = ToastMessageAction(
+                        content = CommonLibs.getString(
+                            id = R.string.subtitle_export_exception_message,
+                            args = arrayOf(e.message ?: "")
+                        ), duration = Toast.LENGTH_SHORT
                     )
                 )
             }
@@ -768,9 +864,9 @@ class VideoDetailsViewModel(
             is BiliVideoModel -> resource.bvid
             else -> null
         }
-        sendViewAction(ShowSaveCoverConfirmAction(coverUrl, bvid))
+        sendViewAction(action = ShowSaveCoverConfirmAction(coverUrl = coverUrl, bvid = bvid))
     }
-    
+
     /**
      * 保存封面图片
      */
@@ -794,16 +890,16 @@ class VideoDetailsViewModel(
         } else {
             // 如果没有 bvid，使用标题
             val resource = mBiliResourceModelLiveData.value ?: return
-            DownloadFileNameUtils.sanitizeFileName("${resource.title.limit(100)}$extension")
+            DownloadFileNameUtils.sanitizeFileName(fileName = "${resource.title.limit(maxLength = 100)}$extension")
         }
 
-        sendViewAction(SaveCoverAction(coverUrl, fileName))
+        sendViewAction(action = SaveCoverAction(coverUrl = coverUrl, fileName = fileName))
     }
 
     /**
      * 确认保存封面（由 Activity 调用）
      */
     fun confirmSaveCover(coverUrl: String, bvid: String?) {
-        onSaveCover(coverUrl, bvid)
+        onSaveCover(coverUrl = coverUrl, bvid = bvid)
     }
 }

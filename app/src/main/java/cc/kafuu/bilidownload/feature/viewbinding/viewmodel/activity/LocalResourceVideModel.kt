@@ -116,13 +116,14 @@ class LocalResourceVideModel : CoreViewModel() {
 
     // FFmpeg 会话用于请求取消，不代表由 ViewModel 创建或管理的一条独立线程。
     private var mConvertSession: FFmpegSession? = null
+
     // 新资源到达时取消旧任务，ViewModel 清理时由 viewModelScope 一并取消。
     private var mLoadResourceJob: Job? = null
 
     /** 从主线程接收最新资源记录，并立即重启与该记录绑定的元数据探测。 */
     fun updateResourceEntity(resource: DownloadResourceEntity) {
         mResourceLiveData.value = resource
-        doLoadResourceDetails(resource)
+        doLoadResourceDetails(resource = resource)
     }
 
     /** 从主线程更新所属任务信息，后续由加载检查与媒体详情共同决定页面是否就绪。 */
@@ -144,11 +145,11 @@ class LocalResourceVideModel : CoreViewModel() {
         mLoadResourceJob = viewModelScope.launch {
             // URI 权限检查和原生探测可能阻塞；仅将最终页面状态写回主线程。
             val details = withContext(Dispatchers.IO) {
-                FFMpegUtils.getMediaInfo(resource.file, resource.contentUri)
+                FFMpegUtils.getMediaInfo(filePath = resource.file, contentUri = resource.contentUri)
             }
             if (details == null) {
                 mLoadingStatusLiveData.value = LoadingStatus.errorStatus(
-                    message = CommonLibs.getString(R.string.error_unable_to_retrieve_content),
+                    message = CommonLibs.getString(id = R.string.error_unable_to_retrieve_content),
                 )
             } else {
                 mLocalMediaDetailLiveData.value = details
@@ -177,11 +178,11 @@ class LocalResourceVideModel : CoreViewModel() {
         val taskDetail = mTaskDetailLiveData.value ?: return
         val resource = mResourceLiveData.value ?: return
         sendViewAction(
-            OpenResourceAction(
-                taskDetail.title,
-                File(resource.file),
-                resource.mimeType,
-                resource.contentUri
+            action = OpenResourceAction(
+                title = taskDetail.title,
+                file = File(resource.file),
+                mimetype = resource.mimeType,
+                contentUri = resource.contentUri
             )
         )
     }
@@ -193,7 +194,7 @@ class LocalResourceVideModel : CoreViewModel() {
         val taskDetail = mTaskDetailLiveData.value ?: return
         val resource = mResourceLiveData.value ?: return
         sendViewAction(
-            PlayResourceAction(
+            action = PlayResourceAction(
                 filePath = resource.file,
                 title = "${taskDetail.title} - ${resource.name}",
                 mimetype = resource.mimeType,
@@ -226,15 +227,24 @@ class LocalResourceVideModel : CoreViewModel() {
             templates = AppModel.getExportFileNameTemplates(),
         )
         // 保留自定义命名模板，并固定本次导出的资源与清理选项。
-        popDialog(ExportOptionsDialog(), success = {
+        popDialog(dialog = ExportOptionsDialog(), success = {
             val options = it as? ExportOptionsDialog.Result ?: return@popDialog
             val readable = withContext(Dispatchers.IO) {
-                FileUtils.resolveReadUri(CommonLibs.requireContext(), file, resource.contentUri) != null
+                FileUtils.resolveReadUri(
+                    context = CommonLibs.requireContext(),
+                    file = file,
+                    contentUri = resource.contentUri
+                ) != null
             }
             if (isTaskProgressing() || !readable) return@popDialog
-            mPendingExport = PendingExport(resource, taskDetail.title, options.deleteSourceAfterExport)
+            mPendingExport =
+                PendingExport(
+                    resource = resource,
+                    title = taskDetail.title,
+                    deleteSourceAfterExport = options.deleteSourceAfterExport
+                )
             sendViewAction(
-                ExportResourceAction(
+                action = ExportResourceAction(
                     file = file,
                     name = fileName,
                     mimetype = resource.mimeType,
@@ -255,11 +265,11 @@ class LocalResourceVideModel : CoreViewModel() {
 
         if (mConvertSession?.state == SessionState.RUNNING) {
             popDialog(
-                ConfirmDialog.buildDialog(
-                    CommonLibs.getString(R.string.text_convert),
-                    CommonLibs.getString(R.string.convert_stop_message),
-                    CommonLibs.getString(R.string.text_cancel),
-                    CommonLibs.getString(R.string.text_stop),
+                dialog = ConfirmDialog.buildDialog(
+                    title = CommonLibs.getString(id = R.string.text_convert),
+                    message = CommonLibs.getString(id = R.string.convert_stop_message),
+                    leftButtonText = CommonLibs.getString(id = R.string.text_cancel),
+                    rightButtonText = CommonLibs.getString(id = R.string.text_stop),
                     rightButtonStyle = ConfirmDialog.Companion.ButtonStyle.Stop
                 ),
                 success = {
@@ -272,11 +282,16 @@ class LocalResourceVideModel : CoreViewModel() {
         val audioCodec = details.getAudioAVCodecOrNull()
         val videoCodec = details.getVideoAVCodecOrNull()
         popDialog(
-            ConvertDialog.buildDialog(resource.name, format, audioCodec, videoCodec),
+            dialog = ConvertDialog.buildDialog(
+                title = resource.name,
+                currentFormat = format,
+                currentAudioCodec = audioCodec,
+                currentVideoCodec = videoCodec
+            ),
             success = {
                 if (isTaskProgressing()) return@popDialog
                 mIsConvertingLiveData.value = true
-                mConvertSession = doCovertResource(it as ConvertDialog.Companion.Result)
+                mConvertSession = doCovertResource(result = it as ConvertDialog.Companion.Result)
                 if (mConvertSession == null) onConvertFailed()
             }
         )
@@ -289,18 +304,18 @@ class LocalResourceVideModel : CoreViewModel() {
         if (isTaskProgressing()) {
             // 待导出快照和实际任务都依赖当前来源，操作结束前不能删除。
             popMessage(
-                ToastMessageAction(CommonLibs.getString(R.string.resource_have_mission_progress))
+                message = ToastMessageAction(content = CommonLibs.getString(id = R.string.resource_have_mission_progress))
             )
             return
         }
         val dialog = ConfirmDialog.buildDialog(
-            CommonLibs.getString(R.string.text_delete_confirm),
-            CommonLibs.getString(R.string.delete_resource_message),
-            CommonLibs.getString(R.string.text_cancel),
-            CommonLibs.getString(R.string.text_delete),
+            title = CommonLibs.getString(id = R.string.text_delete_confirm),
+            message = CommonLibs.getString(id = R.string.delete_resource_message),
+            leftButtonText = CommonLibs.getString(id = R.string.text_cancel),
+            rightButtonText = CommonLibs.getString(id = R.string.text_delete),
             rightButtonStyle = ConfirmDialog.Companion.ButtonStyle.Delete
         )
-        popDialog(dialog, success = {
+        popDialog(dialog = dialog, success = {
             if (it is Boolean && it) doDeleteResource()
         })
     }
@@ -322,9 +337,14 @@ class LocalResourceVideModel : CoreViewModel() {
         viewModelScope.launch {
             // 用例协调 IO 与删源次序；无论成功、失败还是取消，都必须释放页面忙碌状态。
             val result = try {
-                mResourceExportUseCase.execute(request.resource, request.deleteSourceAfterExport) {
+                mResourceExportUseCase.execute(
+                    resource = request.resource,
+                    deleteSourceAfterExport = request.deleteSourceAfterExport
+                ) {
                     FileUtils.writeFileToUri(
-                        CommonLibs.requireContext(), uri, File(request.resource.file),
+                        context = CommonLibs.requireContext(),
+                        uri = uri,
+                        sourceFile = File(request.resource.file),
                         verifyContents = request.deleteSourceAfterExport,
                         sourceContentUri = request.resource.contentUri,
                     )
@@ -335,19 +355,28 @@ class LocalResourceVideModel : CoreViewModel() {
             // 普通导出、移动成功及源清理失败分别提示，不能把保留双副本误报成移动完成。
             val message = when (result) {
                 ResourceExportUseCase.Result.EXPORT_FAILED ->
-                    CommonLibs.getString(R.string.export_resource_failed_message)
+                    CommonLibs.getString(id = R.string.export_resource_failed_message)
+
                 ResourceExportUseCase.Result.EXPORTED ->
-                    CommonLibs.getString(R.string.export_resource_success_message, request.title)
+                    CommonLibs.getString(
+                        id = R.string.export_resource_success_message,
+                        args = arrayOf(request.title)
+                    )
+
                 ResourceExportUseCase.Result.SOURCE_DELETED ->
-                    CommonLibs.getString(R.string.export_source_deleted_message, request.title)
+                    CommonLibs.getString(
+                        id = R.string.export_source_deleted_message,
+                        args = arrayOf(request.title)
+                    )
+
                 ResourceExportUseCase.Result.SOURCE_DELETE_FAILED ->
-                    CommonLibs.getString(R.string.export_source_delete_failed_message)
+                    CommonLibs.getString(id = R.string.export_source_delete_failed_message)
             }
             if (result == ResourceExportUseCase.Result.SOURCE_DELETED) {
                 // 提示和关闭页面通过同一个动作派发，避免 LiveData.postValue 合并连续动作。
-                sendViewAction(ResourceMovedAction(message))
+                sendViewAction(action = ResourceMovedAction(message = message))
             } else {
-                popMessage(ToastMessageAction(message))
+                popMessage(message = ToastMessageAction(content = message))
             }
         }
     }
@@ -357,9 +386,9 @@ class LocalResourceVideModel : CoreViewModel() {
      */
     private suspend fun doDeleteResource() {
         val resource = mResourceLiveData.value ?: return
-        if (!DownloadRepository.deleteResource(resource)) {
+        if (!DownloadRepository.deleteResource(resource = resource)) {
             popMessage(
-                ToastMessageAction(CommonLibs.getString(R.string.delete_resource_failed_message))
+                message = ToastMessageAction(content = CommonLibs.getString(id = R.string.delete_resource_failed_message))
             )
             return
         }
@@ -389,7 +418,11 @@ class LocalResourceVideModel : CoreViewModel() {
         // 回调运行在 FFmpegKit 线程；成功后先迁移/登记，失败时清理本次临时输出并释放忙碌状态。
         val completeCallback = { isSuccess: Boolean ->
             if (isSuccess) {
-                onConvertSuccess(targetName, convertCacheFile, result)
+                onConvertSuccess(
+                    targetName = targetName,
+                    convertCacheFile = convertCacheFile,
+                    targetResult = result
+                )
             } else {
                 onConvertFailed()
             }
@@ -397,7 +430,8 @@ class LocalResourceVideModel : CoreViewModel() {
             mIsConvertingLiveData.postValue(false)
         }
 
-        mConvertProgressLiveData.value = CommonLibs.getString(R.string.convert_progress, 0.0f)
+        mConvertProgressLiveData.value =
+            CommonLibs.getString(id = R.string.convert_progress, args = arrayOf(0.0f))
 
         return FFMpegUtils.convertMediaAsync(
             sourceFile = resource.file,
@@ -408,7 +442,7 @@ class LocalResourceVideModel : CoreViewModel() {
                 val durationMillis = details.duration * 1000
                 val progress = if (details.duration == 0.0) 0.0 else (it / durationMillis) * 100
                 mConvertProgressLiveData.postValue(
-                    CommonLibs.getString(R.string.convert_progress, progress)
+                    CommonLibs.getString(id = R.string.convert_progress, args = arrayOf(progress))
                 )
                 Log.d(TAG, "doCovertResource: times: $it/${details.duration}, progress: $progress")
             },
@@ -446,12 +480,13 @@ class LocalResourceVideModel : CoreViewModel() {
                 mimeType = targetResult.format.mimeType
             )
             val storedResource = when (
-                val publishResult = DownloadRepository.publishResourceIfNeeded(registeredResource)
+                val publishResult =
+                    DownloadRepository.publishResourceIfNeeded(entity = registeredResource)
             ) {
                 is ResourcePublishResult.Success -> publishResult.resource
                 is ResourcePublishResult.Failure -> {
-                    DownloadRepository.getDownloadTaskByTaskId(resource.taskId)?.let { task ->
-                        DownloadRepository.update(task.apply {
+                    DownloadRepository.getDownloadTaskByTaskId(id = resource.taskId)?.let { task ->
+                        DownloadRepository.update(downloadTask = task.apply {
                             status = TaskStatus.PUBLISH_FAILED.code
                         })
                     }
@@ -461,16 +496,19 @@ class LocalResourceVideModel : CoreViewModel() {
                         publishResult.cause
                     )
                     popMessage(
-                        ToastMessageAction(
-                            CommonLibs.getString(R.string.convert_resource_publish_failed_message)
+                        message = ToastMessageAction(
+                            content = CommonLibs.getString(id = R.string.convert_resource_publish_failed_message)
                         )
                     )
                     registeredResource
                 }
             }
             startActivity(
-                LocalResourceActivity::class.java,
-                LocalResourceActivity.buildIntent(resource.taskId, storedResource.id)
+                targetClass = LocalResourceActivity::class.java,
+                targetIntent = LocalResourceActivity.buildIntent(
+                    taskId = resource.taskId,
+                    resourceId = storedResource.id
+                )
             )
         }
     }
@@ -480,7 +518,7 @@ class LocalResourceVideModel : CoreViewModel() {
      */
     private fun onConvertFailed() {
         popMessage(
-            ToastMessageAction(CommonLibs.getString(R.string.convert_resource_failed_message))
+            message = ToastMessageAction(content = CommonLibs.getString(id = R.string.convert_resource_failed_message))
         )
     }
 
@@ -490,11 +528,11 @@ class LocalResourceVideModel : CoreViewModel() {
     override fun finishActivity(activityResult: ActivityResult?) {
         if (isTaskProgressing()) {
             popMessage(
-                ToastMessageAction(CommonLibs.getString(R.string.resource_have_mission_progress))
+                message = ToastMessageAction(content = CommonLibs.getString(id = R.string.resource_have_mission_progress))
             )
             return
         }
-        super.finishActivity(activityResult)
+        super.finishActivity(activityResult = activityResult)
     }
 
     /**

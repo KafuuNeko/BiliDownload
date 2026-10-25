@@ -15,6 +15,7 @@ object DownloadFileNameUtils {
 
     private const val DEFAULT_FALLBACK_BASE_NAME = "resource"
     private const val MAX_FILE_NAME_BYTES = 240
+
     // 媒体扩展名只占少量字节；为主名称及冲突序号保留空间，避免异常扩展名耗尽总预算。
     private const val MAX_EXTENSION_BYTES = 32
     private val illegalFileNameCharsRegex = Regex("""[\\/:*?"<>|\u0000-\u001F]""")
@@ -34,9 +35,13 @@ object DownloadFileNameUtils {
         extension: String,
         fallbackBaseName: String
     ): String {
-        val baseName = renderBaseName(template, context, fallbackBaseName)
-        val safeExtension = sanitizeExtension(extension)
-        return buildFileNameWithSuffix(baseName, safeExtension, "")
+        val baseName = renderBaseName(
+            template = template,
+            context = context,
+            fallbackBaseName = fallbackBaseName
+        )
+        val safeExtension = sanitizeExtension(value = extension)
+        return buildFileNameWithSuffix(baseName = baseName, extension = safeExtension, suffix = "")
     }
 
     /**
@@ -58,8 +63,8 @@ object DownloadFileNameUtils {
         val baseName = if (dotIndex > 0) fileName.substring(0, dotIndex) else fileName
         val extension = if (dotIndex > 0) fileName.substring(dotIndex + 1) else ""
         return buildFileNameWithSuffix(
-            baseName = sanitizeBaseName(baseName).ifBlank { sanitizeBaseName(fallbackBaseName) },
-            extension = sanitizeExtension(extension),
+            baseName = sanitizeBaseName(value = baseName).ifBlank { sanitizeBaseName(value = fallbackBaseName) },
+            extension = sanitizeExtension(value = extension),
             suffix = "",
         )
     }
@@ -73,7 +78,11 @@ object DownloadFileNameUtils {
     ): File {
         return buildUniqueFile(
             directory = directory,
-            baseName = renderBaseName(template, context, fallbackBaseName),
+            baseName = renderBaseName(
+                template = template,
+                context = context,
+                fallbackBaseName = fallbackBaseName
+            ),
             extension = extension
         )
     }
@@ -87,10 +96,10 @@ object DownloadFileNameUtils {
             directory.mkdirs()
         }
 
-        val safeBaseName = sanitizeBaseName(baseName).ifBlank {
-            sanitizeBaseName(DEFAULT_FALLBACK_BASE_NAME)
+        val safeBaseName = sanitizeBaseName(value = baseName).ifBlank {
+            sanitizeBaseName(value = DEFAULT_FALLBACK_BASE_NAME)
         }
-        val safeExtension = sanitizeExtension(extension)
+        val safeExtension = sanitizeExtension(value = extension)
         val unavailableNames = directory.list()
             ?.mapTo(mutableSetOf()) { it.lowercase(Locale.ROOT) }
             ?: mutableSetOf()
@@ -98,7 +107,11 @@ object DownloadFileNameUtils {
         var index = 0
         while (true) {
             val suffix = if (index == 0) "" else " ($index)"
-            val fileName = buildFileNameWithSuffix(safeBaseName, safeExtension, suffix)
+            val fileName = buildFileNameWithSuffix(
+                baseName = safeBaseName,
+                extension = safeExtension,
+                suffix = suffix
+            )
             val unavailableName = fileName.lowercase(Locale.ROOT)
             val candidateFile = File(directory, fileName)
             if (!candidateFile.exists() && !unavailableNames.contains(unavailableName)) {
@@ -118,11 +131,15 @@ object DownloadFileNameUtils {
         val dotIndex = desiredName.lastIndexOf('.')
         val baseName = if (dotIndex > 0) desiredName.substring(0, dotIndex) else desiredName
         val extension = if (dotIndex > 0) desiredName.substring(dotIndex + 1) else ""
-        val safeExtension = sanitizeExtension(extension)
+        val safeExtension = sanitizeExtension(value = extension)
         var index = 0
         while (true) {
             val suffix = if (index == 0) "" else "($index)"
-            val fileName = buildFileNameWithSuffix(baseName, safeExtension, suffix)
+            val fileName = buildFileNameWithSuffix(
+                baseName = baseName,
+                extension = safeExtension,
+                suffix = suffix
+            )
             if (!nameExists(fileName)) return fileName
             index++
         }
@@ -135,11 +152,11 @@ object DownloadFileNameUtils {
     ): String {
         val rendered = template.trim()
             .ifBlank { fallbackBaseName }
-            .replace(VIDEO_NAME_TOKEN, context.videoName)
-            .replace(PART_NAME_TOKEN, context.partName)
+            .replace(oldValue = VIDEO_NAME_TOKEN, newValue = context.videoName)
+            .replace(oldValue = PART_NAME_TOKEN, newValue = context.partName)
 
-        return sanitizeBaseName(rendered).ifBlank {
-            sanitizeBaseName(fallbackBaseName)
+        return sanitizeBaseName(value = rendered).ifBlank {
+            sanitizeBaseName(value = fallbackBaseName)
         }.ifBlank {
             DEFAULT_FALLBACK_BASE_NAME
         }
@@ -147,11 +164,11 @@ object DownloadFileNameUtils {
 
     private fun sanitizeBaseName(value: String): String {
         return value
-            .replace(illegalFileNameCharsRegex, "_")
-            .replace(duplicateUnderscoreRegex, "_")
-            .replace(underscoreBeforeDashRegex, "-")
-            .replace(underscoreAfterDashRegex, "-")
-            .replace(whitespaceRegex, " ")
+            .replace(regex = illegalFileNameCharsRegex, replacement = "_")
+            .replace(regex = duplicateUnderscoreRegex, replacement = "_")
+            .replace(regex = underscoreBeforeDashRegex, replacement = "-")
+            .replace(regex = underscoreAfterDashRegex, replacement = "-")
+            .replace(regex = whitespaceRegex, replacement = " ")
             .trimFileNameSeparators()
     }
 
@@ -160,10 +177,10 @@ object DownloadFileNameUtils {
         val sanitized = value
             .trim()
             .trimStart('.')
-            .replace(illegalFileNameCharsRegex, "")
-            .replace(whitespaceRegex, "")
+            .replace(regex = illegalFileNameCharsRegex, replacement = "")
+            .replace(regex = whitespaceRegex, replacement = "")
             .trimFileNameSeparators()
-        return truncateUtf8(sanitized, MAX_EXTENSION_BYTES)
+        return truncateUtf8(value = sanitized, maxBytes = MAX_EXTENSION_BYTES)
     }
 
     private fun buildFileNameWithSuffix(
@@ -178,10 +195,14 @@ object DownloadFileNameUtils {
                 suffix.toByteArray(StandardCharsets.UTF_8).size -
                 extensionPart.toByteArray(StandardCharsets.UTF_8).size
         )
-        val safeBaseName = sanitizeBaseName(baseName).ifBlank { DEFAULT_FALLBACK_BASE_NAME }
-        val truncatedBaseName = truncateUtf8(safeBaseName, maxBaseBytes).ifBlank {
-            truncateUtf8(DEFAULT_FALLBACK_BASE_NAME, maxBaseBytes).ifBlank { "r" }
-        }
+        val safeBaseName = sanitizeBaseName(value = baseName).ifBlank { DEFAULT_FALLBACK_BASE_NAME }
+        val truncatedBaseName =
+            truncateUtf8(value = safeBaseName, maxBytes = maxBaseBytes).ifBlank {
+                truncateUtf8(
+                    value = DEFAULT_FALLBACK_BASE_NAME,
+                    maxBytes = maxBaseBytes
+                ).ifBlank { "r" }
+            }
         return "$truncatedBaseName$suffix$extensionPart"
     }
 
