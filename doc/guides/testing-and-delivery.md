@@ -79,10 +79,14 @@ Windows 使用 `gradlew.bat` 执行对应任务。构建环境需具备项目要
 
 ## 6. 文档与交付
 
+源码变更交付前，先完成导入清理，再按[自动代码格式化](./code-formatting.md)对本次负责的 Kotlin 文件依次执行 `formatApply` 和同范围的 `formatCheck`，最后由 AI 按[代码美观与可读性](./code-elegance-and-readability.md)完成样式审计。审计修改 Kotlin 代码后重新完成格式化、格式检查和 AI 样式审计，直到最终改动通过。
+
+AI 样式审计确认命名、参数含义、条件分解、嵌套作用域和返回目标清晰，并核对求值顺序、异常、取消与资源清理语义。其他语言按对应项目样式完成排版后审计，随后按受影响行为选择验证；`git diff --check` 仅检查补丁空白问题。
+
 文档修改检查所有相对链接、代码入口、章节引用、Markdown 围栏和示例 API。所有专题应能从主入口到达，专题返回链接指向本仓库主入口，不依赖未创建的专题或设计文件。
 
 `git diff --check` 不包含未跟踪文件；新增文档可使用 `git diff --no-index --check /dev/null doc/coding-guidelines.md` 等方式逐个检查补丁空白问题，同时核对 Git 状态。
 
-交付说明包含：改动结果、执行的验证及结果、未验证的真实限制。完成[主入口交付清单](../coding-guidelines.md#7-交付清单)，不把规划中的验证写成已通过。
+交付说明包含：改动结果、格式化与格式检查结果、AI 样式审计结论、执行的业务验证及结果、未验证的真实限制。完成[主入口交付清单](../coding-guidelines.md#7-交付清单)，不把规划中的验证写成已通过。
 
 发布代码入口：[GitHub 工作流](../../.github/workflows/release.yml)、[Windows 发布校验脚本](../../scripts/verify-release.ps1)。普通开发验证不触发远程发布、签名配置变更或版本升级。

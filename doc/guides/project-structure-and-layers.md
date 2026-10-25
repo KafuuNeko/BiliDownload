@@ -11,7 +11,7 @@
 | 项目 | 当前约定 |
 | --- | --- |
 | 模块与包名 | 单 `:app` 模块，包名及 applicationId 为 `cc.kafuu.bilidownload` |
-| 语言与构建 | Kotlin、Gradle Kotlin DSL、Gradle Wrapper；CI 使用 JDK 17，Java 源码与目标兼容级别为 1.8 |
+| 语言与构建 | Kotlin、Gradle Kotlin DSL、Gradle Wrapper；Android 构建 CI 使用 JDK 17，Java 源码与目标兼容级别为 1.8；独立格式化构建使用 JVM 17 目标，格式化 CI 使用 JDK 21 |
 | Android 范围 | `minSdk = 24`，`compileSdk = 37`，`targetSdk = 37` |
 | 页面 | XML/DataBinding + LiveData，以及 Compose + StateFlow/UiIntent/UiEvent |
 | 数据与网络 | Room + KSP、Kotpref、Retrofit/OkHttp、Gson、EventBus |

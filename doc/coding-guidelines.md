@@ -19,10 +19,11 @@ BiliDownload 是 Android 视频下载与本地媒体管理应用，支持地址�
 
 ## 2. 按任务阅读
 
-新增、修改、重构或审查源码时，[代码注释与 KDoc](./guides/code-comments-and-kdoc.md) 始终必读，其他专题按任务叠加阅读。
+新增、修改、重构或审查源码时，[代码美观与可读性](./guides/code-elegance-and-readability.md)和[代码注释与 KDoc](./guides/code-comments-and-kdoc.md)始终必读，其他专题按任务叠加阅读。
 
 | 任务类型 | 必读专题 |
 | --- | --- |
+| 修改 Kotlin 源码、构建脚本或执行交付前排版检查 | [自动代码格式化](./guides/code-formatting.md) |
 | 新增页面、调整目录或公共能力 | [项目结构与分层](./guides/project-structure-and-layers.md) |
 | 设计页面状态、多选、加载、错误或业务弹窗 | [MVI 与 UiState 树](./guides/mvi-and-uistate-tree.md) |
 | 新增用户操作、跳转、权限或系统选择器 | [UiIntent、UiEvent 与 ViewAction](./guides/intent-and-uievent.md) |
@@ -36,7 +37,7 @@ BiliDownload 是 Android 视频下载与本地媒体管理应用，支持地址�
 | 播放、频谱、FFmpeg、JNI 或原生依赖 | [媒体播放与原生代码](./guides/media-and-native.md) |
 | 选择测试、构建、设备验证或整理交付结果 | [验证与交付](./guides/testing-and-delivery.md) |
 
-例如，“修改公共目录下载失败后的重试”应阅读注释、下载、存储、Room 和验证专题；“新增一个设置开关”应阅读注释、状态、事件、页面实现、界面资源和偏好专题。
+在上述两个必读专题之外，“修改公共目录下载失败后的重试”还应阅读下载、存储、Room 和验证专题；“新增一个设置开关”还应阅读状态、事件、页面实现、界面资源和偏好专题。
 
 ## 3. 通用分层
 
@@ -84,6 +85,16 @@ ViewModel ──> UseCase / Manager / Repository ──> 网络、Room、存储�
 - 全局检索相关符号、资源 ID、中英文名称和语义近似表述，人工核对注释与图示；编译通过不能替代完整清理。
 - 保留其他功能使用的公共能力，以及既有数据所必需的迁移、历史 schema 和兼容性测试。
 
+### 4.3 代码美观与可读性
+
+详细规则见[代码美观与可读性](./guides/code-elegance-and-readability.md)。
+
+- Kotlin 排版通过[自动代码格式化](./guides/code-formatting.md)调用 Android Studio 原生格式化器与本仓库项目代码样式，统一缩进、折行、括号、尾逗号及声明间距。
+- 名称表达业务角色和单位；通过显式 import 使用简短类型名，名称冲突优先使用语义清晰的别名。
+- 容易混淆的参数在 API 支持时使用具名实参；复杂条件按业务含义分解，优先提前返回，保持主要流程清晰。
+- Lambda、调用链和作用域函数应明确接收者、数据流与返回目标；Compose 参数和 DataBinding 表达式保持简洁。
+- 交付前依次执行 `formatApply`、同范围的 `formatCheck`，再由 AI 审计命名、参数、条件、作用域、求值顺序及业务行为；审计修改 Kotlin 代码后重新完成这套流程。验证规则见[验证与交付](./guides/testing-and-delivery.md)。
+
 ## 5. 注释要求
 
 详细规则与本项目示例见[代码注释与 KDoc](./guides/code-comments-and-kdoc.md)。
@@ -114,6 +125,7 @@ ViewModel ──> UseCase / Manager / Repository ──> 网络、Room、存储�
 - 数据库、工作文件、公共 URI 与清理顺序保持一致。
 - 线程、作用域、观察者、播放器、流及原生资源的生命周期完整。
 - 文案、主题、权限、Manifest、schema、测试与注释同步更新。
+- Kotlin 改动已依次通过 `formatApply`、同范围的 `formatCheck` 和 AI 样式审计，最终代码符合[代码美观与可读性](./guides/code-elegance-and-readability.md)。
 - 日志与示例没有敏感数据，Git diff 没有无关改动和产物。
 - 已完成[对应验证](./guides/testing-and-delivery.md)，交付说明写明结果、证据和实际限制。
 

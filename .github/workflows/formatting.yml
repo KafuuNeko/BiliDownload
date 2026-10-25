@@ -1,0 +1,60 @@
+name: Kotlin formatting
+
+on:
+  pull_request:
+    paths:
+      - "**/*.kt"
+      - "**/*.kts"
+      - ".editorconfig"
+      - ".idea/codeStyles/**"
+      - "tools/formatting/**"
+      - "gradle/wrapper/**"
+      - ".github/workflows/formatting.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: formatting-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  formatting:
+    name: Format and test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    env:
+      FORMAT_BASE: ${{ github.event.pull_request.base.sha || github.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Cache Android Studio
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/bilidownload-android-studio
+          key: android-studio-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('tools/formatting/android-studio.properties') }}
+      - name: Set up Android Studio
+        shell: pwsh
+        run: ./tools/formatting/install-android-studio.ps1 -Destination "${{ runner.temp }}/bilidownload-android-studio"
+      - name: Test formatter and check changed sources (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: .\gradlew.bat -p tools/formatting --no-daemon --console=plain test formatCheck "-PformatBase=$env:FORMAT_BASE"
+      - name: Test formatter and check changed sources (Linux and macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: ./gradlew -p tools/formatting --no-daemon --console=plain test formatCheck "-PformatBase=$FORMAT_BASE"
