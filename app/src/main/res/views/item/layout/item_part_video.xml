@@ -98,6 +98,26 @@
                 tools:visibility="gone" />
 
             <ImageView
+                android:id="@+id/iv_notes"
+                bindVisible="@{viewModel.loadingVideoPartLiveData != data &amp;&amp; viewModel.downloadingDanmakuPartLiveData != data &amp;&amp; viewModel.downloadingSubtitlePartLiveData != data &amp;&amp; viewModel.generatingNotesPartLiveData != data &amp;&amp; !viewModel.partSelectionLiveData.enabled}"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="5dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/text_generate_notes"
+                android:onClick="@{()->viewModel.onGenerateNotes(data)}"
+                android:padding="2dp"
+                android:src="@drawable/ic_description" />
+
+            <ProgressBar
+                style="?android:attr/progressBarStyleSmall"
+                bindVisible="@{viewModel.generatingNotesPartLiveData == data}"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="5dp"
+                tools:visibility="gone" />
+
+            <ImageView
                 bindVisible="@{viewModel.loadingVideoPartLiveData != data &amp;&amp; viewModel.downloadingDanmakuPartLiveData != data &amp;&amp; !viewModel.partSelectionLiveData.enabled}"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
