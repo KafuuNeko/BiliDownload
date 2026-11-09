@@ -26,6 +26,7 @@ import cc.kafuu.bilidownload.common.model.bili.BiliVideoModel
 import cc.kafuu.bilidownload.common.model.bili.BiliVideoPartModel
 import cc.kafuu.bilidownload.common.model.bili.VideoStats
 import cc.kafuu.bilidownload.common.network.IServerCallback
+import cc.kafuu.bilidownload.common.network.NetworkConfig
 import cc.kafuu.bilidownload.common.network.manager.NetworkManager
 import cc.kafuu.bilidownload.common.network.model.BiliXmlDanmaku
 import cc.kafuu.bilidownload.common.network.model.BiliPlayStreamDash
@@ -34,6 +35,7 @@ import cc.kafuu.bilidownload.common.network.model.BiliSeasonData
 import cc.kafuu.bilidownload.common.network.model.BiliVideoData
 import cc.kafuu.bilidownload.common.network.model.BiliSubtitleListContainer
 import cc.kafuu.bilidownload.common.network.model.BccSubtitle
+import cc.kafuu.bilidownload.common.notes.NotesPdfGenerator
 import cc.kafuu.bilidownload.common.utils.DanmakuExportUtils
 import cc.kafuu.bilidownload.common.utils.DownloadFileNameUtils
 import cc.kafuu.bilidownload.common.utils.SubtitleExportUtils
@@ -42,9 +44,13 @@ import cc.kafuu.bilidownload.feature.viewbinding.view.activity.PersonalDetailsAc
 import cc.kafuu.bilidownload.feature.viewbinding.view.dialog.BiliPartDialog
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import okhttp3.Request
+import java.io.File
 import kotlin.coroutines.resume
 
 /** 管理视频详情、分 P 选择与页面内批量建任务；已入队任务由下载服务继续执行。 */
@@ -73,6 +79,15 @@ class VideoDetailsViewModel(
         class ExportDanmakuAction(val danmakuList: List<BiliXmlDanmaku>) : ViewAction()
 
         class ExportSubtitleAction(val bccSubtitle: BccSubtitle) : ViewAction()
+
+        class ShowGenerateNotesConfirmAction(
+            val part: BiliVideoPartModel
+        ) : ViewAction()
+
+        class ExportNotesAction(
+            val pdfFile: File,
+            val fileName: String
+        ) : ViewAction()
     }
 
     private val mLoadingStatusLiveData = MutableLiveData(LoadingStatus.waitStatus())
@@ -128,6 +143,10 @@ class VideoDetailsViewModel(
     // 正在下载字幕的片段
     private val mDownloadingSubtitlePartLiveData = MutableLiveData<BiliVideoPartModel?>()
     val downloadingSubtitlePartLiveData = mDownloadingSubtitlePartLiveData.liveData()
+
+    // 正在生成图文笔记的片段
+    private val mGeneratingNotesPartLiveData = MutableLiveData<BiliVideoPartModel?>()
+    val generatingNotesPartLiveData = mGeneratingNotesPartLiveData.liveData()
 
     /** 首次加载番剧分集，配置重建时保留正在处理的列表与选择。 */
     fun initData(media: BiliMediaModel) {
@@ -850,6 +869,271 @@ class VideoDetailsViewModel(
                         ), duration = Toast.LENGTH_SHORT
                     )
                 )
+            }
+        }
+    }
+
+    /**
+     * 生成图文笔记（新增功能）：点击分P上的笔记按钮后先弹确认框。
+     * @param part 视频片段
+     */
+    fun onGenerateNotes(part: BiliVideoPartModel) {
+        if (AccountManager.accountLiveData.value == null) {
+            popMessage(message = ToastMessageAction(content = CommonLibs.getString(id = R.string.please_login_to_your_account_first)))
+            return
+        }
+        if (mGeneratingNotesPartLiveData.value != null) {
+            popMessage(message = ToastMessageAction(content = CommonLibs.getString(id = R.string.notes_generating_message)))
+            return
+        }
+        sendViewAction(action = ShowGenerateNotesConfirmAction(part = part))
+    }
+
+    /**
+     * 确认生成图文笔记（由 Activity 调用）：
+     * 取字幕（优先 zh-CN）→ 下载 720P 视频流到缓存 → 按字幕截图排版生成 PDF → 交 Activity 导出。
+     */
+    fun confirmGenerateNotes(part: BiliVideoPartModel) {
+        viewModelScope.launch {
+            mGeneratingNotesPartLiveData.value = part
+            val context = CommonLibs.requireContext()
+            val videoFile = File(context.cacheDir, "notes_${part.bvid}_${part.cid}.mp4")
+            try {
+                // 1. 请求字幕列表并选定字幕（与下载字幕相同的规则）
+                val container = requestSubtitleList(part = part)
+                if (container is ResultWrapper.Error) {
+                    popMessage(
+                        message = ToastMessageAction(
+                            content = container.error,
+                            duration = Toast.LENGTH_SHORT
+                        )
+                    )
+                    return@launch
+                }
+                val subtitles = (container as ResultWrapper.Success).value.data?.subtitle?.subtitles
+                if (subtitles.isNullOrEmpty()) {
+                    popMessage(
+                        message = ToastMessageAction(
+                            content = CommonLibs.getString(id = R.string.subtitle_no_subtitle_message),
+                            duration = Toast.LENGTH_SHORT
+                        )
+                    )
+                    return@launch
+                }
+                val targetSubtitle = subtitles.find { it.lan == "zh-CN" } ?: subtitles.first()
+                val bccSubtitle = when (val result = requestBccSubtitleData(url = targetSubtitle.subtitleUrl)) {
+                    is ResultWrapper.Error -> {
+                        popMessage(
+                            message = ToastMessageAction(
+                                content = result.error,
+                                duration = Toast.LENGTH_SHORT
+                            )
+                        )
+                        return@launch
+                    }
+
+                    is ResultWrapper.Success -> result.value
+                }
+                if (bccSubtitle.body.isNullOrEmpty()) {
+                    popMessage(
+                        message = ToastMessageAction(
+                            content = CommonLibs.getString(id = R.string.subtitle_no_subtitle_message),
+                            duration = Toast.LENGTH_SHORT
+                        )
+                    )
+                    return@launch
+                }
+
+                // 2. 取 DASH 流并挑一条 720P 视频流（只用来截图，生成后即删）
+                val dash = when (val result = loadPartDash(item = part)) {
+                    is ResultWrapper.Error -> {
+                        popMessage(
+                            message = ToastMessageAction(
+                                content = result.error,
+                                duration = Toast.LENGTH_SHORT
+                            )
+                        )
+                        return@launch
+                    }
+
+                    is ResultWrapper.Success -> result.value
+                }
+                val videoStream = selectNotesVideoStream(dash = dash)
+                if (videoStream == null) {
+                    popMessage(
+                        message = ToastMessageAction(
+                            content = CommonLibs.getString(
+                                id = R.string.notes_generate_failed_detail_message,
+                                args = arrayOf("no video stream")
+                            ),
+                            duration = Toast.LENGTH_SHORT
+                        )
+                    )
+                    return@launch
+                }
+
+                // 3. 下载 720P 流并生成 PDF（耗时操作，切 IO 线程）
+                var durationMismatch = false
+                var downloadError: String? = null
+                val pdfFile = withContext(Dispatchers.IO) {
+                    val error = downloadStreamToFile(
+                        urls = videoStream.getStreamUrls(),
+                        outFile = videoFile
+                    )
+                    if (error != null) {
+                        downloadError = error
+                        return@withContext null
+                    }
+                    val outFile = File(
+                        context.cacheDir,
+                        DownloadFileNameUtils.sanitizeFileName(fileName = "${part.name}.pdf")
+                    )
+                    val result = NotesPdfGenerator.generate(
+                        context = context,
+                        title = part.name,
+                        subtitle = bccSubtitle,
+                        videoFile = videoFile,
+                        outFile = outFile
+                    )
+                    durationMismatch = result.durationMismatch
+                    outFile
+                }
+                if (pdfFile == null) {
+                    popMessage(
+                        message = ToastMessageAction(
+                            content = CommonLibs.getString(
+                                id = R.string.notes_generate_failed_detail_message,
+                                args = arrayOf("download: ${downloadError ?: "unknown"}")
+                            ),
+                            duration = Toast.LENGTH_LONG
+                        )
+                    )
+                    return@launch
+                }
+                if (durationMismatch) {
+                    popMessage(
+                        message = ToastMessageAction(
+                            content = CommonLibs.getString(id = R.string.notes_duration_mismatch_message),
+                            duration = Toast.LENGTH_LONG
+                        )
+                    )
+                }
+                sendViewAction(action = ExportNotesAction(pdfFile = pdfFile, fileName = pdfFile.name))
+            } catch (e: Exception) {
+                e.printStackTrace()
+                popMessage(
+                    message = ToastMessageAction(
+                        content = CommonLibs.getString(
+                            id = R.string.notes_generate_exception_message,
+                            args = arrayOf(e.message ?: "")
+                        ), duration = Toast.LENGTH_SHORT
+                    )
+                )
+            } finally {
+                mGeneratingNotesPartLiveData.value = null
+                videoFile.delete()
+            }
+        }
+    }
+
+    /**
+     * 为生成笔记挑流，按推荐程度排序（截图用途：稳和清楚优先于省流量）：
+     * 1. 清晰度：优先向上选——有 720P 或更高的，选其中最低的一档（720P 本身最优先，
+     *    其次 900P/1080P 等，避免动辄 4K）；全部低于 720P 时才选最高的一档；
+     * 2. 编码：AVC > HEVC > AV1（AVC 解码最稳最快，HEVC 次之，AV1 最吃性能）；
+     * 3. 同清晰度同编码时选码率更高的一条，截图里的文字更清楚。
+     */
+    private fun selectNotesVideoStream(dash: BiliPlayStreamDash): BiliPlayStreamResource? {
+        val videos = dash.video.orEmpty()
+        if (videos.isEmpty()) return null
+        fun codecRank(resource: BiliPlayStreamResource): Int = when {
+            resource.codecs.startsWith("avc1") || resource.codecId == 7L -> 0
+            resource.codecs.startsWith("hev1") || resource.codecs.startsWith("hvc1") ||
+                resource.codecId == 12L -> 1
+
+            resource.codecs.startsWith("av01") || resource.codecId == 13L -> 2
+            else -> 3
+        }
+        val comparator = compareBy<BiliPlayStreamResource>(
+            // 先分档：>=720 的一档优先于 <720 的一档
+            { if (it.height >= 720) 0 else 1 },
+            // 档内排序：>=720 档选高度最小的（最接近 720 的更高清），<720 档选高度最大的（最清楚的一档）
+            { if (it.height >= 720) it.height else -it.height },
+            { codecRank(resource = it) }
+        ).thenByDescending { it.bandwidth }
+        return videos.minWithOrNull(comparator)
+    }
+
+    /**
+     * 把视频流下载到本地文件：候选地址（主地址+备用地址）逐个尝试，
+     * 请求头与 Cookie 和 App 正常下载视频时完全一致（见 DownloadManager.buildRequest），
+     * 避免被 B 站 CDN 拒绝。阻塞方法，须在 IO 线程调用。
+     *
+     * @return 成功返回 null，失败返回失败原因（HTTP 状态码或异常信息），用于提示与排查。
+     */
+    private fun downloadStreamToFile(urls: List<String>, outFile: File): String? {
+        var lastError = "no stream url"
+        for (url in urls) {
+            val error: String? = runCatching {
+                val request = Request.Builder()
+                    .url(url)
+                    .apply {
+                        NetworkConfig.DOWNLOAD_HEADERS.forEach { (key, value) ->
+                            header(key, value)
+                        }
+                        AccountManager.cookiesLiveData.value?.let { header("Cookie", it) }
+                    }
+                    .build()
+                NetworkManager.downloadClient.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) return@use "HTTP ${response.code()}"
+                    val body = response.body() ?: return@use "empty response"
+                    outFile.outputStream().use { output -> body.byteStream().copyTo(output) }
+                    if (outFile.length() > 0) null else "empty file"
+                }
+            }.getOrElse { it.message ?: it.javaClass.simpleName }
+            if (error == null) return null
+            lastError = error
+        }
+        return lastError
+    }
+
+    /**
+     * 将生成的笔记 PDF 导出到用户选择的 URI，导出后删除缓存文件。
+     */
+    fun exportNotesToUri(uri: Uri, pdfFile: File) {
+        viewModelScope.launch {
+            try {
+                val context = CommonLibs.requireContext()
+                val success = withContext(Dispatchers.IO) {
+                    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                        pdfFile.inputStream().use { input -> input.copyTo(outputStream) }
+                        true
+                    } ?: false
+                }
+                popMessage(
+                    message = ToastMessageAction(
+                        content = CommonLibs.getString(
+                            id = if (success) {
+                                R.string.notes_export_success_message
+                            } else {
+                                R.string.notes_export_failed_message
+                            }
+                        ),
+                        duration = Toast.LENGTH_SHORT
+                    )
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
+                popMessage(
+                    message = ToastMessageAction(
+                        content = CommonLibs.getString(
+                            id = R.string.notes_export_exception_message,
+                            args = arrayOf(e.message ?: "")
+                        ), duration = Toast.LENGTH_SHORT
+                    )
+                )
+            } finally {
+                pdfFile.delete()
             }
         }
     }

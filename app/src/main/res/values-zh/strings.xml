@@ -180,6 +180,16 @@
     <string name="download_danmaku_confirm_message">是否下载弹幕到CSV文件？</string>
     <string name="text_download_subtitle">下载字幕</string>
     <string name="download_subtitle_confirm_message">是否下载字幕到SRT文件？</string>
+    <string name="text_generate_notes">生成笔记</string>
+    <string name="generate_notes_confirm_message">是否为这一集生成图文笔记PDF？将下载720P视频流和字幕来截图排版，视频流生成后自动删除。</string>
+    <string name="notes_generating_message">正在生成笔记，请稍候…</string>
+    <string name="notes_generate_failed_message">笔记生成失败</string>
+    <string name="notes_generate_failed_detail_message">笔记生成失败：%s</string>
+    <string name="notes_generate_exception_message">笔记生成异常: %s</string>
+    <string name="notes_duration_mismatch_message">字幕与视频时长对不上，截图位置可能有偏差</string>
+    <string name="notes_export_success_message">笔记导出成功</string>
+    <string name="notes_export_failed_message">笔记导出失败</string>
+    <string name="notes_export_exception_message">笔记导出异常: %s</string>
     <string name="text_play">播放</string>
     <string name="text_open_external_player">用其他播放器打开</string>
     <string name="text_playback_speed">播放倍速</string>

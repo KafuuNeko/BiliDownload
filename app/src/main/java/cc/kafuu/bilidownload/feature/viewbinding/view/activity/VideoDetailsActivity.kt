@@ -63,10 +63,13 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
     private var mPendingDanmakuList: List<BiliXmlDanmaku>? = null
     // 临时保存字幕数据，用于在用户选择文件后导出
     private var mPendingBccSubtitle: BccSubtitle? = null
+    // 临时保存生成的笔记PDF文件，用于在用户选择文件后导出
+    private var mPendingNotesFile: File? = null
 
     private lateinit var mSaveCoverLauncher: ActivityResultLauncher<Intent>
     private lateinit var mSaveDanmakuLauncher: ActivityResultLauncher<Intent>
     private lateinit var mSaveSubtitleLauncher: ActivityResultLauncher<Intent>
+    private lateinit var mSaveNotesLauncher: ActivityResultLauncher<Intent>
 
     private var mBatchDialogJob: Job? = null
 
@@ -81,6 +84,7 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
         initSaveCoverLauncher()
         initSaveDanmakuLauncher()
         initSaveSubtitleLauncher()
+        initSaveNotesLauncher()
     }
 
     override fun initViews() {
@@ -196,6 +200,26 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
         }
     }
 
+    private fun initSaveNotesLauncher() {
+        val contracts = ActivityResultContracts.StartActivityForResult()
+        mSaveNotesLauncher = registerForActivityResult(contracts) {
+            val notesFile = mPendingNotesFile
+            if (it.resultCode == RESULT_OK && it.data != null) {
+                val uri = it.data?.data ?: return@registerForActivityResult
+                if (notesFile != null) {
+                    lifecycleScope.launch {
+                        mViewModel.exportNotesToUri(uri, notesFile)
+                    }
+                }
+            } else {
+                // 用户取消选择位置时删除缓存的笔记文件，避免残留
+                notesFile?.delete()
+            }
+            // 清理临时数据
+            mPendingNotesFile = null
+        }
+    }
+
     private fun doInitData() = when (intent.getStringExtra(KEY_OBJECT_TYPE)) {
         BiliVideoModel::class.simpleName -> {
             val video = intent.getSerializableByClass<BiliVideoModel>(KEY_OBJECT_INSTANCE)!!
@@ -262,6 +286,14 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
             onExportSubtitle(action)
         }
 
+        is VideoDetailsViewModel.Companion.ShowGenerateNotesConfirmAction -> {
+            onShowGenerateNotesConfirm(action)
+        }
+
+        is VideoDetailsViewModel.Companion.ExportNotesAction -> {
+            onExportNotes(action)
+        }
+
         else -> super.onViewAction(action)
     }
 
@@ -290,6 +322,35 @@ class VideoDetailsActivity : CoreActivity<ActivityVideoDetailsBinding, VideoDeta
         }
         // 启动文件选择
         mSaveSubtitleLauncher.launch(intent)
+    }
+
+    private fun onExportNotes(action: VideoDetailsViewModel.Companion.ExportNotesAction) {
+        // 保存待导出的笔记文件
+        mPendingNotesFile = action.pdfFile
+        // 创建文件选择Intent
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/pdf"
+            putExtra(Intent.EXTRA_TITLE, action.fileName)
+        }
+        // 启动文件选择
+        mSaveNotesLauncher.launch(intent)
+    }
+
+    private fun onShowGenerateNotesConfirm(
+        action: VideoDetailsViewModel.Companion.ShowGenerateNotesConfirmAction
+    ) {
+        lifecycleScope.launch {
+            val result = ConfirmDialog.buildDialog(
+                CommonLibs.getString(R.string.text_generate_notes),
+                CommonLibs.getString(R.string.generate_notes_confirm_message),
+                CommonLibs.getString(R.string.text_cancel),
+                CommonLibs.getString(R.string.text_confirm)
+            ).showAndWaitResult(this@VideoDetailsActivity)
+            if (result is ResultWrapper.Success && result.value) {
+                mViewModel.confirmGenerateNotes(action.part)
+            }
+        }
     }
 
     private fun onShowSaveCoverConfirm(action: VideoDetailsViewModel.Companion.ShowSaveCoverConfirmAction) {
