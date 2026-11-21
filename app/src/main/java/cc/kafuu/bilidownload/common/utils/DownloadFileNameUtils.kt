@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets
 import java.util.Locale
 import kotlin.math.max
 
+/** 下载与导出共用的模板渲染、文件名清理及重名处理工具。 */
 object DownloadFileNameUtils {
     const val VIDEO_NAME_TOKEN = "{VideoName}"
     const val PART_NAME_TOKEN = "{PartName}"
@@ -42,6 +43,30 @@ object DownloadFileNameUtils {
         )
         val safeExtension = sanitizeExtension(value = extension)
         return buildFileNameWithSuffix(baseName = baseName, extension = safeExtension, suffix = "")
+    }
+
+    /**
+     * 渲染模板可独立确定的文件名，供预览区区分模板输出与任务相关回退名称。
+     *
+     * 与实际文件命名共用变量替换、字符清理、扩展名及长度限制，不生成任务回退名或检查重名。
+     *
+     * @param template 用户配置的命名模板。
+     * @param context 本次渲染使用的稿件名与分 P 名。
+     * @param extension 文件扩展名，由工具清理后追加。
+     * @return 安全文件名；模板渲染后没有有效主名称时返回 null，由调用方说明回退规则。
+     */
+    fun buildFileNameOrNull(
+        template: String,
+        context: TemplateContext,
+        extension: String,
+    ): String? {
+        val baseName = renderTemplateBaseName(template = template.trim(), context = context)
+        if (baseName.isBlank()) return null
+        return buildFileNameWithSuffix(
+            baseName = baseName,
+            extension = sanitizeExtension(value = extension),
+            suffix = "",
+        )
     }
 
     /**
@@ -150,16 +175,20 @@ object DownloadFileNameUtils {
         context: TemplateContext,
         fallbackBaseName: String
     ): String {
-        val rendered = template.trim()
-            .ifBlank { fallbackBaseName }
-            .replace(oldValue = VIDEO_NAME_TOKEN, newValue = context.videoName)
-            .replace(oldValue = PART_NAME_TOKEN, newValue = context.partName)
-
-        return sanitizeBaseName(value = rendered).ifBlank {
+        val effectiveTemplate = template.trim().ifBlank { fallbackBaseName }
+        return renderTemplateBaseName(template = effectiveTemplate, context = context).ifBlank {
             sanitizeBaseName(value = fallbackBaseName)
         }.ifBlank {
             DEFAULT_FALLBACK_BASE_NAME
         }
+    }
+
+    /** 统一预览与实际命名的模板渲染步骤，空结果保留给各调用方选择回退策略。 */
+    private fun renderTemplateBaseName(template: String, context: TemplateContext): String {
+        val rendered = template
+            .replace(oldValue = VIDEO_NAME_TOKEN, newValue = context.videoName)
+            .replace(oldValue = PART_NAME_TOKEN, newValue = context.partName)
+        return sanitizeBaseName(value = rendered)
     }
 
     private fun sanitizeBaseName(value: String): String {

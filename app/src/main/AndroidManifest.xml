@@ -117,7 +117,8 @@
         <activity
             android:name=".feature.compose.activity.SettingsActivity"
             android:configChanges="orientation|screenSize"
-            android:exported="false" />
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
 
         <service
             android:name=".service.DownloadService"

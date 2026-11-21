@@ -9,248 +9,372 @@
             name="viewModel"
             type="cc.kafuu.bilidownload.feature.viewbinding.viewmodel.fragment.MeViewModel" />
 
-        <import type="cc.kafuu.bilidownload.common.manager.AccountManager" />
-
-        <import type="cc.kafuu.bilidownload.common.utils.ViewDataBindingUtilsKt" />
+        <import type="android.text.TextUtils" />
 
         <import type="cc.kafuu.bilidownload.common.CommonLibs" />
+
+        <import type="cc.kafuu.bilidownload.common.manager.AccountManager" />
+
+        <import type="cc.kafuu.bilidownload.common.utils.GlideUtils" />
+
+        <import type="cc.kafuu.bilidownload.common.utils.ViewDataBindingUtilsKt" />
     </data>
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/general_window_background_color">
+        android:background="@color/me_page_background"
+        android:clipToPadding="false"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingBottom="16dp">
+            android:paddingStart="16dp"
+            android:paddingTop="14dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="24dp">
 
-            <include
-                android:id="@+id/include_account_card"
-                layout="@layout/include_account_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="12dp"
-                android:layout_marginTop="12dp"
-                app:defaultNickname="@{@string/nickname_not_login}"
-                app:defaultSign="@{@string/sign_not_login}"
-                app:nickname="@{AccountManager.INSTANCE.accountLiveData.nickname}"
-                app:onClick="@{()-> viewModel.jumpLoginOrAccount()}"
-                app:profile="@{AccountManager.INSTANCE.accountLiveData.profile}"
-                app:sign="@{AccountManager.INSTANCE.accountLiveData.sign}" />
+            <!-- 账号卡片：圆形头像容器、昵称签名层级及登录引导态 -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/MeCardStyle"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:onClick="@{() -> viewModel.jumpLoginOrAccount()}">
 
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="12dp"
-                android:layout_marginTop="12dp"
-                android:background="@color/general_item_background_color"
-                app:cardCornerRadius="@dimen/card_item_corner_radius"
-                app:cardElevation="@dimen/card_item_elevation">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="16dp"
+                    android:paddingTop="16dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="16dp">
+
+                    <FrameLayout
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        android:background="@drawable/shape_me_avatar_container"
+                        android:padding="2dp">
+
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:id="@+id/iv_account_avatar"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:contentDescription="@string/iv_profile_content_description"
+                            android:scaleType="centerCrop"
+                            app:bindPlaceholder="@{@drawable/ic_2233}"
+                            app:bindProfileAccount="@{AccountManager.INSTANCE.accountLiveData}"
+                            app:bindTransformation="@{GlideUtils.INSTANCE.circleCrop}"
+                            app:shapeAppearanceOverlay="@style/CircleImageView"
+                            tools:src="@drawable/ic_2233" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_marginEnd="10dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tv_account_nickname"
+                            bindSpannable="@{AccountManager.INSTANCE.accountLiveData != null ? AccountManager.INSTANCE.accountLiveData.nickname : @string/nickname_not_login}"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:textColor="@color/main_tab_text_active_color"
+                            android:textSize="17sp"
+                            android:textStyle="bold"
+                            tools:text="未登录" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tv_account_sign"
+                            bindSpannable="@{AccountManager.INSTANCE.accountLiveData != null ? AccountManager.INSTANCE.accountLiveData.sign : @string/sign_not_login}"
+                            bindVisible="@{AccountManager.INSTANCE.accountLiveData == null || !TextUtils.isEmpty(AccountManager.INSTANCE.accountLiveData.sign)}"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:textColor="@color/general_text_color"
+                            android:textSize="13sp"
+                            tools:text="点击此处登录" />
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        bindVisible="@{AccountManager.INSTANCE.accountLiveData == null}"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/shape_me_version_pill"
+                        android:paddingStart="10dp"
+                        android:paddingTop="5dp"
+                        android:paddingEnd="10dp"
+                        android:paddingBottom="5dp"
+                        android:text="@string/me_account_login_badge"
+                        android:textColor="@color/on_primary_container"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        style="@style/MeTrailingArrowStyle"
+                        bindVisible="@{AccountManager.INSTANCE.accountLiveData != null}" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 分组一：通用（最高频设置入口置顶） -->
+            <androidx.appcompat.widget.AppCompatTextView
+                style="@style/MeSectionTitleStyle"
+                android:text="@string/me_section_general" />
+
+            <com.google.android.material.card.MaterialCardView style="@style/MeCardStyle">
+
+                <LinearLayout
+                    style="@style/MeRowStyle"
+                    android:onClick="@{() -> viewModel.jumpSettings()}">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        style="@style/MeIconBadgeStyle"
+                        android:background="@drawable/shape_me_icon_badge_primary"
+                        android:src="@drawable/ic_me_settings" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            style="@style/MeRowTitleStyle"
+                            android:text="@string/text_settings" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            style="@style/MeRowSubtitleStyle"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:text="@string/me_settings_subtitle" />
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.AppCompatImageView style="@style/MeTrailingArrowStyle" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 分组二：关于与支持 -->
+            <androidx.appcompat.widget.AppCompatTextView
+                style="@style/MeSectionTitleStyle"
+                android:text="@string/me_section_about" />
+
+            <com.google.android.material.card.MaterialCardView style="@style/MeCardStyle">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@color/common_transparent"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:minHeight="48dp"
-                        android:onClick="@{()->viewModel.jumpSourceRepository()}"
-                        android:paddingHorizontal="16dp"
-                        android:text="@string/text_source_repository"
-                        android:textColor="@color/general_text_color"
-                        android:textSize="14sp"
-                        app:drawableEndCompat="@drawable/ic_arrow_right" />
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="0.5dp"
-                        android:background="@color/view_split_color" />
-
+                    <!-- 当前版本（静态信息行，避免无响应点击反馈） -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@color/common_transparent"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
-                        android:minHeight="48dp"
-                        android:paddingHorizontal="16dp">
+                        android:minHeight="56dp"
+                        android:orientation="horizontal"
+                        android:paddingStart="16dp"
+                        android:paddingTop="12dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="12dp">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            style="@style/MeIconBadgeStyle"
+                            android:background="@drawable/shape_me_icon_badge_neutral"
+                            android:src="@drawable/ic_me_info" />
 
                         <androidx.appcompat.widget.AppCompatTextView
+                            style="@style/MeRowTitleStyle"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginEnd="8dp"
                             android:layout_weight="1"
-                            android:text="@string/tv_about_version_text"
-                            android:textColor="@color/general_text_color"
-                            android:textSize="14sp" />
+                            android:text="@string/tv_about_version_text" />
 
                         <androidx.appcompat.widget.AppCompatTextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:background="@drawable/shape_me_version_pill"
+                            android:paddingStart="9dp"
+                            android:paddingTop="4dp"
+                            android:paddingEnd="9dp"
+                            android:paddingBottom="4dp"
                             android:text="@{CommonLibs.INSTANCE.getVersionName()}"
-                            android:textColor="@color/primary_color"
-                            android:textSize="14sp"
+                            android:textColor="@color/on_primary_container"
+                            android:textSize="12sp"
                             android:textStyle="bold"
-                            tools:text="1.0.0" />
+                            tools:text="2.3.8.foss" />
+                    </LinearLayout>
+
+                    <View style="@style/MeInsetDividerStyle" />
+
+                    <LinearLayout
+                        style="@style/MeRowStyle"
+                        android:onClick="@{() -> viewModel.jumpSourceRepository()}">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            style="@style/MeIconBadgeStyle"
+                            android:background="@drawable/shape_me_icon_badge_neutral"
+                            android:src="@drawable/ic_me_code" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            style="@style/MeRowTitleStyle"
+                            android:layout_width="0dp"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:text="@string/text_source_repository" />
+
+                        <androidx.appcompat.widget.AppCompatImageView style="@style/MeTrailingArrowStyle" />
+                    </LinearLayout>
+
+                    <View style="@style/MeInsetDividerStyle" />
+
+                    <LinearLayout
+                        style="@style/MeRowStyle"
+                        android:onClick="@{() -> viewModel.jumpOpenSourceLicenses()}">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            style="@style/MeIconBadgeStyle"
+                            android:background="@drawable/shape_me_icon_badge_neutral"
+                            android:src="@drawable/ic_me_license" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            style="@style/MeRowTitleStyle"
+                            android:layout_width="0dp"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:text="@string/tv_about_license_text" />
+
+                        <androidx.appcompat.widget.AppCompatImageView style="@style/MeTrailingArrowStyle" />
+                    </LinearLayout>
+
+                    <View style="@style/MeInsetDividerStyle" />
+
+                    <LinearLayout
+                        style="@style/MeRowStyle"
+                        android:onClick="@{() -> viewModel.jumpFeedback()}">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            style="@style/MeIconBadgeStyle"
+                            android:background="@drawable/shape_me_icon_badge_neutral"
+                            android:src="@drawable/ic_me_feedback" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            style="@style/MeRowTitleStyle"
+                            android:layout_width="0dp"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:text="@string/text_feedback" />
+
+                        <androidx.appcompat.widget.AppCompatImageView style="@style/MeTrailingArrowStyle" />
+                    </LinearLayout>
+
+                    <View style="@style/MeInsetDividerStyle" />
+
+                    <LinearLayout
+                        style="@style/MeRowStyle"
+                        android:onClick="@{() -> viewModel.jumpGooglePlay()}">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            style="@style/MeIconBadgeStyle"
+                            android:background="@drawable/shape_me_icon_badge_neutral"
+                            android:src="@drawable/ic_me_rate" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            style="@style/MeRowTitleStyle"
+                            android:layout_width="0dp"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:text="@string/tv_grade_text" />
+
+                        <androidx.appcompat.widget.AppCompatImageView style="@style/MeTrailingArrowStyle" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 分组三：数据与账号（统一使用柔和危险语义色，替代刺眼纯红） -->
+            <androidx.appcompat.widget.AppCompatTextView
+                style="@style/MeSectionTitleStyle"
+                android:text="@string/me_section_account_and_data" />
+
+            <com.google.android.material.card.MaterialCardView style="@style/MeCardStyle">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        style="@style/MeRowStyle"
+                        bindEnable="@{!viewModel.clearingDataLiveData}"
+                        android:alpha="@{viewModel.clearingDataLiveData ? 0.55f : 1.0f}"
+                        android:onClick="@{() -> viewModel.clearData()}">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            style="@style/MeIconBadgeStyle"
+                            android:background="@drawable/shape_me_icon_badge_danger"
+                            android:src="@drawable/ic_action_delete" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                style="@style/MeRowTitleStyle"
+                                android:text="@{viewModel.clearingDataLiveData ? @string/tv_clearing_data : @string/tv_clear_data}"
+                                android:textColor="@color/color_delete_on_container"
+                                tools:text="清除数据" />
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                style="@style/MeRowSubtitleStyle"
+                                android:ellipsize="end"
+                                android:maxLines="2"
+                                android:text="@string/me_clear_data_subtitle" />
+                        </LinearLayout>
+
+                        <androidx.appcompat.widget.AppCompatImageView style="@style/MeTrailingArrowStyle" />
                     </LinearLayout>
 
                     <View
-                        android:layout_width="match_parent"
-                        android:layout_height="0.5dp"
-                        android:background="@color/view_split_color" />
+                        style="@style/MeInsetDividerStyle"
+                        bindVisible="@{AccountManager.INSTANCE.accountLiveData != null}" />
 
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@color/common_transparent"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:minHeight="48dp"
-                        android:onClick="@{()->viewModel.jumpOpenSourceLicenses()}"
-                        android:paddingHorizontal="16dp"
-                        android:text="@string/tv_about_license_text"
-                        android:textColor="@color/general_text_color"
-                        android:textSize="14sp"
-                        app:drawableEndCompat="@drawable/ic_arrow_right" />
+                    <LinearLayout
+                        style="@style/MeRowStyle"
+                        bindVisible="@{AccountManager.INSTANCE.accountLiveData != null}"
+                        android:onClick="@{() -> viewModel.tryLogout()}">
 
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="0.5dp"
-                        android:background="@color/view_split_color" />
+                        <androidx.appcompat.widget.AppCompatImageView
+                            style="@style/MeIconBadgeStyle"
+                            android:background="@drawable/shape_me_icon_badge_danger"
+                            android:src="@drawable/ic_me_logout" />
 
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@color/common_transparent"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:minHeight="48dp"
-                        android:onClick="@{()->viewModel.jumpFeedback()}"
-                        android:paddingHorizontal="16dp"
-                        android:text="@string/text_feedback"
-                        android:textColor="@color/general_text_color"
-                        android:textSize="14sp"
-                        app:drawableEndCompat="@drawable/ic_arrow_right" />
+                        <androidx.appcompat.widget.AppCompatTextView
+                            style="@style/MeRowTitleStyle"
+                            android:layout_width="0dp"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:text="@string/text_logout"
+                            android:textColor="@color/color_delete_on_container" />
+
+                        <androidx.appcompat.widget.AppCompatImageView style="@style/MeTrailingArrowStyle" />
+                    </LinearLayout>
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="12dp"
-                android:layout_marginTop="12dp"
-                android:background="@color/general_item_background_color"
-                app:cardCornerRadius="@dimen/card_item_corner_radius"
-                app:cardElevation="@dimen/card_item_elevation">
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@color/common_transparent"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:gravity="center_vertical"
-                    android:minHeight="48dp"
-                    android:onClick="@{()->viewModel.jumpSettings()}"
-                    android:paddingHorizontal="16dp"
-                    android:text="@string/text_settings"
-                    android:textColor="@color/general_text_color"
-                    android:textSize="14sp"
-                    app:drawableEndCompat="@drawable/ic_arrow_right" />
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="12dp"
-                android:layout_marginTop="12dp"
-                android:background="@color/general_item_background_color"
-                app:cardCornerRadius="@dimen/card_item_corner_radius"
-                app:cardElevation="@dimen/card_item_elevation">
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@color/common_transparent"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:gravity="center_vertical"
-                    android:minHeight="48dp"
-                    android:onClick="@{()->viewModel.jumpGooglePlay()}"
-                    android:paddingHorizontal="16dp"
-                    android:text="@string/tv_grade_text"
-                    android:textColor="@color/general_text_color"
-                    android:textSize="@dimen/size_text_common_size"
-                    app:drawableEndCompat="@drawable/ic_arrow_right" />
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="12dp"
-                android:layout_marginTop="16dp"
-                android:background="@color/general_item_background_color"
-                app:cardCornerRadius="@dimen/card_item_corner_radius"
-                app:cardElevation="@dimen/card_item_elevation">
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    bindEnable="@{!viewModel.clearingDataLiveData}"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@color/common_transparent"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:gravity="center_vertical"
-                    android:minHeight="48dp"
-                    android:onClick="@{()->viewModel.clearData()}"
-                    android:paddingHorizontal="16dp"
-                    android:text="@{viewModel.clearingDataLiveData?@string/tv_clearing_data:@string/tv_clear_data}"
-                    android:textColor="@color/common_red"
-                    android:textSize="@dimen/size_text_common_size"
-                    app:drawableEndCompat="@drawable/ic_arrow_right" />
-            </androidx.cardview.widget.CardView>
-
-            <androidx.appcompat.widget.AppCompatTextView
-                bindVisible="@{AccountManager.INSTANCE.accountLiveData != null}"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="10dp"
-                android:layout_marginTop="10dp"
-                android:background="@drawable/shape_button_general"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                android:gravity="center"
-                android:minHeight="36dp"
-                android:onClick="@{()-> viewModel.tryLogout()}"
-                android:text="@string/text_logout"
-                android:textColor="@color/common_white"
-                android:textSize="@dimen/size_text_button_size" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_margin="10dp"
-                android:background="@color/common_transparent" />
+            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
-
     </androidx.core.widget.NestedScrollView>
 </layout>

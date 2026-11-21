@@ -24,7 +24,7 @@
     <color name="popup_bg_color">#FFFFFFFF</color>
     <color name="popup_text_color">#FF212121</color>
 
-    <color name="view_split_color">#809F9F9F</color>
+    <color name="view_split_color">#EAECEF</color>
 
     <color name="general_text_color">#707070</color>
     <color name="general_sub_text_color">#999999</color>
@@ -32,6 +32,8 @@
     <color name="general_item_background_color">@color/common_white</color>
 
     <!-- Modern M3 Surface & Container Tokens -->
+    <color name="me_page_background">#F6F7F9</color>
+    <color name="on_primary_container">#C93B66</color>
     <color name="card_selected_background">#FFF4F7</color>
     <color name="card_selected_stroke">#FA7298</color>
     <color name="card_unselected_stroke">#F0F0F2</color>

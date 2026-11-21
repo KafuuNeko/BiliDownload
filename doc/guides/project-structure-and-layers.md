@@ -94,13 +94,25 @@ ViewModel ──> UseCase / Manager / Repository ──> 网络、Room、存储�
 ```text
 feature/compose/
 ├── activity/SettingsActivity.kt
-├── layout/SettingsLayout.kt
+├── layout/settings/
+│   ├── SettingsLayout.kt
+│   ├── SettingsSections.kt
+│   ├── DownloadPathSheet.kt
+│   ├── DownloadSourceSheet.kt
+│   ├── BatchQualityMismatchSheet.kt
+│   ├── FileNameTemplateSheet.kt
+│   └── SettingsDisplayUtils.kt
+├── views/settings/
+│   ├── SettingsComponents.kt
+│   └── SettingsSheetComponents.kt
 └── viewmodel/settings/
     ├── SettingsViewModel.kt
     ├── SettingsUiState.kt
     ├── SettingsUiIntent.kt
     └── SettingsUiEvent.kt
 ```
+
+`SettingsLayout` 组织页面骨架和面板入口，设置分组与各业务面板在同一功能子目录内独立维护。`SettingsDisplayUtils` 承载模板编辑、预览及资源映射等纯展示计算。`views/settings/` 中的条目、容器、输入框和芯片组件接收展示值与回调，不依赖设置页的 UiState 或 UiIntent。
 
 XML 页面分别放在 `feature/viewbinding/view/` 和 `feature/viewbinding/viewmodel/` 的对应分类，布局放在已注册的 `res/views/` 资源根目录。仅属于某页的模型留在该功能范围；被多个页面共同使用的领域类型才进入 `common/model/`。
 

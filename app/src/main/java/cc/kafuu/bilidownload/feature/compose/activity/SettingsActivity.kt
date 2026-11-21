@@ -18,7 +18,7 @@ import cc.kafuu.bilidownload.common.core.compose.CoreCompActivity
 import cc.kafuu.bilidownload.common.model.DownloadPathMode
 import cc.kafuu.bilidownload.common.utils.LocalNetworkPermissionPolicy
 import cc.kafuu.bilidownload.common.utils.LocalNetworkPermissionRequestSession
-import cc.kafuu.bilidownload.feature.compose.layout.SettingsLayout
+import cc.kafuu.bilidownload.feature.compose.layout.settings.SettingsLayout
 import cc.kafuu.bilidownload.feature.compose.viewmodel.settings.SettingsUiEvent
 import cc.kafuu.bilidownload.feature.compose.viewmodel.settings.SettingsUiIntent
 import cc.kafuu.bilidownload.feature.compose.viewmodel.settings.SettingsViewModel
@@ -105,7 +105,11 @@ class SettingsActivity : CoreCompActivity() {
         }
 
         val permission = Manifest.permission.WRITE_EXTERNAL_STORAGE
-        if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(
+                this,
+                permission
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
             mViewModel.onPermissionGranted(mode)
         } else {
             mPendingMode = mode

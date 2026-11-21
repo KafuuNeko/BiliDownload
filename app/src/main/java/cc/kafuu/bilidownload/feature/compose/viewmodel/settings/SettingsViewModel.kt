@@ -9,6 +9,8 @@ import cc.kafuu.bilidownload.common.core.compose.CoreCompViewModelWithEvent
 import cc.kafuu.bilidownload.common.core.compose.UiIntentObserver
 import cc.kafuu.bilidownload.common.model.AppModel
 import cc.kafuu.bilidownload.common.model.DownloadPathMode
+import cc.kafuu.bilidownload.common.utils.DownloadFileNameUtils
+import cc.kafuu.bilidownload.common.utils.ExportFileNameUtils
 import cc.kafuu.bilidownload.common.utils.LocalNetworkPermissionPolicy
 import kotlinx.coroutines.launch
 import java.io.File
@@ -106,6 +108,15 @@ class SettingsViewModel :
         refreshState()
     }
 
+    /** 将下载资源的音频、视频及合成命名模板恢复为系统默认值并刷新页面。 */
+    @UiIntentObserver(SettingsUiIntent.ResetResourceFileNameTemplates::class)
+    fun onResetResourceFileNameTemplates() {
+        AppModel.audioResourceFileNameTemplate = DownloadFileNameUtils.DEFAULT_AUDIO_TEMPLATE
+        AppModel.videoResourceFileNameTemplate = DownloadFileNameUtils.DEFAULT_VIDEO_TEMPLATE
+        AppModel.mixedResourceFileNameTemplate = DownloadFileNameUtils.DEFAULT_MIXED_TEMPLATE
+        refreshState()
+    }
+
     /** 持久化后续音频导出的命名模板并刷新设置展示，已导出的文件不重新命名。 */
     @UiIntentObserver(SettingsUiIntent.SetAudioExportFileNameTemplate::class)
     fun onSetAudioExportFileNameTemplate(
@@ -130,6 +141,15 @@ class SettingsViewModel :
         intent: SettingsUiIntent.SetMixedExportFileNameTemplate
     ) {
         AppModel.mixedExportFileNameTemplate = intent.template
+        refreshState()
+    }
+
+    /** 将音频、视频及合成导出命名模板恢复为系统默认值并刷新页面。 */
+    @UiIntentObserver(SettingsUiIntent.ResetExportFileNameTemplates::class)
+    fun onResetExportFileNameTemplates() {
+        AppModel.audioExportFileNameTemplate = ExportFileNameUtils.DEFAULT_TEMPLATE
+        AppModel.videoExportFileNameTemplate = ExportFileNameUtils.DEFAULT_TEMPLATE
+        AppModel.mixedExportFileNameTemplate = ExportFileNameUtils.DEFAULT_TEMPLATE
         refreshState()
     }
 
@@ -228,12 +248,14 @@ class SettingsViewModel :
                 )
                 File(downloadDir, "BVD").absolutePath
             }
+
             DownloadPathMode.EXTERNAL_MEDIA -> {
                 val moviesDir = Environment.getExternalStoragePublicDirectory(
                     Environment.DIRECTORY_MOVIES
                 )
                 File(moviesDir, "BVD").absolutePath
             }
+
             DownloadPathMode.INTERNAL -> {
                 try {
                     CommonLibs.requireContext().getExternalFilesDir("resources")?.absolutePath

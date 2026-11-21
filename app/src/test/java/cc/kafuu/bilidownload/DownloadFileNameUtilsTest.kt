@@ -3,6 +3,7 @@ package cc.kafuu.bilidownload
 import cc.kafuu.bilidownload.common.utils.DownloadFileNameUtils
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -36,6 +37,31 @@ class DownloadFileNameUtilsTest {
         )
 
         assertEquals("stream-1.mp4", fileName)
+    }
+
+    /** 预览对空模板的处理不能改变实际下载使用任务回退名的行为。 */
+    @Test
+    fun buildFileName_preservesTaskFallbackForEmptyTemplates() {
+        listOf("", " \t ", "---", "////", "...").forEach { template ->
+            val fileName = DownloadFileNameUtils.buildFileName(
+                template = template,
+                context = context,
+                extension = "mp4",
+                fallbackBaseName = "merge-42-1234567890",
+            )
+            assertEquals("merge-42-1234567890.mp4", fileName)
+        }
+    }
+
+    /** 变量替换后只剩 Unicode 空白时，预览同样应交给调用方说明任务回退。 */
+    @Test
+    fun buildFileNameOrNull_returnsNullWhenRenderedTokensAreBlank() {
+        val fileName = DownloadFileNameUtils.buildFileNameOrNull(
+            template = "{VideoName}{PartName}",
+            context = DownloadFileNameUtils.TemplateContext(videoName = "\u2003", partName = ""),
+            extension = "mp4",
+        )
+        assertNull(fileName)
     }
 
     @Test
