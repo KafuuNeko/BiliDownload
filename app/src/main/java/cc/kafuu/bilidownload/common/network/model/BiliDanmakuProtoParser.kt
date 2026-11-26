@@ -10,9 +10,10 @@ import java.io.DataInputStream
  */
 object BiliDanmakuProtoParser {
     private const val TAG = "BiliDanmakuProtoParser"
+    private const val MILLISECONDS_PER_SECOND = 1000f
 
     /**
-     * 从protobuf二进制数据解析弹幕列表
+     * 从 Protobuf 二进制数据解析弹幕列表，出现时间统一转换为模型使用的秒。
      * B站弹幕protobuf结构简述：
      * DmSegMobileReply {
      *   repeated DanmakuElem elems = 1;
@@ -20,7 +21,7 @@ object BiliDanmakuProtoParser {
      *
      * DanmakuElem {
      *   int64 id = 1;
-     *   int32 progress = 2;
+     *   int32 progress = 2; // 出现时间，单位为毫秒
      *   int32 mode = 3;
      *   int32 fontsize = 4;
      *   uint32 color = 5;
@@ -87,7 +88,7 @@ object BiliDanmakuProtoParser {
         val dis = DataInputStream(input)
 
         var id: Long? = null
-        var progress: Float? = null
+        var progressSeconds: Float? = null
         var mode: Int? = null
         var fontsize: Int? = null
         var color: Int? = null
@@ -104,7 +105,11 @@ object BiliDanmakuProtoParser {
 
                 when (fieldNumber) {
                     1 -> if (wireType == 0) id = readVarint(dis)  // int64 id
-                    2 -> if (wireType == 0) progress = readVarint(dis).toFloat()  // int32 progress
+                    2 -> if (wireType == 0) {
+                        // XML 与 CSV 共用秒制模型，毫秒只在 Protobuf 解析边界转换一次。
+                        progressSeconds = readVarint(dis = dis).toFloat() / MILLISECONDS_PER_SECOND
+                    }
+
                     3 -> if (wireType == 0) mode = readVarint(dis).toInt()  // int32 mode
                     4 -> if (wireType == 0) fontsize = readVarint(dis).toInt()  // int32 fontsize
                     5 -> if (wireType == 0) color = readVarint(dis).toInt()  // uint32 color
@@ -120,6 +125,7 @@ object BiliDanmakuProtoParser {
                                 val length = readVarint(dis).toInt()
                                 dis.skipBytes(length)
                             }
+
                             5 -> dis.readInt()
                         }
                     }
@@ -134,11 +140,12 @@ object BiliDanmakuProtoParser {
         }
 
         // 构造弹幕对象
-        return if (id != null && progress != null && mode != null &&
-                   fontsize != null && color != null && midHash != null &&
-                   content != null && ctime != null) {
+        return if (id != null && progressSeconds != null && mode != null &&
+            fontsize != null && color != null && midHash != null &&
+            content != null && ctime != null
+        ) {
             BiliXmlDanmaku(
-                progress = progress,
+                progress = progressSeconds,
                 type = mode,
                 fontSize = fontsize,
                 color = color,
@@ -149,7 +156,10 @@ object BiliDanmakuProtoParser {
                 content = content
             )
         } else {
-            Log.w(TAG, "Incomplete danmaku element: id=$id, progress=$progress, mode=$mode, content=$content")
+            Log.w(
+                TAG,
+                "Incomplete danmaku element: id=$id, progressSeconds=$progressSeconds, mode=$mode, content=$content"
+            )
             null
         }
     }

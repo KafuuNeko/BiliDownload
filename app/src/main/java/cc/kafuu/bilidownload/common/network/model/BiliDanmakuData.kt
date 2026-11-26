@@ -5,13 +5,14 @@ import cc.kafuu.bilidownload.R
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.StringReader
+import kotlin.math.roundToLong
 
 /**
  * B站弹幕数据模型
  * 对应B站弹幕XML格式
  */
 data class BiliXmlDanmaku(
-    // 弹幕发送时间（相对于视频开始时间的秒数，保留3位小数）
+    // 弹幕出现时间（相对于视频开始时间的秒数）
     val progress: Float,
     // 弹幕类型 1-3 5-7 8
     val type: Int,
@@ -31,6 +32,8 @@ data class BiliXmlDanmaku(
     val content: String
 ) {
     companion object {
+        private const val MILLISECONDS_PER_SECOND = 1000L
+
         /**
          * 从XML解析弹幕列表
          * B站弹幕API返回的XML格式示例：
@@ -176,14 +179,18 @@ data class BiliXmlDanmaku(
     }
 
     /**
-     * 获取格式化后的时间字符串（HH:MM:SS.mmm）
+     * 获取格式化后的出现时间（HH:MM:SS.mmm），四舍五入到毫秒。
+     *
+     * 先还原总毫秒再拆分时分秒，避免秒制浮点误差经截断后少显示一毫秒，
+     * 并让取整后的秒、分钟和小时进位保持一致。
      */
     fun getFormattedTime(): String {
-        val totalSeconds = progress.toLong()
+        val totalMilliseconds = (progress.toDouble() * MILLISECONDS_PER_SECOND).roundToLong()
+        val totalSeconds = totalMilliseconds / MILLISECONDS_PER_SECOND
         val hours = totalSeconds / 3600
         val minutes = (totalSeconds % 3600) / 60
         val seconds = totalSeconds % 60
-        val milliseconds = ((progress - totalSeconds) * 1000).toInt()
+        val milliseconds = totalMilliseconds % MILLISECONDS_PER_SECOND
 
         return String.format("%02d:%02d:%02d.%03d", hours, minutes, seconds, milliseconds)
     }
