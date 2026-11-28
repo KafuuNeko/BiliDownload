@@ -82,17 +82,18 @@ interface DownloadTaskDao {
     @Query("SELECT * FROM DownloadTask WHERE groupId = :groupId")
     suspend fun getDownloadTaskByGroupId(groupId: Long): DownloadTaskEntity?
 
+    /** 查询分集的指定状态任务，由 Repository 在同一事务内继续比较完整 DASH 组合。 */
     @Query(
         """
-        SELECT COUNT(*) FROM DownloadTask
+        SELECT id FROM DownloadTask
         WHERE biliBvid = :bvid AND biliCid = :cid AND status IN (:statuses)
         """
     )
-    suspend fun countTasksByVideoPartAndStatuses(
+    suspend fun queryTaskIdsByVideoPartAndStatuses(
         bvid: String,
         cid: Long,
         vararg statuses: Int
-    ): Int
+    ): List<Long>
 
     @Query("DELETE FROM DownloadTask")
     suspend fun deleteAll()

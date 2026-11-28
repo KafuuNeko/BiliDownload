@@ -51,6 +51,7 @@ Windows 使用 `gradlew.bat` 执行对应任务。构建环境需具备项目要
 | BiliAddressParserTest、BvConvertTest | 地址识别、BV/AV 转换 |
 | BatchDownloadResolverTest、BatchDownloadUseCaseTest | 分集解析、批量策略、入队结果 |
 | DownloadTaskStatusPolicyTest | 活动任务状态分类 |
+| DownloadTaskCreationTest | 真实 Room 事务下的组合去重、状态边界与并发创建 |
 | DownloadServiceTaskRegistryTest | 重复服务启动、任务登记和退出判断 |
 | DownloadFileNameUtilsTest、ExportFileNameUtilsTest | 文件模板与输出名称 |
 | DownloadPathModeTest、BatchQualityMismatchModeTest | 持久化 code 与未知值策略 |

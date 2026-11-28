@@ -8,6 +8,7 @@
 
 - 单任务通过 `DownloadManager` 的现有入口创建和调度；批量操作复用 `BatchDownloadResolver`、`BatchDownloadUseCase`、`BatchExportUseCase` 和 `BatchDeleteUseCase`。
 - 视频分集使用 `(bvid, cid)` 标识，数据库任务主键、`groupId`、资源主键及分集 ID 各有职责，不得混用。
+- 活动下载按分集和完整音视频组合去重；组合使用 `(type, dashId, codecId)` 集合比较，忽略顺序、重复项和描述字段。同分集的不同画质、编码、音频或单流组合允许创建独立任务，共用部分流不算重复。
 - 创建任务与 DASH 记录复用 `DownloadRepository.createNewRecordIfAbsent()` 的事务边界，不能改成 UI 层“先查询再插入”的非原子判断。
 - 保持排队、正在启动、正在下载等阶段的去重与停止语义；重复点击和重复启动服务不能让同一任务同时执行两次。
 - `DownloadServiceTaskRegistry` 负责同一服务实例的任务登记和停止判断，避免某个任务结束后直接停止仍有其他任务运行的服务。
@@ -63,7 +64,7 @@
 
 | 场景 | 必须保持的行为 |
 | --- | --- |
-| 相同分集再次提交 | 已有活动任务被识别，调用方得到新增或跳过结果 |
+| 相同分集再次提交 | 相同组合已有活动任务时跳过，不同组合创建独立任务 |
 | 排队时暂停或取消 | 后续出队不会继续启动已停止的请求 |
 | 解析流地址时停止 | 迟到的解析结果不得重新启动该任务 |
 | 多资源并发下载 | 任一资源状态变化不会破坏组状态与已完成资源 |
@@ -88,6 +89,6 @@
 
 代码入口：[DownloadManager](../../app/src/main/java/cc/kafuu/bilidownload/common/manager/DownloadManager.kt)、[DownloadService](../../app/src/main/java/cc/kafuu/bilidownload/service/DownloadService.kt)、[服务任务登记](../../app/src/main/java/cc/kafuu/bilidownload/service/DownloadServiceTaskRegistry.kt)、[批量下载用例](../../app/src/main/java/cc/kafuu/bilidownload/common/download/BatchDownloadUseCase.kt)、[下载通知](../../app/src/main/java/cc/kafuu/bilidownload/notification/DownloadNotification.kt)。
 
-现有验证入口：[传输恢复测试](../../app/src/test/java/cc/kafuu/bilidownload/download/ResourceDownloaderTest.kt)、[源探测测试](../../app/src/test/java/cc/kafuu/bilidownload/download/DownloadSourceSelectorTest.kt)、[批量下载测试](../../app/src/test/java/cc/kafuu/bilidownload/BatchDownloadUseCaseTest.kt)、[服务登记测试](../../app/src/test/java/cc/kafuu/bilidownload/DownloadServiceTaskRegistryTest.kt)、[活动状态测试](../../app/src/test/java/cc/kafuu/bilidownload/DownloadTaskStatusPolicyTest.kt)。续传、前台服务和真实资源发布还需按改动选择设备场景，不能以纯 JVM 测试代替。
+现有验证入口：[任务组合与并发创建测试](../../app/src/androidTest/java/cc/kafuu/bilidownload/DownloadTaskCreationTest.kt)、[传输恢复测试](../../app/src/test/java/cc/kafuu/bilidownload/download/ResourceDownloaderTest.kt)、[源探测测试](../../app/src/test/java/cc/kafuu/bilidownload/download/DownloadSourceSelectorTest.kt)、[批量下载测试](../../app/src/test/java/cc/kafuu/bilidownload/BatchDownloadUseCaseTest.kt)、[服务登记测试](../../app/src/test/java/cc/kafuu/bilidownload/DownloadServiceTaskRegistryTest.kt)、[活动状态测试](../../app/src/test/java/cc/kafuu/bilidownload/DownloadTaskStatusPolicyTest.kt)。续传、前台服务和真实资源发布还需按改动选择设备场景，不能以纯 JVM 测试代替。
 
 相关专题：[存储](./storage-and-resource-lifecycle.md)、[网络](./network-and-account.md)、[媒体](./media-and-native.md)、[验证](./testing-and-delivery.md)。

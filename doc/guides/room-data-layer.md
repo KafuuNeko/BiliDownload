@@ -38,7 +38,7 @@ ViewModel / UseCase / Manager / Service
 - Repository 提供业务操作入口，组合多表操作时明确事务边界；不要把事务跨越到网络请求、用户等待或文件复制。
 - UI 模型转换不能掩盖数据库缺失或资源不可用，应将对应状态传给业务层处理。
 
-`DownloadRepository.createNewRecordIfAbsent()` 在同一事务中判断活动任务并写入任务及 DASH 记录。新增下载入口复用此方法，不能退回页面层先查后插；重复任务结果要由调用方明确处理。
+`DownloadRepository.createNewRecordIfAbsent()` 在同一事务中按分集和完整 DASH 组合判断活动任务，并写入任务及 DASH 记录。组合使用 `(type, dashId, codecId)` 集合比较，不同组合保持独立任务。新增下载入口复用此方法，不能退回页面层先查后插；重复任务结果要由调用方明确处理。
 
 ## 4. 数据库与文件的边界
 

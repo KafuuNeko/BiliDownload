@@ -1,8 +1,8 @@
 package cc.kafuu.bilidownload.common.room.repository
 
 import android.database.sqlite.SQLiteConstraintException
-import androidx.room.withTransaction
 import android.util.Log
+import androidx.room.withTransaction
 import cc.kafuu.bilidownload.common.CommonLibs
 import cc.kafuu.bilidownload.common.constant.DashType
 import cc.kafuu.bilidownload.common.constant.DownloadResourceType
@@ -20,6 +20,7 @@ import cc.kafuu.bilidownload.common.utils.DownloadFileNameUtils
 import cc.kafuu.bilidownload.common.utils.MimeTypeUtils
 import java.io.File
 
+/** 维护下载任务、DASH 选择和资源记录，协调事务创建与文件发布。 */
 object DownloadRepository {
     private const val TAG = "DownloadRepository"
 
@@ -41,26 +42,54 @@ object DownloadRepository {
     }
 
     /**
-     * Atomically skips an active video part or creates its task and DASH records.
-     * The task id is also persisted as groupId so PREPARE tasks survive process restarts.
+     * 在同一事务内按分集和完整音视频组合去重，并创建任务及 DASH 记录。
+     *
+     * - 组合按资源类型、DASH ID 和编码 ID 比较，忽略顺序、重复项和描述字段。
+     * - 不同组合使用独立任务；任务 ID 同时保存为 groupId，排队期间也能识别重复请求。
+     *
+     * @return 新任务 ID；相同分集和组合已有活动任务时返回 null。
+     * @throws IllegalArgumentException 当所选资源为空时抛出。
      */
-    @Throws(IllegalStateException::class, SQLiteConstraintException::class)
+    @Throws(
+        IllegalArgumentException::class,
+        IllegalStateException::class,
+        SQLiteConstraintException::class
+    )
     suspend fun createNewRecordIfAbsent(
         bvid: String,
         cid: Long,
         resources: List<BiliDashModel>
     ): Long? = CommonLibs.requireAppDatabase().withTransaction {
+        require(resources.isNotEmpty()) { "Download task must include at least one DASH resource" }
+
+        // 只拦截完整组合相同的活动任务，共用一条音频或视频流不代表重复下载。
+        val requestedSelection = resources.map { resource ->
+            DashSelectionKey(
+                type = resource.type,
+                dashId = resource.dashId,
+                codecId = resource.codecId
+            )
+        }.toSet()
         val activeStatuses = getActiveTaskStatusCodes()
-        val hasActiveTask = mDownloadTaskDao.countTasksByVideoPartAndStatuses(
-            bvid,
-            cid,
-            *activeStatuses
-        ) > 0
-        if (hasActiveTask) return@withTransaction null
-        val task = DownloadTaskEntity.createEntity(bvid, cid)
-        val taskId = mDownloadTaskDao.insert(task)
+        val activeTaskIds = mDownloadTaskDao.queryTaskIdsByVideoPartAndStatuses(
+            bvid = bvid,
+            cid = cid,
+            statuses = activeStatuses,
+        )
+        val hasSameSelection = activeTaskIds.any { activeTaskId ->
+            val activeSelection = mDownloadDashDao.queryDashListByTaskEntityId(id = activeTaskId)
+                .map { dash ->
+                    DashSelectionKey(type = dash.type, dashId = dash.dashId, codecId = dash.codecId)
+                }.toSet()
+            activeSelection == requestedSelection
+        }
+        if (hasSameSelection) return@withTransaction null
+
+        // 查询和整套记录写入共享事务，避免并发请求在检查后各自插入相同组合。
+        val task = DownloadTaskEntity.createEntity(bvid = bvid, cid = cid)
+        val taskId = mDownloadTaskDao.insert(downloadTask = task)
             .also { if (it == -1L) throw IllegalStateException("Invalid download task id") }
-        mDownloadTaskDao.update(task.copy(id = taskId, groupId = taskId))
+        mDownloadTaskDao.update(downloadTask = task.copy(id = taskId, groupId = taskId))
         resources.map {
             DownloadDashEntity(
                 dashId = it.dashId,
@@ -70,9 +99,16 @@ object DownloadRepository {
                 codecs = it.codecs,
                 mimeType = it.mimeType
             )
-        }.let { mDownloadDashDao.insertOrUpdate(*it.toTypedArray()) }
+        }.let { mDownloadDashDao.insertOrUpdate(dashList = it.toTypedArray()) }
         taskId
     }
+
+    /** 使用稳定的流身份比较组合，媒体描述字段不参与任务去重。 */
+    private data class DashSelectionKey(
+        val type: Int,
+        val dashId: Long,
+        val codecId: Long,
+    )
 
     suspend fun queryDashList(entity: DownloadTaskEntity) =
         mDownloadDashDao.queryDashListByTaskEntityId(entity.id)
@@ -161,6 +197,7 @@ object DownloadRepository {
             DownloadResourceType.AUDIO,
             DownloadResourceType.VIDEO,
             DownloadResourceType.MIXED -> true
+
             else -> false
         }
         return if (isExternalResourceFileNameEnabled() && isDownloadResourceType) {
@@ -356,12 +393,12 @@ object DownloadRepository {
         listOf(DownloadResourceType.VIDEO, DownloadResourceType.AUDIO).forEach { type ->
             mDownloadResourceDao.queryResourceByTaskIdAndResourceType(taskId, type)
                 .forEach { resource ->
-                if (ResourceStorage.delete(resource)) {
-                    mDownloadResourceDao.deleteById(resource.id)
-                } else {
-                    success = false
+                    if (ResourceStorage.delete(resource)) {
+                        mDownloadResourceDao.deleteById(resource.id)
+                    } else {
+                        success = false
+                    }
                 }
-            }
         }
         return success
     }
